@@ -108,6 +108,7 @@ Wick.Selection = class extends Wick.Base {
             "animationType",
             "singleFrameNumber",
             "isSynced",
+            "imageSmoothingEnabled"
         ];
     }
 
