@@ -68,6 +68,7 @@ Wick.Clip = class extends Wick.Tickable {
 
         this._clones = [];
 
+        this._clipTags = [];
     }
 
     _serialize(args) {
@@ -79,6 +80,7 @@ Wick.Clip = class extends Wick.Tickable {
         data.singleFrameNumber = this._singleFrameNumber;
         data.assetSourceUUID = this._assetSourceUUID;
         data.isSynced = this._isSynced;
+        data.clipTags = this._clipTags.concat([]);
 
         return data;
     }
@@ -92,6 +94,7 @@ Wick.Clip = class extends Wick.Tickable {
         this._singleFrameNumber = data.singleFrameNumber || 1;
         this._assetSourceUUID = data.assetSourceUUID;
         this._isSynced = data.isSynced;
+        this._clipTags = data.clipTags;
 
         this._playedOnce = false;
 
@@ -188,6 +191,31 @@ Wick.Clip = class extends Wick.Tickable {
 
     set assetSourceUUID (assetSourceUUID) {
         this._assetSourceUUID = assetSourceUUID;
+    }
+
+    /**
+     * All the tags on the current clips.
+     */
+    get clipTags () {
+        return this._clipTags;
+    }
+
+    /**
+     * Add clip tag to current clip and to the project, if needed.
+     * @param {string} tag 
+     */
+    addClipTag (tag) {
+        if (!this.clipTags.includes(tag)) this.clipTags.push(tag);
+    }
+
+    /**
+     * Removes a clip tag from this clip.
+     * @param {string} tag 
+     */
+    removeClipTag (tag) {
+        if (this.clipTags.includes(tag)) {
+            this._clipTags = this.clipTags.filter(oldTag => oldTag !== tag);
+        }
     }
 
     /**

@@ -203,6 +203,10 @@ class Editor extends EditorCore {
 
   UNSAFE_componentWillMount = () => {
     document.title =  `Wick Editor ${this.editorVersion}`;
+    
+    // Add theme directly to the body so all components have access.
+    document.body.classList.add('theme-default');
+
     // Initialize "live" engine state
     this.project = new window.Wick.Project();
     this.attachErrorHandlers();
@@ -944,7 +948,7 @@ class Editor extends EditorCore {
               exporting={this.state.exporting}
               toast={this.toast} 
               openExportMedia={() => {this.openModal('ExportMedia')}}
-              openExportOptions={() => {this.openModal('ExportOptions')}}
+              openExportOptions={() => {this.openModal('ChooseExport')}}
             />
           </DockedPanel>
         </div>
@@ -1170,6 +1174,10 @@ class Editor extends EditorCore {
                         updateLastColors={this.updateLastColors}
                         lastColorsUsed={this.state.lastColorsUsed}
                         getClipAnimationTypes={this.getClipAnimationTypes}
+                        getProjectClipTags={this.getProjectClipTags}
+                        getSelectedClipTags={this.getSelectedClipTags} 
+                        removeClipTagFromSelection={this.removeClipTagFromSelection}
+                        addClipTagToSelection={this.addClipTagToSelection}
                       />
                     </DockedPanel>
                   </ReflexElement>

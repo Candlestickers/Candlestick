@@ -37,7 +37,7 @@ export default function EditorWrapper(props) {
     useEffect(() => {
         Hook(window.console, log => {props.editor.setConsoleLogs([...props.editor.state.consoleLogs, log])}, false)
         return () => Unhook(window.console)
-    }, [])
+    }, [props.editor])
 
 
     return (
@@ -60,7 +60,7 @@ export default function EditorWrapper(props) {
                 allowChanges={true}
                 keyMap={props.editor.getKeyMap()}
                 handlers={props.editor.getKeyHandlers()} />
-            <div id="editor" className="theme-default">
+            <div id="editor">
                 <ModalHandler
                     getRenderSize={props.editor.getRenderSize}
                     activeModalName={props.editor.state.activeModalName}

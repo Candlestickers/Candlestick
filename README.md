@@ -18,13 +18,11 @@
     <img src="https://img.shields.io/twitter/follow/wickeditor?style=social&logo=twitter" alt="follow on Twitter"></a>
 </p>
 
-# Candlestick
+<h1>Wick Editor</h1>
 
-Candlestick is a fork of Wick Editor,  a free and open-source tool for creating games, animations, and everything in-between.
+The Wick Editor is a free and open-source tool for creating games, animations, and everything in-between. It's designed to be the most accessible tool for creating multimedia projects on the web.
 
 <p align="center"><img width="100%" src=".github/images/editor.svg"></p>
-
-Below is the rest of the original README.
 
 ## Getting started
 

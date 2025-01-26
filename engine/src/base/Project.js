@@ -119,6 +119,9 @@ Wick.Project = class extends Wick.Base {
 
         this.history.project = this;
         this.history.pushState(Wick.History.StateType.ONLY_VISIBLE_OBJECTS);
+    
+        this._clipTags = [];
+        this._clipTagMap = {};
     }
 
     /**
@@ -282,6 +285,112 @@ Wick.Project = class extends Wick.Base {
         this._backgroundColor = backgroundColor;
     }
 
+    /**
+     * Returns an array that includes all tags currently used in the project.
+     * @type {string[]}
+     */
+    get clipTags () {
+        return this._clipTags;
+    }
+
+    /**
+     * A mapping of all tags to clips in the project.
+     */
+    get clipTagMap () {
+        return this._clipTagMap;
+    }
+
+    /**
+     * Adds a clip tag to the project. If the tag already exists, it will not be added again.
+     * @param {string} tag Tag to add
+     */
+    addClipTagToSelection (tag) {
+        this.selection.addClipTag(tag);
+        if (!this.clipTags.includes(tag)) this.clipTags.push(tag);
+        this.mapClipTagToClip(tag, this.selection.uuid);
+    }
+
+    /**
+     * Removes clip tag from selection.
+     * @param {string} tag 
+     */
+    removeClipTagFromSelection (tag) {
+        this.selection.removeClipTag(tag);
+        this.removeClipTagFromMap(tag, this.selection.uuid);
+    }
+
+    /**
+     * Connects a tag to an object
+     * @param {string} tag tag to add to object 
+     * @param {string} uuid object to connect tag to.
+     */
+    mapClipTagToClip (tag, uuid) {
+        if (this._clipTagMap[tag]) {
+            this._clipTagMap[tag].add(uuid);
+        } else {
+            this._clipTagMap[tag] = new Set([uuid]);
+        }
+    }
+
+    /**
+     * Removes tag from clip map connected to uuid.
+     * @param {string} tag tag to remove from object
+     * @param {string} uuid uuid of object to disconnect 
+     */
+    removeClipTagFromMap (tag, uuid) {
+        if (this._clipTagMap[tag]) {
+            this._clipTagMap[tag].delete(uuid);
+        }
+
+        if (this._clipTagMap[tag].size === 0) {
+            this._clipTags = this._clipTags.filter(oldTag => tag !== oldTag);
+        }
+    }
+
+    /**
+     * Reviews all clips in the project and establishes the clip tag map.
+     * Also establishes a list of clip tags for all clips in the project.
+     */
+    defineClipTagMap () {
+        // Go through all layers, frames, and clips and connect clips to tags.
+        this.activeTimeline.layers.forEach(layer => {
+            layer.frames.forEach(frame => {
+                frame.clips.forEach(clip => {
+                    clip.clipTags.forEach(tag => {
+                        this.mapClipTagToClip(tag, clip.uuid);
+
+                        if (!this.clipTags.includes(tag)) {
+                            this.clipTags.push(tag);
+                        }
+                    });
+                })
+            });
+        });
+    }
+
+    /**
+     * Returns an array of all clips that currently have this tag.
+     * TODO: This retrieval method is relatively inefficient and may 
+     * slow down on a project with many frames or clips.
+     * @param {string} tag tag to find. 
+     */
+    getActiveClipsByTag (tag) {
+        let clips = [];
+
+        this.activeFrames.forEach(frame => {
+            frame.clips.forEach(clip => {
+                if (clip.clipTags.includes(tag)) {
+                    clips.push(clip);
+                }
+            })
+        });
+
+        return clips;
+    }
+    
+    /**
+     * Options to use when the hits() function is called.
+     */
     get hitTestOptions() {
         return this._hitTestOptions;
     }
@@ -300,6 +409,25 @@ Wick.Project = class extends Wick.Base {
             if (typeof options.intersections === 'boolean') {
                 this._hitTestOptions.intersections = options.intersections;
             }
+        }
+    }
+
+    /**
+     * Returns an array of all tags that this clip has.
+     * @type {string[]}
+     */
+    get clipTags () {
+        return this._clipTags;
+    }
+
+    /**
+     * Adds a tag to this clip.
+     * @param {string} tag Tag to add 
+     */
+    addClipTag (tag) {
+        if (!this.clipTags.includes(tag)) {
+            this.clipTags.push(tag);
+            this.project.addClipTag(tag);
         }
     }
 
@@ -1776,8 +1904,6 @@ Wick.Project = class extends Wick.Base {
         if(!args.onFinish) args.onFinish = () => {};
         if(!args.width) args.width = this.width;
         if(!args.height) args.height = this.height;
-
-        
 
         var renderCopy = this;
         renderCopy.renderBlackBars = true; // Turn off black bars (removes black lines)

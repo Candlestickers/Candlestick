@@ -20,12 +20,17 @@ export default function WickTextInput (props) {
     let { isValid, cleanUp, isValidRegex, ...rest } = props;
 
     // Update the display value if it's updated elsewhere.
-    useEffect(() => {
+    useEffect(resetDisplayValueOnChange, [props.value])
+
+    /**
+     * Resets the display value of the component if the value
+     * is changed somewhere else.
+     */
+    function resetDisplayValueOnChange () {
         let val = props.value;
         if (fullIsValid(val)) { val = internalCleanup(val) }
-
         setDisplayValue(val);
-    }, [props.value])
+    }
 
     function wrappedOnChange (val) {
         props.onChange && props.onChange(val);
@@ -78,6 +83,16 @@ export default function WickTextInput (props) {
         }
     }
 
+    /**
+     * Runs when the text input is blurred, or after a specified amount of
+     * time after an edit.
+     * @param {*} e 
+     */
+    function internalOnChangeComplete (e) {
+        internalOnChange(e);
+        props.onChangeComplete && props.onChangeComplete(displayValue);
+    }
+
     return (
         <input
             {...rest}
@@ -85,6 +100,6 @@ export default function WickTextInput (props) {
             value={displayValue}
             type="text"
             onChange={internalOnChange}
-            onBlur={internalOnChange}/>
+            onBlur={internalOnChangeComplete}/>
     )
 }

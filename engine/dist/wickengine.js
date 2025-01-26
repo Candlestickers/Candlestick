@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2021.1.18.12.6.20";
+var WICK_ENGINE_BUILD_VERSION = "2021.1.20.18.42.18";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -47064,7 +47064,7 @@ GlobalAPI = class {
     return ['stop', 'play', 'gotoAndStop', 'gotoAndPlay', 'gotoNextFrame', 'gotoPrevFrame', // These are currently disabled, they are very slow for some reason.
     // They are currently hacked in inside Tickable._runFunction
     //'project','root','parent','parentObject',
-    'isMouseDown', 'mouseX', 'mouseY', 'mouseMoveX', 'mouseMoveY', 'key', 'keys', 'isKeyDown', 'keyIsDown', 'isKeyJustPressed', 'keyIsJustPressed', 'random', 'playSound', 'stopAllSounds', 'onEvent', 'hideCursor', 'showCursor', 'hitTestOptions'];
+    'isMouseDown', 'mouseX', 'mouseY', 'mouseMoveX', 'mouseMoveY', 'key', 'keys', 'isKeyDown', 'keyIsDown', 'isKeyJustPressed', 'keyIsJustPressed', 'random', 'playSound', 'stopAllSounds', 'onEvent', 'hideCursor', 'showCursor', 'hitTestOptions', 'getActiveClipsByTag'];
   }
   /**
    * @param {object} scriptOwner The tickable object which owns the script being evaluated.
@@ -47146,9 +47146,24 @@ GlobalAPI = class {
   gotoPrevFrame() {
     this.scriptOwner.parentClip.gotoPrevFrame();
   }
+  /**
+   * Sets the hit test options for the editor globally. All calls to hits() will
+   * use these settings unless overridden. 
+   * @param {object} options 
+   */
+
 
   hitTestOptions(options) {
     this.scriptOwner.project.hitTestOptions = options;
+  }
+  /**
+   * Returns all currently active clips that have this tag.
+   * @param {string} tag 
+   */
+
+
+  getActiveClipsByTag(tag) {
+    return this.scriptOwner.project.getActiveClipsByTag(tag);
   }
   /**
    * Returns an object representing the project with properties such as width, height, framerate, background color, and name.
@@ -48410,7 +48425,8 @@ Wick.WickFile = class {
 
 
   static _prepareProject(project) {
-    // 1.16+ projects don't allow gaps between frames.
+    project.defineClipTagMap(); // 1.16+ projects don't allow gaps between frames.
+
     Wick.ObjectCache.getAllObjects().filter(object => {
       return object instanceof Wick.Timeline;
     }).forEach(timeline => {
@@ -50005,6 +50021,8 @@ Wick.Project = class extends Wick.Base {
     this._error = null;
     this.history.project = this;
     this.history.pushState(Wick.History.StateType.ONLY_VISIBLE_OBJECTS);
+    this._clipTags = [];
+    this._clipTagMap = {};
   }
   /**
    * Prepares the project to be used in an editor.
@@ -50175,6 +50193,119 @@ Wick.Project = class extends Wick.Base {
   set backgroundColor(backgroundColor) {
     this._backgroundColor = backgroundColor;
   }
+  /**
+   * Returns an array that includes all tags currently used in the project.
+   * @type {string[]}
+   */
+
+
+  get clipTags() {
+    return this._clipTags;
+  }
+  /**
+   * A mapping of all tags to clips in the project.
+   */
+
+
+  get clipTagMap() {
+    return this._clipTagMap;
+  }
+  /**
+   * Adds a clip tag to the project. If the tag already exists, it will not be added again.
+   * @param {string} tag Tag to add
+   */
+
+
+  addClipTagToSelection(tag) {
+    this.selection.addClipTag(tag);
+    if (!this.clipTags.includes(tag)) this.clipTags.push(tag);
+    this.mapClipTagToClip(tag, this.selection.uuid);
+  }
+  /**
+   * Removes clip tag from selection.
+   * @param {string} tag 
+   */
+
+
+  removeClipTagFromSelection(tag) {
+    this.selection.removeClipTag(tag);
+    this.removeClipTagFromMap(tag, this.selection.uuid);
+  }
+  /**
+   * Connects a tag to an object
+   * @param {string} tag tag to add to object 
+   * @param {string} uuid object to connect tag to.
+   */
+
+
+  mapClipTagToClip(tag, uuid) {
+    if (this._clipTagMap[tag]) {
+      this._clipTagMap[tag].add(uuid);
+    } else {
+      this._clipTagMap[tag] = new Set([uuid]);
+    }
+  }
+  /**
+   * Removes tag from clip map connected to uuid.
+   * @param {string} tag tag to remove from object
+   * @param {string} uuid uuid of object to disconnect 
+   */
+
+
+  removeClipTagFromMap(tag, uuid) {
+    if (this._clipTagMap[tag]) {
+      this._clipTagMap[tag].delete(uuid);
+    }
+
+    if (this._clipTagMap[tag].size === 0) {
+      this._clipTags = this._clipTags.filter(oldTag => tag !== oldTag);
+    }
+  }
+  /**
+   * Reviews all clips in the project and establishes the clip tag map.
+   * Also establishes a list of clip tags for all clips in the project.
+   */
+
+
+  defineClipTagMap() {
+    // Go through all layers, frames, and clips and connect clips to tags.
+    this.activeTimeline.layers.forEach(layer => {
+      layer.frames.forEach(frame => {
+        frame.clips.forEach(clip => {
+          clip.clipTags.forEach(tag => {
+            this.mapClipTagToClip(tag, clip.uuid);
+
+            if (!this.clipTags.includes(tag)) {
+              this.clipTags.push(tag);
+            }
+          });
+        });
+      });
+    });
+  }
+  /**
+   * Returns an array of all clips that currently have this tag.
+   * TODO: This retrieval method is relatively inefficient and may 
+   * slow down on a project with many frames or clips.
+   * @param {string} tag tag to find. 
+   */
+
+
+  getActiveClipsByTag(tag) {
+    let clips = [];
+    this.activeFrames.forEach(frame => {
+      frame.clips.forEach(clip => {
+        if (clip.clipTags.includes(tag)) {
+          clips.push(clip);
+        }
+      });
+    });
+    return clips;
+  }
+  /**
+   * Options to use when the hits() function is called.
+   */
+
 
   get hitTestOptions() {
     return this._hitTestOptions;
@@ -50197,6 +50328,27 @@ Wick.Project = class extends Wick.Base {
       if (typeof options.intersections === 'boolean') {
         this._hitTestOptions.intersections = options.intersections;
       }
+    }
+  }
+  /**
+   * Returns an array of all tags that this clip has.
+   * @type {string[]}
+   */
+
+
+  get clipTags() {
+    return this._clipTags;
+  }
+  /**
+   * Adds a tag to this clip.
+   * @param {string} tag Tag to add 
+   */
+
+
+  addClipTag(tag) {
+    if (!this.clipTags.includes(tag)) {
+      this.clipTags.push(tag);
+      this.project.addClipTag(tag);
     }
   }
   /**
@@ -52430,6 +52582,40 @@ Wick.Selection = class extends Wick.Base {
     }
   }
   /**
+   * Tags that belong to selected clip.
+   */
+
+
+  get clipTags() {
+    if (this.getSelectedObject() && this.selectionType === 'clip') {
+      return this.getSelectedObject().clipTags;
+    } else {
+      return null;
+    }
+  }
+  /**
+   * Add clip tag to selected clip.
+   * @param {string} tag tag to add
+   */
+
+
+  addClipTag(tag) {
+    if (this.getSelectedObject() && this.selectionType === 'clip') {
+      this.getSelectedObject().addClipTag(tag);
+    }
+  }
+  /**
+   * Removes tag from selected clip.
+   * @param {string} tag tag to remove
+   */
+
+
+  removeClipTag(tag) {
+    if (this.getSelectedObject() && this.selectionType === 'clip') {
+      this.getSelectedObject().removeClipTag(tag);
+    }
+  }
+  /**
    * The position of the selection.
    * @type {number}
    */
@@ -53839,7 +54025,31 @@ Wick.Tween = class extends Wick.Base {
       'none': TWEEN.Easing.Linear.None,
       'in': TWEEN.Easing.Quadratic.In,
       'out': TWEEN.Easing.Quadratic.Out,
-      'in-out': TWEEN.Easing.Quadratic.InOut
+      'in-out': TWEEN.Easing.Quadratic.InOut,
+        'in-cubic': TWEEN.Easing.Cubic.In,
+        'out-cubic': TWEEN.Easing.Cubic.Out,
+        'in-out-cubic': TWEEN.Easing.Cubic.InOut,
+        'in-quartic': TWEEN.Easing.Quartic.In,
+        'out-quartic': TWEEN.Easing.Quartic.Out,
+        'in-out-quartic': TWEEN.Easing.Quartic.InOut,
+        'in-quintic': TWEEN.Easing.Quintic.In,
+        'out-quintic': TWEEN.Easing.Quintic.Out,
+        'in-out-quintic': TWEEN.Easing.Quintic.InOut,
+        'in-sine': TWEEN.Easing.Sinusoidal.In,
+        'out-sine': TWEEN.Easing.Sinusoidal.Out,
+        'in-out-sine': TWEEN.Easing.Sinusoidal.InOut,
+        'in-exp': TWEEN.Easing.Exponential.In,
+        'out-exp': TWEEN.Easing.Exponential.Out,
+        'in-out-exp': TWEEN.Easing.Exponential.InOut,
+        'in-circle': TWEEN.Easing.Circular.In,
+        'out-circle': TWEEN.Easing.Circular.Out,
+        'in-out-circle': TWEEN.Easing.Circular.InOut,
+        'in-back': TWEEN.Easing.Back.In,
+        'out-back': TWEEN.Easing.Back.Out,
+        'in-out-back': TWEEN.Easing.Back.InOut,
+        'in-bounce': TWEEN.Easing.Bounce.In,
+        'out-bounce': TWEEN.Easing.Bounce.Out,
+        'in-out-bounce': TWEEN.Easing.Bounce.InOut
     }[this.easingType];
   }
 
@@ -55956,7 +56166,7 @@ Wick.Tickable = class extends Wick.Base {
 
 
   runScript(name, parameters) {
-    if (this.removed || !this.onScreen) {
+    if (this.removed || !this.onScreen && !(name === 'unload')) {
       return;
     }
 
@@ -57111,6 +57321,7 @@ Wick.Clip = class extends Wick.Tickable {
     }
 
     this._clones = [];
+    this._clipTags = [];
   }
 
   _serialize(args) {
@@ -57122,6 +57333,7 @@ Wick.Clip = class extends Wick.Tickable {
     data.singleFrameNumber = this._singleFrameNumber;
     data.assetSourceUUID = this._assetSourceUUID;
     data.isSynced = this._isSynced;
+    data.clipTags = this._clipTags.concat([]);
     return data;
   }
 
@@ -57134,6 +57346,7 @@ Wick.Clip = class extends Wick.Tickable {
     this._singleFrameNumber = data.singleFrameNumber || 1;
     this._assetSourceUUID = data.assetSourceUUID;
     this._isSynced = data.isSynced;
+    this._clipTags = data.clipTags;
     this._playedOnce = false;
     this._clones = [];
   }
@@ -57236,6 +57449,34 @@ Wick.Clip = class extends Wick.Tickable {
 
   set assetSourceUUID(assetSourceUUID) {
     this._assetSourceUUID = assetSourceUUID;
+  }
+  /**
+   * All the tags on the current clips.
+   */
+
+
+  get clipTags() {
+    return this._clipTags;
+  }
+  /**
+   * Add clip tag to current clip and to the project, if needed.
+   * @param {string} tag 
+   */
+
+
+  addClipTag(tag) {
+    if (!this.clipTags.includes(tag)) this.clipTags.push(tag);
+  }
+  /**
+   * Removes a clip tag from this clip.
+   * @param {string} tag 
+   */
+
+
+  removeClipTag(tag) {
+    if (this.clipTags.includes(tag)) {
+      this._clipTags = this.clipTags.filter(oldTag => oldTag !== tag);
+    }
   }
   /**
    * The timeline of the clip.

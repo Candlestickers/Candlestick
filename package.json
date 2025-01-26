@@ -1,6 +1,6 @@
 {
   "name": "wick-editor",
-  "version": "0.0.1",
+  "version": "1.20.0",
   "author": "Wicklets LLC",
   "private": true,
   "homepage": "./",
@@ -10,8 +10,8 @@
     "url": "https://github.com/Wicklets/wick-editor.git"
   },
   "dependencies": {
-    "14": "^3.1.6",
     "@ffmpeg/ffmpeg": "^0.7.0",
+    "@material-ui/core": "^4.11.3",
     "ace-builds": "^1.4.12",
     "audiobuffer-to-wav": "^1.0.0",
     "base64-arraybuffer": "^0.2.0",
@@ -23,8 +23,11 @@
     "file-saver": "^2.0.0",
     "localforage": "^1.7.3",
     "node-sass": "^4.9.4",
+    "npm-force-resolutions": "^0.0.10",
+    "postcss": "^7.0.39",
+    "postcss-safe-parser": "^7.0.1",
     "query-string": "^6.9.0",
-    "rc-slider": "^8.6.3",
+    "rc-slider": "^9.7.1",
     "react": "^16.13.1",
     "react-ace": "^6.3.2",
     "react-aria-menubutton": "^6.0.1",
@@ -43,8 +46,8 @@
     "react-reflex": "^3.0.6",
     "react-resize-detector": "^3.1.3",
     "react-rnd": "^10.2.3",
-    "react-scripts": "2.0.5",
-    "react-select": "^2.1.0",
+    "react-scripts": "^4.0.2",
+    "react-select": "^3.2.0",
     "react-sizeme": "^2.6.12",
     "react-spinners": "^0.9.0",
     "react-tabs": "^3.0.0",
@@ -134,18 +137,20 @@
   ],
   "devDependencies": {
     "dotenv": "^8.2.0",
-    "electron": "^7.2.4",
     "electron-builder": "^22.4.1",
     "electron-builder-notarize": "^1.1.2",
     "electron-notarize": "^0.3.0",
     "electron-osx-sign": "^0.4.15",
     "electron-packager": "^14.2.1",
+    "gh-pages": "^2.0.1",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-header": "^2.0.9",
     "gulp-rename": "^2.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gh-pages": "^2.0.1"
+    "gulp-uglify": "^3.0.2"
+  },
+  "resolutions": {
+    "postcss": "7.0.39"
   }
 }

@@ -34,24 +34,19 @@ var classNames = require('classnames');
 class WelcomeModal extends Component {
   constructor () {
     super();
-    this.forumPost = "https://forum.wickeditor.com/t/wick-editor-status-update-sorta/12967";
+    this.forumPost = "https://forum.wickeditor.com/t/help-needed-wick-editor-version-1-18-new-fill-bucket-outliner-tool-mobile-improvements/3314";
     this.updates = [
-      "Rebrand to Candlestick",
-      "---",
-      "---",
-      "---",
-      "---",
-      "---",
-      "---",
-      "Bug Fixes",
-    ] // No More than 9 if patreon removed (8 looks better), no more than 3 if patreon is kept
+      "New Code Editor!",
+      "New Hit Test Options",
+      "And Much More!",
+    ] // No More than 3
 
-    /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
+    let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
     let t2 = ["Constance Ye", "Dan Doggett", "Anonymous"]
-    let t3 = ["Gautaum Bose", "Trevor", "Jovanny Rodriguez", "André Bray", "Colin Fitz-Gerald"]
+    let t3 = ["Gautaum Bose", "Jovanny Rodriguez", "André Bray", "Colin Fitz-Gerald"]
     let t4 = ["Golan Levin", "Daniel Sun", "Benjamin Briand", "Joseph Hocking", "Charisse Hampton", "Jessie Young", "Bluecake", "O.K. Keyes", "Sarksus", "Laurens Bonnema", "Anonymous"]
-    let t5 = ["Joe", "Karlin Fox", "StepSwitcher", "Kandy Kat", "Ann Griffin", "Happyships", "Dixie Dorward", "Albin Rodriguex"]
-    this.patreonSupporters = t1.concat(t2, t3, t4, t5)*/
+    let t5 = ["Joe", "Karlin Fox", "StepSwitcher", "Kandy Kat", "Ann Griffin", "Happyships", "Dixie Dorward", "Albin Rodriguex", "Brent Knopf"]
+    this.patreonSupporters = t1.concat(t2, t3, t4, t5)
   }
 
   // Render updates as a list.
@@ -66,7 +61,7 @@ class WelcomeModal extends Component {
   }
 
   // Render a list of all Patreon supporters.
-  /*renderPatreonSupporters = (className) => {
+  renderPatreonSupporters = (className) => {
     return  (
       <div className={classNames("supporter-list-container", className)}>
         <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://www.patreon.com/WickEditor">Become a Patreon Supporter!</a>
@@ -75,7 +70,7 @@ class WelcomeModal extends Component {
         </div>
       </div>
     );
-  }*/
+  }
 
   renderMobileModal = (modalProps) => {
     return (
@@ -86,10 +81,10 @@ class WelcomeModal extends Component {
             <img className="welcome-modal-mobile-image" alt="Night sky with mountains, clouds, a moon and stars" src={nightImageShort}/>
           </div>
           <div className="welcome-modal-mobile-content">
-            <div className="welcome-modal-title small-modal">Candlestick</div>
+            <div className="welcome-modal-title small-modal">The Wick Editor</div>
             <div className="welcome-modal-version small-modal"><a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href={this.forumPost}>Version {this.props.editorVersion}</a></div>
             {this.renderUpdates("small-modal")}
-            {/* {this.renderPatreonSupporters()} */}
+            {this.renderPatreonSupporters()}
           </div>
           <div id="welcome-modal-mobile-accept">
               <ActionButton
@@ -114,12 +109,12 @@ class WelcomeModal extends Component {
             <img id="welcome-image" alt="Night sky with mountains, clouds, a moon and stars" src={coolField} />
           </div>
           <div id="welcome-message-container" className="modal-main-container">
-            <div id="welcome-modal-title" className="welcome-modal-item">Welcome To Candlestick!</div>
+            <div id="welcome-modal-title" className="welcome-modal-item">Welcome To The Wick Editor!</div>
             <div id="welcome-modal-version" className="welcome-modal-item"><a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href={this.forumPost}>Version {this.props.editorVersion}</a></div>
-            <div id="welcome-modal-subtitle" className="welcome-modal-item">Candlestick {this.props.editorVersion} includes:</div>
+            <div id="welcome-modal-subtitle" className="welcome-modal-item">Wick Editor {this.props.editorVersion} includes:</div>
             <div id="welcome-modal-message" className="welcome-modal-item">
               {this.renderUpdates()}
-              {/* {this.renderPatreonSupporters("desktop-modal")} */}
+              {this.renderPatreonSupporters("desktop-modal")}
             </div>
             <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://forum.wickeditor.com">forum!</a></div>
             <div id="welcome-modal-footer">

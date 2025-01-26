@@ -36,12 +36,12 @@ class MenuBar extends Component {
             icon="mascotmark"
             />
 
-          {/* <MenuBarSupportButton
+          <MenuBarSupportButton
             icon="redheart"
             text="support us"
             id="support-us-button"
             action={() => this.props.openModal('SupportUs')}
-            /> */}
+            />
           </div>
 
         <div className="menu-bar-project-name" role="button" onClick={() => this.props.openModal("SimpleProjectSettings")}>

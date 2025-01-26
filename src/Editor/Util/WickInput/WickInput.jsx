@@ -21,6 +21,7 @@ import React, { Component } from 'react';
 import './_wickinput.scss';
 
 import Select from 'react-select';
+import CreateableSelect from 'react-select/creatable';
 import 'react-dropdown/style.css';
 
 import ColorPicker from 'Editor/Util/ColorPicker/ColorPicker';
@@ -97,6 +98,8 @@ class WickInput extends Component {
       return ( this.renderSlider() );
     } else if (this.props.type === "select") {
       return ( this.renderSelect() );
+    } else if (this.props.type === "createable-select") {
+      return ( this.renderCreateableSelect() );
     } else if (this.props.type === "color") {
       return ( this.renderColor());
     } else if (this.props.type === "checkbox") {
@@ -248,9 +251,35 @@ class WickInput extends Component {
     );
   }
 
+  renderCreateableSelect = () => {
+    let value = this.props.options.find(obj => obj.value === this.props.value);
+
+    if (value === undefined) {
+      value = {
+        label: this.props.value,
+        value: this.props.value
+      }
+    }
+
+    return (
+      <CreateableSelect
+        isMulti
+        value={this.props.value}
+        onCreateOption={this.props.onCreateOption}
+        inputId={this.props.id}
+        onChange={this.props.onChange}
+        options={this.props.options}
+        className={classNames("wick-input-createable-select", this.props.className)}
+        classNamePrefix={'wick-input-select'}
+        menuPortalTarget={document.body}
+        menuPosition={'fixed'}
+      />
+    );
+  }
+
   renderCheckbox = () => {
     return (
-      <div className="wick-checkbox-container">
+      <div className={classNames("wick-checkbox-container", this.props.containerClassName)}>
         {this.props.label && 
           <label htmlFor={this.props.label} className="wick-checkbox-label">
             {this.props.label}
