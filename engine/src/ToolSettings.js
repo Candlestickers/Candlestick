@@ -50,6 +50,20 @@ Wick.ToolSettings = class {
             step: 1,
         }, {
             type: "number",
+            name: 'pixelGridSize',
+            default: 10,
+            min: 1,
+            max: 200,
+            step: 1,
+        }, {
+            type: "number",
+            name: 'pixelSize',
+            default: 10,
+            min: 1,
+            max: 200,
+            step: 1,
+        }, {
+            type: "number",
             name: 'cornerRadius',
             default: 0,
             min: 0,

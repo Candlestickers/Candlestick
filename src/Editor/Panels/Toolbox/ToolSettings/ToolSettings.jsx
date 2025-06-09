@@ -33,6 +33,7 @@ class ToolSettings extends Component {
       "brush": this.renderBrushSettings,
       "pencil": this.renderPencilSettings,
       "eraser": this.renderEraserSettings,
+      "pixelbrush": this.renderPixelBrushSettings,
       "rectangle": this.renderRectangleSettings,
       "ellipse": this.renderEllipseSettings,
       "line": this.renderLineSettings,
@@ -318,6 +319,39 @@ class ToolSettings extends Component {
         onChange={(val) => this.setToolSetting('gapFillAmount', val)}
         inputRestrictions={this.props.getToolSettingRestrictions('gapFillAmount')}/>
     )
+  }
+
+  renderPixelGridSize = () => {
+    return (
+      <ToolSettingsInput renderSize={this.props.renderSize}
+        name='Grid Size'
+        icon='size'
+        type='numeric'
+        value={this.getToolSetting('pixelGridSize')}
+        onChange={(val) => this.setToolSetting('pixelGridSize', val)}
+        inputRestrictions={this.props.getToolSettingRestrictions('pixelGridSize')}/>
+    )
+  }
+
+  renderPixelSize = () => {
+    return (
+      <ToolSettingsInput renderSize={this.props.renderSize}
+        name='Pixel Size'
+        icon='brushsize'
+        type='numeric'
+        value={this.getToolSetting('pixelSize')}
+        onChange={(val) => this.setToolSetting('pixelSize', val)}
+        inputRestrictions={this.props.getToolSettingRestrictions('pixelSize')}/>
+    )
+  }
+
+  renderPixelBrushSettings = () => {
+    return (
+      <div className='settings-input-container'>
+        {this.renderPixelGridSize()}
+        {this.renderPixelSize()}
+      </div>
+    );
   }
 
   /**

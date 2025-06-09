@@ -92,6 +92,7 @@ Wick.Project = class extends Wick.Base {
             pan: new Wick.Tools.Pan(),
             pathcursor: new Wick.Tools.PathCursor(),
             pencil: new Wick.Tools.Pencil(),
+            pixelbrush: new Wick.Tools.PixelBrush(),
             rectangle: new Wick.Tools.Rectangle(),
             text: new Wick.Tools.Text(),
             zoom: new Wick.Tools.Zoom(),

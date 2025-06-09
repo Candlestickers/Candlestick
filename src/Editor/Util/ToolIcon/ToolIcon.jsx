@@ -189,6 +189,7 @@ const icons = {
   "cursor":iconCursor,
   "ellipse":iconEllipse,
   "rectangle":iconRectangle,
+  "pixelbrush":iconRectangle,
   "line":iconLine,
   "pencil":iconPencil,
   "eyedropper":iconEyeDropper,

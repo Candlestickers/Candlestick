@@ -57,6 +57,10 @@ class HotKeyInterface extends Object {
         name: "Activate Brush",
         sequences: ['b'],
       },
+      'activate-pixelbrush': {
+        name: "Activate Pixel Brush",
+        sequences: ['m'],
+      },
       'activate-cursor': {
         name: "Activate Cursor",
         sequences: ['c', 'v'],
@@ -353,6 +357,7 @@ class HotKeyInterface extends Object {
     return ({
       "Drawing Tools": [
         "activate-brush",
+        "activate-pixelbrush",
         "activate-cursor",
         "activate-pencil",
         "activate-eraser",
@@ -434,6 +439,7 @@ class HotKeyInterface extends Object {
   createDefaultHandlers = () => {
     this.handlers = {
       'activate-brush': (() => this.editor.setActiveTool("brush")),
+      'activate-pixelbrush': (() => this.editor.setActiveTool("pixelbrush")),
       'activate-cursor': (() => this.editor.setActiveTool("cursor")),
       'activate-pencil': (() => this.editor.setActiveTool("pencil")),
       'activate-eraser': (() => this.editor.setActiveTool("eraser")),
