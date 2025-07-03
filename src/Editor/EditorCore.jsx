@@ -743,6 +743,104 @@ class EditorCore extends Component {
   }
 
   /**
+   * 
+   * Performs horizontal alignment of objects -H.A.
+   */
+  alignSelectionX = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    if (selected.length < 2) return;
+  
+    const referenceX = selected[0].x; // Use the first selected object's y
+    selected.forEach(obj => {
+      obj.x = referenceX;
+    });
+  
+    this.projectDidChange({ actionName: "Align X" });
+  }
+
+  /**
+   * 
+   * Performs vertical alignment of objects -H.A.
+   */
+  alignSelectionY = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    if (selected.length < 2) return;
+  
+    const referenceY = selected[0].y; // Use the first selected object's y
+    selected.forEach(obj => {
+      obj.y = referenceY;
+    });
+  
+    this.projectDidChange({ actionName: "Align Y" });
+  }
+
+  /**
+   * 
+   * Performs left side alignment of selected objects -H.A.
+   */
+  alignSelectionLeft = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    if (selected.length < 2) return;
+  
+    const referenceX = this.project.selection.x;
+    selected.forEach(obj => {
+      obj.x = referenceX + (obj.width || obj.bounds.width)/2;
+    });
+  
+    this.projectDidChange({ actionName: "Align Left" });
+  }
+
+  /**
+   * 
+   * Performs right side alignment of selected objects -H.A.
+   */
+  alignSelectionRight = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    console.log(this.project.selection._view);
+    if (selected.length < 2) return;
+
+    const referenceX = this.project.selection.x + this.project.selection.originalWidth;
+    selected.forEach(obj => {
+      obj.x = referenceX - (obj.width || obj.bounds.width)/2;
+    });
+  
+    this.projectDidChange({ actionName: "Align Right" });
+  }
+
+  /**
+   * 
+   * Performs bottom side alignment of selected objects -H.A.
+   */
+  alignSelectionBottom = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    if (selected.length < 2) return;
+  
+    const referenceY = this.project.selection.y + this.project.selection.originalHeight;
+    selected.forEach(obj => {
+      obj.y = referenceY - (obj.height || obj.bounds.height)/2;
+    });
+  
+    this.projectDidChange({ actionName: "Align Bottom" });
+  }
+
+  /**
+   * 
+   * Performs top side alignment of selected objects -H.A.
+   */
+  alignSelectionTop = () => {
+    const selected = this.getSelectedCanvasObjects(); // Get selected objects
+    if (selected.length < 2) return;
+  
+    const referenceY = this.project.selection.y;
+    selected.forEach(obj => {
+      obj.y = referenceY + (obj.height || obj.bounds.height)/2;
+    });
+  
+    this.projectDidChange({ actionName: "Align Right" });
+  }
+  
+
+  /**
    * Updates the Wick Project settings with new values passed in as an object. Will make no changes if input is invalid or the same as the previous settings.
    * @param {object} newSettings an object containing all of the settings to update within the project. Accepts valid project settings such as 'name', 'width', 'height', 'framerate', and 'backgroundColor'.
    */

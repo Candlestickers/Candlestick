@@ -3,7 +3,7 @@
 $canvas-action-size: 35px;
 
 .canvas-actions-widget {
-  height: $canvas-action-size;
+  height: auto;//$canvas-action-size; // -H.A.
   display: flex;
   align-items: center;
   margin: 1px;
@@ -13,14 +13,24 @@ $canvas-action-size: 35px;
 }
 
 .actions-container {
-  height: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); // 4 buttons per row
+  flex-wrap: wrap;
   flex-direction: row;
   align-items: center;
+  width: 140px;     // 4 × (32 + 4) = 144px
+  overflow: visible;
 }
+
+// .actions-container.vertical {
+//   flex-direction: column;
+// }
+
 .actions-container.vertical {
-  flex-direction: column;
+  flex-direction: row !important;
+  flex-wrap: wrap;
 }
+
 
 .canvas-action-button {
   width: $canvas-action-size;

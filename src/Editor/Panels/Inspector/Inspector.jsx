@@ -74,6 +74,7 @@ class Inspector extends Component {
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
       'addAssetToCanvas': ["imageasset"],
+      // 'alignX': [ "multipath"] // H.A.
     }
 
     /**

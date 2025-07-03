@@ -28,13 +28,19 @@ class CanvasActions extends Component {
         {this.renderActionButton(this.props.editorActions.sendBackward)}
         {this.renderActionButton(this.props.editorActions.sendForward)}
         {this.renderActionButton(this.props.editorActions.sendToFront)}
-        <ToolboxBreak vertical={this.props.renderSize === "small"}/>
+        {this.renderActionButton(this.props.editorActions.alignRight)}
+        {this.renderActionButton(this.props.editorActions.alignLeft)}
+        {this.renderActionButton(this.props.editorActions.alignTop)}
+        {this.renderActionButton(this.props.editorActions.alignBottom)}
+        {this.renderActionButton(this.props.editorActions.alignX)}
+        {this.renderActionButton(this.props.editorActions.alignY)}
         {this.renderActionButton(this.props.editorActions.flipHorizontal)}
         {this.renderActionButton(this.props.editorActions.flipVertical)}
-        <ToolboxBreak vertical={this.props.renderSize === "small"}/>
         {this.renderActionButton(this.props.editorActions.booleanUnite)}
         {this.renderActionButton(this.props.editorActions.booleanSubtract)}
         {this.renderActionButton(this.props.editorActions.booleanIntersect)}
+        <ToolboxBreak vertical={this.props.renderSize === "small"}/>
+        {/* -H.A. */}
       </div>
     );
   }

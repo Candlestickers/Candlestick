@@ -70,6 +70,42 @@ class ActionMapInterface extends Object {
         action: this.editor.booleanIntersect,
         id: 'action-boolean-intersect',
       },
+      alignX: {
+        icon: 'alignX', // name of your icon file without extension
+        tooltip: 'Align Vertically',
+        action: this.editor.alignSelectionX,
+        id: 'action-align-x',
+      }, 
+      alignY: {
+        icon: 'alignY', // name of your icon file without extension
+        tooltip: 'Align Horizontally',
+        action: this.editor.alignSelectionY,
+        id: 'action-align-y',
+      }, 
+      alignRight: {
+        icon: 'alignRight', // name of your icon file without extension
+        tooltip: 'Align Right Edge',
+        action: this.editor.alignSelectionRight,
+        id: 'action-align-right',
+      }, 
+      alignLeft: {
+        icon: 'alignLeft', // name of your icon file without extension
+        tooltip: 'Align Left Edge',
+        action: this.editor.alignSelectionLeft,
+        id: 'action-align-left',
+      }, 
+      alignTop: {
+        icon: 'alignTop', // name of your icon file without extension
+        tooltip: 'Align Top Edge',
+        action: this.editor.alignSelectionTop,
+        id: 'action-align-top',
+      }, 
+      alignBottom: {
+        icon: 'alignBottom', // name of your icon file without extension
+        tooltip: 'Align Bottom Edge',
+        action: this.editor.alignSelectionBottom,
+        id: 'action-align-bottom',
+      },      
       createGroupFromSelection: {
         icon: 'createGroup',
         tooltip: 'Create Group from Selection(NYI)',
