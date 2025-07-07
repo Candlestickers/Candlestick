@@ -109,6 +109,10 @@ class HotKeyInterface extends Object {
         name: "Deactivate Eyedropper",
         sequences: [{sequence: "d", action: "keyup"}, {sequence: "i", action: "keyup"}],
       },
+      'swap-fill-stroke': {
+        name: "Swap Fill & Stroke Color",
+        sequences: ['s']
+      }, // adding new hotkey -H.A.
       'activate-zoom': {
         name: "Deactivate Zoom",
         sequences: ['z'],
@@ -433,6 +437,34 @@ class HotKeyInterface extends Object {
 
   createDefaultHandlers = () => {
     this.handlers = {
+      "swap-fill-stroke": () => {
+        const selection = this.editor.project.selection.getSelectedObjects();
+
+        if (selection.length > 0) {
+          // If something is selected, try to swap its fill and stroke if it's a path
+          selection.forEach(obj => {
+            console.log(obj);
+            if (obj._classname === "Path") {
+              const temp_FC = obj._json[1].fillColor;
+              obj.fillColor = obj._json[1].strokeColor;
+              obj.strokeColor = temp_FC;
+            }
+          });
+
+          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+
+        } else {
+          // Otherwise, swap the project’s tool settings
+          const fill = this.editor.project.toolSettings.getSetting('fillColor');
+          const stroke = this.editor.project.toolSettings.getSetting('strokeColor');
+      
+          this.editor.project.toolSettings.setSetting('fillColor', stroke);
+          this.editor.project.toolSettings.setSetting('strokeColor', fill);
+
+          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+        }
+
+      },
       'activate-brush': (() => this.editor.setActiveTool("brush")),
       'activate-cursor': (() => this.editor.setActiveTool("cursor")),
       'activate-pencil': (() => this.editor.setActiveTool("pencil")),
