@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "author": "Wicklets LLC",
   "private": true,
-  "homepage": "./",
+  "homepage": "https://candlestickers.github.io/Candlestick/",
   "main": "./public/electron.js",
   "repository": {
     "type": "git",
