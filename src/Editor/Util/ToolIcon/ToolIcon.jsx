@@ -173,10 +173,10 @@ import iconSplit from 'resources/tool-icons/split.svg';
 import iconLayerTween from 'resources/tool-icons/layerTween.svg';
 
 // Marks
-import mascotMarkWhite from 'resources/logo-icons/test.gif';//'resources/logo-icons/mascot-mark-white.svg';
-import mascotMarkDark from 'resources/logo-icons/test.gif';// 'resources/logo-icons/mascot-mark-dark.svg';
-import mascotMark from 'resources/logo-icons/test.gif'; //'resources/logo-icons/mascot-mark.svg';
-import mascot from 'resources/logo-icons/test.gif'; //'resources/logo-icons/mascot.svg';
+import mascotMarkWhite from 'resources/logo-icons/mascot-mark-white.svg';
+import mascotMarkDark from 'resources/logo-icons/mascot-mark-dark.svg';
+import mascotMark from 'resources/logo-icons/mascot-mark.svg';
+import mascot from 'resources/logo-icons/mascot.svg';
 
 // Code Editor
 import iconClear from 'resources/tool-icons/clear.svg';
