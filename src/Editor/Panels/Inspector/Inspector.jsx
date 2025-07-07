@@ -36,6 +36,8 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
+// import { GRADIENT_START, GRADIENT_END, setGradientStart, setGradientEnd } from './InspectorActionButton/InspectorActionButton';
+
 class Inspector extends Component {
   constructor (props) {
     super(props);
@@ -668,7 +670,9 @@ class Inspector extends Component {
    * Renders the inspector view for all properties of a multi-clip selection.
    */
   renderMultiClip = () => {
-    return ( <div className="inspector-content" /> );
+    return ( <div className="inspector-content">
+      {this.renderSelectionTransformProperties()}
+      </div> );
   }
 
   /**
