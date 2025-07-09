@@ -1170,6 +1170,7 @@ class Editor extends EditorCore {
                         updateLastColors={this.updateLastColors}
                         lastColorsUsed={this.state.lastColorsUsed}
                         getClipAnimationTypes={this.getClipAnimationTypes}
+                        selection={this.project.selection.getSelectedObjects()}
                       />
                     </DockedPanel>
                   </ReflexElement>

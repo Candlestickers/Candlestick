@@ -111,7 +111,7 @@ class HotKeyInterface extends Object {
       },
       'swap-fill-stroke': {
         name: "Swap Fill & Stroke Color",
-        sequences: ['s']
+        sequences: ["s", {sequence: "s", action: "keyup"}]
       }, // adding new hotkey -H.A.
       'activate-zoom': {
         name: "Deactivate Zoom",
@@ -440,20 +440,32 @@ class HotKeyInterface extends Object {
       "swap-fill-stroke": () => {
         const selection = this.editor.project.selection.getSelectedObjects();
 
+        window.EditorGradientColorSwapState = !window.EditorGradientColorSwapState;
+
         if (selection.length > 0) {
-          // If something is selected, try to swap its fill and stroke if it's a path
-          selection.forEach(obj => {
-            console.log(obj);
-            if (obj._classname === "Path") {
-              const temp_FC = obj._json[1].fillColor;
-              obj.fillColor = obj._json[1].strokeColor;
-              obj.strokeColor = temp_FC;
-            }
-          });
 
-          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+          if(window.EditorGradientColorSwapState){
+            // If something is selected, try to swap its fill and stroke if it's a path
+            selection.forEach(obj => {
 
-        } else {
+              if (obj._classname === "Path") {
+
+                if(obj.fillColor._type === "gradient"){
+                  const temp_POS = obj.fillColor._components[1];
+                  obj.fillColor._components[1] = obj.fillColor._components[2];
+                  obj.fillColor._components[2] = temp_POS;
+                }else{
+                  const temp_FC = obj._json[1].fillColor;
+                  obj.fillColor = obj._json[1].strokeColor;
+                  obj.strokeColor = temp_FC;
+                }
+              }
+            });
+          }
+
+            this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+
+        } else if(window.EditorGradientColorSwapState){
           // Otherwise, swap the project’s tool settings
           const fill = this.editor.project.toolSettings.getSetting('fillColor');
           const stroke = this.editor.project.toolSettings.getSetting('strokeColor');
