@@ -42,6 +42,7 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 // setting default gradient colors
 window.gradientStartColor = '#ff0000ff';
 window.gradientEndColor = '#0000ffff';
+window.gradientIsRadial = true;
 
 window.EditorGradientColorSwapState = false;
 
@@ -52,7 +53,8 @@ class Inspector extends Component {
     this.state = {
       gradientStartColor: window.gradientStartColor || "#ff0000",
       gradientEndColor: window.gradientEndColor || "#0000ff",
-    };    
+      gradientRadial: true
+    };
 
     /**
      * Which render function should be used for each selection type?
@@ -114,14 +116,14 @@ class Inspector extends Component {
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
-      "unknown": "",
+      "unknown": "", // <-- note to self, this is the state when nothing is selected
     }
   }
 
   componentDidUpdate(prevProps,prevState) { // no need to pass in prevProps, react automatically inputs it
     
     const selection = this.props.selection;
-    // make selection is single gradient Path object
+    // make sure selection is single gradient Path object
     if (
     selection.length>0 &&
     selection.length === 1 &&
@@ -142,35 +144,24 @@ class Inspector extends Component {
         const startHex = fil2Hex(fill[0]);
         const endHex = fil2Hex(fill[1]);
     
-        if (window.gradientStartColor !== startHex || window.gradientEndColor !== endHex) {
+        const radBool = (selection[0].fillColor._components[0]._radial);
+
+        if (window.gradientStartColor !== startHex || window.gradientEndColor !== endHex || window.gradientIsRadial !== radBool) {
           window.gradientStartColor = startHex;
           window.gradientEndColor = endHex;
+
+          window.gradientIsRadial = radBool;
     
           this.setState({
             gradientStartColor: startHex,
             gradientEndColor: endHex,
+            gradientRadial: radBool
           });
+          // this.setState({ gradientRadial: radBool });
         }
-
+      //  console.error((selection[0].fillColor._components[0]._radial));
       }else{ // as long as object is selected ... set its gradient to gradient settings
-
-        // CURRENT TODO
-        // if(false){//window.EditorGradientColorSwapState){
-          // const fill = [
-          //   this.props.selection[0].fillColor.gradient.stops[0]._color,
-          //   this.props.selection[0].fillColor.gradient.stops[1]._color
-          // ];
-          // console.log(this.props.selection[0].fillColor);
-          // const PropFC = selection[0].fillColor._components;
-          // selection[0].fillColor._components[1].x += 1;
-          // selection[0].fillColor._components[2].x += 1;
-          // selection[0].fillColor._components[1].y += 1;
-          // selection[0].fillColor._components[2].y += 1;
-          // this.props.project.view.render();
-          // this.props.project.guiElement.draw();
-        // }else{
-        
-        
+            
         const paper = window.editor.paper;
         const gradient = new paper.Gradient();
         gradient.stops = [
@@ -178,7 +169,8 @@ class Inspector extends Component {
           [new paper.Color(this.state.gradientEndColor), 1],
         ];
 
-        gradient.radial = true; // TODO add in the option to toggle this... 
+        // gradient.radial = true; // TODO add in the option to toggle this... 
+        gradient.radial = this.state.gradientRadial; // || true;
 
         const item = selection[0];
         const bounds = selection[0].fillColor._components; //item.bounds;
@@ -952,7 +944,35 @@ class Inspector extends Component {
             style={{ width: '100%' }}
             title="End Alpha"
           />
+          {/* radial & linear mode */}
+        <div style={{ margin: '2px', display: 'flex', gap: '2px' }}>
+          <input
+            type="checkbox"
+            className="wick-checkbox"
+            id="gradient-mode-toggle"
+            checked={window.gradientIsRadial}
+            onChange={(e) => {
+              const isRadial = e.target.checked;
+              window.gradientIsRadial = isRadial;
+              this.setState({ gradientRadial: isRadial });
+            }}
+          />
+          <label
+            htmlFor="gradient-mode-toggle"
+            className="wick-label"
+            style={{
+              margin: 0,
+              padding: 0,
+              lineHeight: 'normal'
+            }}
+          >
+            Radial mode 
+          </label>
         </div>
+        </div>
+
+
+
       </div>
       );
     else 
