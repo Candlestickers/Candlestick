@@ -1,11 +1,11 @@
 self.__precacheManifest = [
   {
-    "revision": "dd639d64e8e602b21528",
+    "revision": "899a006b268aec3d202b",
     "url": "/Candlestick/static/css/main.b15b35fd.chunk.css"
   },
   {
-    "revision": "dd639d64e8e602b21528",
-    "url": "/Candlestick/static/js/main.dd639d64.chunk.js"
+    "revision": "899a006b268aec3d202b",
+    "url": "/Candlestick/static/js/main.899a006b.chunk.js"
   },
   {
     "revision": "9ce80ad08f01e0ac86d7",
@@ -752,7 +752,7 @@ self.__precacheManifest = [
     "url": "/Candlestick/static/media/white-heart.daf330ed.svg"
   },
   {
-    "revision": "c95ea00dc314ce5936ec3fb9c9f28930",
+    "revision": "daa58147df313c783542fc2dce11b285",
     "url": "/Candlestick/index.html"
   }
 ];
