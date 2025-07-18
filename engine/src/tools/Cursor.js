@@ -46,6 +46,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
         this.selectionBox = new this.paper.SelectionBox(paper);
 
         this.selectedItems = [];
+        this.gradientHandles = [];
 
         this.currentCursorIcon = '';
     }
@@ -110,9 +111,28 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
             this.selectionBox.start(e.point);
         }
+
+        // create handles for gradient path objects -H.A.
+        this._gradientHandles = [];
+
+        if(this.selectedItems.length === 1){
+            let item = this.selectedItems[0];
+            if(item.fillColor && item.fillColor[0] === "gradient") {
+                const [_, start, end] = item.fillColor;
+                this._gradientHandles.push(
+                { x: start[0], y: start[1], type: "start", target: item },
+                { x: end[0], y: end[1], type: "end", target: item }
+                );
+            }
+        }
+
+        console.info(this._gradientHandles);
+
     }
 
     onDoubleClick (e) {
+        // jfjnsjfnskfvnks;
+        console.info("Double clicked ... testing line 134")
         var selectedObject = this._selection.getSelectedObject();
         if(selectedObject && selectedObject instanceof Wick.Clip) {
             // Double clicked a Clip, set the focus to that Clip.
@@ -372,4 +392,18 @@ Wick.Tools.Cursor = class extends Wick.Tool {
         }
         return Wick.ObjectCache.getObjectByUUID(uuid);
     }
+//     renderOverlay(ctx) {
+//     for (let handle of this._gradientHandles) {
+//         ctx.save();
+//         ctx.fillStyle = handle.type === "start" ? "#00BFFF" : "#FF1493"; // lightblue for start, pink for end
+//         ctx.strokeStyle = "white";
+//         ctx.lineWidth = 1;
+//         ctx.beginPath();
+//         ctx.arc(handle.x, handle.y, 4, 0, 2 * Math.PI);
+//         ctx.fill();
+//         ctx.stroke();
+//         ctx.restore();
+//     }
+// }
+
 }
