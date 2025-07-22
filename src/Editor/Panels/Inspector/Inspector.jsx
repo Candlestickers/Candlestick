@@ -43,6 +43,7 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 window.gradientStartColor = '#ff0000ff';
 window.gradientEndColor = '#0000ffff';
 window.gradientIsRadial = true;
+window.gradientStopsTrackPosition = [[0,0],[0,0]];
 
 window.EditorGradientColorSwapState = false;
 
@@ -175,11 +176,13 @@ class Inspector extends Component {
         const item = selection[0];
         const bounds = selection[0].fillColor._components; //item.bounds;
 
+        let GSTP = window.gradientStopsTrackPosition;
         const newfillColor = {
           gradient: gradient,
-          origin: new paper.Point(bounds[1].x, bounds[1].y),
-          destination: new paper.Point(bounds[2].x, bounds[2].y),
+          origin: new paper.Point(GSTP[0][0]||bounds[1].x, GSTP[0][1]||bounds[1].y),
+          destination: new paper.Point(GSTP[1][0]||bounds[2].x, GSTP[1][1]||bounds[2].y),
         };
+        window.gradientStopsTrackPosition = [[0,0],[0,0]];
 
           item.fillColor = newfillColor;
           this.props.project.view.render();

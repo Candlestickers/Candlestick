@@ -7,7 +7,7 @@
   "main": "./public/electron.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Wicklets/wick-editor.git"
+    "url": "https://github.com/Candlestickers/Candlestick"
   },
   "dependencies": {
     "14": "^3.1.6",

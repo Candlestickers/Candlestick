@@ -781,6 +781,7 @@ class Editor extends EditorCore {
    **/
 
 
+  // TODO: Fix caps lock issue here - TODO H.A.
   combineHotKeys = (hotkeys1, hotkeys2) => {
     // Try to combine all keys
 
