@@ -59313,10 +59313,21 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     this.CURSOR_ROTATE_BOTTOM_RIGHT = 'cursors/rotate-bottom-right.png';
     this.CURSOR_ROTATE_BOTTOM_LEFT = 'cursors/rotate-bottom-left.png';
     this.CURSOR_MOVE = 'cursors/move.png';
+	this.CURSOR_GRAD = 'cursors/gradMove.png';
     this.hitResult = new this.paper.HitResult();
     this.selectionBox = new this.paper.SelectionBox(paper);
     this.selectedItems = [];
     this.currentCursorIcon = '';
+
+	this.hoverPreview = new this.paper.Item({
+      insert: false
+    });
+	this.hoverPreview2 = new this.paper.Item({
+      insert: false
+    });
+	this._lastSelection = null;
+	this.gradientColorSelection = [false];
+
   }
   /**
    * Generate the current cursor.
@@ -59325,29 +59336,75 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
 
   get cursor() {
-    return 'url("' + this.currentCursorIcon + '") 32 32, auto';
+	// allow cursor to be default 'grab', 'grabbing', etc.
+    return (this.currentCursorIcon&&this.currentCursorIcon.includes('.'))?`url("${this.currentCursorIcon}") 32 32, auto`:this.currentCursorIcon;
   }
 
   onActivate(e) {
     this.selectedItems = [];
+	this._lastSelection = null;
   }
 
   onDeactivate(e) {}
 
   onMouseMove(e) {
-    super.onMouseMove(e); // Find the thing that is currently under the cursor.
+    super.onMouseMove(e);
 
-    this.hitResult = this._updateHitResult(e); // Update the image being used for the cursor
+	// remove hover preview and a new one will be rendered if needed
+	this.hoverPreview.remove();
+	this.hoverPreview2.remove();
+	this.gradientColorSelection = [false];
 
-    this._setCursor(this._getCursor());
+	// Find the thing that is currently under the cursor.
+    this.hitResult = this._updateHitResult(e); 
+
+	if (this._selection.numObjects === 1 ){ //&& this._lastSelection._data.wickType==="path" && this._lastSelection._style._values.fillColor._type === "gradient") {
+		this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
+		// console.info(this._lastSelection);
+		if(this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient"){
+			let FC = this._lastSelection._json[1][1].fillColor;
+			
+			let distToCursor = (xy) => {
+				return Math.sqrt((xy[0]-e.tool._lastPoint.x)**2+(xy[1]-e.tool._lastPoint.y)**2)
+			}
+			
+			this.hoverPreview = this.createGradPoint({
+				x: FC[2][0],
+				y: FC[2][1]
+			},window.gradientStartColor,5);
+			
+			this.hoverPreview2 = this.createGradPoint({
+				x: FC[3][0],
+				y: FC[3][1]
+			},window.gradientEndColor,5);
+
+			this.gradientColorSelection = [distToCursor(FC[2]),distToCursor(FC[3])];
+			this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length>0 && Math.min(...this.gradientColorSelection)<10;
+
+		} // Added gradient stops movement -H.A.
+	}
+	// Update the image being used for the cursor
+    this._setCursor(this.gradientColorSelection.isCursorHover?this.CURSOR_GRAD:this._getCursor());
   }
+
+  createGradPoint(xy,fill,sz) {
+		let a = new this.paper.Path.Circle(xy, sz / this.paper.view.zoom);
+		a.strokeColor = '#ffa'; //'rgba(255, 0, 0, 1)';
+		a.strokeWidth = 1.5;
+		a.fillColor = fill; //'#fff';
+		a.data.wickType = 'gui';
+		return a;
+	}
 
   onMouseDown(e) {
     super.onMouseDown(e);
     if (!e.modifiers) e.modifiers = {};
     this.hitResult = this._updateHitResult(e);
 
-    if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {// Clicked the selection box GUI, do nothing
+	
+	if(this.gradientColorSelection.isCursorHover){
+		// selecting gradient
+	}else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {// Clicked the selection box GUI, do nothing
     } else if (this.hitResult.item && this._isItemSelected(this.hitResult.item)) {
       // We clicked something that was already selected.
       // Shift click: Deselect that item
@@ -59366,6 +59423,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
       } // Clicked an item: select that item
 
 
+	  this._lastSelection = this.hitResult.item;
       this._selectItem(this.hitResult.item);
 
       this.fireEvent({
@@ -59416,6 +59474,24 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     if (!e.modifiers) e.modifiers = {};
     this.__isDragging = true;
 
+	if(this.gradientColorSelection.isCursorHover){
+
+		this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
+		
+		// get gradient point
+		let selectedPoint = `hoverPreview${this.gradientColorSelection[0]===Math.min(...this.gradientColorSelection)?'':'2'}`;
+		this[selectedPoint].remove();
+		let FC = this._lastSelection._json[1][1].fillColor[2+1*selectedPoint.includes('2')];
+		
+		FC[0]+=e.delta.x;
+		FC[1]+=e.delta.y;
+		this[selectedPoint] = this.createGradPoint({
+			x: FC[0],
+			y: FC[1]
+		},this[selectedPoint].fillColor,15);
+		window.gradientStopsTrackPosition[1*selectedPoint.includes('2')] = [FC];
+			
+	}else
     if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
       // Update selection drag
       if (!this._widget.currentTransformation) {
