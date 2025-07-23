@@ -1,19 +1,19 @@
 self.__precacheManifest = [
   {
-    "revision": "93060caaaef4f75631a8",
-    "url": "/Candlestick/static/css/main.b15b35fd.chunk.css"
+    "revision": "03bea6e5b9e4556abcfb",
+    "url": "/Candlestick/static/css/main.69ccbebf.chunk.css"
   },
   {
-    "revision": "93060caaaef4f75631a8",
-    "url": "/Candlestick/static/js/main.93060caa.chunk.js"
+    "revision": "03bea6e5b9e4556abcfb",
+    "url": "/Candlestick/static/js/main.03bea6e5.chunk.js"
   },
   {
-    "revision": "9ce80ad08f01e0ac86d7",
-    "url": "/Candlestick/static/css/1.a57febfe.chunk.css"
+    "revision": "b23af97ed829cccd809e",
+    "url": "/Candlestick/static/css/1.68591ea4.chunk.css"
   },
   {
-    "revision": "9ce80ad08f01e0ac86d7",
-    "url": "/Candlestick/static/js/1.9ce80ad0.chunk.js"
+    "revision": "b23af97ed829cccd809e",
+    "url": "/Candlestick/static/js/1.b23af97e.chunk.js"
   },
   {
     "revision": "95cc05b3167b036bdcec",
@@ -752,7 +752,7 @@ self.__precacheManifest = [
     "url": "/Candlestick/static/media/white-heart.daf330ed.svg"
   },
   {
-    "revision": "1b87be3af0934210be8d924bd6dcdf41",
+    "revision": "bb08fa13a851af07fdbcf343677401d4",
     "url": "/Candlestick/index.html"
   }
 ];
