@@ -1149,7 +1149,7 @@ class Editor extends EditorCore {
                 <ReflexContainer windowResizeAware={true} orientation="horizontal">
                   {/* Inspector */}
                   <ReflexElement {...this.resizeProps}>
-                    <DockedPanel showOverlay={this.state.previewPlaying}>
+                    <DockedPanel showOverlay={false /*this.state.previewPlaying*/}>
                       <Inspector
                         getToolSetting={this.getToolSetting}
                         setToolSetting={this.setToolSetting}
