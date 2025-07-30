@@ -36,7 +36,8 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
-// import WickColorPicker from '../../Util/ColorPicker/WickColorPicker';
+import { Console, Hook, Unhook } from 'console-feed';
+// import { useEffect, useState } from 'react';
 
 
 // setting default gradient colors
@@ -52,9 +53,16 @@ class Inspector extends Component {
     super(props);
 
     this.state = {
+      logs: [],
       gradientStartColor: window.gradientStartColor || "#ff0000",
       gradientEndColor: window.gradientEndColor || "#0000ff",
       gradientRadial: true
+    };
+
+    this.handleConsoleLog = (log) => {
+      this.setState((state) => ({
+        logs: [...state.logs, log]
+      }));
     };
 
     /**
@@ -121,7 +129,19 @@ class Inspector extends Component {
     }
   }
 
+  componentDidMount() {
+    Hook(window.console, this.handleConsoleLog, false);
+  }
+  componentWillUnmount() {
+    Unhook(window.console);
+  }
+
   componentDidUpdate(prevProps,prevState) { // no need to pass in prevProps, react automatically inputs it
+
+    if(window.project.playing && this.consoleEndRef.current) {
+      this.consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+
     
     const selection = this.props.selection;
     // make sure selection is single gradient Path object
@@ -1078,9 +1098,22 @@ class Inspector extends Component {
    * Renders a default selection view with no properties.
    */
   renderUnknown = () => {
+    if(!window.project.playing)
+      this.state.logs = []; // <-- note: mutate state directly, DO NOT USE setState()
+    
+    // scroll reference
+    this.consoleEndRef = React.createRef();
+
     return (
       <div>
         <div className="inspector-content">
+          {/* Code for displaying console - H.A. */}
+          {window.project.playing && (
+        <div style={{ width: '110%', height: 'auto', overflowY: 'scroll', backgroundColor: '#242424' }}>
+          <Console logs={this.state.logs} variant="dark" />
+          <div ref={this.consoleEndRef} />
+        </div>
+      )}
         </div>
       </div>
     )
