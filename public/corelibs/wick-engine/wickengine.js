@@ -60385,8 +60385,12 @@ Wick.Tools.Line = class extends Wick.Tool {
 		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
 		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
 		this.hoverPreview.strokeWidth = 1.5;
+		
+		// display red when deleting line by dragging it to start point
 		this.hoverPreview.fillColor = 
-		this.endPoint===this.startPoint?'rgba(150,50,50,0.5)':'rgba(50,50,255,0.5)';
+		(this.endPoint.x===this.startPoint.x && this.endPoint.y===this.startPoint.y)?
+		'rgba(150,50,50,0.5)':'rgba(50,50,255,0.5)';
+
 	}else{ // default to cursor position
 		this.endPoint = e.point;
 	}
@@ -60423,7 +60427,7 @@ Wick.Tools.Line = class extends Wick.Tool {
   onMouseUp(e) {
 	this.hoverPreview.remove();
     this.path.remove();
-	if(this.startPoint !== this.endPoint){
+	if(this.endPoint.x!==this.startPoint.x || this.endPoint.y!==this.startPoint.y){
 		this.addPathToProject(this.path);
 		this.fireEvent({
 		eventName: 'canvasModified',
