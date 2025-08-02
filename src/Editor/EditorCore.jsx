@@ -1104,7 +1104,7 @@ class EditorCore extends Component {
     window.Wick.HTMLPreview.previewProject(this.project, previewWindow => {
       this.hideWaitOverlay();
       if (previewWindow) {
-        this.toast('Project preview window opened.', 'info', {autoClose: false});
+        this.toast('Project preview window opened.', 'info', {autoClose: true});
       } else {
         // If pop ups are disabled, previewWindow will be null.
         this.toast('Could not open a preview window. Try disabling your popup blocker!', 'error', {autoClose: false});
