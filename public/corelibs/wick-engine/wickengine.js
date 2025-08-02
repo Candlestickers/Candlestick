@@ -60375,18 +60375,12 @@ Wick.Tools.Line = class extends Wick.Tool {
 	// find what's under the cursor
 	this.hitResult = this._updateHitResult(e);
 
-	// straight line
-	if(e.modifiers.shift){
-		const dy = Math.abs(this.startPoint.y - e.point.y);
-		const dx = Math.abs(this.startPoint.x - e.point.x);
-
-		this.endPoint = {
-			x: e.point.x,
-			y: this.startPoint.y
-		}
-	}else // snap to point
+	// else // snap to point
 	if(this.hitResult.type === 'segment') {
-		this.endPoint = this.hitResult.segment.point;
+		this.endPoint = {
+			x: this.hitResult.segment.point.x,
+			y: this.hitResult.segment.point.y
+		};
 
 		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
 		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
@@ -60395,6 +60389,28 @@ Wick.Tools.Line = class extends Wick.Tool {
 		this.endPoint===this.startPoint?'rgba(150,50,50,0.5)':'rgba(50,50,255,0.5)';
 	}else{ // default to cursor position
 		this.endPoint = e.point;
+	}
+
+	// straight line
+	if(e.modifiers.shift){
+		const dy = Math.abs(this.startPoint.y - e.point.y);
+		const dx = Math.abs(this.startPoint.x - e.point.x);
+
+		// diagnol
+		if(dy && dx && (dy/dx)>0.5 && (dx/dy)>0.5){
+			const diff = {
+				x: this.endPoint.x-this.startPoint.x,
+				y: this.endPoint.y-this.startPoint.y
+			}
+			this.endPoint = {
+				x: this.startPoint.x + (dy+dx)/2 * diff.x/Math.abs(diff.x),
+				y: this.startPoint.y + (dy+dx)/2 * diff.y/Math.abs(diff.y)
+			}
+		}else if(dy>dx) // straight vertical
+			this.endPoint.x = this.startPoint.x;
+		else // straight horizontal
+			this.endPoint.y = this.startPoint.y;
+
 	}
 	this.hoverPreview.data.wickType = 'gui';
 
