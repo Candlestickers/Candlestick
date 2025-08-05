@@ -1,45 +1,71 @@
-import * as fastgif from './fastgif.js';
+import { parseGIF, decompressFrames } from 'gifuct-js';
 
 class GIFImport {
-  static importGIFIntoProject (args) {
-    let { gifFile, project, onFinish } = args;
+  static importGIFIntoProject({ gifFile, project, onFinish }) {
+    const reader = new FileReader();
 
-    var a = new FileReader();
-    a.onload = (e) => {
-      var buf = e.target.result;
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target.result;
 
-      var dataURLs = [];
+      const gif = parseGIF(arrayBuffer);
+      const frames = decompressFrames(gif, true); // true = build full frame
 
-      const wasmDecoder = new fastgif.Decoder();
-      wasmDecoder.decode(buf).then(decoded => {
-        var tempCanvas = document.createElement('canvas');
-        var tempCtx = tempCanvas.getContext('2d');
-        decoded.forEach(frame => {
-          tempCanvas.width = frame.imageData.width;
-          tempCanvas.height = frame.imageData.height;
-          tempCtx.putImageData(frame.imageData, 0, 0);
-          dataURLs.push(tempCanvas.toDataURL());
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCanvas.width = gif.lsd.width;
+      tempCanvas.height = gif.lsd.height;
+
+      const dataURLs = [];
+      let previousImageData = null;
+
+      for (let i = 0; i < frames.length; i++) {
+        const frame = frames[i];
+        const { dims, patch, disposalType } = frame;
+
+        // disposal type 3, save previous canvas state
+        if (disposalType === 3) 
+          previousImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+
+        // Past disposal type 2, restore to background
+        if (i > 0 && frames[i - 1].disposalType === 2) {
+          const prevDims = frames[i - 1].dims;
+          tempCtx.clearRect(prevDims.left, prevDims.top, prevDims.width, prevDims.height);
+        }
+
+        // Past disposal type 3, restore to previous
+        if (i > 0 && frames[i - 1].disposalType === 3 && previousImageData)
+          tempCtx.putImageData(previousImageData, 0, 0);
+
+        // draw this frame's patch at its position
+        const imageData = tempCtx.createImageData(dims.width, dims.height);
+        imageData.data.set(patch);
+        tempCtx.putImageData(imageData, dims.left, dims.top);
+
+        // save result
+        dataURLs.push(tempCanvas.toDataURL());
+      }
+
+
+      const imageAssets = dataURLs.map((url, index) => {
+        const asset = new window.Wick.ImageAsset({
+          filename: gifFile.name + "_" + index + ".png",
+          src: url,
         });
-
-        var imageAssets = [];
-        dataURLs.forEach(dataURL => {
-            var imageAsset = new window.Wick.ImageAsset({
-                filename: gifFile.name + '_' + dataURLs.indexOf(dataURL) + '.png',
-                src: dataURL,
-            });
-            project.addAsset(imageAsset);
-            imageAssets.push(imageAsset);
-        });
-        project.loadAssets(() => {
-            window.Wick.GIFAsset.fromImages(imageAssets, project, gifAsset => {
-                gifAsset.name = gifFile.name;
-                gifAsset.filename = gifFile.name;
-                onFinish(gifAsset);
-            });
-        })
+        project.addAsset(asset);
+        return asset;
       });
-    }
-    a.readAsArrayBuffer(gifFile);
+
+      project.loadAssets(() => {
+        window.Wick.GIFAsset.fromImages(imageAssets, project, (gifAsset) => {
+          gifAsset.name = gifFile.name;
+          gifAsset.filename = gifFile.name;
+          onFinish(gifAsset);
+        });
+      });
+    };
+
+    reader.readAsArrayBuffer(gifFile);
   }
 }
 

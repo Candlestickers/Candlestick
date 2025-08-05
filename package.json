@@ -21,6 +21,7 @@
     "electron-is-dev": "^1.2.0",
     "electron-updater": "^4.2.5",
     "file-saver": "^2.0.0",
+    "gifuct-js": "^2.1.2",
     "localforage": "^1.7.3",
     "node-sass": "^4.9.4",
     "query-string": "^6.9.0",
