@@ -60444,7 +60444,7 @@ Wick.Tools.Line = class extends Wick.Tool {
       curves: false,
       segments: true,
       handles: false,
-      tolerance: 8,
+      tolerance: 10,
       match: result => {
         return result.item !== this.hoverPreview && !result.item.data.isBorder;
       }
