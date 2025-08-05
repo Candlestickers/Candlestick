@@ -17,18 +17,35 @@ class GIFImport {
       tempCanvas.height = gif.lsd.height;
 
       const dataURLs = [];
+      let previousImageData = null;
 
       for (let i = 0; i < frames.length; i++) {
         const frame = frames[i];
-        const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
-        imageData.data.set(frame.patch); // RGBA patch
+        const { dims, patch, disposalType } = frame;
 
-        // Draw onto canvas at correct position
-        tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
+        // disposal type 3, save previous canvas state
+        if (disposalType === 3) 
+          previousImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
 
-        // Save dataURL
+        // Past disposal type 2, restore to background
+        if (i > 0 && frames[i - 1].disposalType === 2) {
+          const prevDims = frames[i - 1].dims;
+          tempCtx.clearRect(prevDims.left, prevDims.top, prevDims.width, prevDims.height);
+        }
+
+        // Past disposal type 3, restore to previous
+        if (i > 0 && frames[i - 1].disposalType === 3 && previousImageData)
+          tempCtx.putImageData(previousImageData, 0, 0);
+
+        // draw this frame's patch at its position
+        const imageData = tempCtx.createImageData(dims.width, dims.height);
+        imageData.data.set(patch);
+        tempCtx.putImageData(imageData, dims.left, dims.top);
+
+        // save result
         dataURLs.push(tempCanvas.toDataURL());
       }
+
 
       const imageAssets = dataURLs.map((url, index) => {
         const asset = new window.Wick.ImageAsset({
