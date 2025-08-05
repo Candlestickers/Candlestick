@@ -60343,8 +60343,8 @@ Wick.Tools.Line = class extends Wick.Tool {
 	// find what's under the cursor
 	this.hitResult = this._updateHitResult(e);
 
-	// && !this.hitResult.item.data.isSelectionBoxGUI
-	if(this.hitResult.type === 'segment') {
+	// alt/ option or command/ control to snap to nearby selection
+	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
 		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
 		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
 		this.hoverPreview.strokeWidth = 1.5;
@@ -60375,8 +60375,8 @@ Wick.Tools.Line = class extends Wick.Tool {
 	// find what's under the cursor
 	this.hitResult = this._updateHitResult(e);
 
-	// else // snap to point
-	if(this.hitResult.type === 'segment') {
+	// snap to point if option/ alt or command/ control
+	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
 		this.endPoint = {
 			x: this.hitResult.segment.point.x,
 			y: this.hitResult.segment.point.y
