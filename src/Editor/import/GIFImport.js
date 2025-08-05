@@ -1,45 +1,54 @@
-import * as fastgif from './fastgif.js';
+import { parseGIF, decompressFrames } from 'gifuct-js';
 
 class GIFImport {
-  static importGIFIntoProject (args) {
-    let { gifFile, project, onFinish } = args;
+  static importGIFIntoProject({ gifFile, project, onFinish }) {
+    const reader = new FileReader();
 
-    var a = new FileReader();
-    a.onload = (e) => {
-      var buf = e.target.result;
+    reader.onload = async (e) => {
+      const arrayBuffer = e.target.result;
 
-      var dataURLs = [];
+      const gif = parseGIF(arrayBuffer);
+      const frames = decompressFrames(gif, true); // true = build full frame
 
-      const wasmDecoder = new fastgif.Decoder();
-      wasmDecoder.decode(buf).then(decoded => {
-        var tempCanvas = document.createElement('canvas');
-        var tempCtx = tempCanvas.getContext('2d');
-        decoded.forEach(frame => {
-          tempCanvas.width = frame.imageData.width;
-          tempCanvas.height = frame.imageData.height;
-          tempCtx.putImageData(frame.imageData, 0, 0);
-          dataURLs.push(tempCanvas.toDataURL());
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+
+      tempCanvas.width = gif.lsd.width;
+      tempCanvas.height = gif.lsd.height;
+
+      const dataURLs = [];
+
+      for (let i = 0; i < frames.length; i++) {
+        const frame = frames[i];
+        const imageData = tempCtx.createImageData(frame.dims.width, frame.dims.height);
+        imageData.data.set(frame.patch); // RGBA patch
+
+        // Draw onto canvas at correct position
+        tempCtx.putImageData(imageData, frame.dims.left, frame.dims.top);
+
+        // Save dataURL
+        dataURLs.push(tempCanvas.toDataURL());
+      }
+
+      const imageAssets = dataURLs.map((url, index) => {
+        const asset = new window.Wick.ImageAsset({
+          filename: gifFile.name + "_" + index + ".png",
+          src: url,
         });
-
-        var imageAssets = [];
-        dataURLs.forEach(dataURL => {
-            var imageAsset = new window.Wick.ImageAsset({
-                filename: gifFile.name + '_' + dataURLs.indexOf(dataURL) + '.png',
-                src: dataURL,
-            });
-            project.addAsset(imageAsset);
-            imageAssets.push(imageAsset);
-        });
-        project.loadAssets(() => {
-            window.Wick.GIFAsset.fromImages(imageAssets, project, gifAsset => {
-                gifAsset.name = gifFile.name;
-                gifAsset.filename = gifFile.name;
-                onFinish(gifAsset);
-            });
-        })
+        project.addAsset(asset);
+        return asset;
       });
-    }
-    a.readAsArrayBuffer(gifFile);
+
+      project.loadAssets(() => {
+        window.Wick.GIFAsset.fromImages(imageAssets, project, (gifAsset) => {
+          gifAsset.name = gifFile.name;
+          gifAsset.filename = gifFile.name;
+          onFinish(gifAsset);
+        });
+      });
+    };
+
+    reader.readAsArrayBuffer(gifFile);
   }
 }
 
