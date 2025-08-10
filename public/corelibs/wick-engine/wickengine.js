@@ -57797,6 +57797,7 @@ Wick.Clip = class extends Wick.Tickable {
       return null;
     }
 
+
     let c1 = bounds1.center;
     let c2 = bounds2.center; // clockwise arrays of points in format [[x1, y1], [x2, y2], ...]
 
@@ -57834,72 +57835,53 @@ Wick.Clip = class extends Wick.Tickable {
       let t2 = (dy - dy1*dx / dx1) / (dy1*dx2 / dx1 - dy2);
       let t1 = (dx + dx2*t2 ) / dx1;
 
+	  if(isNaN(t1) || isNaN(t2)){
+		let pointY = c[1] + Math.abs(dx)*(dy2/Math.abs(dx2)); //a[1] + (dy1) * t1;
+		// if(pointY < Math.max(a[1],b[1]) && pointY > Math.min(a[1],b[1]))
+		if(
+			true ||
+			((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))
+			&&
+			pointY < Math.max(a[1],b[1])
+			&&
+			pointY > Math.min(a[1],b[1])
+		)
+		intersections.push({
+          x: a[0],
+          y: pointY
+        });
+	  }
+
       if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
-		// window.intersectingRN.unshift(true);
         intersections.push({
           x: a[0] + (dx1) * t1,
           y: a[1] + (dy1) * t1
         });
-      }else{
-		// todo delete me
-		if(isNaN(t1) && i2 === 3){
-			
-			window.intersectingRN.unshift(" (i1 "+i1+" • i2"+i2+") \n");
-		}
-		if(isNaN(t2) && i2 === 3){
-			
-			// window.intersectingRN.unshift("t2_"+i1+","+i2);
-			window.intersectingRN.unshift(" dx2: "+Math.round(dx2)+" ");
-			window.intersectingRN.unshift(" dx1: "+Math.round(dx1)+" ");
-			window.intersectingRN.unshift(" dx: "+Math.round(dx)+" ");
-		}
-	}
-	// window.intersectingRN.unshift(`${dx2.toFixed(1)} | ${c[0]} | ${d[0]}`);
-
-	  // vertical CD line intersection
-	  if(isNaN(t1) && isNaN(t2)){
-		// dx1 = 0 vertical shape
-		if(dx > 0 && dx1 === 0 && dx < Math.abs(dx2)){
-			// check collision
+      }
+	
 			/*
 
 
 
-                ____   ___    ________     _____         __________ 
-			   //  /  /  /   //  ____/    //   /        //   ___  /
-			  //  /__/  /   //  /__,     //   /        //   /__/ /
-		     //  ___   |   //  ____/    //   /        //   _____/  
-		    //  /  /  /   //  /____    //   /____    //   /      
-		   //__/  /__/   //_______/   //________/   //___/          ME
-		   . . .
-		   save yourself too.  . ..…… RUN BEFORE ITS TOO LATE FOR YOU
+           ____   ___    ________     _____         __________ 
+		  //  /  /  /   //  ____/    //   /        //   ___  /
+		 //  /__/  /   //  /__,     //   /        //   /__/ /
+    	//  ___   |   //  ____/    //   /        //   _____/  
+	   //  /  /  /   //  /____    //   /____    //   /      
+	  //__/  /__/   //_______/   //________/   //___/      ME
+	. . .
+		   save yourself too . . .
+		   .  . ..…… RUN BEFORE ITS TOO LATE FOR YOU
 		   
 		   
 
 
-			*/
-			let pointY = c[1] + (dy2/Math.abs(dx2))*(dx2*Math.abs(dx)/dx2);
-			// if(pointY < Math.max(a[1],b[1]) && pointY > Math.min(a[1],b[1]))
-			intersections.push({
-				x: a[0],
-				y: pointY
-			})
-			
-		}
+		*/
 
 
 
-
-	}
-
-
-
-	  if(window.intersectionSegmentsLines1.length>8){
-		window.intersectionSegmentsLines1.pop();
-		window.intersectionSegmentsLines2.pop();
+	  if(window.intersectingRN.length>8)
 		window.intersectingRN.pop();
-	  }
-
 
       let APointingToB = t1 > 1;
       let BPointingToA = t2 > 1;
