@@ -57824,18 +57824,86 @@ Wick.Clip = class extends Wick.Tickable {
       //t2((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y)) = c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x)
       //t2 = (c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x))  /  ((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y))
 
-      let t2 = (c[1] - a[1] - (b[1] - a[1]) * (c[0] - a[0]) / (b[0] - a[0])) / ((b[1] - a[1]) * (d[0] - c[0]) / (b[0] - a[0]) - d[1] + c[1]);
-      let t1 = (c[0] + (d[0] - c[0]) * t2 - a[0]) / (b[0] - a[0]);
+	  let dx1 = b[0] - a[0],
+		  dy1 = b[1] - a[1],
+		  dx2 = d[0] - c[0],
+		  dy2 = d[1] - c[1],
+		  dx  = c[0] - a[0],
+		  dy  = c[1] - a[1]
+
+      let t2 = (dy - dy1*dx / dx1) / (dy1*dx2 / dx1 - dy2);
+      let t1 = (dx + dx2*t2 ) / dx1;
 
       if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
+		// window.intersectingRN.unshift(true);
         intersections.push({
-          x: a[0] + (b[0] - a[0]) * t1,
-          y: a[1] + (b[1] - a[1]) * t1
+          x: a[0] + (dx1) * t1,
+          y: a[1] + (dy1) * t1
         });
-      }
+      }else{
+		// todo delete me
+		if(isNaN(t1) && i2 === 3){
+			
+			window.intersectingRN.unshift(" (i1 "+i1+" • i2"+i2+") \n");
+		}
+		if(isNaN(t2) && i2 === 3){
+			
+			// window.intersectingRN.unshift("t2_"+i1+","+i2);
+			window.intersectingRN.unshift(" dx2: "+Math.round(dx2)+" ");
+			window.intersectingRN.unshift(" dx1: "+Math.round(dx1)+" ");
+			window.intersectingRN.unshift(" dx: "+Math.round(dx)+" ");
+		}
+	}
+	// window.intersectingRN.unshift(`${dx2.toFixed(1)} | ${c[0]} | ${d[0]}`);
+
+	  // vertical CD line intersection
+	  if(isNaN(t1) && isNaN(t2)){
+		// dx1 = 0 vertical shape
+		if(dx > 0 && dx1 === 0 && dx < Math.abs(dx2)){
+			// check collision
+			/*
+
+
+
+                ____   ___    ________     _____         __________ 
+			   //  /  /  /   //  ____/    //   /        //   ___  /
+			  //  /__/  /   //  /__,     //   /        //   /__/ /
+		     //  ___   |   //  ____/    //   /        //   _____/  
+		    //  /  /  /   //  /____    //   /____    //   /      
+		   //__/  /__/   //_______/   //________/   //___/          ME
+		   . . .
+		   save yourself too.  . ..…… RUN BEFORE ITS TOO LATE FOR YOU
+		   
+		   
+
+
+			*/
+			let pointY = c[1] + (dy2/Math.abs(dx2))*(dx2*Math.abs(dx)/dx2);
+			// if(pointY < Math.max(a[1],b[1]) && pointY > Math.min(a[1],b[1]))
+			intersections.push({
+				x: a[0],
+				y: pointY
+			})
+			
+		}
+
+
+
+
+	}
+
+
+
+	  if(window.intersectionSegmentsLines1.length>8){
+		window.intersectionSegmentsLines1.pop();
+		window.intersectionSegmentsLines2.pop();
+		window.intersectingRN.pop();
+	  }
+
 
       let APointingToB = t1 > 1;
       let BPointingToA = t2 > 1;
+	//   console.info(`t1 ${t1}\nt2 ${t2}`);
 
       if (BPointingToA && !APointingToB) {
         // Advance B
