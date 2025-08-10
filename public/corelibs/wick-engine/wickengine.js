@@ -57838,31 +57838,15 @@ Wick.Clip = class extends Wick.Tickable {
 	  if(isNaN(t1) || isNaN(t2)){
 		let pointY = c[1] + Math.abs(dx)*(dy2/Math.abs(dx2)); //a[1] + (dy1) * t1;
 		// if(pointY < Math.max(a[1],b[1]) && pointY > Math.min(a[1],b[1]))
-		if(
-			true ||
-			((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))
-			&&
-			pointY < Math.max(a[1],b[1])
-			&&
-			pointY > Math.min(a[1],b[1])
-		)
-		intersections.push({
-          x: a[0],
-          y: pointY
-        });
+		if(((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))
+			&& pointY === Math.max(Math.min(a[1],pointY),b[1]))
+		intersections.push({x: a[0],y: pointY});
 	  }
 
-      if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
-        intersections.push({
-          x: a[0] + (dx1) * t1,
-          y: a[1] + (dy1) * t1
-        });
-      }
-	
-			/*
+      if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1)
+        intersections.push({ x: a[0]+(dx1)*t1, y: a[1]+(dy1)*t1 });
 
-
-
+/*
            ____   ___    ________     _____         __________ 
 		  //  /  /  /   //  ____/    //   /        //   ___  /
 		 //  /__/  /   //  /__,     //   /        //   /__/ /
@@ -57872,13 +57856,7 @@ Wick.Clip = class extends Wick.Tickable {
 	. . .
 		   save yourself too . . .
 		   .  . ..…… RUN BEFORE ITS TOO LATE FOR YOU
-		   
-		   
-
-
-		*/
-
-
+*/
 
 	  if(window.intersectingRN.length>8)
 		window.intersectingRN.pop();
