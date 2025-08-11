@@ -57837,7 +57837,6 @@ Wick.Clip = class extends Wick.Tickable {
 
 	  if(isNaN(t1) || isNaN(t2)){
 		let pointY = c[1] + Math.abs(dx)*(dy2/Math.abs(dx2)); //a[1] + (dy1) * t1;
-		// if(pointY < Math.max(a[1],b[1]) && pointY > Math.min(a[1],b[1]))
 		if(((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))
 			&& pointY === Math.max(Math.min(a[1],pointY),b[1]))
 		intersections.push({x: a[0],y: pointY});
