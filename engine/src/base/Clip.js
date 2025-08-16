@@ -708,182 +708,206 @@ Wick.Clip = class extends Wick.Tickable {
      * @returns {object} Hit information
      */
     convexHits(other, options) {
-        // Efficient check first
-        let bounds1 = this.absoluteBounds;
-        let bounds2 = other.absoluteBounds;
-        // TODO: write intersects so we don't rely on paper Rectangle objects
-        if (!bounds1.intersects(bounds2)) {
-            return null;
-        }
-        let c1 = bounds1.center;
-        let c2 = bounds2.center;
+    // Efficient check first
+    let bounds1 = this.absoluteBounds;
+    let bounds2 = other.absoluteBounds; // TODO: write intersects so we don't rely on paper Rectangle objects
 
-        // clockwise arrays of points in format [[x1, y1], [x2, y2], ...]
-        let hull1 = this.convexHull;
-        let hull2 = other.convexHull;
-
-        let finished1 = false;
-        let finished2 = false;
-
-        let i1 = hull1.length - 1;
-        let i2 = hull2.length - 1;
-
-        let intersections = [];
-
-        let n = 0;
-        // Algorithm from https://www.bowdoin.edu/~ltoma/teaching/cs3250-CompGeom/spring17/Lectures/cg-convexintersection.pdf
-        while ((!finished1 || !finished2) && n <= 2 * (hull1.length + hull2.length)) {
-            n++;
-            // line segments A is ab, B is cd
-            let a = hull1[i1],
-            b = hull1[((i1 - 1) % hull1.length + hull1.length) % hull1.length],
-            c = hull2[i2],
-            d = hull2[((i2 - 1) % hull2.length + hull2.length) % hull2.length];
-
-            //Use parametric line intersection
-            //<x,y> = a + (b - a)t1
-            //<x,y> = c + (d - c)t2
-            //a + (b - a)t1 = c + (d - c)t2
-            //t1 = (c.x + (d.x - c.x)t2 - a.x) / (b.x - a.x)
-            //a.y + (b.y - a.y) * (c.x + (d.x - c.x)t2 - a.x) / (b.x - a.x) = c.y + (d.y - c.y)t2
-            //t2((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y)) = c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x)
-            //t2 = (c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x))  /  ((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y))
-            let t2 = (c[1] - a[1] - (b[1] - a[1]) * (c[0] - a[0]) / (b[0] - a[0]))  /  ((b[1] - a[1]) * (d[0] - c[0]) / (b[0] - a[0]) - d[1] + c[1]);
-            let t1 = (c[0] + (d[0] - c[0]) * t2 - a[0]) / (b[0] - a[0]);
-
-            if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) {
-                intersections.push({x: a[0] + (b[0] - a[0])*t1, y: a[1] + (b[1] - a[1]) * t1});
-            }
-
-            let APointingToB = t1 > 1;
-            let BPointingToA = t2 > 1;
-
-            if (BPointingToA && !APointingToB) {
-                // Advance B
-                i2 -= 1;
-                if (i2 < 0) {
-                    finished2 = true;
-                    i2 += hull2.length;
-                }
-            }
-            else if (APointingToB && !BPointingToA) {
-                // Advance A
-                i1 -= 1;
-                if (i1 < 0) {
-                    finished1 = true;
-                    i1 += hull1.length;
-                }
-            }
-            else {
-                // Advance outside
-                if (this.cw(a[0], a[1], b[0], b[1], d[0], d[1])) {
-                    // Advance B
-                    i2 -= 1;
-                    if (i2 < 0) {
-                        finished2 = true;
-                        i2 += hull2.length;
-                    }
-                }
-                else {
-                    // Advance A
-                    i1 -= 1;
-                    if (i1 < 0) {
-                        finished1 = true;
-                        i1 += hull1.length;
-                    }
-                }
-            }
-        }
-        // Ok, we have all the intersections now
-        let avgIntersection = {x: 0, y: 0};
-        if (intersections.length === 0) {
-            avgIntersection.x = bounds1.width < bounds2.width ? c1.x : c2.x;
-            avgIntersection.y = bounds1.width < bounds2.width ? c1.y : c2.y;
-        }
-        else {
-            for (let i = 0; i < intersections.length; i++) {
-                avgIntersection.x += intersections[i].x;
-                avgIntersection.y += intersections[i].y;
-            }
-            avgIntersection.x /= intersections.length;
-            avgIntersection.y /= intersections.length;
-        }
-
-        let result = {};
-        if (options.intersections) {
-            result.intersections = intersections;
-        }
-        if (options.offset) {
-            // Calculate offset by taking the center of mass of the intersection, call it P,
-            // get the radius from P on this convex hull in the direction
-            // from this center to that center,
-            // Then, the offset is a vector in the direction from that center to this center
-            // with magnitude of that radius
-
-            let targetTheta = Math.atan2(c2.y - c1.y, c2.x - c1.x); //from c1 to c2
-            let r = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
-            targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
-            r += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
-
-            let directionX = c1.x - c2.x;
-            let directionY = c1.y - c2.y;
-            let mag = Math.sqrt(directionX*directionX + directionY*directionY);
-            directionX *= r / mag;
-            directionY *= r / mag;
-            result.offsetX = directionX;
-            result.offsetY = directionY;
-        }
-        if (options.overlap) {
-            //same as offset except instead of center to center, 
-            //we will move perpendicular to the best fit line
-            //of the intersection points
-
-            let directionX, directionY;
-            if (intersections.length < 2) {
-                directionX = c2.x - c1.x;
-                directionY = c2.y - c1.y;
-            }
-            else {
-                let max_d = 0;
-                for (let i = 1; i < intersections.length; i++) {
-                    let d = (intersections[i].y - intersections[0].y) * (intersections[i].y - intersections[0].y) +
-                        (intersections[i].x - intersections[0].x) * (intersections[i].x - intersections[0].x);
-                    if (d > max_d) {
-                        max_d = d;
-                        directionX = -(intersections[i].y - intersections[0].y);
-                        directionY = intersections[i].x - intersections[0].x;
-                        if (directionX * (c1.x - avgIntersection.x) + directionY * (c1.y - avgIntersection.y) > 0) {
-                            directionX = -directionX;
-                            directionY = -directionY;
-                        }
-                    }
-                }
-            }
-
-            let targetTheta = Math.atan2(directionY, directionX); 
-            let r = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
-            targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
-            r += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
-
-            let r2 = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
-            targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
-            r2 += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
-
-            if (r2 < r) {
-                r = r2;
-                directionX *= -1;
-                directionY *= -1;
-            }
-
-
-            let mag = Math.sqrt(directionX*directionX + directionY*directionY);
-            directionX *= -r / mag;
-            directionY *= -r / mag;
-            result.overlapX = directionX;
-            result.overlapY = directionY;
-        }
-        return result;
+    if (!bounds1.intersects(bounds2)) {
+      return null;
     }
+
+
+    let c1 = bounds1.center;
+    let c2 = bounds2.center; // clockwise arrays of points in format [[x1, y1], [x2, y2], ...]
+
+    let hull1 = this.convexHull;
+    let hull2 = other.convexHull;
+    let finished1 = false;
+    let finished2 = false;
+    let i1 = hull1.length - 1;
+    let i2 = hull2.length - 1;
+    let intersections = [];
+    let n = 0; // Algorithm from https://www.bowdoin.edu/~ltoma/teaching/cs3250-CompGeom/spring17/Lectures/cg-convexintersection.pdf
+
+    while ((!finished1 || !finished2) && n <= (hull1.length + hull2.length)) {
+      n++; // line segments A is ab, B is cd
+
+      let a = hull1[i1],
+          b = hull1[((i1 - 1) % hull1.length + hull1.length) % hull1.length],
+          c = hull2[i2],
+          d = hull2[((i2 - 1) % hull2.length + hull2.length) % hull2.length]; //Use parametric line intersection
+      //<x,y> = a + (b - a)t1
+      //<x,y> = c + (d - c)t2
+      //a + (b - a)t1 = c + (d - c)t2
+      //t1 = (c.x + (d.x - c.x)t2 - a.x) / (b.x - a.x)
+      //a.y + (b.y - a.y) * (c.x + (d.x - c.x)t2 - a.x) / (b.x - a.x) = c.y + (d.y - c.y)t2
+      //t2((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y)) = c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x)
+      //t2 = (c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x))  /  ((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y))
+
+	  let dx1 = b[0] - a[0],
+		  dy1 = b[1] - a[1],
+		  dx2 = d[0] - c[0],
+		  dy2 = d[1] - c[1],
+		  dx  = c[0] - a[0],
+		  dy  = c[1] - a[1]
+
+      let t2 = (dy - dy1*dx / dx1) / (dy1*dx2 / dx1 - dy2);
+      let t1 = (dx + dx2*t2 ) / dx1;
+
+	  if(dx1 === 0 && ((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))){ // test to see if we have a divide by zero error somewhere
+		let pointY = (c[1] + Math.abs(dx)*(dy2/Math.abs(dx2))); //a[1] + (dy1) * t1;
+		if(pointY === Math.max(Math.min(a[1],pointY),b[1]))
+			intersections.push({x: a[0],y: pointY});
+	  }
+	  if(dy1 === 0 && ((dy>0 && d[1]<a[1]) || (dy<0 && d[1]>a[1]))){ // test to see if we have a divide by zero error somewhere
+		let pointX = (c[0] + Math.abs(dy)*(dx2/Math.abs(dy2))); //a[1] + (dy1) * t1;
+		if(pointX === Math.max(Math.min(a[0],pointX),b[0]))
+			intersections.push({x: pointX, y: a[1]});
+	  }
+	  if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1)
+        intersections.push({ x: a[0]+(dx1)*t1, y: a[1]+(dy1)*t1 });
+
+	  if(window.intersectingRN.length>8)
+		window.intersectingRN.pop();
+
+      let APointingToB = t1 > 1;
+      let BPointingToA = t2 > 1;
+	//   console.info(`t1 ${t1}\nt2 ${t2}`);
+
+      if (BPointingToA && !APointingToB) {
+        // Advance B
+        i2 -= 1;
+
+        if (i2 < 0) {
+          finished2 = true;
+          i2 += hull2.length;
+        }
+      } else if (APointingToB && !BPointingToA) {
+        // Advance A
+        i1 -= 1;
+
+        if (i1 < 0) {
+          finished1 = true;
+          i1 += hull1.length;
+        }
+      } else {
+        // Advance outside
+        if (this.cw(a[0], a[1], b[0], b[1], d[0], d[1])) {
+          // Advance B
+          i2 -= 1;
+
+          if (i2 < 0) {
+            finished2 = true;
+            i2 += hull2.length;
+          }
+        } else {
+          // Advance A
+          i1 -= 1;
+
+          if (i1 < 0) {
+            finished1 = true;
+            i1 += hull1.length;
+          }
+        }
+      }
+    } // Ok, we have all the intersections now
+
+
+    let avgIntersection = {
+      x: 0,
+      y: 0
+    };
+
+    if (intersections.length === 0) {
+      avgIntersection.x = bounds1.width < bounds2.width ? c1.x : c2.x;
+      avgIntersection.y = bounds1.width < bounds2.width ? c1.y : c2.y;
+    } else {
+      for (let i = 0; i < intersections.length; i++) {
+        avgIntersection.x += intersections[i].x;
+        avgIntersection.y += intersections[i].y;
+      }
+
+      avgIntersection.x /= intersections.length;
+      avgIntersection.y /= intersections.length;
+    }
+
+    let result = {};
+
+    if (options.intersections) {
+      result.intersections = intersections;
+    }
+
+    if (options.offset) {
+      // Calculate offset by taking the center of mass of the intersection, call it P,
+      // get the radius from P on this convex hull in the direction
+      // from this center to that center,
+      // Then, the offset is a vector in the direction from that center to this center
+      // with magnitude of that radius
+      let targetTheta = Math.atan2(c2.y - c1.y, c2.x - c1.x); //from c1 to c2
+
+      let r = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
+      targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
+      r += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
+      let directionX = c1.x - c2.x;
+      let directionY = c1.y - c2.y;
+      let mag = Math.sqrt(directionX * directionX + directionY * directionY);
+      directionX *= r / mag;
+      directionY *= r / mag;
+      result.offsetX = directionX;
+      result.offsetY = directionY;
+    }
+
+    if (options.overlap) {
+      //same as offset except instead of center to center, 
+      //we will move perpendicular to the best fit line
+      //of the intersection points
+      let directionX, directionY;
+
+      if (intersections.length < 2) {
+        directionX = c2.x - c1.x;
+        directionY = c2.y - c1.y;
+      } else {
+        let max_d = 0;
+
+        for (let i = 1; i < intersections.length; i++) {
+          let d = (intersections[i].y - intersections[0].y) * (intersections[i].y - intersections[0].y) + (intersections[i].x - intersections[0].x) * (intersections[i].x - intersections[0].x);
+
+          if (d > max_d) {
+            max_d = d;
+            directionX = -(intersections[i].y - intersections[0].y);
+            directionY = intersections[i].x - intersections[0].x;
+
+            if (directionX * (c1.x - avgIntersection.x) + directionY * (c1.y - avgIntersection.y) > 0) {
+              directionX = -directionX;
+              directionY = -directionY;
+            }
+          }
+        }
+      }
+
+      let targetTheta = Math.atan2(directionY, directionX);
+      let r = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
+      targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
+      r += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
+      let r2 = this.radiusAtPointInDirection(hull1, avgIntersection, targetTheta);
+      targetTheta = (targetTheta + Math.PI) % (2 * Math.PI);
+      r2 += this.radiusAtPointInDirection(hull2, avgIntersection, targetTheta);
+
+      if (r2 < r) {
+        r = r2;
+        directionX *= -1;
+        directionY *= -1;
+      }
+
+      let mag = Math.sqrt(directionX * directionX + directionY * directionY);
+      directionX *= -r / mag;
+      directionY *= -r / mag;
+      result.overlapX = directionX;
+      result.overlapY = directionY;
+    }
+
+    return result;
+  }
 
     /**
      * Casts a ray from p in the direction targetTheta and intersects it with the hull ch,

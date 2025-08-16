@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.7.22.21.54.9";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.16.14.49.58";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -57797,7 +57797,6 @@ Wick.Clip = class extends Wick.Tickable {
       return null;
     }
 
-
     let c1 = bounds1.center;
     let c2 = bounds2.center; // clockwise arrays of points in format [[x1, y1], [x2, y2], ...]
 
@@ -57810,7 +57809,7 @@ Wick.Clip = class extends Wick.Tickable {
     let intersections = [];
     let n = 0; // Algorithm from https://www.bowdoin.edu/~ltoma/teaching/cs3250-CompGeom/spring17/Lectures/cg-convexintersection.pdf
 
-    while ((!finished1 || !finished2) && n <= 2 * (hull1.length + hull2.length)) {
+    while ((!finished1 || !finished2) && n <= hull1.length + hull2.length) {
       n++; // line segments A is ab, B is cd
 
       let a = hull1[i1],
@@ -57825,44 +57824,42 @@ Wick.Clip = class extends Wick.Tickable {
       //t2((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y)) = c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x)
       //t2 = (c.y - a.y - (b.y - a.y)*(c.x - a.x)/(b.x - a.x))  /  ((b.y - a.y)(d.x - c.x)/(b.x - a.x) - (d.y - c.y))
 
-	  let dx1 = b[0] - a[0],
-		  dy1 = b[1] - a[1],
-		  dx2 = d[0] - c[0],
-		  dy2 = d[1] - c[1],
-		  dx  = c[0] - a[0],
-		  dy  = c[1] - a[1]
+      let dx1 = b[0] - a[0],
+          dy1 = b[1] - a[1],
+          dx2 = d[0] - c[0],
+          dy2 = d[1] - c[1],
+          dx = c[0] - a[0],
+          dy = c[1] - a[1];
+      let t2 = (dy - dy1 * dx / dx1) / (dy1 * dx2 / dx1 - dy2);
+      let t1 = (dx + dx2 * t2) / dx1;
 
-      let t2 = (dy - dy1*dx / dx1) / (dy1*dx2 / dx1 - dy2);
-      let t1 = (dx + dx2*t2 ) / dx1;
+      if (dx1 === 0 && (dx > 0 && d[0] < a[0] || dx < 0 && d[0] > a[0])) {
+        // test to see if we have a divide by zero error somewhere
+        let pointY = c[1] + Math.abs(dx) * (dy2 / Math.abs(dx2)); //a[1] + (dy1) * t1;
 
-	  if(isNaN(t1) || isNaN(t2)){
-		let pointY = c[1] + Math.abs(dx)*(dy2/Math.abs(dx2)); //a[1] + (dy1) * t1;
-		if(((dx>0 && d[0]<a[0]) || (dx<0 && d[0]>a[0]))
-			&& pointY === Math.max(Math.min(a[1],pointY),b[1]))
-		intersections.push({x: a[0],y: pointY});
-	  }
+        if (pointY === Math.max(Math.min(a[1], pointY), b[1])) intersections.push({
+          x: a[0],
+          y: pointY
+        });
+      }
 
-      if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1)
-        intersections.push({ x: a[0]+(dx1)*t1, y: a[1]+(dy1)*t1 });
+      if (dy1 === 0 && (dy > 0 && d[1] < a[1] || dy < 0 && d[1] > a[1])) {
+        // test to see if we have a divide by zero error somewhere
+        let pointX = c[0] + Math.abs(dy) * (dx2 / Math.abs(dy2)); //a[1] + (dy1) * t1;
 
-/*
-           ____   ___    ________     _____         __________ 
-		  //  /  /  /   //  ____/    //   /        //   ___  /
-		 //  /__/  /   //  /__,     //   /        //   /__/ /
-    	//  ___   |   //  ____/    //   /        //   _____/  
-	   //  /  /  /   //  /____    //   /____    //   /      
-	  //__/  /__/   //_______/   //________/   //___/      ME
-	. . .
-		   save yourself too . . .
-		   .  . ..…… RUN BEFORE ITS TOO LATE FOR YOU
-*/
+        if (pointX === Math.max(Math.min(a[0], pointX), b[0])) intersections.push({
+          x: pointX,
+          y: a[1]
+        });
+      }
 
-	  if(window.intersectingRN.length>8)
-		window.intersectingRN.pop();
-
+      if (0 <= t1 && t1 <= 1 && 0 <= t2 && t2 <= 1) intersections.push({
+        x: a[0] + dx1 * t1,
+        y: a[1] + dy1 * t1
+      });
+      if (window.intersectingRN.length > 8) window.intersectingRN.pop();
       let APointingToB = t1 > 1;
-      let BPointingToA = t2 > 1;
-	//   console.info(`t1 ${t1}\nt2 ${t2}`);
+      let BPointingToA = t2 > 1; //   console.info(`t1 ${t1}\nt2 ${t2}`);
 
       if (BPointingToA && !APointingToB) {
         // Advance B
@@ -60329,10 +60326,10 @@ Wick.Tools.Line = class extends Wick.Tool {
     });
     this.startPoint;
     this.endPoint;
-	this.hitResult = new this.paper.HitResult();
-	this.hoverPreview = new this.paper.Item({
-		insert: false
-	});
+    this.hitResult = new this.paper.HitResult();
+    this.hoverPreview = new this.paper.Item({
+      insert: false
+    });
   }
 
   get doubleClickEnabled() {
@@ -60361,90 +60358,74 @@ Wick.Tools.Line = class extends Wick.Tool {
   }
 
   onMouseMove(e) {
-	// inherit mousemove class
-	super.onMouseMove(e); 
+    // inherit mousemove class
+    super.onMouseMove(e); // remove the hover preview
 
-	// remove the hover preview
-	this.hoverPreview.remove();
+    this.hoverPreview.remove(); // find what's under the cursor
 
-	// find what's under the cursor
-	this.hitResult = this._updateHitResult(e);
+    this.hitResult = this._updateHitResult(e); // alt/ option or command/ control to snap to nearby selection
 
-	// alt/ option or command/ control to snap to nearby selection
-	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
-		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
-		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
-		this.hoverPreview.strokeWidth = 1.5;
-		this.hoverPreview.fillColor = 'rgba(150,0,0,0.5)';
+    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+      this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+      this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
+      this.hoverPreview.strokeWidth = 1.5;
+      this.hoverPreview.fillColor = 'rgba(150,0,0,0.5)';
+      this.startPoint = this.hitResult.segment.point;
+    } else {
+      this.startPoint = false;
+    }
 
-		this.startPoint = this.hitResult.segment.point;
-	}else{
-		this.startPoint = false;
-	}
-
-	this.hoverPreview.data.wickType = 'gui';
+    this.hoverPreview.data.wickType = 'gui';
   }
 
   onMouseDown(e) {
-	
-	// check if there is a hoverpoint
-	// else use e.point for startPoint
-	if(!this.startPoint)
-	this.startPoint = e.point;
+    // check if there is a hoverpoint
+    // else use e.point for startPoint
+    if (!this.startPoint) this.startPoint = e.point;
   }
 
   onMouseDrag(e) {
-    this.path.remove();
+    this.path.remove(); // remove the hover preview
 
-	// remove the hover preview
-	this.hoverPreview.remove();
+    this.hoverPreview.remove(); // find what's under the cursor
 
-	// find what's under the cursor
-	this.hitResult = this._updateHitResult(e);
+    this.hitResult = this._updateHitResult(e); // snap to point if option/ alt or command/ control
 
-	// snap to point if option/ alt or command/ control
-	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
-		this.endPoint = {
-			x: this.hitResult.segment.point.x,
-			y: this.hitResult.segment.point.y
-		};
+    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+      this.endPoint = {
+        x: this.hitResult.segment.point.x,
+        y: this.hitResult.segment.point.y
+      };
+      this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+      this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
+      this.hoverPreview.strokeWidth = 1.5; // display red when deleting line by dragging it to start point
 
-		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
-		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
-		this.hoverPreview.strokeWidth = 1.5;
-		
-		// display red when deleting line by dragging it to start point
-		this.hoverPreview.fillColor = 
-		(this.endPoint.x===this.startPoint.x && this.endPoint.y===this.startPoint.y)?
-		'rgba(150,50,50,0.5)':'rgba(50,50,255,0.5)';
+      this.hoverPreview.fillColor = this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y ? 'rgba(150,50,50,0.5)' : 'rgba(50,50,255,0.5)';
+    } else {
+      // default to cursor position
+      this.endPoint = e.point;
+    } // straight line
 
-	}else{ // default to cursor position
-		this.endPoint = e.point;
-	}
 
-	// straight line
-	if(e.modifiers.shift){
-		const dy = Math.abs(this.startPoint.y - e.point.y);
-		const dx = Math.abs(this.startPoint.x - e.point.x);
+    if (e.modifiers.shift) {
+      const dy = Math.abs(this.startPoint.y - e.point.y);
+      const dx = Math.abs(this.startPoint.x - e.point.x); // diagnol
 
-		// diagnol
-		if(dy && dx && (dy/dx)>0.5 && (dx/dy)>0.5){
-			const diff = {
-				x: this.endPoint.x-this.startPoint.x,
-				y: this.endPoint.y-this.startPoint.y
-			}
-			this.endPoint = {
-				x: this.startPoint.x + (dy+dx)/2 * diff.x/Math.abs(diff.x),
-				y: this.startPoint.y + (dy+dx)/2 * diff.y/Math.abs(diff.y)
-			}
-		}else if(dy>dx) // straight vertical
-			this.endPoint.x = this.startPoint.x;
-		else // straight horizontal
-			this.endPoint.y = this.startPoint.y;
+      if (dy && dx && dy / dx > 0.5 && dx / dy > 0.5) {
+        const diff = {
+          x: this.endPoint.x - this.startPoint.x,
+          y: this.endPoint.y - this.startPoint.y
+        };
+        this.endPoint = {
+          x: this.startPoint.x + (dy + dx) / 2 * diff.x / Math.abs(diff.x),
+          y: this.startPoint.y + (dy + dx) / 2 * diff.y / Math.abs(diff.y)
+        };
+      } else if (dy > dx) // straight vertical
+        this.endPoint.x = this.startPoint.x;else // straight horizontal
+        this.endPoint.y = this.startPoint.y;
+    }
 
-	}
-	this.hoverPreview.data.wickType = 'gui';
-
+    this.hoverPreview.data.wickType = 'gui';
     this.path = new paper.Path.Line(this.startPoint, this.endPoint);
     this.path.strokeCap = 'round';
     this.path.strokeColor = this.getSetting('strokeColor').rgba;
@@ -60452,18 +60433,19 @@ Wick.Tools.Line = class extends Wick.Tool {
   }
 
   onMouseUp(e) {
-	this.hoverPreview.remove();
+    this.hoverPreview.remove();
     this.path.remove();
-	if(this.endPoint.x!==this.startPoint.x || this.endPoint.y!==this.startPoint.y){
-		this.addPathToProject(this.path);
-		this.fireEvent({
-		eventName: 'canvasModified',
-		actionName: 'line'
-		});
-	}
-  }
 
-  // todo: clean this function -H.A.
+    if (this.endPoint.x !== this.startPoint.x || this.endPoint.y !== this.startPoint.y) {
+      this.addPathToProject(this.path);
+      this.fireEvent({
+        eventName: 'canvasModified',
+        actionName: 'line'
+      });
+    }
+  } // todo: clean this function -H.A.
+
+
   _updateHitResult(e) {
     var newHitResult = this.paper.project.hitTest(e.point, {
       fill: false,
@@ -60476,7 +60458,6 @@ Wick.Tools.Line = class extends Wick.Tool {
         return result.item !== this.hoverPreview && !result.item.data.isBorder;
       }
     });
-
     if (!newHitResult) newHitResult = new this.paper.HitResult();
 
     if (newHitResult.item && !newHitResult.item.data.isSelectionBoxGUI) {
