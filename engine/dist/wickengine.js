@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.16.15.26.1";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.16.17.52.7";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -48639,7 +48639,10 @@ Wick.HTMLExport = class {
   static bundleProject(project, callback) {
     Wick.WickFile.toWickFile(project, wickFileBase64 => {
       fetch(Wick.resourcepath + 'emptyproject.html').then(resp => resp.text()).then(text => {
+        // updating text, favicon, and injecting wick data
         text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64).replace('<title>Loading...</title>', '<title>' + project._name + '</title>');
+        let faviconAsset = project.assets.find(n => n._name.toLowerCase() == "favicon");
+        if (faviconAsset) text = text.replace("</title>", `</title><link rel="icon" href="${faviconAsset.src}">`);
         callback(text);
       }).catch(e => {
         console.error('Wick.HTMLExport: Could not download HTML file template.');

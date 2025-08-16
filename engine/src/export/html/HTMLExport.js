@@ -30,7 +30,12 @@ Wick.HTMLExport = class {
             fetch(Wick.resourcepath + 'emptyproject.html')
                 .then(resp => resp.text())
                 .then(text => {
+                    // updating text, favicon, and injecting wick data
                     text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64).replace('<title>Loading...</title>', '<title>' + project._name + '</title>');
+                    let faviconAsset = project.assets.find((n)=> n._name.toLowerCase() == "favicon");
+                    if(faviconAsset)
+                        text = text.replace("</title>",`</title><link rel="icon" href="${faviconAsset.src}">`);
+
                     callback(text);
                 })
                 .catch((e) => {
