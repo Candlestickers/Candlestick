@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.16.14.49.58";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.16.15.26.1";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -48654,7 +48654,7 @@ Wick.HTMLExport = class {
   static bundleProject(project, callback) {
     Wick.WickFile.toWickFile(project, wickFileBase64 => {
       fetch(Wick.resourcepath + 'emptyproject.html').then(resp => resp.text()).then(text => {
-        text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64);
+        text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64).replace('<title>Loading...</title>', '<title>' + project._name + '</title>');
         callback(text);
       }).catch(e => {
         console.error('Wick.HTMLExport: Could not download HTML file template.');

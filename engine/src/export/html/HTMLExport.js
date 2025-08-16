@@ -30,7 +30,7 @@ Wick.HTMLExport = class {
             fetch(Wick.resourcepath + 'emptyproject.html')
                 .then(resp => resp.text())
                 .then(text => {
-                    text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64);
+                    text = text.replace('<!--INJECT_WICKPROJECTDATA_HERE-->', wickFileBase64).replace('<title>Loading...</title>', '<title>' + project._name + '</title>');
                     callback(text);
                 })
                 .catch((e) => {
