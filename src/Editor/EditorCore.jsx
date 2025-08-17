@@ -1437,6 +1437,7 @@ class EditorCore extends Component {
    * Imports a wick file into the editor.
    * @param {File} file Zipped wick file to import.
    */
+  // MP4 File Import stuff starts here -H.A.
   importProjectAsWickFile = (file) => {
     this.showWaitOverlay();
     window.Wick.WickFile.fromWickFile(file, project => {
