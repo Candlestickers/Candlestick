@@ -1969,27 +1969,47 @@ class EditorCore extends Component {
           gifAsset.filename = projectName;
           this.project.addAsset(gifAsset);
           
+          console.info(this.project);
+          this.project._children[1].activeFrame.end = this.project._children.length-3;
+          
+          gifAsset._isSynced = true;
+          gifAsset._animationType = "playOnce";
+          
+          console.error("gifasset");
+          console.error(gifAsset);
+          
           // add in the audio file as well (if video has audio)
           if (audioBlob) {
             const audioFile = new File([audioBlob], projectName+".wav", { type: 'audio/wav' })
             this.importFileAsAsset(audioFile, () => {})  // reuses existing audio import path
           }
           
-          // add the video asset into the project
-          this.createImageFromAsset(gifAsset.uuid, this.project.width/2, this.project.height/2, true)
           
-          // update project
-          this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
-          this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 2500 })
-          this.hideWaitOverlay()
-          resolve()
+          // add the video asset into the project
+          this.project.createClipInstanceFromAsset(gifAsset, this.project.width/2, this.project.height/2, (clip) => {
+            this.selectObject(clip) // <-- select the object so we can adjust its settings
+
+            // set to synce and enable play once
+            this.setSelectionAttribute('animationType', 'playOnce')
+            this.setSelectionAttribute('isSynced', true)
+
+            // const tl = this.project.activeTimeline;
+            // tl.layers[0].identifier = "video";
+            // if(audioBlob){
+            //   tl.addLayer(new window.Wick.Layer);
+            //   tl.layers[1].identifier = "audio";
+            // }
+
+            this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
+            this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 2500 })
+            this.hideWaitOverlay()
+            resolve()
+          })
+
+          // this.project._children[1].activeFrame._children[0]._isSynced = true;
+          
         })
       })
-
-
-
-
-
 
     } catch (err) {
       console.error(err)
