@@ -1975,15 +1975,6 @@ class EditorCore extends Component {
           gifAsset._isSynced = true;
           gifAsset._animationType = "playOnce";
           
-          console.error("gifasset");
-          console.error(gifAsset);
-          
-          // add in the audio file as well (if video has audio)
-          if (audioBlob) {
-            const audioFile = new File([audioBlob], projectName+".wav", { type: 'audio/wav' })
-            this.importFileAsAsset(audioFile, () => {})  // reuses existing audio import path
-          }
-          
           
           // add the video asset into the project
           this.project.createClipInstanceFromAsset(gifAsset, this.project.width/2, this.project.height/2, (clip) => {
@@ -1993,12 +1984,30 @@ class EditorCore extends Component {
             this.setSelectionAttribute('animationType', 'playOnce')
             this.setSelectionAttribute('isSynced', true)
 
-            // const tl = this.project.activeTimeline;
-            // tl.layers[0].identifier = "video";
-            // if(audioBlob){
-            //   tl.addLayer(new window.Wick.Layer);
-            //   tl.layers[1].identifier = "audio";
-            // }
+            // unselect the mp4 clip guy
+            this.clearSelection();
+
+            const tl = this.project.activeTimeline;
+            tl.layers[0].name = "video";
+            
+            // add in the audio file as well (if video has audio)
+            if (audioBlob) {
+              tl.addLayer(new window.Wick.Layer());
+              tl.layers[1].name = "audio";
+              tl.layers[1].addFrame(new window.Wick.Frame());
+              tl.layers[1].frames[0].end = tl.layers[0].frames[0].end;
+              // const soundObj = new window.Wick.Sound({ asset: this.project.assets[1]});
+              
+              const audioFile = new File([audioBlob], projectName+".wav", { type: 'audio/wav' })
+              this.importFileAsAsset(audioFile, () => {
+                this.project.loadAssets(() => {
+                  // wait for new audio asset to load in
+                  this.setActiveLayerIndex(1);
+                  this.addSoundToActiveFrame(this.project.assets[this.project.assets.length-1])
+                  this.setActiveLayerIndex(0);
+                })
+              })  // reuses existing audio import path
+            }
 
             this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
             this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 2500 })
