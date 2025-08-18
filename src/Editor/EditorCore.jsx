@@ -22,6 +22,8 @@ import queryString from 'query-string';
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
 import GIFImport from './import/GIFImport';
+// import MP4Import from './import/MP4Import';
+import MP4ImportPure from './import/MP4Import_Pure';
 import AudioExport from './export/AudioExport';
 
 class EditorCore extends Component {
@@ -1918,14 +1920,83 @@ class EditorCore extends Component {
       this.activateLastTool();
   }
 
-  handleWickFileLoad = (e) => {
+  handleWickFileLoad = async (e) => {
     var file = e.target.files[0];
     if (!file) {
       console.warn('handleWickFileLoad: no files recieved');
       return;
     }
 
-    this.importProjectAsWickFile(file);
+    // if not an mp4 file just load it then
+    if(file.type !== 'video/mp4'){
+      this.importProjectAsWickFile(file);
+      return;
+    }
+
+    // if an mp4 file then translate it before opening it
+    try {
+      const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false })
+
+      // NOTE need to setup new project BEFORE loading mp4 (otherwise will still work but console will be loaded with error messages)
+      this.setupNewProject();
+      this.projectDidChange({ actionName: 'Reset project' });
+
+      this.showWaitOverlay() // disable clicking anywhere
+
+      // GET ALL FRAMES FROM MP4 (run through MP4 import function)
+      const { imageAssets, audioBlob, fps, projectName, width, height } = 
+            await MP4ImportPure.importMP4AsSequence({
+              mp4File: file,
+              fps: Math.max(1,Math.min(60,Number(prompt("Enter FPS","12")))), // give user the option of FPS
+              projectName: file.name.replace(".mp4", ''),
+              onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p||0)}%)` })
+            })
+
+      // set up new project
+      this.project.width = width;
+      this.project.height = height;
+      this.project.framerate = fps;
+      this.projectDidChange({ actionName: 'Adjusted settings based on MP4' });
+
+      // add image assets to the current project
+      imageAssets.forEach(asset => this.project.addAsset(asset));
+
+      // turn the sequence into an asset using the same system used by the GIF import ;-;
+      await new Promise(res => this.project.loadAssets(res))
+      await new Promise((resolve) => {
+        window.Wick.GIFAsset.fromImages(imageAssets, this.project, (gifAsset) => {
+          gifAsset.name = projectName;
+          gifAsset.filename = projectName;
+          this.project.addAsset(gifAsset);
+          
+          // add in the audio file as well (if video has audio)
+          if (audioBlob) {
+            const audioFile = new File([audioBlob], projectName+".wav", { type: 'audio/wav' })
+            this.importFileAsAsset(audioFile, () => {})  // reuses existing audio import path
+          }
+          
+          // add the video asset into the project
+          this.createImageFromAsset(gifAsset.uuid, this.project.width/2, this.project.height/2, true)
+          
+          // update project
+          this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
+          this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 2500 })
+          this.hideWaitOverlay()
+          resolve()
+        })
+      })
+
+
+
+
+
+
+    } catch (err) {
+      console.error(err)
+      this.toast('Failed to import MP4.', 'error')
+      this.hideWaitOverlay()
+    }
+
   }
 
   /**
