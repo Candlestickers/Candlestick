@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/Candlestick/precache-manifest.38eed46d69c45bef5c1e575c71a7bc8f.js"
+  "/Candlestick/precache-manifest.a1f916e9cb2a4c0d78f58d26e55c6d5b.js"
 );
 
 workbox.clientsClaim();
