@@ -163,7 +163,7 @@ class Editor extends EditorCore {
 
     // Wick Project File Input
     this.openProjectFileFromClient = window.createFileInput({
-      accept: '.zip, .wick',
+      accept: '.zip, .wick, .mp4',
       onChange: this.handleWickFileLoad,
     });
 
