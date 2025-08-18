@@ -1,10 +1,10 @@
 {
   "main.css": "/Candlestick/static/css/main.13325d57.chunk.css",
-  "main.js": "/Candlestick/static/js/main.b9d2e4ac.chunk.js",
-  "main.js.map": "/Candlestick/static/js/main.b9d2e4ac.chunk.js.map",
+  "main.js": "/Candlestick/static/js/main.3d333574.chunk.js",
+  "main.js.map": "/Candlestick/static/js/main.3d333574.chunk.js.map",
   "static/css/1.b0877872.chunk.css": "/Candlestick/static/css/1.b0877872.chunk.css",
-  "static/js/1.8b3a65ea.chunk.js": "/Candlestick/static/js/1.8b3a65ea.chunk.js",
-  "static/js/1.8b3a65ea.chunk.js.map": "/Candlestick/static/js/1.8b3a65ea.chunk.js.map",
+  "static/js/1.7c5a242b.chunk.js": "/Candlestick/static/js/1.7c5a242b.chunk.js",
+  "static/js/1.7c5a242b.chunk.js.map": "/Candlestick/static/js/1.7c5a242b.chunk.js.map",
   "runtime~main.js": "/Candlestick/static/js/runtime~main.95cc05b3.js",
   "runtime~main.js.map": "/Candlestick/static/js/runtime~main.95cc05b3.js.map",
   "static/media/settings-icon.svg": "/Candlestick/static/media/settings-icon.d6e566ed.svg",
@@ -185,6 +185,6 @@
   "static/css/main.13325d57.chunk.css.map": "/Candlestick/static/css/main.13325d57.chunk.css.map",
   "static/css/1.b0877872.chunk.css.map": "/Candlestick/static/css/1.b0877872.chunk.css.map",
   "index.html": "/Candlestick/index.html",
-  "precache-manifest.989a3cde6ea443c60fb1ecf5b567f411.js": "/Candlestick/precache-manifest.989a3cde6ea443c60fb1ecf5b567f411.js",
+  "precache-manifest.38eed46d69c45bef5c1e575c71a7bc8f.js": "/Candlestick/precache-manifest.38eed46d69c45bef5c1e575c71a7bc8f.js",
   "service-worker.js": "/Candlestick/service-worker.js"
 }
