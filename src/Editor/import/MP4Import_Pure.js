@@ -144,7 +144,7 @@ async function mp4ToWickFileBlob({ mp4File, fps = DEFAULT_FPS, projectName = 'Im
     
 
     
-    onProgress('Registering assets…', 99)
+    onProgress('One more magic spell... ', 99)
     // return a GIFAsset (animated) and optionally a SoundAsset
     const imageDataURLs = await Promise.all(frames.map(blobToDataURL))
     const imageAssets = imageDataURLs.map((src, i) => new window.Wick.ImageAsset({

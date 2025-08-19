@@ -1956,6 +1956,7 @@ class EditorCore extends Component {
       this.project.width = width;
       this.project.height = height;
       this.project.framerate = fps;
+      this.project.name = projectName;
       this.projectDidChange({ actionName: 'Adjusted settings based on MP4' });
 
       // add image assets to the current project
@@ -1968,12 +1969,8 @@ class EditorCore extends Component {
           gifAsset.name = projectName;
           gifAsset.filename = projectName;
           this.project.addAsset(gifAsset);
-          
-          console.info(this.project);
+          // extend frame
           this.project._children[1].activeFrame.end = this.project._children.length-3;
-          
-          gifAsset._isSynced = true;
-          gifAsset._animationType = "playOnce";
           
           
           // add the video asset into the project
@@ -2010,7 +2007,7 @@ class EditorCore extends Component {
             }
 
             this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
-            this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 2500 })
+            this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
             this.hideWaitOverlay()
             resolve()
           })
