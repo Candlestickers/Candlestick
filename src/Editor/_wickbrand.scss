@@ -21,6 +21,12 @@
 
 // candlestick 2025
 $wick-cs-yellow: #ffff00;
+$wick-cs-orange: #ff9500; 
+$wick-cs-black: #000000;
+
+$wick-cs-pink: #ff00e6; 
+$wick-cs-pink-light: #ff7ef2; // UNUSED
+$wick-cs-pink-text: #ff22f3; // used for text
 
 // Spring 2019 color scheme
 $editor-primary: #303030;
@@ -46,10 +52,10 @@ $editor-modal-gray-secondary: #525252;
 $editor-modal-text-white: #FFFFFF;
 $editor-modal-text-gray: #E6E6E6;
 $editor-modal-text-dark: #a6a6a6;
-$editor-modal-text-highlight: #1EE29A;
+$editor-modal-text-highlight: $wick-cs-orange;
 
-$editor-green-highlight: #1EE29A;
-$editor-green-highlight-dark: #19C284;
+$editor-green-highlight: $wick-cs-orange;
+$editor-green-highlight-dark: $wick-cs-pink-text;
 
 $editor-canvas-border: #6A6A6A;
 
@@ -184,7 +190,7 @@ $github-text: black;
 // mobile container colors
 $mobile-panel-background: #191919;
 $timeline-red: #FA8A87;
-$inspector-teal: #4FF7DE;
+$inspector-teal: #f74fd5;
 $code-pink: #FA73FA;
 $asset-green: #BAFA98;
 
