@@ -1,7 +1,7 @@
 {
-  "main.css": "/Candlestick/static/css/main.13325d57.chunk.css",
-  "main.js": "/Candlestick/static/js/main.81d7ea69.chunk.js",
-  "main.js.map": "/Candlestick/static/js/main.81d7ea69.chunk.js.map",
+  "main.css": "/Candlestick/static/css/main.909b71d4.chunk.css",
+  "main.js": "/Candlestick/static/js/main.fa5fafde.chunk.js",
+  "main.js.map": "/Candlestick/static/js/main.fa5fafde.chunk.js.map",
   "static/css/1.b0877872.chunk.css": "/Candlestick/static/css/1.b0877872.chunk.css",
   "static/js/1.7c5a242b.chunk.js": "/Candlestick/static/js/1.7c5a242b.chunk.js",
   "static/js/1.7c5a242b.chunk.js.map": "/Candlestick/static/js/1.7c5a242b.chunk.js.map",
@@ -173,7 +173,7 @@
   "static/media/layer.svg": "/Candlestick/static/media/layer.3e60c1ce.svg",
   "static/media/frame.svg": "/Candlestick/static/media/frame.4c8ac93b.svg",
   "static/media/blue_night_short.svg": "/Candlestick/static/media/blue_night_short.b4121f27.svg",
-  "static/media/cool_field3.png": "/Candlestick/static/media/cool_field3.2ba9abca.png",
+  "static/media/cool_field3.png": "/Candlestick/static/media/cool_field3.cb32dbb0.png",
   "static/media/backwards.svg": "/Candlestick/static/media/backwards.1a5a080b.svg",
   "static/media/forwards.svg": "/Candlestick/static/media/forwards.d5ccce94.svg",
   "static/media/github-logo-white.svg": "/Candlestick/static/media/github-logo-white.648103ae.svg",
@@ -182,9 +182,9 @@
   "static/media/instagram.svg": "/Candlestick/static/media/instagram.d77f30af.svg",
   "static/media/twitter.svg": "/Candlestick/static/media/twitter.47cbfa33.svg",
   "static/media/white-heart.svg": "/Candlestick/static/media/white-heart.daf330ed.svg",
-  "static/css/main.13325d57.chunk.css.map": "/Candlestick/static/css/main.13325d57.chunk.css.map",
+  "static/css/main.909b71d4.chunk.css.map": "/Candlestick/static/css/main.909b71d4.chunk.css.map",
   "static/css/1.b0877872.chunk.css.map": "/Candlestick/static/css/1.b0877872.chunk.css.map",
   "index.html": "/Candlestick/index.html",
-  "precache-manifest.a1f916e9cb2a4c0d78f58d26e55c6d5b.js": "/Candlestick/precache-manifest.a1f916e9cb2a4c0d78f58d26e55c6d5b.js",
+  "precache-manifest.1ca5f16e820b320d98d1c0042ad78add.js": "/Candlestick/precache-manifest.1ca5f16e820b320d98d1c0042ad78add.js",
   "service-worker.js": "/Candlestick/service-worker.js"
 }
