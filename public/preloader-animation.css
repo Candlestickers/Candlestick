@@ -18,9 +18,9 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    margin-left: -160px;
-    margin-top: -160px;
-    width: 220px;
+    margin-left: -60px;
+    margin-top: -80px;
+    width: 120px;
     /* height: 220px; */
     animation: float .6s ease-in-out infinite alternate;
 }
@@ -28,9 +28,9 @@
 /* removed the shaodw */
 .flashy-shadow {
     position: absolute;
-    top: calc(200% + 70px); 
+    top: calc(50% + 70px); 
     left: 50%;
-    margin-left: -45px;
+    margin-left: -50px;
     margin-top: -22.5px;
     width: 90px;
     height: 45px;
@@ -41,8 +41,8 @@
     position: absolute;
     top: calc(50% + 150px);
     left: 50%;
-    margin-left: -295px;
-    width: 500px;
+    margin-left: -130px;
+    width: 250px;
     /* height: 130px; */
     animation: pulse 1.2s ease-in-out infinite alternate;
 }
