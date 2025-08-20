@@ -23,6 +23,7 @@
 $wick-cs-yellow: #ffff00;
 $wick-cs-orange: #ff9500; 
 $wick-cs-black: #000000;
+$wick-cs-splitter-highlight: #e89556;
 
 $wick-cs-pink: #ff00e6; 
 $wick-cs-pink-light: #ff7ef2; // UNUSED
@@ -317,7 +318,7 @@ a:hover {
 // define interface element properties
 $splitter-size: calc(#{$editor-outline-padding} / 2);
 $splitter-color: $editor-primary-outline;
-$splitter-highlight-color: $editor-primary-property-text;
+$splitter-highlight-color: $wick-cs-splitter-highlight;
 
 $interface-roundness-primary: 2px;
 $interface-roundness-secondary: 4px;
