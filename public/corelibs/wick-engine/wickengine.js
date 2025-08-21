@@ -60390,7 +60390,7 @@ Wick.Tools.Line = class extends Wick.Tool {
   onMouseDrag(e) {
     this.path.remove(); // remove the hover preview
 
-    this.hoverPreview.remove(); // find what's under the cursor
+    // this.hoverPreview.remove(); // find what's under the cursor
 
     this.hitResult = this._updateHitResult(e); // snap to point if option/ alt or command/ control
 
