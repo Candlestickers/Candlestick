@@ -110,10 +110,10 @@ class BuiltinLibrary extends Component {
 
         {this.props.isAssetInLibrary(asset.file.split("/").pop()) ?
           <ActionButton
-            className="add-as-asset-button"
+            className="added-as-asset-button"
             action={() => {}}
             text="Already Added"
-            color="gray"
+            // color="gray"
           />
         :
           <ActionButton
@@ -151,10 +151,10 @@ class BuiltinLibrary extends Component {
 
         {this.props.isAssetInLibrary(asset.file.split("/").pop()) ?
           <ActionButton
-            className="add-as-asset-button"
+            className="added-as-asset-button"
             action={() => {}}
             text="Already Added"
-            color="gray"
+            // color="gray"
           />
         :
           <ActionButton

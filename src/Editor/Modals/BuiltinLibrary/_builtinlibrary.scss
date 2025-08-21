@@ -62,7 +62,7 @@ $margin: 3%;
 .builtin-library-asset-icon-container {
   width: 100%;
   height: 100px;
-  background-color: $editor-modal-dark;
+  background-color: white;
   border: none;
   border-radius: 5px;
   overflow: hidden;
@@ -70,6 +70,7 @@ $margin: 3%;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-left: 5px;
 }
 
 .builtin-library-asset-icon {
@@ -78,11 +79,31 @@ $margin: 3%;
   height: 100%;
 }
 
+
 .add-as-asset-button {
   width: 100%;
   height: 28px;
   margin: $margin;
   padding-right: calc(#{$margin} * 2);
+  color: white;
+  background-color: $wick-cs-orange;
+}
+body.hasHover .add-as-asset-button:hover {
+  background-color: $wick-cs-yellow;
+}
+
+.added-as-asset-button {
+  width: 100%;
+  height: 28px;
+  margin: $margin;
+  padding-right: calc(#{$margin} * 2);
+  background-color: gray;
+  color: white;
+}
+body.hasHover .added-as-asset-button:hover {
+  background-color: gray;
+  color: $wick-cs-orange-light;
+  cursor: default;
 }
 
 .preview-sound-button {
