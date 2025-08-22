@@ -41,7 +41,7 @@ class EditorCore extends Component {
    * @param {string} newTool - The string representation of the tool to switch to.
    */
   setActiveTool = (newTool) => {
-    if(newTool !== this.getActiveTool().name) {
+    if (newTool !== this.getActiveTool().name) {
       this.lastUsedTool = this.getActiveTool();
       this.project.activeTool = newTool;
 
@@ -64,7 +64,7 @@ class EditorCore extends Component {
    */
   toggleClipBorders = () => {
     this.project.showClipBorders = !this.project.showClipBorders;
-    this.projectDidChange({ actionName: "Toggle Clip Borders"});
+    this.projectDidChange({ actionName: "Toggle Clip Borders" });
   }
 
   /**
@@ -79,10 +79,10 @@ class EditorCore extends Component {
    * Undo the last action that was done.
    */
   undoAction = () => {
-    if(!this.project.undo()) {
+    if (!this.project.undo()) {
       this.toast('Nothing to undo.', 'warning');
     } else {
-      this.projectDidChange({ skipHistory:true, actionName: "Undo" });
+      this.projectDidChange({ skipHistory: true, actionName: "Undo" });
     }
   }
 
@@ -90,10 +90,10 @@ class EditorCore extends Component {
    * Recover the state of the project from before the last action was done.
    */
   redoAction = () => {
-    if(!this.project.redo()) {
+    if (!this.project.redo()) {
       this.toast('Nothing to redo.', 'warning');
     } else {
-      this.projectDidChange({skipHistory:true, actionName: "Redo" });
+      this.projectDidChange({ skipHistory: true, actionName: "Redo" });
     }
   }
 
@@ -102,7 +102,7 @@ class EditorCore extends Component {
    */
   recenterCanvas = () => {
     this.project.recenter();
-    this.projectDidChange( { skipHistory: true, actionName: "recenterCanvas"} );
+    this.projectDidChange({ skipHistory: true, actionName: "recenterCanvas" });
   }
 
   /**
@@ -135,14 +135,14 @@ class EditorCore extends Component {
    */
   setToolSetting = (name, value) => {
     this.project.toolSettings.setSetting(name, value);
-    this.projectDidChange({actionName: "Change Tool Setting " + name + ":" + value });
+    this.projectDidChange({ actionName: "Change Tool Setting " + name + ":" + value });
   }
 
   /**
    *
    */
   getToolSettingRestrictions = (name) => {
-      return this.project.toolSettings.getSettingRestrictions(name);
+    return this.project.toolSettings.getSettingRestrictions(name);
   }
 
   /**
@@ -152,7 +152,7 @@ class EditorCore extends Component {
   getClipAnimationTypes = () => {
     let outputTypes = [];
     Object.keys(window.Wick.Clip.animationTypes).forEach(key => {
-      outputTypes.push({label: window.Wick.Clip.animationTypes[key], value: key});
+      outputTypes.push({ label: window.Wick.Clip.animationTypes[key], value: key });
     });
     return outputTypes;
   }
@@ -163,12 +163,12 @@ class EditorCore extends Component {
   changeBrushSize = (amt) => {
     var tool = this.project.activeTool.name
     var option;
-    if(tool === 'brush') {
-        option = 'brushSize';
+    if (tool === 'brush') {
+      option = 'brushSize';
     } else if (tool === 'eraser') {
-        option = 'eraserSize';
+      option = 'eraserSize';
     } else {
-        return;
+      return;
     }
 
     let brushSize = this.getToolSetting(option);
@@ -225,7 +225,7 @@ class EditorCore extends Component {
    * @return {Wick.Frame|Wick.Clip} object - the scriptable object that is selected
    */
   getSelectedObjectScript = () => {
-    if(this.selectionIsScriptable()) {
+    if (this.selectionIsScriptable()) {
       return this.project.selection.getSelectedObject();
     } else {
       return null;
@@ -324,7 +324,7 @@ class EditorCore extends Component {
    */
   getSelectedScriptableObject = () => {
     return this.project.selection.getSelectedObject().isScriptable
-        && this.project.selection.getSelectedObject();
+      && this.project.selection.getSelectedObject();
   }
 
   /**
@@ -429,8 +429,8 @@ class EditorCore extends Component {
   getSelectionAttribute = (attributeName) => {
     let attribute = this.project.selection[attributeName];
 
-    if(attribute instanceof Array) {
-      if(attribute.length === 0) {
+    if (attribute instanceof Array) {
+      if (attribute.length === 0) {
         return undefined;
       } else if (attribute.length === 1) {
         return attribute[0];
@@ -474,8 +474,8 @@ class EditorCore extends Component {
    * @param {string|number} newValue  New value of the attribute to update.
    */
   setSelectionAttribute = (attribute, newValue) => {
-    try{this.project.selection[attribute] = newValue;}catch(err){}
-    this.projectDidChange({ actionName: "Set Selection Attribute: " + attribute + ":" + newValue});
+    this.project.selection[attribute] = newValue;
+    this.projectDidChange({ actionName: "Set Selection Attribute: " + attribute + ":" + newValue });
   }
 
   /**
@@ -499,7 +499,7 @@ class EditorCore extends Component {
       console.log("No selection from which to create clips.");
       return;
     } else if (!wrapSingularClip && this.project.selection.numObjects === 1
-    && this.project.selection.types[0] === "Clip") {
+      && this.project.selection.types[0] === "Clip") {
       console.log("That's already a Clip.");
       return;
     }
@@ -576,7 +576,7 @@ class EditorCore extends Component {
       return;
     }
     this.project.breakApartSelection();
-    this.projectDidChange({ actionName: "Break Apart Selection"});
+    this.projectDidChange({ actionName: "Break Apart Selection" });
   }
 
   /**
@@ -584,7 +584,7 @@ class EditorCore extends Component {
    * @returns {object[]} The objects that were deleted.
    */
   deleteSelectedObjects = () => {
-    if(this.project.selection.location === 'AssetLibrary') {
+    if (this.project.selection.location === 'AssetLibrary') {
       this.openWarningModal({
         description: "Any objects in the project using this asset will also be deleted.",
         title: "Delete this asset?",
@@ -592,14 +592,14 @@ class EditorCore extends Component {
           this.project.deleteSelectedObjects();
           this.projectDidChange({ actionName: "Delete Selected Asset" });
         }),
-        cancelAction: (() => {}),
-        finalAction: (() => {}),
+        cancelAction: (() => { }),
+        finalAction: (() => { }),
         acceptText: "Delete",
         cancelText: "Cancel",
       });
     } else {
       this.project.deleteSelectedObjects();
-      this.projectDidChange({actionName: "Delete Selected Objects"});
+      this.projectDidChange({ actionName: "Delete Selected Objects" });
     }
   }
 
@@ -688,7 +688,7 @@ class EditorCore extends Component {
     if (this.project.selection.numObjects === 0) return; // Ignore if no objects are selected.
     this.project.selection.x += x;
     this.project.selection.y += y;
-    this.projectDidChange({ skipHistory: true, actionName: "Nudge Selection", skipReactRender: true});
+    this.projectDidChange({ skipHistory: true, actionName: "Nudge Selection", skipReactRender: true });
   }
 
   /**
@@ -785,12 +785,12 @@ class EditorCore extends Component {
   alignSelectionX = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2) return;
-  
+
     const referenceX = selected[0].x; // Use the first selected object's y
     selected.forEach(obj => {
       obj.x = referenceX;
     });
-  
+
     this.projectDidChange({ actionName: "Align X" });
   }
 
@@ -801,12 +801,12 @@ class EditorCore extends Component {
   alignSelectionY = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2) return;
-  
+
     const referenceY = selected[0].y; // Use the first selected object's y
     selected.forEach(obj => {
       obj.y = referenceY;
     });
-  
+
     this.projectDidChange({ actionName: "Align Y" });
   }
 
@@ -817,12 +817,12 @@ class EditorCore extends Component {
   alignSelectionLeft = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2) return;
-  
+
     const referenceX = this.project.selection.x;
     selected.forEach(obj => {
-      obj.x = referenceX + (obj.width || obj.bounds.width)/2;
+      obj.x = referenceX + (obj.width || obj.bounds.width) / 2;
     });
-  
+
     this.projectDidChange({ actionName: "Align Left" });
   }
 
@@ -837,9 +837,9 @@ class EditorCore extends Component {
 
     const referenceX = this.project.selection.x + this.project.selection.originalWidth;
     selected.forEach(obj => {
-      obj.x = referenceX - (obj.width || obj.bounds.width)/2;
+      obj.x = referenceX - (obj.width || obj.bounds.width) / 2;
     });
-  
+
     this.projectDidChange({ actionName: "Align Right" });
   }
 
@@ -850,12 +850,12 @@ class EditorCore extends Component {
   alignSelectionBottom = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2) return;
-  
+
     const referenceY = this.project.selection.y + this.project.selection.originalHeight;
     selected.forEach(obj => {
-      obj.y = referenceY - (obj.height || obj.bounds.height)/2;
+      obj.y = referenceY - (obj.height || obj.bounds.height) / 2;
     });
-  
+
     this.projectDidChange({ actionName: "Align Bottom" });
   }
 
@@ -866,17 +866,17 @@ class EditorCore extends Component {
   alignSelectionTop = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2) return;
-  
+
     const referenceY = this.project.selection.y;
     selected.forEach(obj => {
-      obj.y = referenceY + (obj.height || obj.bounds.height)/2;
+      obj.y = referenceY + (obj.height || obj.bounds.height) / 2;
     });
-  
+
     this.projectDidChange({ actionName: "Align Right" });
   }
 
   // ADD GRADIENT SETTINGS HERE TODO -H.A.
-  
+
 
   /**
    * Updates the Wick Project settings with new values passed in as an object. Will make no changes if input is invalid or the same as the previous settings.
@@ -928,51 +928,51 @@ class EditorCore extends Component {
     // convert screen position to wick project position
     let paper = this.project.view.paper;
     let dropPoint = new paper.Point();
-    if(isCanvasSpace) {
-      dropPoint = new paper.Point(x,y);
+    if (isCanvasSpace) {
+      dropPoint = new paper.Point(x, y);
     } else {
       let canvasPosition = paper.project.view.element.getBoundingClientRect();
       x -= canvasPosition.x;
       y -= canvasPosition.y;
-      dropPoint = paper.view.viewToProject(new window.paper.Point(x,y));
+      dropPoint = paper.view.viewToProject(new window.paper.Point(x, y));
     }
 
     let obj = window.Wick.ObjectCache.getObjectByUUID(uuid);
 
     if (obj instanceof window.Wick.ImageAsset) {
       this.project.createImagePathFromAsset(window.Wick.ObjectCache.getObjectByUUID(uuid), dropPoint.x, dropPoint.y, path => {
-        this.projectDidChange({ actionName: "Create Image Path From Asset"});
+        this.projectDidChange({ actionName: "Create Image Path From Asset" });
       });
     } else if (obj instanceof window.Wick.ClipAsset) {
       this.project.createClipInstanceFromAsset(window.Wick.ObjectCache.getObjectByUUID(uuid), dropPoint.x, dropPoint.y, clip => {
-        this.projectDidChange({ actionName: "Create Clip Instance From Asset"});
+        this.projectDidChange({ actionName: "Create Clip Instance From Asset" });
       });
     } else if (obj instanceof window.Wick.SVGAsset) {
       this.project.createSVGInstanceFromAsset(window.Wick.ObjectCache.getObjectByUUID(uuid), dropPoint.x, dropPoint.y, svg => {
-        this.projectDidChange({ actionName: "Create SVG Instance From Asset"});
+        this.projectDidChange({ actionName: "Create SVG Instance From Asset" });
       });
     } else {
       console.error('object is not an ImageAsset or a ClipAsset')
     }
   }
 
- /**
-  * Creates an instance of the selected asset at the center of the canvas
-  */
+  /**
+   * Creates an instance of the selected asset at the center of the canvas
+   */
   createInstanceOfSelectedAsset = () => {
     let uuid = this.project.selection.getSelectedObject().uuid;
-    this.createImageFromAsset(uuid, this.project.width/2, this.project.height/2, true);
+    this.createImageFromAsset(uuid, this.project.width / 2, this.project.height / 2, true);
   }
 
- /**
-   * Is called when a sound asset is dragged/dropped on the timeline element.
-   * @param {string} uuid - The UUID of the desired asset.
-   * @param {number} x - The x location of the image after creation in relation to the window.
-   * @param {number} y - The y location of the image after creation in relation to the window.
-   * @param {boolean} drop - If true, will drop the asset with the uuid onto the hovered frame, modifying the frame.
-   */
+  /**
+    * Is called when a sound asset is dragged/dropped on the timeline element.
+    * @param {string} uuid - The UUID of the desired asset.
+    * @param {number} x - The x location of the image after creation in relation to the window.
+    * @param {number} y - The y location of the image after creation in relation to the window.
+    * @param {boolean} drop - If true, will drop the asset with the uuid onto the hovered frame, modifying the frame.
+    */
   dragSoundOntoTimeline = (uuid, x, y, drop) => {
-      this.project.guiElement.dragAssetAtPosition(uuid, x, y, drop);
+    this.project.guiElement.dragAssetAtPosition(uuid, x, y, drop);
   }
 
   addSoundToActiveFrame = (soundAsset) => {
@@ -996,7 +996,7 @@ class EditorCore extends Component {
     this.project.importFile(file, (asset) => {
       if (callback) callback(asset);
 
-      if(asset === null) {
+      if (asset === null) {
         this.toast('Could not add files to project: ' + file.name, 'error');
       } else {
         this.toast(`Imported ${file.name || "project"} successfully.`);
@@ -1011,7 +1011,7 @@ class EditorCore extends Component {
    * @param {File} file - file to add
    */
   addFileToBuiltinPreviews = (filename, file) => {
-    this.builtinPreviews[filename] = {blob: file};
+    this.builtinPreviews[filename] = { blob: file };
 
     let reader = new FileReader();
 
@@ -1019,9 +1019,9 @@ class EditorCore extends Component {
       let dataURL = reader.result;
       this.builtinPreviews[filename].src = dataURL;
 
-      this.projectDidChange({ skipHistory: true, actionName: "Import File To Builtin Previews"});
+      this.projectDidChange({ skipHistory: true, actionName: "Import File To Builtin Previews" });
     }
-    
+
     reader.readAsDataURL(file);
   }
 
@@ -1055,7 +1055,8 @@ class EditorCore extends Component {
       let fileNamesRejected = rejectedFiles.map(file => file.name).join(', ');
       this.updateToast(toastID, {
         type: 'error',
-        text: 'Could not import files: ' + fileNamesRejected});
+        text: 'Could not import files: ' + fileNamesRejected
+      });
     }
 
     let createCallback = (asset) => {
@@ -1063,19 +1064,20 @@ class EditorCore extends Component {
     }
 
     // Add all successfully uploaded assets
-    for(var i = 0; i < acceptedFiles.length; i++) {
-      if(acceptedFiles[i].type === 'image/gif') {
+    for (var i = 0; i < acceptedFiles.length; i++) {
+      if (acceptedFiles[i].type === 'image/gif') {
         GIFImport.importGIFIntoProject({
-            gifFile: acceptedFiles[i],
-            project: this.project,
-            onProgress: (percent) => {
-                console.log('GIFImport onProgress: ' + percent);
-            },
-            onFinish: (gifAsset) => {
-                this.project.addAsset(gifAsset);
-                this.projectDidChange({ actionName: "Add Asset" });
-                if (options.create) this.createImageFromAsset(gifAsset.uuid, options.location.x || 0, options.location.y || 0);
-            }});
+          gifFile: acceptedFiles[i],
+          project: this.project,
+          onProgress: (percent) => {
+            console.log('GIFImport onProgress: ' + percent);
+          },
+          onFinish: (gifAsset) => {
+            this.project.addAsset(gifAsset);
+            this.projectDidChange({ actionName: "Add Asset" });
+            if (options.create) this.createImageFromAsset(gifAsset.uuid, options.location.x || 0, options.location.y || 0);
+          }
+        });
       } else {
         var file = acceptedFiles[i];
 
@@ -1106,10 +1108,10 @@ class EditorCore extends Component {
     window.Wick.HTMLPreview.previewProject(this.project, previewWindow => {
       this.hideWaitOverlay();
       if (previewWindow) {
-        this.toast('Project preview window opened.', 'info', {autoClose: true});
+        this.toast('Project preview window opened.', 'info', { autoClose: true });
       } else {
         // If pop ups are disabled, previewWindow will be null.
-        this.toast('Could not open a preview window. Try disabling your popup blocker!', 'error', {autoClose: false});
+        this.toast('Could not open a preview window. Try disabling your popup blocker!', 'error', { autoClose: false });
       }
     });
   }
@@ -1120,13 +1122,14 @@ class EditorCore extends Component {
   exportProjectAsWickFile = () => {
     this.showWaitOverlay();
 
-    let toastID = this.toast('Exporting project as a .wick file...', 'info', {autoClose: false});
-    
+    let toastID = this.toast('Exporting project as a .wick file...', 'info', { autoClose: false });
+
     window.Wick.WickFile.toWickFile(this.project, file => {
       if (file === undefined) {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Could not export .wick file." });
+          text: "Could not export .wick file."
+        });
         this.hideWaitOverlay();
         return;
       }
@@ -1134,16 +1137,18 @@ class EditorCore extends Component {
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved .wick file." });
+          text: "Successfully saved .wick file."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving .wick file. Please try again." });
+          text: "Error saving .wick file. Please try again."
+        });
       }
 
-      file = new Blob([file], {type: 'application/wick'});
+      file = new Blob([file], { type: 'application/wick' });
       window.saveFileFromWick(file, this.project.name, '.wick', success, fail);
 
       this.hideWaitOverlay();
@@ -1182,13 +1187,15 @@ class EditorCore extends Component {
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved .gif file." });
+          text: "Successfully saved .gif file."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving .gif file. Please try again." });
+          text: "Error saving .gif file. Please try again."
+        });
       }
 
       window.saveFileFromWick(gifBlob, outputName, '.gif', success, fail);
@@ -1226,7 +1233,7 @@ class EditorCore extends Component {
 
     let onProgress = (completed, maxFrames) => {
       let message = "Rendered " + completed + "/" + maxFrames + " frames";
-      let percentage = 10 + (90 * (completed/maxFrames));
+      let percentage = 10 + (90 * (completed / maxFrames));
       this.setState({
         renderStatusMessage: message,
         renderProgress: percentage,
@@ -1242,16 +1249,18 @@ class EditorCore extends Component {
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved image sequence." });
+          text: "Successfully saved image sequence."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving image sequence. Please try again." });
+          text: "Error saving image sequence. Please try again."
+        });
       }
 
-      window.saveFileFromWick(sequenceBlobZip, this.project.name+'_imageSequence', '.zip', success, fail);
+      window.saveFileFromWick(sequenceBlobZip, this.project.name + '_imageSequence', '.zip', success, fail);
 
       this.setState({
         exporting: false,
@@ -1303,7 +1312,8 @@ class EditorCore extends Component {
     let onFinish = (message) => {
       this.updateToast(toastID, {
         type: 'success',
-        text: "Successfully created .mp4 file." });
+        text: "Successfully created .mp4 file."
+      });
       console.log("Video Render Complete: ", message);
 
       this.setState({
@@ -1327,9 +1337,9 @@ class EditorCore extends Component {
       },
     });
   }
-    /**
-   * Export the current project as a video.
-   */
+  /**
+ * Export the current project as a video.
+ */
 
   exportProjectAsImageSVG = () => {
     // Open export media loading bar modal.
@@ -1347,18 +1357,20 @@ class EditorCore extends Component {
     }
 
     let onFinish = (file) => {
-      
+
 
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved .svg file." });
+          text: "Successfully saved .svg file."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving .svg file. Please try again." });
+          text: "Error saving .svg file. Please try again."
+        });
       }
 
       window.saveFileFromWick(file, this.project.name, '.svg', success, fail);
@@ -1368,7 +1380,7 @@ class EditorCore extends Component {
 
     // this.showWaitOverlay('Rendering video...');
     window.Wick.SVGFile.toSVGFile(this.project.activeTimeline,
-       onError,file => {
+      onError, file => {
         this.hideWaitOverlay();
         onFinish(file);
       });
@@ -1384,13 +1396,15 @@ class EditorCore extends Component {
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved .zip file." });
+          text: "Successfully saved .zip file."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving .zip file. Please try again." });
+          text: "Error saving .zip file. Please try again."
+        });
       }
 
       window.saveFileFromWick(blob, outputName, '.zip', success, fail);
@@ -1405,22 +1419,24 @@ class EditorCore extends Component {
     let toastID = this.toast('Exporting project as HTML...', 'info');
     let outputName = args.name || this.project.name;
     window.Wick.HTMLExport.bundleProject(this.project, html => {
-      let file = new Blob([html], {type: 'text/html'});
+      let file = new Blob([html], { type: 'text/html' });
 
       let success = () => {
         this.updateToast(toastID, {
           type: 'success',
-          text: "Successfully saved .html file." });
+          text: "Successfully saved .html file."
+        });
       }
 
       let fail = () => {
         this.updateToast(toastID, {
           type: 'error',
-          text: "Error saving .html file. Please try again." });
+          text: "Error saving .html file. Please try again."
+        });
       }
 
       window.saveFileFromWick(file, outputName, '.html', success, fail);
-      
+
     });
   }
 
@@ -1443,7 +1459,7 @@ class EditorCore extends Component {
   importProjectAsWickFile = (file) => {
     this.showWaitOverlay();
     window.Wick.WickFile.fromWickFile(file, project => {
-      if(project) {
+      if (project) {
         this.setupNewProject(project);
         this.toast(`Opened ${file.name || "project"} successfully.`, 'success');
       } else {
@@ -1482,7 +1498,7 @@ class EditorCore extends Component {
           this.setupNewProject();
         }, 100)
       }),
-      cancelAction: (() => {}),
+      cancelAction: (() => { }),
       finalAction: (() => {
 
       }),
@@ -1501,20 +1517,20 @@ class EditorCore extends Component {
     });
   }
 
-/**
-   * Attempts to parse a url passed to the editor.
-   * 
-   * if a url is passed to with the 'project' parameter, the editor will attempt to oad that project over https.
-   * if a example file name is passed with the 'example' parameter, the editor will attempt to load the example locally.
-   * 
-   * If the projects are not served over https, or do not exist, an error will be thrown.
-   * 
-   * the example parameter takes precedence.
-   */
+  /**
+     * Attempts to parse a url passed to the editor.
+     * 
+     * if a url is passed to with the 'project' parameter, the editor will attempt to oad that project over https.
+     * if a example file name is passed with the 'example' parameter, the editor will attempt to load the example locally.
+     * 
+     * If the projects are not served over https, or do not exist, an error will be thrown.
+     * 
+     * the example parameter takes precedence.
+     */
   tryToParseProjectURL = () => {
     var urlParams = queryString.parse(window.location.search);
 
-  
+
     let loadProjectFromURL = (url) => {
       // Download and open the wick project.
       fetch(url)
@@ -1525,10 +1541,10 @@ class EditorCore extends Component {
           }, 'blob');
         })
         .catch((e) => {
-          this.toast('Could not download project from URL.','warning');
+          this.toast('Could not download project from URL.', 'warning');
           console.error('tryToParseProjectURL: Could not download Wick project.')
           console.error(e);
-        });; 
+        });;
     }
 
 
@@ -1542,12 +1558,12 @@ class EditorCore extends Component {
     var projectLink = urlParams.project;
 
     // No URL param, skip the download
-    if(!projectLink) {
+    if (!projectLink) {
       return false;
     }
 
     if (!projectLink.startsWith('http')) {
-      projectLink='https://' + projectLink;
+      projectLink = 'https://' + projectLink;
     }
 
     try {
@@ -1561,8 +1577,8 @@ class EditorCore extends Component {
     // Check if the provided URL is allowed in the whitelist.
     var whitelist = ['wickeditor.com', 'editor.wickeditor.com', 'test.wickeditor.com', 'aka.ms'];
 
-    if(whitelist.indexOf(url.hostname) === -1) {
-      this.toast('Could not open project from link! \n URL is not on whitelist.','warning');
+    if (whitelist.indexOf(url.hostname) === -1) {
+      this.toast('Could not open project from link! \n URL is not on whitelist.', 'warning');
       console.error('tryToParseProjectURL: URL is not in the whitelist.');
       return false;
     }
@@ -1580,12 +1596,12 @@ class EditorCore extends Component {
     if (this.project && this.project._internalErrorMessages) {
       let errors = this.project._internalErrorMessages.concat([]);
       for (let error of errors) {
-        this.toast(error, 'error', {autoClose: false}); // Show all errors that occurred while loading the project.
+        this.toast(error, 'error', { autoClose: false }); // Show all errors that occurred while loading the project.
       }
     }
 
     this.project.onError(message => {
-      if(message === 'OUT_OF_BOUNDS' || message === 'LEAKY_HOLE') {
+      if (message === 'OUT_OF_BOUNDS' || message === 'LEAKY_HOLE') {
         this.toast('The shape you are trying to fill has a gap.', 'warning');
       } else if (message === 'FILL_EQUALS_HOLE') {
         this.toast("Error: Can't fill the same color.", 'warning');
@@ -1644,7 +1660,7 @@ class EditorCore extends Component {
    */
   loadAutosavedProject = (callback) => {
     window.Wick.AutoSave.getAutosavesList(autosaveList => {
-      if(!autosaveList[0]) {
+      if (!autosaveList[0]) {
         callback();
       } else {
         this.showWaitOverlay();
@@ -1696,7 +1712,7 @@ class EditorCore extends Component {
    * Toggles the preview play between on and off states.
    */
   togglePreviewPlaying = () => {
-    if(this.processingAction) return;
+    if (this.processingAction) return;
 
     let onionSkinningWasOn = false;
     if (!this.state.previewPlaying && this.project.onionSkinEnabled) {
@@ -1708,7 +1724,7 @@ class EditorCore extends Component {
     this.processingAction = true;
 
     // Apply the change of the current selection before clearing it.
-    if(this.project.selection.numObjects > 0) {
+    if (this.project.selection.numObjects > 0) {
       this.project.view.applyChanges();
       this.project.selection.clear();
     }
@@ -1732,10 +1748,10 @@ class EditorCore extends Component {
    * Start playing the project from the beginning of the timeline.
    */
   startPreviewPlayFromBeginning = () => {
-      if(this.state.previewPlaying) return;
+    if (this.state.previewPlaying) return;
 
-      this.project.focus.timeline.playheadPosition = 1;
-      this.togglePreviewPlaying();
+    this.project.focus.timeline.playheadPosition = 1;
+    this.togglePreviewPlaying();
   }
 
   /**
@@ -1750,7 +1766,7 @@ class EditorCore extends Component {
       showCodeErrors: this.project.error === undefined ? false : true,
     });
 
-    if(error) {
+    if (error) {
       let obj = window.Wick.ObjectCache.getObjectByUUID(error.uuid);
 
       if (obj) {
@@ -1767,18 +1783,18 @@ class EditorCore extends Component {
    * Clears the current error message in the project.
    */
   clearCodeEditorError = () => {
-      this.project.error = null;
-      this.setState({
-        codeError: null,
-      })
-      this.projectDidChange({ actionName: "Clear Code Editor Error" });
+    this.project.error = null;
+    this.setState({
+      codeError: null,
+    })
+    this.projectDidChange({ actionName: "Clear Code Editor Error" });
   }
 
   /**
    * Copies the selection state and selected objects to the clipboard.
    */
   copySelectionToClipboard = () => {
-    if(this.project.copySelectionToClipboard()) {
+    if (this.project.copySelectionToClipboard()) {
       this.projectDidChange({ actionName: "Copy Selection" });
     } else {
       this.toast('There is nothing to copy.', 'warning');
@@ -1789,8 +1805,8 @@ class EditorCore extends Component {
    * Duplicates the current objects in the selection.
    */
   duplicateSelection = () => {
-    if(this.project.duplicateSelection()) {
-      this.projectDidChange({actionName: "Duplicate Selection" });
+    if (this.project.duplicateSelection()) {
+      this.projectDidChange({ actionName: "Duplicate Selection" });
     } else {
       this.toast('There is nothing to duplicate.', 'warning');
     }
@@ -1800,8 +1816,8 @@ class EditorCore extends Component {
    * Copies the selected objects to the clipboard and then deletes them from the project.
    */
   cutSelectionToClipboard = () => {
-    if(this.project.cutSelectionToClipboard()) {
-      this.projectDidChange({ actionName: "Cut Selection"});
+    if (this.project.cutSelectionToClipboard()) {
+      this.projectDidChange({ actionName: "Cut Selection" });
     } else {
       this.toast('There is nothing to duplicate.', 'warning');
     }
@@ -1812,7 +1828,7 @@ class EditorCore extends Component {
    * @return {[type]} [description]
    */
   pasteFromClipboard = () => {
-    if(this.project.pasteClipboardContents()) {
+    if (this.project.pasteClipboardContents()) {
       this.projectDidChange({ actionName: "Paste from Clipboard" });
     } else {
       this.toast('There is nothing in the clipboard to paste.', 'warning');
@@ -1823,7 +1839,7 @@ class EditorCore extends Component {
    * Creates a new keyframe at the current playhead position.
    */
   addTweenKeyframe = () => {
-    if(!this.project.activeFrame) return;
+    if (!this.project.activeFrame) return;
     this.project.activeFrame.createTween();
     this.projectDidChange({ actionName: "Add Tween Keyframe" });
   }
@@ -1845,79 +1861,79 @@ class EditorCore extends Component {
   }
 
   extendFrame = () => {
-      var frames = this.project.selection.getSelectedObjects('Frame');
-      this.project.extendFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.selection.getSelectedObjects('Frame');
+    this.project.extendFrames(frames);
+    this.project.guiElement.draw();
   }
 
   shrinkFrame = () => {
-      var frames = this.project.selection.getSelectedObjects('Frame');
-      this.project.shrinkFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.selection.getSelectedObjects('Frame');
+    this.project.shrinkFrames(frames);
+    this.project.guiElement.draw();
   }
 
   moveFrameRight = () => {
-      this.project.moveSelectedFramesRight();
-      this.project.guiElement.draw();
+    this.project.moveSelectedFramesRight();
+    this.project.guiElement.draw();
   }
 
   moveFrameLeft = () => {
-      this.project.moveSelectedFramesLeft();
-      this.project.guiElement.draw();
+    this.project.moveSelectedFramesLeft();
+    this.project.guiElement.draw();
   }
 
   createTween = () => {
-      this.project.createTween();
-      this.projectDidChange({ actionName: "Create Tween" });
+    this.project.createTween();
+    this.projectDidChange({ actionName: "Create Tween" });
   }
 
   cutFrame = () => {
-      this.project.cutSelectedFrames();
-      this.projectDidChange({ actionName: "Cut Frame" });
+    this.project.cutSelectedFrames();
+    this.projectDidChange({ actionName: "Cut Frame" });
   }
 
   insertBlankFrame = () => {
-      this.project.insertBlankFrame();
-      this.projectDidChange({ actionName: "Insert Blank Frame" });
+    this.project.insertBlankFrame();
+    this.projectDidChange({ actionName: "Insert Blank Frame" });
   }
 
   extendSelectedFramesAndPushOtherFrames = () => {
-      var frames = this.project.selection.getSelectedObjects('Frame');
-      this.project.extendFramesAndPushOtherFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.selection.getSelectedObjects('Frame');
+    this.project.extendFramesAndPushOtherFrames(frames);
+    this.project.guiElement.draw();
   }
 
   shrinkSelectedFramesAndPullOtherFrames = () => {
-      var frames = this.project.selection.getSelectedObjects('Frame');
-      this.project.shrinkFramesAndPullOtherFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.selection.getSelectedObjects('Frame');
+    this.project.shrinkFramesAndPullOtherFrames(frames);
+    this.project.guiElement.draw();
   }
 
   extendActiveFramesAndPushOtherFrames = () => {
-      var frames = this.project.activeTimeline.activeFrames;
-      this.project.extendFramesAndPushOtherFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.activeTimeline.activeFrames;
+    this.project.extendFramesAndPushOtherFrames(frames);
+    this.project.guiElement.draw();
   }
 
   shrinkActiveFramesAndPullOtherFrames = () => {
-      var frames = this.project.activeTimeline.activeFrames;
-      this.project.shrinkFramesAndPullOtherFrames(frames);
-      this.project.guiElement.draw();
+    var frames = this.project.activeTimeline.activeFrames;
+    this.project.shrinkFramesAndPullOtherFrames(frames);
+    this.project.guiElement.draw();
   }
 
   exportSelectedClip = () => {
-      var clip = this.project.selection.getSelectedObject();
-      if(!clip) return;
-      if(!(clip instanceof window.Wick.Clip)) return;
+    var clip = this.project.selection.getSelectedObject();
+    if (!clip) return;
+    if (!(clip instanceof window.Wick.Clip)) return;
 
-      window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
-          window.saveFileFromWick(file, (clip.identifier || 'object'), '.wickobj');
-      });
+    window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
+      window.saveFileFromWick(file, (clip.identifier || 'object'), '.wickobj');
+    });
   }
 
   onEyedropperPickedColor = (e) => {
-      this._onEyedropperPickedColor(e.color);
-      this.activateLastTool();
+    this._onEyedropperPickedColor(e.color);
+    this.activateLastTool();
   }
 
   handleWickFileLoad = async (e) => {
@@ -1928,7 +1944,7 @@ class EditorCore extends Component {
     }
 
     // if not an mp4 file just load it then
-    if(file.type !== 'video/mp4'){
+    if (file.type !== 'video/mp4') {
       this.importProjectAsWickFile(file);
       return;
     }
@@ -1944,13 +1960,13 @@ class EditorCore extends Component {
       this.showWaitOverlay() // disable clicking anywhere
 
       // GET ALL FRAMES FROM MP4 (run through MP4 import function)
-      const { imageAssets, audioBlob, fps, projectName, width, height } = 
-            await MP4ImportPure.importMP4AsSequence({
-              mp4File: file,
-              fps: Math.max(1,Math.min(60,Number(prompt("Enter FPS","12")))), // give user the option of FPS
-              projectName: file.name.replace(".mp4", ''),
-              onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p||0)}%)` })
-            })
+      const { imageAssets, audioBlob, fps, projectName, width, height } =
+        await MP4ImportPure.importMP4AsSequence({
+          mp4File: file,
+          fps: Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12")))), // give user the option of FPS
+          projectName: file.name.replace(".mp4", ''),
+          onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p || 0)}%)` })
+        })
 
       // set up new project
       this.project.width = width;
@@ -1970,11 +1986,11 @@ class EditorCore extends Component {
           gifAsset.filename = projectName;
           this.project.addAsset(gifAsset);
           // extend frame
-          this.project._children[1].activeFrame.end = this.project._children.length-3;
-          
-          
+          this.project._children[1].activeFrame.end = this.project._children.length - 3;
+
+
           // add the video asset into the project
-          this.project.createClipInstanceFromAsset(gifAsset, this.project.width/2, this.project.height/2, (clip) => {
+          this.project.createClipInstanceFromAsset(gifAsset, this.project.width / 2, this.project.height / 2, (clip) => {
             this.selectObject(clip) // <-- select the object so we can adjust its settings
 
             // set to synce and enable play once
@@ -1986,7 +2002,7 @@ class EditorCore extends Component {
 
             const tl = this.project.activeTimeline;
             tl.layers[0].name = "video";
-            
+
             // add in the audio file as well (if video has audio)
             if (audioBlob) {
               tl.addLayer(new window.Wick.Layer());
@@ -1994,13 +2010,13 @@ class EditorCore extends Component {
               tl.layers[1].addFrame(new window.Wick.Frame());
               tl.layers[1].frames[0].end = tl.layers[0].frames[0].end;
               // const soundObj = new window.Wick.Sound({ asset: this.project.assets[1]});
-              
-              const audioFile = new File([audioBlob], projectName+".wav", { type: 'audio/wav' })
+
+              const audioFile = new File([audioBlob], projectName + ".wav", { type: 'audio/wav' })
               this.importFileAsAsset(audioFile, () => {
                 this.project.loadAssets(() => {
                   // wait for new audio asset to load in
                   this.setActiveLayerIndex(1);
-                  this.addSoundToActiveFrame(this.project.assets[this.project.assets.length-1])
+                  this.addSoundToActiveFrame(this.project.assets[this.project.assets.length - 1])
                   this.setActiveLayerIndex(0);
                 })
               })  // reuses existing audio import path
@@ -2013,7 +2029,7 @@ class EditorCore extends Component {
           })
 
           // this.project._children[1].activeFrame._children[0]._isSynced = true;
-          
+
         })
       })
 
@@ -2037,7 +2053,7 @@ class EditorCore extends Component {
           target: {
             files: [blob]
           }
-        }); 
+        });
       });
     } else {
       console.error("No File Entry Opener Provided");
@@ -2057,7 +2073,7 @@ class EditorCore extends Component {
    */
   reloadSavedWickFiles = () => {
     if (window.getSavedWickFiles) {
-       window.getSavedWickFiles(files => {
+      window.getSavedWickFiles(files => {
         this.setState({
           localSavedFiles: files,
         });
