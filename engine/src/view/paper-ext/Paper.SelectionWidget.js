@@ -413,7 +413,7 @@ class SelectionWidget {
     /**
      *
      */
-    scaleSelection(scale, pivot) {
+    scaleSelection(scale, pivot = this.pivot) {
         this._itemsInSelection.forEach(item => {
             item.rotate(-this.boxRotation, this.pivot);
             item.scale(scale, pivot);
@@ -427,7 +427,7 @@ class SelectionWidget {
     /**
      *
      */
-    transformSelection(matrix, pivot) {
+    transformSelection(matrix, pivot = this.pivot) {
         this._itemsInSelection.forEach(item => {
             item.rotate(-this.boxRotation, this.pivot);
             item.translate(pivot.multiply(-1)).transform(matrix).translate(pivot);
