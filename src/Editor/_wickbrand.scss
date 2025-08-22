@@ -31,6 +31,7 @@ $wick-cs-tab-bottom: $wick-cs-yellow;
 
 $wick-cs-pink: #ff00e6; 
 $wick-cs-pink-light: #ff7ef2; // UNUSED
+$wick-cs-pink-dark: #8d027f;
 $wick-cs-pink-text: #ff22f3; // used for text
 
 // wick tool bar
@@ -269,7 +270,7 @@ a:hover {
 }
 
 .wick-brand-arrow {
-  border: solid $wick-green;
+  border: solid $wick-cs-yellow;
   border-width: 0 3px 3px 0;
   border-radius: 2px; 
   display: inline-block;
