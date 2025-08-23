@@ -109,10 +109,14 @@
     "test": "react-scripts test",
     "engine-tests": "cd engine; python -m SimpleHTTPServer 9999",
     "predeploy": "npm run build",
-    "editor-deploy": "npm run build; rm -r ../wick-site/public/editor; mkdir ../wick-site/public/editor; cp -r build/* ../wick-site/public/editor; cd ../wick-site/public/editor; rm CNAME; echo 'wickeditor.com/editor/' > CNAME; git add .; git commit -m 'update release build'; git push --force;",
-    "test-deploy": "npm run build; rm -r ../wick-site/public/test; mkdir ../wick-site/public/test; cp -r build/* ../wick-site/public/test; cd ../wick-site/public/test; rm CNAME; echo 'wickeditor.com/test/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
-    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.wickeditor.com' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
-    "deploy": "gh-pages -d build",
+    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.github.io/Candlestick/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
+
+    "build:nocname": "react-scripts build",
+    "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error(`✖ Deploy test only from development (current: ${b})`); process.exit(1);} console.log('✔ Branch ok:', b);\"",
+    "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error(`✖ Deploy to prod only from main/master (current: ${b})`); process.exit(1);} console.log('✔ Branch ok:', b);\"",
+    "master-deploy": "npm run check-branch-prod; gh-pages -d build -b gh-pages -m \"deploy prod\"",
+    "test-deploy": "npm run check-branch; PUBLIC_URL=/Candlestick/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
+
     "electron": "electron .",
     "electron-dev-macos": "ELECTRON_START_URL=http://localhost:3000 electron .",
     "electron-dev-windows": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
