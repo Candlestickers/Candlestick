@@ -1,7 +1,7 @@
 {
   "main.css": "/Candlestick/test/static/css/main.13325d57.chunk.css",
-  "main.js": "/Candlestick/test/static/js/main.1dbfd7d6.chunk.js",
-  "main.js.map": "/Candlestick/test/static/js/main.1dbfd7d6.chunk.js.map",
+  "main.js": "/Candlestick/test/static/js/main.a28d60ce.chunk.js",
+  "main.js.map": "/Candlestick/test/static/js/main.a28d60ce.chunk.js.map",
   "static/css/1.b0877872.chunk.css": "/Candlestick/test/static/css/1.b0877872.chunk.css",
   "static/js/1.ddcf06b0.chunk.js": "/Candlestick/test/static/js/1.ddcf06b0.chunk.js",
   "static/js/1.ddcf06b0.chunk.js.map": "/Candlestick/test/static/js/1.ddcf06b0.chunk.js.map",
@@ -182,9 +182,9 @@
   "static/media/instagram.svg": "/Candlestick/test/static/media/instagram.d77f30af.svg",
   "static/media/twitter.svg": "/Candlestick/test/static/media/twitter.47cbfa33.svg",
   "static/media/white-heart.svg": "/Candlestick/test/static/media/white-heart.daf330ed.svg",
-  "static/css/1.b0877872.chunk.css.map": "/Candlestick/test/static/css/1.b0877872.chunk.css.map",
   "static/css/main.13325d57.chunk.css.map": "/Candlestick/test/static/css/main.13325d57.chunk.css.map",
+  "static/css/1.b0877872.chunk.css.map": "/Candlestick/test/static/css/1.b0877872.chunk.css.map",
   "index.html": "/Candlestick/test/index.html",
-  "precache-manifest.a7595e963e19c7ee8251833f4f7110ad.js": "/Candlestick/test/precache-manifest.a7595e963e19c7ee8251833f4f7110ad.js",
+  "precache-manifest.bfd8458eff5513c8bd167014904699c7.js": "/Candlestick/test/precache-manifest.bfd8458eff5513c8bd167014904699c7.js",
   "service-worker.js": "/Candlestick/test/service-worker.js"
 }
