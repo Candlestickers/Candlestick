@@ -6,7 +6,7 @@ export default {
     "icon": "icons/button.png",
   },{
     "file": "wickobjects/vcam.wickobj",
-    "name": "Vcam (Beta)",
+    "name": "Vcam (v1.0)",
     "icon": "icons/vcam.png",
   },{
     "file": "wickobjects/multiframeclip.wickobj",
@@ -18,7 +18,7 @@ export default {
     "icon": "icons/checkbox.png",
   },{
     "file": "wickobjects/keyboardcontrol.wickobj",
-    "name": "Keyboard Controlled Character",
+    "name": "Keyboard Movement",
     "icon": "icons/keyboardcharacter.png",
   },{
     "file": "wickobjects/link.wickobj",
