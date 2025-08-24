@@ -191,6 +191,24 @@ class ActionMapInterface extends Object {
         action: this.editor.toggleCanvasActions,
         id: 'action-show-more-canvas-options',
       },
+      showBooleanCanvasActions: {
+        icon: 'unite',
+        tooltip: 'Boolean Actions',
+        action: this.editor.toggleBooleanCanvasActions,
+        id: 'action-show-boolean-canvas-options',
+      },
+      showLayersCanvasActions: {
+        icon: 'sendToBack',
+        tooltip: 'Layer Actions',
+        action: this.editor.toggleLayersCanvasActions,
+        id: 'action-show-layers-canvas-options',
+      },
+      showAlignmentCanvasActions: {
+        icon: 'alignLeft',
+        tooltip: 'Alignment Actions',
+        action: this.editor.toggleAlignmentCanvasActions,
+        id: 'action-show-alignment-canvas-options',
+      },
       convertSelectionToButton: {
         icon: 'button-object-dark',
         tooltip: 'Make Button',

@@ -80,6 +80,9 @@ class Editor extends EditorCore {
       codeEditorOpen: false,
       scriptToEdit: "default",
       showCanvasActions: false,
+      showBooleanCanvasActions: false,
+      showLayersCanvasActions: false,
+      showAlignmentCanvasActions: false,
       showBrushModes: false,
       showCodeErrors: false,
       codeError: null,
@@ -604,6 +607,48 @@ class Editor extends EditorCore {
   }
 
   /**
+   * Opens and closes the BOOLEAN canvas actions popover.
+   * @param {boolean} state - Optional. True will open the canvas boolean actions menu, false will close.
+   */
+  toggleBooleanCanvasActions = (state) => {
+    if (state === undefined || (typeof state !== "boolean")) {
+      state = !this.state.showBooleanCanvasActions;
+    }
+
+    this.setState({
+      showBooleanCanvasActions: state,
+    });
+  }
+
+  /**
+   * Opens and closes the LAYERS canvas actions popover.
+   * @param {boolean} state - Optional. True will open the canvas layers actions menu, false will close.
+   */
+  toggleLayersCanvasActions = (state) => {
+    if (state === undefined || (typeof state !== "boolean")) {
+      state = !this.state.showLayersCanvasActions;
+    }
+
+    this.setState({
+      showLayersCanvasActions: state,
+    });
+  }
+
+  /**
+   * Opens and closes the ALIGNMENT canvas actions popover.
+   * @param {boolean} state - Optional. True will open the canvas alignment actions menu, false will close.
+   */
+  toggleAlignmentCanvasActions = (state) => {
+    if (state === undefined || (typeof state !== "boolean")) {
+      state = !this.state.showAlignmentCanvasActions;
+    }
+
+    this.setState({
+      showAlignmentCanvasActions: state,
+    });
+  }
+
+  /**
    * Opens and closes the brush modes popover.
    * @param {boolean} state - Optional. True will open the brush modes menu, false will close.
    */
@@ -972,8 +1017,14 @@ class Editor extends EditorCore {
                       editorActions={this.actionMapInterface.editorActions}
                       getToolSettingRestrictions={this.getToolSettingRestrictions}
                       showCanvasActions={this.state.showCanvasActions}
+                      showBooleanCanvasActions={this.state.showBooleanCanvasActions}
+                      showLayersCanvasActions={this.state.showLayersCanvasActions}
+                      showAlignmentCanvasActions={this.state.showAlignmentCanvasActions}
                       showBrushModes={this.state.showBrushModes}
                       toggleCanvasActions={this.toggleCanvasActions}
+                      toggleBooleanCanvasActions={this.toggleBooleanCanvasActions}
+                      toggleLayersCanvasActions={this.toggleLayersCanvasActions}
+                      toggleAlignmentCanvasActions={this.toggleAlignmentCanvasActions}
                       toggleBrushModes={this.toggleBrushModes}
                       colorPickerType={this.state.colorPickerType}
                       changeColorPickerType={this.changeColorPickerType}

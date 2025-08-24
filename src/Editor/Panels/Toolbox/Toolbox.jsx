@@ -147,6 +147,22 @@ class Toolbox extends Component {
       <div className="toolbox-actions-right-container">
         <div className="toolbox-actions-right">
 
+
+          <div id="alignment-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showAlignmentCanvasActions)}
+            <CanvasActions {...this.props} />
+          </div>
+
+          <div id="layers-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showLayersCanvasActions)}
+            <CanvasActions {...this.props} />
+          </div>
+
+          <div id="boolean-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showBooleanCanvasActions)}
+            <CanvasActions {...this.props} />
+          </div>
+
           <div id="more-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showMoreCanvasActions)}
             <CanvasActions {...this.props} />
@@ -180,6 +196,9 @@ class Toolbox extends Component {
           getToolSettingRestrictions={this.props.getToolSettingRestrictions}
           toggleBrushModes={this.props.toggleBrushModes}
           showCanvasActions={this.props.showCanvasActions}
+          showBooleanCanvasActions={this.showBooleanCanvasActions}
+          showLayersCanvasActions={this.showLayersCanvasActions}
+          showAlignmentCanvasActions={this.showAlignmentCanvasActions}
           showBrushModes={this.props.showBrushModes}
         />
 
@@ -206,6 +225,9 @@ class Toolbox extends Component {
             getToolSettingRestrictions={this.props.getToolSettingRestrictions}
             toggleBrushModes={this.props.toggleBrushModes}
             showCanvasActions={this.props.showCanvasActions}
+            showBooleanCanvasActions={this.showBooleanCanvasActions}
+            showLayersCanvasActions={this.showLayersCanvasActions}
+            showAlignmentCanvasActions={this.showAlignmentCanvasActions}
             showBrushModes={this.props.showBrushModes}/>
             {this.renderCanvasActions()}
         </div>
@@ -233,6 +255,9 @@ class Toolbox extends Component {
             getToolSettingRestrictions={this.props.getToolSettingRestrictions}
             toggleBrushModes={this.props.toggleBrushModes}
             showCanvasActions={this.props.showCanvasActions}
+            showBooleanCanvasActions={this.showBooleanCanvasActions}
+            showLayersCanvasActions={this.showLayersCanvasActions}
+            showAlignmentCanvasActions={this.showAlignmentCanvasActions}
             showBrushModes={this.props.showBrushModes}/>
         </div>
 
