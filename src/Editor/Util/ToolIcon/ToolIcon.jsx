@@ -81,13 +81,16 @@ import iconUnite from 'resources/tool-icons/unite.svg';
 import iconAddDark from 'resources/asset-library-icons/add-icon-dark.svg';
 import iconUploadDark from 'resources/asset-library-icons/upload-icon-dark.svg';
 
-// NEW Alignment Icons -H.A.
+// Alignment Icons -H.A.
 import iconAlignX from 'resources/tool-icons/alignX.png';
 import iconAlignY from 'resources/tool-icons/alignY.png';
 import iconAlignRight from 'resources/tool-icons/alignRight.png';
 import iconAlignLeft from 'resources/tool-icons/alignLeft.png';
 import iconAlignTop from 'resources/tool-icons/alignTop.png';
 import iconAlignBottom from 'resources/tool-icons/alignBottom.png';
+
+// Dropdown Icons -H.A.
+import layersDropdown from 'resources/tool-icons/layersDropdown.png';
 
 
 // Assets
@@ -289,6 +292,8 @@ const icons = {
   "alignLeft": iconAlignLeft,
   "alignTop": iconAlignTop,
   "alignBottom": iconAlignBottom,
+
+  "layersDropdown": layersDropdown,
 
   "lock": iconLock,
   "unlock": iconUnlock,

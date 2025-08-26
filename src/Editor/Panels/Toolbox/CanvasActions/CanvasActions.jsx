@@ -24,22 +24,8 @@ class CanvasActions extends Component {
   renderActions = () => {
     return (
       <div className={classNames('actions-container', this.props.renderSize === "small" && "vertical")}>
-        {/* {this.renderActionButton(this.props.editorActions.sendToBack)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendBackward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendForward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendToFront)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignRight)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignLeft)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignTop)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignBottom)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignX)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignY)} */}
         {this.renderActionButton(this.props.editorActions.flipHorizontal)}
         {this.renderActionButton(this.props.editorActions.flipVertical)}
-        {/* {this.renderActionButton(this.props.editorActions.booleanUnite)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanSubtract)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanIntersect)} */}
-        {/* <ToolboxBreak vertical={this.props.renderSize === "small"}/> */}
         {/* -H.A. */}
       </div>
     );
@@ -48,22 +34,9 @@ class CanvasActions extends Component {
   renderBooleanActions = () => {
     return (
       <div className={classNames('actions-container', this.props.renderSize === "small" && "vertical")}>
-        {/* {this.renderActionButton(this.props.editorActions.sendToBack)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendBackward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendForward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendToFront)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignRight)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignLeft)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignTop)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignBottom)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignX)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignY)} */}
-        {/* {this.renderActionButton(this.props.editorActions.flipHorizontal)} */}
-        {/* {this.renderActionButton(this.props.editorActions.flipVertical)} */}
         {this.renderActionButton(this.props.editorActions.booleanUnite)}
         {this.renderActionButton(this.props.editorActions.booleanSubtract)}
         {this.renderActionButton(this.props.editorActions.booleanIntersect)}
-        {/* <ToolboxBreak vertical={this.props.renderSize === "small"}/> */}
         {/* -H.A. */}
       </div>
     );
@@ -76,18 +49,6 @@ class CanvasActions extends Component {
         {this.renderActionButton(this.props.editorActions.sendBackward)}
         {this.renderActionButton(this.props.editorActions.sendForward)}
         {this.renderActionButton(this.props.editorActions.sendToFront)}
-        {/* {this.renderActionButton(this.props.editorActions.alignRight)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignLeft)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignTop)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignBottom)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignX)} */}
-        {/* {this.renderActionButton(this.props.editorActions.alignY)} */}
-        {/* {this.renderActionButton(this.props.editorActions.flipHorizontal)} */}
-        {/* {this.renderActionButton(this.props.editorActions.flipVertical)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanUnite)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanSubtract)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanIntersect)} */}
-        {/* <ToolboxBreak vertical={this.props.renderSize === "small"}/> */}
         {/* -H.A. */}
       </div>
     );
@@ -96,21 +57,12 @@ class CanvasActions extends Component {
   renderAlignmentActions = () => {
     return (
       <div className={classNames('actions-container', this.props.renderSize === "small" && "vertical")}>
-        {/* {this.renderActionButton(this.props.editorActions.sendToBack)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendBackward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendForward)} */}
-        {/* {this.renderActionButton(this.props.editorActions.sendToFront)} */}
         {this.renderActionButton(this.props.editorActions.alignRight)}
         {this.renderActionButton(this.props.editorActions.alignLeft)}
         {this.renderActionButton(this.props.editorActions.alignTop)}
         {this.renderActionButton(this.props.editorActions.alignBottom)}
         {this.renderActionButton(this.props.editorActions.alignX)}
         {this.renderActionButton(this.props.editorActions.alignY)}
-        {/* {this.renderActionButton(this.props.editorActions.flipHorizontal)} */}
-        {/* {this.renderActionButton(this.props.editorActions.flipVertical)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanUnite)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanSubtract)} */}
-        {/* {this.renderActionButton(this.props.editorActions.booleanIntersect)} */}
         {/* <ToolboxBreak vertical={this.props.renderSize === "small"}/> */}
         {/* -H.A. */}
       </div>

@@ -168,6 +168,8 @@ class Toolbox extends Component {
           </div>
 
           <CanvasActions {...this.props} />
+        
+        <ToolboxBreak/>
 
         {this.renderToolButtonFromAction(this.props.editorActions.delete)}
         {this.renderToolButtonFromAction(this.props.editorActions.copy)}
