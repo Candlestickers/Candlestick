@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.25.19.25.2";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.25.23.47.59";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -55658,26 +55658,29 @@ WickSound = class {
     };
     this._hasCustomLoopRange = false;
     this._muteVolume = 1;
-    this._loopTimer = null;
-  }
+  } // set a custom loop range, if low and high are the same as the sound duration
 
-  setLoopRange(loopRange) {
-    if (loopRange.low < 0) loopRange.low = 0;
-    if (loopRange.high > this.duration()) loopRange.high = this.duration();
 
-    if (loopRange.high <= loopRange.low) {
-      loopRange.low = 0;
-      loopRange.high = this.duration();
+  setLoopRange(low, high) {
+    if (low < 0) low = 0;
+    if (high > this.duration()) high = this.duration();
+
+    if (high <= low) {
+      low = 0;
+      high = this.duration();
     }
 
-    if (loopRange.low == 0 && loopRange.high == this.duration()) {
+    if (low == 0 && high == this.duration()) {
       this._hasCustomLoopRange = false;
       return;
     } // if the sound is playing and we are setting loop to true,
 
 
     this._hasCustomLoopRange = true;
-    this._loopRange = loopRange;
+    this._loopRange = {
+      low: low,
+      high: high
+    };
   } // set sound to loop or not, returns is its looping when no argument is passed.
 
 
@@ -55696,7 +55699,7 @@ WickSound = class {
       if (this.isPlaying()) {
         let curr = this.currently();
 
-        if (curr < this._loopRange.low || curr > this._loopRange.high - 0.01) {
+        if (curr < this._loopRange.low || curr > this._loopRange.high) {
           this.seek(this._loopRange.low);
         }
       }
@@ -55727,7 +55730,7 @@ WickSound = class {
       return this.asset._howl.rate();
     }
 
-    if (rate <= 0.1) rate = 0.1;else if (rate > 4) rate = 4;
+    if (rate <= 0.01) rate = 0.01;else if (rate > 10) rate = 10;
 
     this.asset._howl.rate(rate);
   } // Method for panning pan = -1 all left, pan = 1 all right...

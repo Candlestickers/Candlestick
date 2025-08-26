@@ -474,7 +474,7 @@ class EditorCore extends Component {
    * @param {string|number} newValue  New value of the attribute to update.
    */
   setSelectionAttribute = (attribute, newValue) => {
-    try{this.project.selection[attribute] = newValue;}catch(err){}
+    this.project.selection[attribute] = newValue;
     this.projectDidChange({ actionName: "Set Selection Attribute: " + attribute + ":" + newValue});
   }
 
