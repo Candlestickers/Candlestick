@@ -2,25 +2,60 @@
 WickSound = class {
 	constructor(assetName) {
 		this.asset = project.project.getAssetByName(assetName);
-		this._pan    = 0;
-		this._volume = 1;
-		this._seek   = 0;
-		this._loop   = false;
-		this._muteVolume = 1;
+		this._pan         = 0;
+		this._volume      = 1;
+		this._seek        = 0;
+		this._loop        = false;
+		this._loopRange   = {low:0, high:this.duration()};
+		this._hasCustomLoopRange = false;
+		this._muteVolume  = 1;
+		this._loopTimer = null;
+	}
+
+	setLoopRange(loopRange) {
+		if(loopRange.low < 0) loopRange.low = 0;
+		if(loopRange.high>this.duration()) loopRange.high = this.duration();
+		if(loopRange.high<=loopRange.low) {
+			loopRange.low = 0;
+			loopRange.high = this.duration();
+		}
+
+		if(loopRange.low == 0 && loopRange.high == this.duration()) {
+			this._hasCustomLoopRange = false;
+			return;
+		} 
+
+		// if the sound is playing and we are setting loop to true,
+		this._hasCustomLoopRange = true;
+		this._loopRange = loopRange;
 	}
 
 	// set sound to loop or not, returns is its looping when no argument is passed.
 	loop(loop) {
-		if(loop === null || loop==undefined){
-			return this._loop;
-		}
+		if(loop === null || loop === undefined) return (this._loop);
+
 		this._loop = loop;
-		this.asset._howl.loop(this._loop);
+
+		if(!this._hasCustomLoopRange) {
+			this.asset._howl.loop(this._loop);
+		}
+	}
+
+	// required only to update the loop when using custom loop range
+	updateLoop() {
+		if(this._loop && this._hasCustomLoopRange) {
+			if(this.isPlaying()) {
+				let curr = this.currently();
+				if (curr < this._loopRange.low || curr > this._loopRange.high - 0.01) {
+					this.seek(this._loopRange.low);
+				}
+			}
+		}
 	}
 
 	// Method for volume control, volume = 1 is the default sound volume. 
 	volume(volume) {
-		if(volume === null || volume==undefined){
+		if(volume === null || volume === undefined){
 			return this._volume;
 		}
 
@@ -33,34 +68,48 @@ WickSound = class {
 		this.asset._howl.volume(this._volume);
 	}
 
+	// Method for rate control, rate = 1 is the default sound rate.
+	// rate can go from 0.1 to 4
+	rate(rate) {
+		if(rate === null || rate === undefined){
+			return this.asset._howl.rate();
+		}
+
+		if(rate<=0.1)   rate = 0.1;
+		else if(rate>4) rate = 4;
+		
+		this.asset._howl.rate(rate);
+	}
+
 	// Method for panning pan = -1 all left, pan = 1 all right...
 	stereo(pan) {
-		if(pan === null || pan==undefined){
+		if(pan === null || pan === undefined){
 			return this._pan;
 		}
 
 		this._pan = pan;
-		if(this._pan<-1) {
-			this._pan = -1;
-		}  else if(this._pan>1) {
-			this._pan = 1;
-		}
+		if(this._pan<-1)     this._pan = -1;
+		else if(this._pan>1) this._pan = 1;
+		
 		this.asset._howl.stereo(this._pan);
 	}
 
 	// seek sound in seconds from 0 to sound duration
 	seek(seconds) {
-		if(seconds === null || seconds==undefined) {
+		if(seconds === null || seconds === undefined) {
 			return this.asset._howl.seek();
 		}
 
 		this._seek = seconds;
-		if(this._seek >this.duration()) {
-			this._seek = this.duration();
-		} else if(this._seek<0) {
-			this._seek = 0;
-		}
+		if(this._seek >this.duration()) this._seek = this.duration();
+		else if(this._seek<0)           this._seek = 0;
+		
 		this.asset._howl.seek(this._seek);
+	}
+
+	// returns the internal Howl object
+	getHowl(){
+		return this.asset._howl;
 	}
 
 	// play sound at specified second.  If no argument is 
