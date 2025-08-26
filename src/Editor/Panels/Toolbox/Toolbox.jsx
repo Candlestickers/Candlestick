@@ -150,23 +150,24 @@ class Toolbox extends Component {
 
           <div id="alignment-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showAlignmentCanvasActions)}
-            <CanvasActions {...this.props} />
+
           </div>
 
           <div id="layers-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showLayersCanvasActions)}
-            <CanvasActions {...this.props} />
+            
           </div>
 
           <div id="boolean-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showBooleanCanvasActions)}
-            <CanvasActions {...this.props} />
+          
           </div>
 
           <div id="more-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showMoreCanvasActions)}
-            <CanvasActions {...this.props} />
           </div>
+
+          <CanvasActions {...this.props} />
 
         {this.renderToolButtonFromAction(this.props.editorActions.delete)}
         {this.renderToolButtonFromAction(this.props.editorActions.copy)}
