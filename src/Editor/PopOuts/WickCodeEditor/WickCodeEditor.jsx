@@ -252,72 +252,72 @@ export default function WickCodeEditor(props) {
     }
   }
 
-  function renderCodeTabs () {
+  function renderCodeTabs() {
     return (
       <div className="wick-code-editor-tabs">
-            {props.script && props.script.scripts.map(script => {
-              return <button
-                key={"script-tab-" + script.name}
-                onClick={() => {
-                  props.editScript(script.name)
-                  props.clearCodeEditorError();
-                }}
+        {props.script && props.script.scripts.map(script => {
+          return <button
+            key={"script-tab-" + script.name}
+            onClick={() => {
+              props.editScript(script.name)
+              props.clearCodeEditorError();
+            }}
 
-                className={classNames("we-code-script-button",
-                  "we-event",
-                  props.scriptInfoInterface.getScriptType(script.name),
-                  { selected: props.scriptToEdit === script.name })}
-              >
-                {capitalize(script.name)}
-              </button>
-            })}
-            {props.script && <button
-              onClick={() => {
-                props.editScript('add')
-                props.clearCodeEditorError();
-              }}
-              className={classNames("we-code-script-button", "we-code-add")}
-            >
-              +
-            </button>}
-          </div>
+            className={classNames("we-code-script-button",
+              "we-event",
+              props.scriptInfoInterface.getScriptType(script.name),
+              { selected: props.scriptToEdit === script.name })}
+          >
+            {capitalize(script.name)}
+          </button>
+        })}
+        {props.script && <button
+          onClick={() => {
+            props.editScript('add')
+            props.clearCodeEditorError();
+          }}
+          className={classNames("we-code-script-button", "we-code-add")}
+        >
+          +
+        </button>}
+      </div>
     )
   }
 
 
-  function renderCodeEditor () {
+  function renderCodeEditor() {
     return (
       <div className={classNames("wick-code-editor-code", 'theme' + props.codeEditorWindowProperties.theme)}>
-      {
-        props.scriptToEdit === 'add' &&
-        <AddScriptPanel
-          availableScripts={props.script && props.script.getAvailableScripts()}
-          scripts={props.scriptInfoInterface.scriptData.filter(script => script.type === addScriptTab)}
-          changeTab={(tab) => setAddScriptTab(tab)}
-          addScript={addScript}
-          addScriptTab={addScriptTab}
-        />
-      }
-      {
-        props.scriptToEdit !== 'add' &&
-        <AceEditor
-          value={scriptToShow}
-          mode="javascript"
-          theme={props.codeEditorWindowProperties.theme}
-          fontSize={props.codeEditorWindowProperties.fontSize} // TODO: Controllable by User
-          width="100%"
-          height="100%"
-          name="wick-ace-editor"
-          focus={true}
-          editorProps={{ $blockScrolling: true }}
-          onChange={scriptOnChange}
-          onLoad={(editor) => setAceEditor(editor)}
-          markers={mapErrorToMarkers(props.error)}
-          annotations={mapErrorToAnnotations(props.error)}
-          readOnly={!props.script}
-        />
-      }
-    </div>
+        {
+          props.scriptToEdit === 'add' &&
+          <AddScriptPanel
+            availableScripts={props.script && props.script.getAvailableScripts()}
+            scripts={props.scriptInfoInterface.scriptData.filter(script => script.type === addScriptTab)}
+            changeTab={(tab) => setAddScriptTab(tab)}
+            addScript={addScript}
+            addScriptTab={addScriptTab}
+          />
+        }
+        {
+          props.scriptToEdit !== 'add' &&
+          <AceEditor
+            value={scriptToShow}
+            mode="javascript"
+            theme={props.codeEditorWindowProperties.theme}
+            fontSize={props.codeEditorWindowProperties.fontSize} // TODO: Controllable by User
+            width="100%"
+            height="100%"
+            name="wick-ace-editor"
+            focus={true}
+            editorProps={{ $blockScrolling: Infinity }}
+            onChange={scriptOnChange}
+            onLoad={(editor) => setAceEditor(editor)}
+            markers={mapErrorToMarkers(props.error)}
+            annotations={mapErrorToAnnotations(props.error)}
+            readOnly={!props.script}
+          />
+        }
+      </div>
     )
   }
 
@@ -354,111 +354,111 @@ export default function WickCodeEditor(props) {
     )
   } else {
 
-  return (
-    <Rnd
-      id="wick-code-editor-resizeable"
-      bounds="window"
-      dragHandleClassName="wick-code-editor-drag-handle"
-      minWidth={props.codeEditorWindowProperties.minWidth}
-      minHeight={props.codeEditorWindowProperties.minHeight}
-      onResizeStop={onResizeHandler}
-      onDragStop={onDragHandler}
-      default={props.codeEditorWindowProperties}
-    >
+    return (
+      <Rnd
+        id="wick-code-editor-resizeable"
+        bounds="window"
+        dragHandleClassName="wick-code-editor-drag-handle"
+        minWidth={props.codeEditorWindowProperties.minWidth}
+        minHeight={props.codeEditorWindowProperties.minHeight}
+        onResizeStop={onResizeHandler}
+        onDragStop={onDragHandler}
+        default={props.codeEditorWindowProperties}
+      >
 
-      <div className="wick-code-editor-drag-handle">
-        <div className="wick-code-editor-icon">{"</>"}</div>
-        <div className="we-code-editor-title">
-          Code Editor | 
-          { !props.error && <div className="we-code-editor-title-selected">
-            {`editing ${props.selectionType}`}
+        <div className="wick-code-editor-drag-handle">
+          <div className="wick-code-editor-icon">{"</>"}</div>
+          <div className="we-code-editor-title">
+            Code Editor |
+            {!props.error && <div className="we-code-editor-title-selected">
+              {`editing ${props.selectionType}`}
             </div>
-          } 
-          { props.error && <div className="we-code-editor-title-error">
-                {`error - line ${props.error.lineNumber}`}
-              </div>
-          }
+            }
+            {props.error && <div className="we-code-editor-title-error">
+              {`error - line ${props.error.lineNumber}`}
+            </div>
+            }
+          </div>
+          <ActionButton
+            className="we-code-close-button"
+            color="tool"
+            icon="cancel-white"
+            action={props.toggleCodeEditor} />
         </div>
-        <ActionButton
-          className="we-code-close-button"
-          color="tool"
-          icon="cancel-white"
-          action={props.toggleCodeEditor} />
-      </div>
 
-      <div className="wick-code-editor-body">
-        <div className="wick-code-editor-reference">
-          <CodeReference
-            referenceItems={props.scriptInfoInterface.referenceItems}
-            addCodeToTab={addCodeToTab} />
-        </div>
-        <div className="wick-code-editor-content">
-          {renderCodeTabs()}
-          <ReflexContainer>
-            <ReflexElement>
-              {renderCodeEditor()}
-            </ReflexElement>
+        <div className="wick-code-editor-body">
+          <div className="wick-code-editor-reference">
+            <CodeReference
+              referenceItems={props.scriptInfoInterface.referenceItems}
+              addCodeToTab={addCodeToTab} />
+          </div>
+          <div className="wick-code-editor-content">
+            {renderCodeTabs()}
+            <ReflexContainer>
+              <ReflexElement>
+                {renderCodeEditor()}
+              </ReflexElement>
 
-            <ReflexSplitter></ReflexSplitter>
+              <ReflexSplitter></ReflexSplitter>
 
-            <ReflexElement
-              minSize={40}
-              size={props.codeEditorWindowProperties.consoleOpen ? props.codeEditorWindowProperties.consoleHeight : 1}
-              onStopResize={resizeConsole}>
-              <div className="wick-code-editor-console">
+              <ReflexElement
+                minSize={40}
+                size={props.codeEditorWindowProperties.consoleOpen ? props.codeEditorWindowProperties.consoleHeight : 1}
+                onStopResize={resizeConsole}>
+                <div className="wick-code-editor-console">
 
-                <div className="we-code-console-bar">
-                  <div className="we-code-console-title">{consoleType === 'options' ? 'Text Editor Options' : 'Console'}</div>
-                  <div className="we-code-console-options-container">
-                    {
-                      consoleType === 'options' &&
-                      <ActionButton
-                        className="we-code-console-option"
-                        id="console-console-button"
-                        icon="codeConsole"
-                        action={() => { setConsoleType('console') }}
-                        tooltip="Show Console"
-                        tooltipPlace="left"
-                        color='tool' />
-                    }
+                  <div className="we-code-console-bar">
+                    <div className="we-code-console-title">{consoleType === 'options' ? 'Text Editor Options' : 'Console'}</div>
+                    <div className="we-code-console-options-container">
+                      {
+                        consoleType === 'options' &&
+                        <ActionButton
+                          className="we-code-console-option"
+                          id="console-console-button"
+                          icon="codeConsole"
+                          action={() => { setConsoleType('console') }}
+                          tooltip="Show Console"
+                          tooltipPlace="left"
+                          color='tool' />
+                      }
 
-                    {
-                      consoleType === 'console' &&
-                      <ActionButton
-                        className="we-code-console-option"
-                        id="console-option-button"
-                        icon="gear"
-                        action={() => { setConsoleType('options') }}
-                        tooltip="Show Options"
-                        tooltipPlace="left"
-                        color='tool' />
-                    }
+                      {
+                        consoleType === 'console' &&
+                        <ActionButton
+                          className="we-code-console-option"
+                          id="console-option-button"
+                          icon="gear"
+                          action={() => { setConsoleType('options') }}
+                          tooltip="Show Options"
+                          tooltipPlace="left"
+                          color='tool' />
+                      }
 
-                    {
-                      consoleType === 'console' &&
-                      <ActionButton
-                        className="we-code-console-option we-code-clear-console"
-                        id="clear-console-button"
-                        icon="clear"
-                        action={clearConsole}
-                        tooltip="Clear Console"
-                        tooltipPlace="left"
-                        color='tool' />
-                    }
+                      {
+                        consoleType === 'console' &&
+                        <ActionButton
+                          className="we-code-console-option we-code-clear-console"
+                          id="clear-console-button"
+                          icon="clear"
+                          action={clearConsole}
+                          tooltip="Clear Console"
+                          tooltipPlace="left"
+                          color='tool' />
+                      }
+                    </div>
+
                   </div>
 
+                  {consoleType === 'console' && <Console logs={props.consoleLogs} variant="dark" />}
+                  {consoleType === 'options' && renderCodeEditorOptions()}
                 </div>
-
-                {consoleType === 'console' && <Console logs={props.consoleLogs} variant="dark"/>}
-                {consoleType === 'options' && renderCodeEditorOptions()}
-              </div>
-            </ReflexElement>
-          </ReflexContainer>
+              </ReflexElement>
+            </ReflexContainer>
+          </div>
         </div>
-      </div>
 
-    </Rnd>
-  )
+      </Rnd>
+    )
 
   }
 }
