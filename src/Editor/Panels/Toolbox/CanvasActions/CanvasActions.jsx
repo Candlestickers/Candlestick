@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
-import ToolboxBreak from '../ToolboxBreak/ToolboxBreak';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 import './_canvasactions.scss';
 
