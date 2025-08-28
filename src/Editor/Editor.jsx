@@ -205,7 +205,7 @@ class Editor extends EditorCore {
   }
 
   UNSAFE_componentWillMount = () => {
-    document.title =  `Candlestick ${this.editorVersion}`;
+    document.title =  `W.E. Candlestick ${this.editorVersion}`;
     // Initialize "live" engine state
     this.project = new window.Wick.Project();
     this.attachErrorHandlers();
