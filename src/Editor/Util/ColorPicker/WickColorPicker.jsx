@@ -9,6 +9,26 @@ import WickSwatch from 'Editor/Util/ColorPicker/WickSwatch/WickSwatch'
 var { Saturation, Hue, Alpha, Checkboard, Swatch } = require('react-color/lib/components/common');
 var { SketchFields } = require('react-color/lib/components/sketch/SketchFields');
 
+// fix for react-color window traversal crash on unmount
+// SEE: https://stackoverflow.com/questions/54954385/react-useeffect-causing-cant-perform-a-react-state-update-on-an-unmounted-comp
+const safeGetContainerRenderWindow = function () {
+  const container = this.container;
+  let renderWindow = (container && container.ownerDocument && container.ownerDocument.defaultView) || (typeof window !== 'undefined' ? window : undefined);
+
+  while (renderWindow && renderWindow.document && typeof renderWindow.document.contains === 'function' && renderWindow.document.contains(container) && renderWindow.parent && renderWindow.parent !== renderWindow){
+    renderWindow = renderWindow.parent;
+  }
+  return renderWindow || (typeof window !== 'undefined' ? window : undefined);
+};
+
+// redefining react color components to add to correct container render type
+[Saturation, Hue, Alpha].forEach(Cmp => {
+  if (Cmp && Cmp.prototype && typeof Cmp.prototype.getContainerRenderWindow === 'function'){
+    Cmp.prototype.getContainerRenderWindow = safeGetContainerRenderWindow;
+  }
+});
+
+
 class WickColorPicker extends Component {
     renderSwatchColumn = (colorList, i) => {
         return (
