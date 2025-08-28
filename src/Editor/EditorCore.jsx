@@ -782,7 +782,7 @@ class EditorCore extends Component {
   // refresh bounds/center for current objects
   refreshSelectionBounds = () => {
     const objs = this.getSelectedCanvasObjects();
-    if(objs&&objs.length)
+    if(objs && objs.length)
       this.project.selection.selectMultipleObjects(objs);
   };
 
@@ -862,7 +862,6 @@ class EditorCore extends Component {
    */
   alignSelectionRight = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    console.log(this.project.selection._view);
     if (selected.length < 2){
       if(selected[0]){
         selected[0].x = this.project.width-selected[0].bounds.width/2;
