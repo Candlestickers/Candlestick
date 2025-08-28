@@ -11,6 +11,7 @@ var { SketchFields } = require('react-color/lib/components/sketch/SketchFields')
 
 // fix for react-color window traversal crash on unmount
 // SEE: https://stackoverflow.com/questions/54954385/react-useeffect-causing-cant-perform-a-react-state-update-on-an-unmounted-comp
+// Note to future self: update library and we'll less likely need this -H.A.
 const safeGetContainerRenderWindow = function () {
   const container = this.container;
   let renderWindow = (container && container.ownerDocument && container.ownerDocument.defaultView) || (typeof window !== 'undefined' ? window : undefined);
