@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.26.17.7.20";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.28.17.9.37";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -62497,7 +62497,7 @@ class SelectionWidget {
    */
 
 
-  scaleSelection(scale, pivot) {
+  scaleSelection(scale, pivot = this.pivot) {
     this._itemsInSelection.forEach(item => {
       item.rotate(-this.boxRotation, this.pivot);
       item.scale(scale, pivot);
@@ -62512,7 +62512,7 @@ class SelectionWidget {
    */
 
 
-  transformSelection(matrix, pivot) {
+  transformSelection(matrix, pivot = this.pivot) {
     this._itemsInSelection.forEach(item => {
       item.rotate(-this.boxRotation, this.pivot);
       item.translate(pivot.multiply(-1)).transform(matrix).translate(pivot);

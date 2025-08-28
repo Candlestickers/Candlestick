@@ -153,10 +153,6 @@ Wick.Project = class extends Wick.Base {
      * TODO: Remove all elements created by this project.
      */
     destroy () {
-        if (this._handleResize) {
-            window.removeEventListener('resize', this._handleResize);
-            this._handleResize = null;
-        }
         this.guiElement.removeAllEventListeners();
     }
 
@@ -1622,12 +1618,9 @@ Wick.Project = class extends Wick.Base {
         this.view.fitMode = 'fill';
         this.view.canvasBGColor = this.backgroundColor.hex;
 
-        // window.onresize = function() {
-        //     project.view.resize();
-        // }
-        this._handleResize = () => { this.view && this.view.resize(); };
-        window.addEventListener('resize', this._handleResize);
-        
+        window.onresize = function() {
+            project.view.resize();
+        }
         this.view.resize();
         this.view.prerender();
 
