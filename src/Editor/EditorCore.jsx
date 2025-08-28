@@ -778,19 +778,35 @@ class EditorCore extends Component {
     this.projectDidChange({ actionName: "Boolean Intersect" });
   }
 
+
+  // refresh bounds/center for current objects
+  refreshSelectionBounds = () => {
+    const objs = this.getSelectedCanvasObjects();
+    if(objs&&objs.length)
+      this.project.selection.selectMultipleObjects(objs);
+  };
+
+
   /**
    * 
    * Performs horizontal alignment of objects -H.A.
    */
   alignSelectionX = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].x = this.project.width/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align X to project" });
+      }
+      return;
+    };
   
-    const referenceX = selected[0].x; // Use the first selected object's y
+    const referenceX = selected[0].x; // Use the first selected object's x
     selected.forEach(obj => {
       obj.x = referenceX;
     });
-  
+    this.refreshSelectionBounds();
     this.projectDidChange({ actionName: "Align X" });
   }
 
@@ -800,13 +816,20 @@ class EditorCore extends Component {
    */
   alignSelectionY = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].y = this.project.height/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align Y to project" });
+      }
+      return;
+    }
   
     const referenceY = selected[0].y; // Use the first selected object's y
     selected.forEach(obj => {
       obj.y = referenceY;
     });
-  
+    this.refreshSelectionBounds();
     this.projectDidChange({ actionName: "Align Y" });
   }
 
@@ -816,13 +839,20 @@ class EditorCore extends Component {
    */
   alignSelectionLeft = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].x = selected[0].bounds.width/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align Left to project" });
+      }
+      return;
+    }
   
     const referenceX = this.project.selection.x;
     selected.forEach(obj => {
       obj.x = referenceX + (obj.width || obj.bounds.width)/2;
     });
-  
+    this.refreshSelectionBounds();
     this.projectDidChange({ actionName: "Align Left" });
   }
 
@@ -833,13 +863,20 @@ class EditorCore extends Component {
   alignSelectionRight = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     console.log(this.project.selection._view);
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].x = this.project.width-selected[0].bounds.width/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align Right to project" });
+      }
+      return;
+    }
 
     const referenceX = this.project.selection.x + this.project.selection.originalWidth;
     selected.forEach(obj => {
       obj.x = referenceX - (obj.width || obj.bounds.width)/2;
     });
-  
+    this.refreshSelectionBounds();
     this.projectDidChange({ actionName: "Align Right" });
   }
 
@@ -849,13 +886,20 @@ class EditorCore extends Component {
    */
   alignSelectionBottom = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].y = this.project.height-selected[0].bounds.height/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align Bottom to project" });
+      }
+      return;
+    }
   
     const referenceY = this.project.selection.y + this.project.selection.originalHeight;
     selected.forEach(obj => {
       obj.y = referenceY - (obj.height || obj.bounds.height)/2;
     });
-  
+    this.refreshSelectionBounds();
     this.projectDidChange({ actionName: "Align Bottom" });
   }
 
@@ -865,17 +909,24 @@ class EditorCore extends Component {
    */
   alignSelectionTop = () => {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
-    if (selected.length < 2) return;
+    if (selected.length < 2){
+      if(selected[0]){
+        selected[0].y = selected[0].bounds.height/2;
+        this.refreshSelectionBounds();
+        this.projectDidChange({ actionName: "Align Top to project" });
+      }
+      return;
+    }
   
     const referenceY = this.project.selection.y;
     selected.forEach(obj => {
       obj.y = referenceY + (obj.height || obj.bounds.height)/2;
     });
-  
-    this.projectDidChange({ actionName: "Align Right" });
+    this.refreshSelectionBounds();
+    this.projectDidChange({ actionName: "Align Top" });
   }
 
-  // ADD GRADIENT SETTINGS HERE TODO -H.A.
+  // ALIGNMENT SETTINGS END HERE
   
 
   /**
