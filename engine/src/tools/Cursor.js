@@ -115,8 +115,23 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
 	createGradPoint(xy, fill, sz) {
 		let a = new this.paper.Path.Circle(xy, sz / this.paper.view.zoom);
-		a.strokeColor = '#ffa'; //'rgba(255, 0, 0, 1)';
-		a.strokeWidth = 1.5;
+
+		let color = new this.paper.Color(fill);
+
+		// a.strokeColor = new this.paper.Color({
+		// 	red: 1-color.red,
+		// 	green: 1-color.green,
+		// 	blue: 1-color.blue
+		// });
+
+		a.strokeColor = {
+			red: 1-color.red,
+			green: 1-color.green,
+			blue: 1-color.blue
+		};
+
+		//`rgba(${1-color.red},${1-color.green},${1-color.blue},0.7)`;//'#ffa'; //'rgba(255, 0, 0, 1)';
+		a.strokeWidth = 1.5 / this.paper.view.zoom;
 		a.fillColor = fill; //'#fff';
 		a.data.wickType = 'gui';
 		return a;
