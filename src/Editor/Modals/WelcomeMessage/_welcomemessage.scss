@@ -46,7 +46,7 @@ $welcome-modal-padding: 28px;
 }
 
 #welcome-message-container {
-  background-color: $editor-modal-dark;
+  background-color: $wick-cs-black;
   width: 350px;
   min-width: 350px;
   padding: $welcome-modal-padding;
@@ -176,6 +176,8 @@ $welcome-modal-padding: 28px;
 .updates-list {
   margin-bottom: 0px;
   color: white; 
+  max-height: 175px;
+  overflow-y: scroll;
 }
 
 .updates-list.small-modal li {

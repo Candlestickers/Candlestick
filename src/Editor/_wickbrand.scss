@@ -19,6 +19,31 @@
 
 // Define Color Scheme
 
+// CANDLESTICK 2025
+$wick-cs-yellow: #ffff00;
+$wick-cs-orange: #ff9500; 
+$wick-cs-orange-dark: #976f00;
+$wick-cs-orange-light: #d8c07e;
+$wick-cs-black: #000000;
+
+
+$wick-cs-splitter-highlight: #e89556;
+$wick-cs-tab-bottom: $wick-cs-yellow;
+
+$wick-cs-pink: #ff00e6; 
+$wick-cs-pink-light: #ff7ef2; // UNUSED
+$wick-cs-pink-dark: #8d027f;
+$wick-cs-pink-text: #ff22f3; // used for text
+
+// wick tool bar
+$wick-cs-tool-border-hover: #FF7967;
+$wick-cs-tool-border-active: #FF7967;
+
+// wick save button
+$wick-cs-save-button: $wick-cs-yellow;
+// drag and drop assets overlay
+$wick-cs-drop-overlay: $wick-cs-orange;
+
 // Spring 2019 color scheme
 $editor-primary: #303030;
 $editor-primary-text: white; //#AFAFAF;
@@ -43,10 +68,10 @@ $editor-modal-gray-secondary: #525252;
 $editor-modal-text-white: #FFFFFF;
 $editor-modal-text-gray: #E6E6E6;
 $editor-modal-text-dark: #a6a6a6;
-$editor-modal-text-highlight: #1EE29A;
+$editor-modal-text-highlight: $wick-cs-orange;
 
-$editor-green-highlight: #1EE29A;
-$editor-green-highlight-dark: #19C284;
+$editor-green-highlight: $wick-cs-orange;
+$editor-green-highlight-dark: $wick-cs-pink-text;
 
 $editor-canvas-border: #6A6A6A;
 
@@ -181,7 +206,7 @@ $github-text: black;
 // mobile container colors
 $mobile-panel-background: #191919;
 $timeline-red: #FA8A87;
-$inspector-teal: #4FF7DE;
+$inspector-teal: #f74fd5;
 $code-pink: #FA73FA;
 $asset-green: #BAFA98;
 
@@ -248,7 +273,7 @@ a:hover {
 }
 
 .wick-brand-arrow {
-  border: solid $wick-green;
+  border: solid $wick-cs-yellow;
   border-width: 0 3px 3px 0;
   border-radius: 2px; 
   display: inline-block;
@@ -308,7 +333,7 @@ a:hover {
 // define interface element properties
 $splitter-size: calc(#{$editor-outline-padding} / 2);
 $splitter-color: $editor-primary-outline;
-$splitter-highlight-color: $editor-primary-property-text;
+$splitter-highlight-color: $wick-cs-splitter-highlight;
 
 $interface-roundness-primary: 2px;
 $interface-roundness-secondary: 4px;

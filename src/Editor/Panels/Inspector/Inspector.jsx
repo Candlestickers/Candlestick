@@ -1100,7 +1100,6 @@ class Inspector extends Component {
   renderUnknown = () => {
     if(!window.project.playing)
       this.state.logs = []; // <-- note: mutate state directly, DO NOT USE setState()
-    
     // scroll reference
     this.consoleEndRef = React.createRef();
 

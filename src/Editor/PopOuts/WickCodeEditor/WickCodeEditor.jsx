@@ -17,7 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
 import WickInput from 'Editor/Util/WickInput/WickInput';
 import { Rnd } from 'react-rnd';
@@ -70,6 +70,16 @@ export default function WickCodeEditor(props) {
   const [addScriptTab, setAddScriptTab] = useState('Mouse');
   const [consoleType, setConsoleType] = useState('console');
   const [aceEditor, setAceEditor] = useState(null);
+
+  // Auto-switch to Add Script when there are no scripts or the requested script is missing
+  useEffect(() => {
+    if (!props.script) return;
+    const list = props.script.scripts || [];
+    const missing = !list.find(s => s.name === props.scriptToEdit);
+    if ((list.length === 0 || missing) && props.scriptToEdit !== 'add') {
+      props.editScript('add'); // updates parent state: scriptToEdit + opens editor
+    }
+  }, [props.script, props.scriptToEdit]);
 
   const editorThemeSelectRef = useRef();
 
@@ -245,11 +255,12 @@ export default function WickCodeEditor(props) {
   if (props.script) {
 
     let script = props.script.scripts.find(s => s.name === props.scriptToEdit);
-    if (script) {
+    if (script)
       scriptToShow = script.src;
-    } else {
-      scriptToShow = "Can't Find Script...";
-    }
+    else
+      // automatically open what script is present
+      if(props.script.scripts.length)
+        scriptToShow = props.script.scripts[0].src;
   }
 
   function renderCodeTabs() {

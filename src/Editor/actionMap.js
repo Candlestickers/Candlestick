@@ -186,10 +186,28 @@ class ActionMapInterface extends Object {
         id: 'action-delete-selected-objects',
       },
       showMoreCanvasActions: {
-        icon: 'moreactions',
-        tooltip: 'Canvas Actions',
+        icon: 'flipHorizontal',
+        tooltip: 'Flip',
         action: this.editor.toggleCanvasActions,
         id: 'action-show-more-canvas-options',
+      },
+      showBooleanCanvasActions: {
+        icon: 'intersect',
+        tooltip: 'Boolean',
+        action: this.editor.toggleBooleanCanvasActions,
+        id: 'action-show-boolean-canvas-options',
+      },
+      showLayersCanvasActions: {
+        icon: 'layersDropdown',
+        tooltip: 'Layer Actions',
+        action: this.editor.toggleLayersCanvasActions,
+        id: 'action-show-layers-canvas-options',
+      },
+      showAlignmentCanvasActions: {
+        icon: 'alignLeft',
+        tooltip: 'Align Shapes',
+        action: this.editor.toggleAlignmentCanvasActions,
+        id: 'action-show-alignment-canvas-options',
       },
       convertSelectionToButton: {
         icon: 'button-object-dark',

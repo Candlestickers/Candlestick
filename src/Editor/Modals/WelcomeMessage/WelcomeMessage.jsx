@@ -37,13 +37,16 @@ class WelcomeModal extends Component {
     this.forumPost = "https://forum.wickeditor.com/t/wick-editor-status-update-sorta/12967";
     this.updates = [
       "Rebrand to Candlestick",
-      "---",
-      "---",
-      "---",
-      "---",
-      "---",
-      "---",
-      "Bug Fixes",
+      "New Alignment Options",
+      "New Shape Transformations",
+      "New MP4 Importer",
+      "Fixed GIF Importer",
+      "Runtime Console",
+      "Built-in Gradient Tool",
+      "HTML Favicon & Tab Title",
+      "Line Tool Auto-Snapping",
+      "Stroke & Fill Colors Swap",
+      "Extra Bug Fixes",
     ] // No More than 9 if patreon removed (8 looks better), no more than 3 if patreon is kept
 
     /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
@@ -121,7 +124,7 @@ class WelcomeModal extends Component {
               {this.renderUpdates()}
               {/* {this.renderPatreonSupporters("desktop-modal")} */}
             </div>
-            <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://forum.wickeditor.com">forum!</a></div>
+            <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://discord.gg/nEc7C4CbRd">Discord!</a></div>
             <div id="welcome-modal-footer">
               <div id="welcome-modal-accept">
                 <ActionButton
