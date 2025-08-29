@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.26.17.7.20";
+var WICK_ENGINE_BUILD_VERSION = "2025.8.28.9.2.2";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -53645,7 +53645,7 @@ Wick.Timeline = class extends Wick.Base {
  */
 Wick.Tween = class extends Wick.Base {
   static get VALID_EASING_TYPES() {
-    return ['none', 'in', 'out', 'in-out'];
+    return ['none', 'in', 'out', 'in-out', 'in-cubic', 'out-cubic', 'in-out-cubic', 'in-quartic', 'out-quartic', 'in-out-quartic', 'in-quintic', 'out-quintic', 'in-out-quintic', 'in-sine', 'out-sine', 'in-out-sine', 'in-exp', 'out-exp', 'in-out-exp', 'in-circle', 'out-circle', 'in-out-circle', 'in-back', 'out-back', 'in-out-back', 'in-bounce', 'out-bounce', 'in-out-bounce'];
   }
 
   static _calculateTimeValue(tweenA, tweenB, playheadPosition) {
@@ -53846,7 +53846,31 @@ Wick.Tween = class extends Wick.Base {
       'none': TWEEN.Easing.Linear.None,
       'in': TWEEN.Easing.Quadratic.In,
       'out': TWEEN.Easing.Quadratic.Out,
-      'in-out': TWEEN.Easing.Quadratic.InOut
+      'in-out': TWEEN.Easing.Quadratic.InOut,
+      'in-cubic': TWEEN.Easing.Cubic.In,
+      'out-cubic': TWEEN.Easing.Cubic.Out,
+      'in-out-cubic': TWEEN.Easing.Cubic.InOut,
+      'in-quartic': TWEEN.Easing.Quartic.In,
+      'out-quartic': TWEEN.Easing.Quartic.Out,
+      'in-out-quartic': TWEEN.Easing.Quartic.InOut,
+      'in-quintic': TWEEN.Easing.Quintic.In,
+      'out-quintic': TWEEN.Easing.Quintic.Out,
+      'in-out-quintic': TWEEN.Easing.Quintic.InOut,
+      'in-sine': TWEEN.Easing.Sinusoidal.In,
+      'out-sine': TWEEN.Easing.Sinusoidal.Out,
+      'in-out-sine': TWEEN.Easing.Sinusoidal.InOut,
+      'in-exp': TWEEN.Easing.Exponential.In,
+      'out-exp': TWEEN.Easing.Exponential.Out,
+      'in-out-exp': TWEEN.Easing.Exponential.InOut,
+      'in-circle': TWEEN.Easing.Circular.In,
+      'out-circle': TWEEN.Easing.Circular.Out,
+      'in-out-circle': TWEEN.Easing.Circular.InOut,
+      'in-back': TWEEN.Easing.Back.In,
+      'out-back': TWEEN.Easing.Back.Out,
+      'in-out-back': TWEEN.Easing.Back.InOut,
+      'in-bounce': TWEEN.Easing.Bounce.In,
+      'out-bounce': TWEEN.Easing.Bounce.Out,
+      'in-out-bounce': TWEEN.Easing.Bounce.InOut
     }[this.easingType];
   }
 
@@ -62497,7 +62521,7 @@ class SelectionWidget {
    */
 
 
-  scaleSelection(scale, pivot) {
+  scaleSelection(scale, pivot = this.pivot) {
     this._itemsInSelection.forEach(item => {
       item.rotate(-this.boxRotation, this.pivot);
       item.scale(scale, pivot);
@@ -62512,7 +62536,7 @@ class SelectionWidget {
    */
 
 
-  transformSelection(matrix, pivot) {
+  transformSelection(matrix, pivot = this.pivot) {
     this._itemsInSelection.forEach(item => {
       item.rotate(-this.boxRotation, this.pivot);
       item.translate(pivot.multiply(-1)).transform(matrix).translate(pivot);
