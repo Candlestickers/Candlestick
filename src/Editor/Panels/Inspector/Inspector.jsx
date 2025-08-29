@@ -1098,8 +1098,9 @@ class Inspector extends Component {
    * Renders a default selection view with no properties.
    */
   renderUnknown = () => {
-    if(!window.project.playing)
-      this.state.logs = []; // <-- note: mutate state directly, DO NOT USE setState()
+    // if(!window.project.playing)
+      // this.state.logs = []; // <-- note: mutate state directly, DO NOT USE setState()
+    const logsForRender = window.project.playing ? this.state.logs : [];
     // scroll reference
     this.consoleEndRef = React.createRef();
 
@@ -1109,7 +1110,7 @@ class Inspector extends Component {
           {/* Code for displaying console - H.A. */}
           {window.project.playing && (
         <div style={{ width: '110%', height: 'auto', overflowY: 'scroll', backgroundColor: '#242424' }}>
-          <Console logs={this.state.logs} variant="dark" />
+          <Console logs={logsForRender} variant="dark" />
           <div ref={this.consoleEndRef} />
         </div>
       )}
