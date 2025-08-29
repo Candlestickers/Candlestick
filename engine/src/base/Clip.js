@@ -1021,7 +1021,7 @@ let avgIntersection = {
     };
 
     if (options) {
-      if (options.mode === 'RECTANGLE' || options.mode === 'CONVEX') {
+      if (options.mode === 'CIRCLE' || options.mode === 'RECTANGLE' || options.mode === 'CONVEX') {
         finalOptions.mode = options.mode;
       }
 
@@ -1045,8 +1045,10 @@ let avgIntersection = {
     if (other) {
       if (finalOptions.mode === 'CONVEX') {
         return this.convexHits(other, finalOptions);
-      } else {
+      } else if(finalOptions.mode === 'RECTANGLE') {
         return this.rectangleHits(other, finalOptions);
+      } else {
+        return this.circleHits(other, finalOptions); 
       }
     }
 
@@ -1058,7 +1060,14 @@ let avgIntersection = {
       // check either all==true or the tag condition is satisfied
 
       if (other !== this) {
-        let hit = finalOptions.mode === 'CONVEX' ? this.convexHits(other, finalOptions) : this.rectangleHits(other, finalOptions);
+        let hit;
+        if(finalOptions.mode === 'RECTANGLE') {
+          hit = this.rectangleHits(other, finalOptions);
+        } else if (finalOptions.mode === 'CIRCLE') {
+          hit = this.circleHits(other, finalOptions);
+        } else {
+          hit = this.convexHits(other, finalOptions);
+        }
 
         if (hit) {
           hit.clip = other;
