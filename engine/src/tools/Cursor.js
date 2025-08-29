@@ -258,6 +258,14 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	onMouseUp(e) {
 		if (!e.modifiers) e.modifiers = {};
 
+		// remove hover preview and a new one will be rendered if needed
+		this.hoverPreview.remove();
+		this.hoverPreview2.remove();
+		this.gradientColorSelection = [false];
+
+		// Find the thing that is currently under the cursor.
+		this.hitResult = this._updateHitResult(e);
+
 		if (this.selectionBox.active) {
 			// Finish selection box and select objects touching box (or inside box, if alt is held)
 			this.selectionBox.mode = e.modifiers.alt ? 'contains' : 'intersects';
@@ -291,7 +299,31 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 					eventName: 'canvasModified',
 					actionName: 'cursorDrag'
 				});
-			}
+			}else if(this._selection.numObjects === 1) { // check to see if we're selecting something
+					this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
+					// check to see if object we're selecting is a gradient
+					if(this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient") {
+						let FC = this._lastSelection._json[1][1].fillColor;
+
+						let distToCursor = (xy) => {
+							return Math.sqrt((xy[0] - e.tool._lastPoint.x) ** 2 + (xy[1] - e.tool._lastPoint.y) ** 2)
+						}
+
+						this.hoverPreview = this.createGradPoint({
+							x: FC[2][0],
+							y: FC[2][1]
+						}, window.gradientStartColor, 5);
+
+						this.hoverPreview2 = this.createGradPoint({
+							x: FC[3][0],
+							y: FC[3][1]
+						}, window.gradientEndColor, 5);
+
+						this.gradientColorSelection = [distToCursor(FC[2]), distToCursor(FC[3])];
+						this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length > 0 && Math.min(...this.gradientColorSelection) < 10;
+
+					} // Added gradient stops movement -H.A.
+				}
 		}
 	}
 
