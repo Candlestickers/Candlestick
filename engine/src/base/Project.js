@@ -352,7 +352,7 @@ Wick.Project = class extends Wick.Base {
 
     set hitTestOptions(options) {
         if (options) {
-          if (options.mode === 'RECTANGLE' || options.mode === 'CONVEX') {
+          if (options.mode === 'CIRCLE' || options.mode === 'RECTANGLE' || options.mode === 'CONVEX') {
             this._hitTestOptions.mode = options.mode;
           }
 
