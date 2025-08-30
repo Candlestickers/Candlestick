@@ -1401,7 +1401,7 @@ let avgIntersection = {
   /**
    * depth - Send clip to Absolute Front: top layer, top depth
    */
-  sentToAbsoluteFront() {
+  sendToAbsoluteFront() {
       this.moveToLayer(0);
   }
 
