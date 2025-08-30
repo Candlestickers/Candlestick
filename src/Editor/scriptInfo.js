@@ -265,8 +265,8 @@ class ScriptInfoInterface extends Object {
                     description: 'Moves this object in front of all siblings in its current layer.'
                   },
                   {
-                    name: 'sentToAbsoluteFront',
-                    snippet: 'this.sentToAbsoluteFront()',
+                    name: 'sendToAbsoluteFront',
+                    snippet: 'this.sendToAbsoluteFront()',
                     description: 'Moves this object to the top layer and to the very front.'
                   },
                   {
