@@ -1367,7 +1367,7 @@ let avgIntersection = {
 
   /**
    * depth - Send clip to Back
-   * designed by pumkinhead
+   * designed by pumpkinhead's 
    */
   sendToBack() {
     let siblings = this.parentFrame._children;
@@ -1378,8 +1378,24 @@ let avgIntersection = {
   }
 
   /**
+   * depth - Send clip to Absolute Back: bottom layer, bottom depth
+   */
+  sendToAbsoluteBack() {
+    let backLayer  = this.parentFrame.parentTimeline.layers.length - 1;
+    this.moveToLayer(backLayer);
+    this.sendToBack();
+  }
+
+  /**
+   * depth - Send clip to Absolute Front: top layer, top depth
+   */
+  sentToAbsoluteFront() {
+    this.moveToLayer(0);
+  }
+
+  /**
    * depth - Send clip to Front
-   * designed by pumkinhead
+   * designed by pumpkinhead's 
    */
   sendToFront() {
     let siblings = this.parentFrame._children;
