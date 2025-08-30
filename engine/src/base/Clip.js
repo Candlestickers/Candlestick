@@ -1387,13 +1387,6 @@ let avgIntersection = {
   }
 
   /**
-   * depth - Send clip to Absolute Front: top layer, top depth
-   */
-  sentToAbsoluteFront() {
-    this.moveToLayer(0);
-  }
-
-  /**
    * depth - Send clip to Front
    * designed by pumpkinhead's 
    */
@@ -1403,6 +1396,13 @@ let avgIntersection = {
     
     siblings.splice(index, 1);
     siblings.push(this);
+  }
+
+  /**
+   * depth - Send clip to Absolute Front: top layer, top depth
+   */
+  sentToAbsoluteFront() {
+      this.moveToLayer(0);
   }
 
   /**
