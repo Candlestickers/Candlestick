@@ -121,6 +121,7 @@ Wick.Project = class extends Wick.Base {
 
         this.history.project = this;
         this.history.pushState(Wick.History.StateType.ONLY_VISIBLE_OBJECTS);
+        this.orderedLayers = [];
     }
 
     markClipQuadtreeDirty(clip) {
@@ -522,7 +523,27 @@ Wick.Project = class extends Wick.Base {
             return asset.name === name;
         });
     }
+/**
+     * Filling this.orderedLayers array for dynamic asset's lib clip performance
+     */
+orderDynamicFrames() {
+    this.orderedLayers = [];
+    let layerNumber = 0;
+    for (let layer of this.focus.timeline.layers) {
+        this.orderedLayers[layerNumber] = [];
+        for (let fIndex = 0; fIndex<layer.length; fIndex++) {
+            let fplay = fIndex+1;
 
+            for(let normalFrame of layer.frames) {
+                if(normalFrame.inPosition(fplay)) {
+                    this.orderedLayers[layerNumber].push(normalFrame);
+                    break;
+                }
+            }
+        }
+        layerNumber++;
+    }
+}
     /**
      * The assets belonging to the project.
      * @param {string} type - Optional, filter assets by type ("Sound"/"Image"/"Clip"/"Button")
@@ -1544,7 +1565,7 @@ Wick.Project = class extends Wick.Base {
 
         this._playing = true;
         this.view.paper.view.autoUpdate = false;
-
+        this.orderDynamicFrames();
         if (this._tickIntervalID) {
             this.stop();
         }

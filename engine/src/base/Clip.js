@@ -1334,6 +1334,138 @@ let avgIntersection = {
         this.transformation.opacity = opacity;
     }
 
+
+  /**
+   * Get depth number relative to this clip's siblings in its parent frame.
+   * @returns {number}
+   */
+  get depth() {
+    if (!this.parentFrame) {
+      throw new Error("Clip has no parentFrame.");
+    }
+    return this.parentFrame._children.indexOf(this);
+  }
+
+  /**
+   * Set depth by reordering within parent's children.
+   */
+  set depth(newDepth) {
+    let siblings = this.parentFrame._children;
+    let curDepth = this.depth;
+
+    if (newDepth < 0) newDepth = 0;
+    if (newDepth >= siblings.length) newDepth = siblings.length - 1;
+
+    if (curDepth === newDepth) return; // nothing to do
+
+    // Remove from current position
+    siblings.splice(curDepth, 1);
+
+    // Insert at new position
+    siblings.splice(newDepth, 0, this);
+  }
+
+  /**
+   * depth - Send clip to Back
+   * designed by pumkinhead
+   */
+  sendToBack() {
+    let siblings = this.parentFrame._children;
+    let index = this.depth;
+    
+    siblings.splice(index, 1);
+    siblings.unshift(this);
+  }
+
+  /**
+   * depth - Send clip to Front
+   * designed by pumkinhead
+   */
+  sendToFront() {
+    let siblings = this.parentFrame._children;
+    let index = this.depth;
+    
+    siblings.splice(index, 1);
+    siblings.push(this);
+  }
+
+  /**
+   * depth - Send clip to Forward a 'num' times
+   */
+  sendForward(num) {
+    if (num === undefined) num = 1;
+    if (num < 1) return;
+    this.depth += num;
+  }
+
+  /**
+   * depth - Send clip to Backward a 'num' times
+   */
+  sendBackward(num) {
+    if (num === undefined) num = 1;
+    if (num < 1) return;
+    this.depth -= num;
+  }
+
+  /**
+   * Swap Depths between this and other clip within th same parent frame
+   */
+  swapDepth(otherClip) {
+    if (!(otherClip instanceof Wick.Clip)) {
+      throw new Error("Argument is not a Clip");
+    }
+    if (otherClip === this) return; // nothing to do
+
+    let siblings = this.parentFrame._children;
+    let thisIndex = this.depth;
+    let otherIndex = siblings.indexOf(otherClip);
+
+    if(thisIndex>=0 && otherIndex>=0) {
+      siblings[thisIndex] = otherClip;
+      siblings[otherIndex] = this;
+    }
+    
+    // "Clips don't belog to the same Layer"
+  }
+
+  // Get the layer number of this clip within its parent timeline
+  get layer() {
+    return this.parentFrame.layerIndex;
+  }
+
+  // Move this clip to a different layer within its parent timeline
+  set layer(layerNumber) {
+    this.moveToLayer(layerNumber);
+  }
+
+  /* Get the layer number of this clip within its parent timeline */
+  getLayerNumber() {
+    return this.layer;
+  }
+
+  /* Move this clip to a different layer within its parent timeline */
+  moveToLayer(layerNumber) {
+    let oldFrame      = this.parentFrame;
+    let siblings      = oldFrame._children;
+    let layersLength  = oldFrame.parentTimeline.layers.length;
+    let timelineIndex = oldFrame.parentTimeline.playheadPosition-1;
+
+    let toLayer = layerNumber;
+    let index = this.depth;
+
+    if(toLayer >= layersLength) toLayer = layersLength - 1;
+    else if(toLayer<0)          toLayer = 0;
+  
+    let targetFrame = this.project.orderedLayers[toLayer][timelineIndex];
+
+    if(targetFrame === undefined || targetFrame === null) {
+        throw new Error("There is no frame associated to the Layer number");
+    }
+
+    targetFrame.addChild(this);
+    siblings.splice(index, 1);
+  }
+
     /**
      * Copy this clip, and add the copy to the same frame as the original clip.
      * @returns {Wick.Clip} the result of the clone.
