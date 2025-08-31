@@ -64,7 +64,7 @@ const editorThemes = [
   }]
 
 let classNames = require('classnames');
-
+let thValue = 'monokai';
 export default function WickCodeEditor(props) {
 
   const [addScriptTab, setAddScriptTab] = useState('Mouse');
@@ -82,6 +82,17 @@ export default function WickCodeEditor(props) {
   }, [props.script, props.scriptToEdit]);
 
   const editorThemeSelectRef = useRef();
+
+    /**
+   * This function forces the code editor to always shows code line numbers
+   */
+    function updateEditorLines() {
+      let th1 = 'monokai';
+      if(thValue === 'monokai')  th1 = 'dracula';
+  
+      props.updateCodeEditorWindowProperties({theme:th1});
+      props.updateCodeEditorWindowProperties({theme:thValue});
+    }
 
   /**
    * To be called when the code editor popout is repositioned.
@@ -101,6 +112,7 @@ export default function WickCodeEditor(props) {
       width: ref.style.width,
       height: ref.style.height,
     });
+    updateEditorLines();
   }
 
   /**
@@ -112,6 +124,7 @@ export default function WickCodeEditor(props) {
     props.updateCodeEditorWindowProperties({
       consoleHeight: console.domElement.offsetHeight,
     });
+    updateEditorLines();
   }
 
   /**
@@ -233,7 +246,8 @@ export default function WickCodeEditor(props) {
                 selected={props.codeEditorWindowProperties.theme}
                 ref={editorThemeSelectRef}
                 onChange={(e) => {
-                  props.updateCodeEditorWindowProperties({ theme: editorThemeSelectRef.current.value })
+                  thValue = editorThemeSelectRef.current.value;
+                  props.updateCodeEditorWindowProperties({ theme: editorThemeSelectRef.current.value });
                 }}>
                 {editorThemes.map(theme => {
                   return <option
