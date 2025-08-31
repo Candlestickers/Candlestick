@@ -795,7 +795,7 @@ class EditorCore extends Component {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2){
       if(selected[0]){
-        selected[0].x = this.project.width/2;
+        selected[0].x = this.project.focus.parent !== this.project? 0 :this.project.width/2;
         this.refreshSelectionBounds();
         this.projectDidChange({ actionName: "Align X to project" });
       }
@@ -818,7 +818,7 @@ class EditorCore extends Component {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2){
       if(selected[0]){
-        selected[0].y = this.project.height/2;
+        selected[0].y = this.project.focus.parent !== this.project? 0 :this.project.height/2;
         this.refreshSelectionBounds();
         this.projectDidChange({ actionName: "Align Y to project" });
       }
@@ -864,7 +864,7 @@ class EditorCore extends Component {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2){
       if(selected[0]){
-        selected[0].x = this.project.width-selected[0].bounds.width/2;
+        selected[0].x = (this.project.focus.parent !== this.project? 0 :this.project.width) - selected[0].bounds.width/2;
         this.refreshSelectionBounds();
         this.projectDidChange({ actionName: "Align Right to project" });
       }
@@ -887,7 +887,7 @@ class EditorCore extends Component {
     const selected = this.getSelectedCanvasObjects(); // Get selected objects
     if (selected.length < 2){
       if(selected[0]){
-        selected[0].y = this.project.height-selected[0].bounds.height/2;
+        selected[0].y = (this.project.focus.parent !== this.project? 0 :this.project.height)-selected[0].bounds.height/2;
         this.refreshSelectionBounds();
         this.projectDidChange({ actionName: "Align Bottom to project" });
       }
