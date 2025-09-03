@@ -1,19 +1,19 @@
 self.__precacheManifest = [
   {
-    "revision": "c2484570032ca6b30d9f",
-    "url": "/Candlestick/test/static/css/main.98240a6f.chunk.css"
+    "revision": "ecd5595884dce0da04d0",
+    "url": "/Candlestick/test/static/css/main.75c0ab5b.chunk.css"
   },
   {
-    "revision": "c2484570032ca6b30d9f",
-    "url": "/Candlestick/test/static/js/main.c2484570.chunk.js"
+    "revision": "ecd5595884dce0da04d0",
+    "url": "/Candlestick/test/static/js/main.ecd55958.chunk.js"
   },
   {
-    "revision": "d2bc9621d139920c1192",
-    "url": "/Candlestick/test/static/css/1.9ab3b27d.chunk.css"
+    "revision": "eac0488ac0147bc5c538",
+    "url": "/Candlestick/test/static/css/1.262c9652.chunk.css"
   },
   {
-    "revision": "d2bc9621d139920c1192",
-    "url": "/Candlestick/test/static/js/1.d2bc9621.chunk.js"
+    "revision": "eac0488ac0147bc5c538",
+    "url": "/Candlestick/test/static/js/1.eac0488a.chunk.js"
   },
   {
     "revision": "c6fbb0bdf93f3c7bf1d9",
@@ -50,6 +50,10 @@ self.__precacheManifest = [
   {
     "revision": "3147d4a2bc238d87fdaeff47628c2003",
     "url": "/Candlestick/test/static/media/brushsmoothness.3147d4a2.svg"
+  },
+  {
+    "revision": "6f4bf9fca0c0e90c922990f013377aca",
+    "url": "/Candlestick/test/static/media/cool_field3.6f4bf9fc.png"
   },
   {
     "revision": "332ee567127bb938e8692496ce5756a0",
@@ -716,14 +720,6 @@ self.__precacheManifest = [
     "url": "/Candlestick/test/static/media/script.c4a042cb.svg"
   },
   {
-    "revision": "b4121f27c27c02e4fe44dac2997c5da2",
-    "url": "/Candlestick/test/static/media/blue_night_short.b4121f27.svg"
-  },
-  {
-    "revision": "6f4bf9fca0c0e90c922990f013377aca",
-    "url": "/Candlestick/test/static/media/cool_field3.6f4bf9fc.png"
-  },
-  {
     "revision": "1a5a080b009da8dcf2958ba0b719cea0",
     "url": "/Candlestick/test/static/media/backwards.1a5a080b.svg"
   },
@@ -756,7 +752,7 @@ self.__precacheManifest = [
     "url": "/Candlestick/test/static/media/white-heart.daf330ed.svg"
   },
   {
-    "revision": "2da3a67fb4610be6e4720a1801aa8b8e",
+    "revision": "1cc9ac3932c5e1d4de7c81ff6be23762",
     "url": "/Candlestick/test/index.html"
   }
 ];
