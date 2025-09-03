@@ -29,4 +29,6 @@ Candlestick is under the GNU v3 Public License. See the [LICENSE](LICENSE.md) fo
 
 Wick Editor was created by Luca Damasco and Zach Rispoli. See more credits on the Wick Editor [About Page](https://www.wickeditor.com/#/about/) and [Credits](https://github.com/Wicklets/wick-editor/blob/master/CREDITS.md).
 
-The Candlestick fork was created by Hamzah Alani, Baron, and Jovanny Rodriguez. Additional contributions came from StickmanRed.
+The Candlestick fork was created by Hamzah Alani, Baron, and Jovanny Rodriguez. Additional contributions came from:
+- pumpkinhead
+- StickmanRed
