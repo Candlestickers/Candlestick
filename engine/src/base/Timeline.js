@@ -75,7 +75,7 @@ Wick.Timeline = class extends Wick.Base {
     }
 
     set playheadPosition(playheadPosition) {
-        // Automatically clear selection when any playhead in the project moves
+        let changed = this._playheadPosition !== playheadPosition;// Automatically clear selection when any playhead in the project moves
         if(this.project && this._playheadPosition !== playheadPosition && this.parentClip.isFocus) {
             this.project.selection.clear('Canvas');
             this.project.resetTools();
@@ -91,6 +91,10 @@ Wick.Timeline = class extends Wick.Base {
             frame.applyTweenTransforms();
             frame.updateClipTimelinesForAnimationType();
         });
+
+        if (changed && this.parentClip) {
+            this.parentClip._onVisualDirty();
+        }
     }
 
     /**
