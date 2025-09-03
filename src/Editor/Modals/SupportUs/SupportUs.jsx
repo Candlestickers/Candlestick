@@ -76,7 +76,7 @@ class SupportUs extends Component {
 
           <p id="support-modal-benefit-text">Get Merch, get featured, and help Wick Editor Grow!</p>
 
-          <div class="support-modal-row">
+          <div className="support-modal-row">
             {contentDisplay}
           </div>
           
@@ -88,31 +88,31 @@ class SupportUs extends Component {
 
   render() {
     const contentDisplay = [<Fragment key="support-us-fragment-1">
-      <div key="support-us-patreon-cont" class={(this.props.isMobile)?"support-modal-col":"support-modal-col left-col"}>
-        <div class="support-modal-col-title">
-          <img src={patreonLogoWhite} alt="white patreon logo" class="support-modal-col-title-img"></img>
-          <p class="support-modal-col-title-text">Patreon</p>
+      <div key="support-us-patreon-cont" className={(this.props.isMobile)?"support-modal-col":"support-modal-col left-col"}>
+        <div className="support-modal-col-title">
+          <img src={patreonLogoWhite} alt="white patreon logo" className="support-modal-col-title-img"></img>
+          <p className="support-modal-col-title-text">Patreon</p>
         </div>
-        <p class="support-modal-col-text">for individuals and creators</p>
-        <div class="support-modal-progress-bar"><div class="support-modal-patreon-progress" style={{width:this.progressData.patreonProgress/this.progressData.patreonGoal*100+"%"}}></div></div>
-        <p class="support-modal-col-text">{"Goal: $" + this.progressData.patreonProgress+" / $" + this.progressData.patreonGoal + " per month"}</p>
-        <button class="support-modal-button patreon-button" onClick={function(){window.open("https://www.patreon.com/WickEditor", "_blank")}}>
-          <img src={patreonLogoWhite} alt="white patreon logo" class="support-modal-button-img"></img>
-          <p class="support-modal-button-text">Become a Patron</p>
+        <p className="support-modal-col-text">for individuals and creators</p>
+        <div className="support-modal-progress-bar"><div className="support-modal-patreon-progress" style={{width:this.progressData.patreonProgress/this.progressData.patreonGoal*100+"%"}}></div></div>
+        <p className="support-modal-col-text">{"Goal: $" + this.progressData.patreonProgress+" / $" + this.progressData.patreonGoal + " per month"}</p>
+        <button className="support-modal-button patreon-button" onClick={function(){window.open("https://www.patreon.com/WickEditor", "_blank")}}>
+          <img src={patreonLogoWhite} alt="white patreon logo" className="support-modal-button-img"></img>
+          <p className="support-modal-button-text">Become a Patron</p>
         </button>
       </div>
   
-      <div key="support-us-github-cont" class={(this.props.isMobile)?"support-modal-col":"support-modal-col right-col"}>
-        <div class="support-modal-col-title">
-          <img src={githubLogoWhite} alt="white github log" class="support-modal-col-title-img"></img>
-          <p class="support-modal-col-title-text">GitHub Sponsors</p>
+      <div key="support-us-github-cont" className={(this.props.isMobile)?"support-modal-col":"support-modal-col right-col"}>
+        <div className="support-modal-col-title">
+          <img src={githubLogoWhite} alt="white github log" className="support-modal-col-title-img"></img>
+          <p className="support-modal-col-title-text">GitHub Sponsors</p>
         </div>
-        <p class="support-modal-col-text">for businesses and developers</p>
-        <div class="support-modal-progress-bar"><div class="support-modal-github-progress" style={{width:this.progressData.githubProgress/this.progressData.githubGoal*100+"%"}}></div></div>
-        <p class="support-modal-col-text">{"Goal: "+this.progressData.githubProgress+" of "+this.progressData.githubGoal +" sponsors found"}</p>
-        <button class="support-modal-button github-button" onClick={function(){window.open("https://github.com/sponsors/Wicklets", "_blank")}}>
-          <img src={githubHeart} alt="pink heart" class="support-modal-button-img"></img>
-          <p class="support-modal-button-text">Sponsor</p>
+        <p className="support-modal-col-text">for businesses and developers</p>
+        <div className="support-modal-progress-bar"><div className="support-modal-github-progress" style={{width:this.progressData.githubProgress/this.progressData.githubGoal*100+"%"}}></div></div>
+        <p className="support-modal-col-text">{"Goal: "+this.progressData.githubProgress+" of "+this.progressData.githubGoal +" sponsors found"}</p>
+        <button className="support-modal-button github-button" onClick={function(){window.open("https://github.com/sponsors/Wicklets", "_blank")}}>
+          <img src={githubHeart} alt="pink heart" className="support-modal-button-img"></img>
+          <p className="support-modal-button-text">Sponsor</p>
         </button>
       </div>
     </Fragment>];
@@ -122,14 +122,14 @@ class SupportUs extends Component {
       <p id="support-modal-follow-text">Follow us and share your work with <p id="support-modal-hashtag">#MadeWithWickEditor</p>!</p>
   
       <div id="support-modal-social-icons">
-        <button class="support-modal-social-icon" onClick={function(){window.open("https://www.facebook.com/wickeditor/", "_blank")}}>
-          <img class="support-modal-social-img" src={facebookIcon} alt="facebook logo"></img>
+        <button className="support-modal-social-icon" onClick={function(){window.open("https://www.facebook.com/wickeditor/", "_blank")}}>
+          <img className="support-modal-social-img" src={facebookIcon} alt="facebook logo"></img>
         </button>
-        <button class="support-modal-social-icon" onClick={function(){window.open("https://www.instagram.com/wickeditor/", "_blank")}}>
-          <img class="support-modal-social-img" src={instagramIcon} alt="instagram logo"></img>
+        <button className="support-modal-social-icon" onClick={function(){window.open("https://www.instagram.com/wickeditor/", "_blank")}}>
+          <img className="support-modal-social-img" src={instagramIcon} alt="instagram logo"></img>
         </button>
-        <button class="support-modal-social-icon" onClick={function(){window.open("https://twitter.com/wickeditor", "_blank")}}>
-          <img class="support-modal-social-img" src={twitterIcon} alt="twitter logo"></img>
+        <button className="support-modal-social-icon" onClick={function(){window.open("https://twitter.com/wickeditor", "_blank")}}>
+          <img className="support-modal-social-img" src={twitterIcon} alt="twitter logo"></img>
         </button>
       </div>
     </Fragment>];

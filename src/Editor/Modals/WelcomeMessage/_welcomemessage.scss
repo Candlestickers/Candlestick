@@ -125,19 +125,27 @@ $welcome-modal-padding: 28px;
 // Mobile Modal Specs
 .welcome-modal-mobile-body {
   width: 80%;
-  height: 380px;
+  height: 410px;
   max-width: 400px;
   padding: 0px; 
   background-color: $editor-modal-dark !important;
 }
 
+
+
 .welcome-modal-mobile-image {
+  display: block;
   width: 100%;
+  height: 100%;        /* required so object-fit can crop */
+  object-fit: cover;
+  object-position: center calc(100% + 45px);  /* show bottom part */
 }
 
 .welcome-modal-mobile-image-container {
-  width: 100%;
-  max-height: 30%;
+  width: 99%;
+  padding-top: 1%;
+  padding-left: 1%;
+  height: 38%;
   overflow: hidden;
 }
 

@@ -1862,7 +1862,7 @@ orderDynamicFrames() {
         
 
         var renderCopy = this;
-        renderCopy.renderBlackBars = true; // Turn off black bars (removes black lines)
+        renderCopy.renderBlackBars = false; // Turn off black bars (removes black lines)
 
         var oldCanvasContainer = this.view.canvasContainer;
 
