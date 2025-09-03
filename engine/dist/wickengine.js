@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.8.30.18.7.17";
+var WICK_ENGINE_BUILD_VERSION = "2025.9.3.11.17.6";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -61969,9 +61969,11 @@ Wick.View.Project = class extends Wick.View {
 
     // Render black bars (for published projects)
     if (this.model.isPublished && this.model.renderBlackBars) {
+      // this._model._children[1]._children[0]._children[0].activate();
       this._svgBordersLayer.removeChildren();
       this._svgBordersLayer.addChildren(this._generateSVGBorders());
       this.paper.project.addLayer(this._svgBordersLayer);
+      this._svgBordersLayer.bringToFront();
     }
   }
   _generateSVGCanvasStage() {
@@ -62028,7 +62030,8 @@ Wick.View.Project = class extends Wick.View {
       to: new paper.Point(borderMax, strokeOffset),
       fillColor: 'black',
       strokeWidth: 0,
-      strokeColor: 'black'
+      strokeColor: 'black',
+      insert: false
     }),
     // bottom
     new paper.Path.Rectangle({
@@ -62036,7 +62039,8 @@ Wick.View.Project = class extends Wick.View {
       to: new paper.Point(borderMax, borderMax),
       fillColor: 'black',
       strokeWidth: 0,
-      strokeColor: 'black'
+      strokeColor: 'black',
+      insert: false
     }),
     // left
     new paper.Path.Rectangle({
@@ -62044,7 +62048,8 @@ Wick.View.Project = class extends Wick.View {
       to: new paper.Point(-strokeOffset, bottom + strokeOffset),
       fillColor: 'black',
       strokeWidth: 1,
-      strokeColor: 'black'
+      strokeColor: 'black',
+      insert: false
     }),
     // right
     new paper.Path.Rectangle({
@@ -62052,16 +62057,19 @@ Wick.View.Project = class extends Wick.View {
       to: new paper.Point(borderMax, borderMax),
       fillColor: 'black',
       strokeWidth: 1,
-      strokeColor: 'black'
+      strokeColor: 'black',
+      insert: false
     })];
-    var border = new paper.Group();
+    var border = new paper.Group({
+      insert: false
+    });
     border.applyMatrix = false;
     border.addChildren(borderPieces);
 
     // Adjust borders based on zoom/pan (this fixes borders hiding things while using a vcam)
     border.scaling = new paper.Point(this.model.zoom, this.model.zoom);
     border.position = new paper.Point(-this.model.pan.x, -this.model.pan.y);
-    return border;
+    return border.children;
   }
   _generateClipBorders() {
     var clipBorders = [];
