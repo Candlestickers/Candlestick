@@ -951,7 +951,7 @@ class Editor extends EditorCore {
   getRenderSize = () => {
     if (window.innerWidth > 1200) {
       return "large";
-    } else if (window.innerWidth > 800) {
+    } else if (window.innerWidth > 850) {
       return "medium";
     } else {
       return "small";
