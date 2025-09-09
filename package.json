@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "author": "Wicklets LLC",
   "private": true,
-  "homepage": "https://candlestickers.app",
+  "homepage": "https://candlestickers.app/",
   "main": "./public/electron.js",
   "repository": {
     "type": "git",
@@ -103,7 +103,8 @@
     "eject": "react-scripts eject",
     "dist": "electron-builder",
     "start": "react-scripts start",
-    "build": "react-scripts build && cp CNAME_editor ./build/CNAME;",
+    "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
+
     "build-engine": "cd engine; mkdir dist/; gulp; cp -a dist/. ../public/corelibs/wick-engine/",
     "build-engine-windows": "cd engine & mkdir dist  2>nul &    gulp & xcopy /EY dist\\. ..\\public\\corelibs\\wick-engine\\",
     "test": "react-scripts test",
