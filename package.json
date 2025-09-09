@@ -115,7 +115,7 @@
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error(`✖ Deploy test only from development (current: ${b})`); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error(`✖ Deploy to prod only from main/master (current: ${b})`); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "master-deploy": "npm run check-branch-prod; gh-pages -d build -b gh-pages -m \"deploy prod\"",
-    "test-deploy": "npm run check-branch; PUBLIC_URL=/Candlestick/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
+    "test-deploy": "npm run check-branch; PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
 
     "electron": "electron .",
     "electron-dev-macos": "ELECTRON_START_URL=http://localhost:3000 electron .",
