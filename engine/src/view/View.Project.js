@@ -54,6 +54,11 @@ Wick.View.Project = class extends Wick.View {
         return 10000;
     }
 
+    get gestureActive() {
+        return !!this._gesture;
+    }
+
+
     /*
      * Create a new Project View.
      */
@@ -257,6 +262,103 @@ Wick.View.Project = class extends Wick.View {
             e.preventDefault();
             this.scrollToZoom(e);
         });
+
+    // --- Mobile multi-touch gestures code starts HERE ---
+    this._svgCanvas.style.touchAction = 'none';
+
+    // Track active pointers
+    this._activePointers = new Map();
+    this._gesture = null; // state during a two-finger gesture
+
+    // get two fingers + 
+    const getPoint = (ev) => ({ x: ev.clientX, y: ev.clientY });
+    const dist = (a, b) => Math.hypot(a.x-b.x,a.y-b.y);
+    const mid  = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+    const onPointerDown = (ev) => {
+        // capture to keep receiving events
+        try{ev.target.setPointerCapture(ev.pointerId);} catch (err){}
+
+        const p = getPoint(ev);
+        this._activePointers.set(ev.pointerId, { ...p, downTime: ev.timeStamp, maxMove: 0 });
+
+        if (this._activePointers.size === 2) {
+            const pts = Array.from(this._activePointers.values());
+            const p0 = pts[0], p1 = pts[1];
+            const startDist = dist(p0, p1);
+            const startMid  = mid(p0, p1);
+            // Remember starting zoom and center in project space
+            this._gesture = {
+                startDist,
+                startMid,
+                startZoom: this.paper.view.zoom,
+                startCenter: this.paper.view.center.clone()
+            };
+        }
+    };
+
+  const onPointerMove = (ev) => {
+    if(!this._activePointers.has(ev.pointerId))return;
+    const prev = this._activePointers.get(ev.pointerId);
+    const p = getPoint(ev);
+    const move = Math.hypot(p.x - prev.x, p.y - prev.y);
+    this._activePointers.set(ev.pointerId, { ...prev, ...p, maxMove: Math.max(prev.maxMove, move) });
+
+    if (this._activePointers.size === 2 && this._gesture) {
+      const pts = Array.from(this._activePointers.values());
+      const p0 = pts[0], p1 = pts[1];
+      const curDist = dist(p0, p1);
+      const curMid  = mid(p0, p1);
+      if (this._gesture.startDist <= 0.0001) return;
+
+      // Scale zoom based on pinch distance
+      const scale = curDist / this._gesture.startDist;
+      const targetZoom = this._gesture.startZoom * scale;
+      // Clamp like _applyZoomAndPanChangesFromPaper would
+      this.paper.view.zoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, targetZoom));
+
+      // Keep the midpoint under the fingers by translating center by the midpoint delta (in project units)
+      const midDeltaPx = new paper.Point(curMid.x - this._gesture.startMid.x, curMid.y - this._gesture.startMid.y);
+      const midDeltaProj = midDeltaPx.divide(this.paper.view.zoom);
+      this.paper.view.center = this._gesture.startCenter.subtract(midDeltaProj);
+
+      // push zoom/pan to model + re-render (respects limits)
+      this._applyZoomAndPanChangesFromPaper();
+    }
+  };
+
+  const onPointerUpOrCancel = (ev) => {
+    const justTwo = (this._activePointers.size === 2);
+    const taps = Array.from(this._activePointers.values());
+    this._activePointers.delete(ev.pointerId);
+
+    // Detect a quick two-finger tap (undo): both down briefly, little movement
+    if (justTwo && this._activePointers.size < 2 && taps.length === 2 && !this.model.isPublished) {
+      const now = ev.timeStamp;
+      const maxTapDur = 250;   // ms
+      const maxTapMove = 12;   // px
+      const quick = taps.every(t => (now - t.downTime) <= maxTapDur);
+      const still = taps.every(t => (t.maxMove <= maxTapMove));
+      if (quick && still) {
+        if (!this.model.undo()) {
+          // no-op if nothing to undo
+        } else {
+          this.applyChanges();
+          this.fireEvent('canvasModified', { undo: true }, 'Undo');
+        }
+      }
+    }
+    if (this._activePointers.size < 2) {
+      this._gesture = null;
+    }
+  };
+
+  // Use non-passive so we can preventDefault if ever needed (we currently rely on touch-action: none)
+  this._svgCanvas.addEventListener('pointerdown', onPointerDown, { passive: false });
+  this._svgCanvas.addEventListener('pointermove', onPointerMove, { passive: false });
+  this._svgCanvas.addEventListener('pointerup', onPointerUpOrCancel, { passive: false });
+  this._svgCanvas.addEventListener('pointercancel', onPointerUpOrCancel, { passive: false });
+  // --- end gestures ---
 
         // Connect all Wick Tools into the paper.js project
         for (var toolName in this.model.tools) {

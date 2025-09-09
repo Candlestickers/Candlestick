@@ -34,6 +34,8 @@ Wick.Tool = class {
 
         // Attach onActivate event
         this.paperTool.onActivate = (e) => {
+            // const view = this.project && this.project.view;
+            // if (view && view.gestureActive) return;
             this.onActivate(e);
         }
 
@@ -44,11 +46,16 @@ Wick.Tool = class {
 
         // Attach mouse move event
         this.paperTool.onMouseMove = (e) => {
+            const view = this.project && this.project.view;
+            if (view && view.gestureActive) return;
             this.onMouseMove(e);
         }
 
         // Attach mouse down + double click event
         this.paperTool.onMouseDown = (e) => {
+            const view = this.project && this.project.view;
+            if (view && view.gestureActive) return;
+
             if(this.doubleClickEnabled &&
                this._lastMousedownTimestamp !== null &&
                e.timeStamp - this._lastMousedownTimestamp < Wick.Tool.DOUBLE_CLICK_TIME &&
@@ -71,11 +78,15 @@ Wick.Tool = class {
 
         // Attach mouse move event
         this.paperTool.onMouseDrag = (e) => {
+            const view = this.project && this.project.view;
+            if (view && view.gestureActive) return;
             this.onMouseDrag(e);
         }
 
         // Attach mouse up event
         this.paperTool.onMouseUp = (e) => {
+            const view = this.project && this.project.view;
+            if (view && view.gestureActive) return;
             this.onMouseUp(e);
         }
 
@@ -112,6 +123,24 @@ Wick.Tool = class {
 
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * Called when the mouse moves and the tool is active.
      */
@@ -119,33 +148,6 @@ Wick.Tool = class {
         this.setCursor(this.cursor);
     }
 
-    /**
-     * Called when the mouse clicks the paper.js canvas and this is the active tool.
-     */
-    onMouseDown (e) {
-
-    }
-
-    /**
-     * Called when the mouse is dragged on the paper.js canvas and this is the active tool.
-     */
-    onMouseDrag (e) {
-
-    }
-
-    /**
-     * Called when the mouse is clicked on the paper.js canvas and this is the active tool.
-     */
-    onMouseUp (e) {
-
-    }
-
-    /**
-     * Called when the mouse double clicks on the paper.js canvas and this is the active tool.
-     */
-    onDoubleClick (e) {
-
-    }
 
     /**
      * Called when a key is pressed and this is the active tool.
