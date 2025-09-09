@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "author": "Wicklets LLC",
   "private": true,
-  "homepage": "https://candlestickers.github.io/Candlestick/",
+  "homepage": "https://candlestickers.app",
   "main": "./public/electron.js",
   "repository": {
     "type": "git",
@@ -109,7 +109,7 @@
     "test": "react-scripts test",
     "engine-tests": "cd engine; python -m SimpleHTTPServer 9999",
     "predeploy": "npm run build",
-    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.github.io/Candlestick/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
+    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.app/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
 
     "build:nocname": "react-scripts build",
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error(`✖ Deploy test only from development (current: ${b})`); process.exit(1);} console.log('✔ Branch ok:', b);\"",
