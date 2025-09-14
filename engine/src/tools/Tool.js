@@ -115,24 +115,6 @@ Wick.Tool = class {
 
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
      * Called when the mouse moves and the tool is active.
      */
@@ -140,6 +122,33 @@ Wick.Tool = class {
         this.setCursor(this.cursor);
     }
 
+    /**
+     * Called when the mouse clicks the paper.js canvas and this is the active tool.
+     */
+    onMouseDown (e) {
+
+    }
+
+    /**
+     * Called when the mouse is dragged on the paper.js canvas and this is the active tool.
+     */
+    onMouseDrag (e) {
+
+    }
+
+    /**
+     * Called when the mouse is clicked on the paper.js canvas and this is the active tool.
+     */
+    onMouseUp (e) {
+
+    }
+
+    /**
+     * Called when the mouse double clicks on the paper.js canvas and this is the active tool.
+     */
+    onDoubleClick (e) {
+
+    }
 
     /**
      * Called when a key is pressed and this is the active tool.
