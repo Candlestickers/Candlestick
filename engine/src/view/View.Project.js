@@ -294,6 +294,8 @@ Wick.View.Project = class extends Wick.View {
                 startZoom: this.paper.view.zoom,
                 startCenter: this.paper.view.center.clone()
             };
+            Wick.gesture.active = true;
+            Wick.gesture.type = 'pinch_pan';
         }
     };
 
@@ -349,7 +351,9 @@ Wick.View.Project = class extends Wick.View {
       }
     }
     if (this._activePointers.size < 2) {
-      this._gesture = null;
+        this._gesture = null;
+        Wick.gesture.active = false;
+        Wick.gesture.type = null;
     }
   };
 

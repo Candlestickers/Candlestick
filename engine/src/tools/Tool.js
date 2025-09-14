@@ -46,15 +46,11 @@ Wick.Tool = class {
 
         // Attach mouse move event
         this.paperTool.onMouseMove = (e) => {
-            const view = this.project && this.project.view;
-            if (view && view.gestureActive) return;
             this.onMouseMove(e);
         }
 
         // Attach mouse down + double click event
         this.paperTool.onMouseDown = (e) => {
-            const view = this.project && this.project.view;
-            if (view && view.gestureActive) return;
 
             if(this.doubleClickEnabled &&
                this._lastMousedownTimestamp !== null &&
@@ -78,15 +74,11 @@ Wick.Tool = class {
 
         // Attach mouse move event
         this.paperTool.onMouseDrag = (e) => {
-            const view = this.project && this.project.view;
-            if (view && view.gestureActive) return;
             this.onMouseDrag(e);
         }
 
         // Attach mouse up event
         this.paperTool.onMouseUp = (e) => {
-            const view = this.project && this.project.view;
-            if (view && view.gestureActive) return;
             this.onMouseUp(e);
         }
 
