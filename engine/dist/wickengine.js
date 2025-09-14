@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.9.5.8.55.24";
+var WICK_ENGINE_BUILD_VERSION = "2025.9.14.9.20.42";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -45739,7 +45739,13 @@ TWEEN.Interpolation = {
 Wick = {
   version: window.WICK_ENGINE_BUILD_VERSION || "dev",
   resourcepath: '../dist/',
-  _originals: {} // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  _originals: {},
+  // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  // adding global variable to track finger gestures -H.A.
+  gesture: {
+    active: false,
+    type: null
+  }
 };
 console.log('Wick Engine version "' + Wick.version + '" is available.');
 
@@ -57979,15 +57985,11 @@ Wick.Tool = class {
 
     // Attach mouse move event
     this.paperTool.onMouseMove = e => {
-      const view = this.project && this.project.view;
-      if (view && view.gestureActive) return;
       this.onMouseMove(e);
     };
 
     // Attach mouse down + double click event
     this.paperTool.onMouseDown = e => {
-      const view = this.project && this.project.view;
-      if (view && view.gestureActive) return;
       if (this.doubleClickEnabled && this._lastMousedownTimestamp !== null && e.timeStamp - this._lastMousedownTimestamp < Wick.Tool.DOUBLE_CLICK_TIME && e.point.subtract(this._lastMousedownPoint).length < Wick.Tool.DOUBLE_CLICK_MAX_DISTANCE) {
         this.onDoubleClick(e);
       } else {
@@ -58007,15 +58009,11 @@ Wick.Tool = class {
 
     // Attach mouse move event
     this.paperTool.onMouseDrag = e => {
-      const view = this.project && this.project.view;
-      if (view && view.gestureActive) return;
       this.onMouseDrag(e);
     };
 
     // Attach mouse up event
     this.paperTool.onMouseUp = e => {
-      const view = this.project && this.project.view;
-      if (view && view.gestureActive) return;
       this.onMouseUp(e);
     };
     this._eventCallbacks = {};
@@ -58052,6 +58050,26 @@ Wick.Tool = class {
   onMouseMove(e) {
     this.setCursor(this.cursor);
   }
+
+  /**
+   * Called when the mouse clicks the paper.js canvas and this is the active tool.
+   */
+  onMouseDown(e) {}
+
+  /**
+   * Called when the mouse is dragged on the paper.js canvas and this is the active tool.
+   */
+  onMouseDrag(e) {}
+
+  /**
+   * Called when the mouse is clicked on the paper.js canvas and this is the active tool.
+   */
+  onMouseUp(e) {}
+
+  /**
+   * Called when the mouse double clicks on the paper.js canvas and this is the active tool.
+   */
+  onDoubleClick(e) {}
 
   /**
    * Called when a key is pressed and this is the active tool.
@@ -58719,6 +58737,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   }
   onMouseDown(e) {
     super.onMouseDown(e);
+    // GESTURES CHECK before running tool -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     if (!e.modifiers) e.modifiers = {};
     this.hitResult = this._updateHitResult(e);
     if (this.gradientColorSelection.isCursorHover) {
@@ -58782,6 +58802,26 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseDrag(e) {
+    // GESTURE CHECK — cancel selection -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      // undo selection box
+      if (this.selectionBox && this.selectionBox.active) {
+        this.selectionBox._active = false;
+        if (this.selectionBox._box) this.selectionBox._box.remove();
+        this.selectionBox._items = [];
+      }
+
+      // Cancel live transform jus tin case
+      if (this._widget && this._widget.currentTransformation) {
+        this._widget.currentTransformation = null;
+        if (typeof this._widget.update === 'function') this._widget.update();
+      }
+
+      // Do not proceed with normal drag logic while gesture is active
+      this.__isDragging = false;
+      // done, that's all -H.A.
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
     this.__isDragging = true;
     if (this.gradientColorSelection.isCursorHover) {
@@ -58818,6 +58858,15 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseUp(e) {
+    // (LAST) GESTURE CHECK . . . can never be too safe -H.A.
+    // this is more useful for two finger undo gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      // remove gradient handles
+      if (this.hoverPreview) this.hoverPreview.remove();
+      if (this.hoverPreview2) this.hoverPreview2.remove();
+      this.__isDragging = false;
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
 
     // remove hover preview and a new one will be rendered if needed
@@ -62303,6 +62352,8 @@ Wick.View.Project = class extends Wick.View {
           startZoom: this.paper.view.zoom,
           startCenter: this.paper.view.center.clone()
         };
+        Wick.gesture.active = true;
+        Wick.gesture.type = 'pinch_pan';
       }
     };
     const onPointerMove = ev => {
@@ -62363,6 +62414,8 @@ Wick.View.Project = class extends Wick.View {
       }
       if (this._activePointers.size < 2) {
         this._gesture = null;
+        Wick.gesture.active = false;
+        Wick.gesture.type = null;
       }
     };
 
