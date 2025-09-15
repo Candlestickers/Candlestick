@@ -294,8 +294,12 @@ Wick.View.Project = class extends Wick.View {
                 startZoom: this.paper.view.zoom,
                 startCenter: this.paper.view.center.clone()
             };
+            Wick.gesture = Wick.gesture || {};
             Wick.gesture.active = true;
             Wick.gesture.type = 'pinch_pan';
+            Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
+            Wick.gesture.lastStartAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
         }
     };
 
@@ -354,6 +358,8 @@ Wick.View.Project = class extends Wick.View {
         this._gesture = null;
         Wick.gesture.active = false;
         Wick.gesture.type = null;
+        Wick.gesture.lastEndAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
     }
   };
 

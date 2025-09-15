@@ -52,6 +52,13 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this._isInProgress = false;
 
+        // keep track of when mouse event is interrupted by gestures - H.A. 
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = 0;
+        this._strokeStartedAt = 0;
+
+
         this._croquisStartTimeout = null;
 
         // These are used to crop the final path image.
@@ -106,9 +113,12 @@ Wick.Tools.Brush = class extends Wick.Tool {
     onDeactivate (e) {
         // This prevents croquis from leaving stuck brush strokes on the screen.
         this.finishStrokeEarly();
+        if (this.croquis) this.croquis.clearLayer();
     }
 
     onMouseMove (e) {
+        if (window.Wick && Wick.gesture && Wick.gesture.active) return;
+        
         super.onMouseMove(e);
 
         this._updateCanvasAttributes();
@@ -116,6 +126,33 @@ Wick.Tools.Brush = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
+
+        // add in check for wick gestures - H.A.
+        // gesture active? don't even begin
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            this._suppressCommit = true;
+            return;
+        }
+
+
+        // not interrupted by hand gestures
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+        this._strokeStartedAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+        // clean up any pending work from a prior aborted stroke (belt & suspenders)
+        if (this._croquisStartTimeout) {
+            clearTimeout(this._croquisStartTimeout);
+            this._croquisStartTimeout = null;
+        }
+        if (this.croquis) {
+            this.croquis.clearLayer();
+        }
+        this._resetStrokeBounds(new paper.Point(0, 0)); // or e.point if you prefer
+
+
         if(this._isInProgress)
             this.discard();
 
@@ -149,6 +186,24 @@ Wick.Tools.Brush = class extends Wick.Tool {
     onMouseDrag (e) {
         if(!this._isInProgress) return;
 
+        // GESTURE CHECK - H.A.
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            if (this._isInProgress) {
+                this._gestureInterrupted = true;
+                this._suppressCommit = true;
+
+                // cancel pending potrace -_-
+                if(this._croquisStartTimeout) {
+                    clearTimeout(this._croquisStartTimeout);
+                    this._croquisStartTimeout = null;
+                }
+
+                this.discard(); // abort croquis safely
+            }
+        return;
+        }
+
+
         // Forward mouse event to croquis canvas
         var point = this._croquisToPaperPoint(e.point);
         this._updateStrokeBounds(point);
@@ -164,21 +219,38 @@ Wick.Tools.Brush = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
-        if(!this._isInProgress) return;
+        // Was this stroke interrupted by a gesture ? that's the question... - H.A.
+        const g = (window.Wick && Wick.gesture) || {};
+        const gestureActiveNow = !!g.active;
+        const gestureStartedDuringStroke =
+            (g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt) ||
+            ((g.seq || 0) !== (this._gestureSeqAtStart || 0));
+
+        const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+
+        if (interrupted) {
+            if (this._isInProgress) this.discard();
+            this._suppressCommit = false;
+            this._gestureInterrupted = false;
+            return;
+        }
+
+        if (!this._isInProgress) return;
         this._isInProgress = false;
 
-        var point = this._croquisToPaperPoint(e.point);
+        const point = this._croquisToPaperPoint(e.point);
         this._calculateStrokeBounds(point);
 
         try {
             this.croquis.up(point.x, point.y, this.lastPressure);
-        } catch (e) {
-            this.handleBrushError(e);
+        } catch (err) {
+            this.handleBrushError(err);
             return;
         }
 
         this._potraceCroquisCanvas(point);
     }
+
 
     /**
      * The current amount of pressure applied to the paper js canvas this tool belongs to.
@@ -218,16 +290,28 @@ Wick.Tools.Brush = class extends Wick.Tool {
      * Discard the current brush stroke.
      */
     discard () {
-        if(!this._isInProgress) return;
+        if (!this._isInProgress) return;
         this._isInProgress = false;
 
-        // "Give up" on the current stroke by forcing a mouseup
-        this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+        // prevent any scheduled potrace from the previous stroke
+        if (this._croquisStartTimeout) {
+            clearTimeout(this._croquisStartTimeout);
+            this._croquisStartTimeout = null;
+        }
 
-        // Clear the current croquis canvas
-        setTimeout(() => {
-            this.croquis.clearLayer();
-        }, 10);
+        // make sure we never commit anything from this aborted stroke
+        this._suppressCommit = true;
+
+        // close the stroke in croquis so it releases internal state
+        try {
+            this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+        } catch (_) {}
+
+        // nuke any raster the abort might have left behind — do it now, not later
+        this.croquis.clearLayer();
+
+        // ensure stale crop bounds don't leak into the next potrace
+        this._resetStrokeBounds(this._lastMousePoint);
     }
 
     /**
@@ -318,6 +402,13 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
     /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */
     _potraceCroquisCanvas (point) {
+
+        if (this._suppressCommit || this._gestureInterrupted || (window.Wick && Wick.gesture && Wick.gesture.active)) {
+            this._suppressCommit = false;
+            this._gestureInterrupted = false;
+            return;
+        }
+        
         this.errorOccured = false;
         var strokeBounds = this.strokeBounds.clone();
 
@@ -330,6 +421,14 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         // Give croquis just a little bit to get the canvas ready...
         this._croquisStartTimeout = setTimeout(() => {
+
+            // check for gesture interruptions
+            if (this._suppressCommit || this._gestureInterrupted || (window.Wick && Wick.gesture && Wick.gesture.active)) {
+                this._suppressCommit = false;
+                this._gestureInterrupted = false;
+                return;
+            }
+
             // Retrieve Croquis canvas
             var canvas = this.paper.view._element.parentElement.getElementsByClassName('croquis-layer-canvas')[1];
             if(!canvas) {
