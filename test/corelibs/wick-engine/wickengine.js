@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.9.14.17.32.28";
+var WICK_ENGINE_BUILD_VERSION = "2025.9.15.15.4.2";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -58264,6 +58264,9 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = null;
     this.errorOccured = false;
     this._isInProgress = false;
+
+    // keep track of when mouse event is interrupted by gestures - H.A. 
+    this._gestureInterrupted = false;
     this._croquisStartTimeout = null;
 
     // These are used to crop the final path image.
@@ -58310,11 +58313,20 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.finishStrokeEarly();
   }
   onMouseMove(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     super.onMouseMove(e);
     this._updateCanvasAttributes();
     this._regenCursor();
   }
   onMouseDown(e) {
+    // add in check for wick gestures - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+
+    // we aren't being interrupted by hand gestures
+    this._gestureInterrupted = false;
     if (this._isInProgress) this.discard();
     this._currentDrawingFrame = this.project.activeFrame;
     clearTimeout(this._croquisStartTimeout);
@@ -58343,6 +58355,15 @@ Wick.Tools.Brush = class extends Wick.Tool {
   onMouseDrag(e) {
     if (!this._isInProgress) return;
 
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      if (this._isInProgress) {
+        this._gestureInterrupted = true;
+        this.discard(); // abort croquis
+      }
+      return;
+    }
+
     // Forward mouse event to croquis canvas
     var point = this._croquisToPaperPoint(e.point);
     this._updateStrokeBounds(point);
@@ -58356,6 +58377,15 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = this.pressure;
   }
   onMouseUp(e) {
+    if (!this._isInProgress) return;
+    this._isInProgress = false;
+
+    // GESTURES CHECK on mouse release - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active || this._gestureInterrupted) {
+      if (this._isInProgress) this.discard();
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this._isInProgress) return;
     this._isInProgress = false;
     var point = this._croquisToPaperPoint(e.point);
