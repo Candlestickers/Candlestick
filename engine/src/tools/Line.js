@@ -21,19 +21,26 @@ Wick.Tools.Line = class extends Wick.Tool {
   /**
    *
    */
-  constructor() {
-    super();
-    this.name = 'line';
-    this.path = new this.paper.Path({
-      insert: false
-    });
-    this.startPoint;
-    this.endPoint;
-	this.hitResult = new this.paper.HitResult();
-	this.hoverPreview = new this.paper.Item({
-		insert: false
-	});
-  }
+	constructor() {
+		super();
+		this.name = 'line';
+		this.path = new this.paper.Path({
+			insert: false
+		});
+		this.startPoint;
+		this.endPoint;
+		this.hitResult = new this.paper.HitResult();
+		this.hoverPreview = new this.paper.Item({
+			insert: false
+		});
+
+		// HAND GESTURES - H.A.
+		this._gestureInterrupted = false;
+		this._suppressCommit = false;
+		this._gestureSeqAtStart = 0;
+		this._strokeStartedAt = 0;
+
+	}
 
   get doubleClickEnabled() {
     return false;
@@ -53,11 +60,13 @@ Wick.Tools.Line = class extends Wick.Tool {
   }
 
   onActivate(e) {
-    this.path.remove();
+	this._cancelPath();
+    // this.path.remove();
   }
 
   onDeactivate(e) {
-    this.path.remove();
+	this._cancelPath();
+    // this.path.remove();
   }
 
   onMouseMove(e) {
@@ -86,6 +95,18 @@ Wick.Tools.Line = class extends Wick.Tool {
   }
 
   onMouseDown(e) {
+
+	// check for gesture
+	if (window.Wick && Wick.gesture && Wick.gesture.active) {
+		this._gestureInterrupted = true;
+		this._suppressCommit = true;
+		return;
+	}
+	// else reset gesture stamp
+	this._gestureInterrupted = false;
+	this._suppressCommit = false;
+	this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+	this._strokeStartedAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 	
 	// check if there is a hoverpoint
 	// else use e.point for startPoint
@@ -94,7 +115,17 @@ Wick.Tools.Line = class extends Wick.Tool {
   }
 
   onMouseDrag(e) {
-    this.path.remove();
+
+	// abort mid-process if needed
+	if (window.Wick && Wick.gesture && Wick.gesture.active) {
+		this._gestureInterrupted = true;
+		this._suppressCommit = true;
+		this._cancelPath();
+		return;
+	}
+
+    // this.path.remove();
+	this._cancelPath();
 
 	// remove the hover preview
 	this.hoverPreview.remove();
@@ -151,17 +182,67 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.path.strokeWidth = this.getSetting('strokeWidth');
   }
 
-  onMouseUp(e) {
-	this.hoverPreview.remove();
-    this.path.remove();
-	if(this.endPoint.x!==this.startPoint.x || this.endPoint.y!==this.startPoint.y){
-		this.addPathToProject(this.path);
-		this.fireEvent({
-		eventName: 'canvasModified',
-		actionName: 'line'
-		});
+	onMouseUp(e) {
+	// clean up preview safely
+	if (this.hoverPreview && typeof this.hoverPreview.remove === 'function') {
+		try { this.hoverPreview.remove(); } catch (_) {}
 	}
-  }
+
+	// Compute interruption FIRST
+	const g = (window.Wick && Wick.gesture) || {};
+	const gestureActiveNow = !!g.active;
+	const gestureStartedDuringStroke =
+		(g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt) ||
+		((g.seq || 0) !== (this._gestureSeqAtStart || 0));
+	const interrupted =
+		this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+
+	if (interrupted) {
+		// abort; remove any preview path and reset points
+		this._cancelPath();
+		this._suppressCommit = false;
+		this._gestureInterrupted = false;
+		this.startPoint = null;
+		this.endPoint = null;
+		return;
+	}
+
+	// Not interrupted — finalize the line if it’s not a dot
+	if (!this.startPoint || !this.endPoint) {
+		// nothing meaningful to add
+		this._cancelPath();
+		return;
+	}
+
+	const samePoint = (this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y);
+	if (samePoint) {
+		this._cancelPath();
+		this.startPoint = null;
+		this.endPoint = null;
+		return;
+	}
+
+	// Ensure we have a path to add (gesture aborts may have nulled it)
+	if (!this.path) {
+		this.path = new this.paper.Path.Line(this.startPoint, this.endPoint);
+		this.path.strokeCap = 'round';
+		this.path.strokeColor = this.getSetting('strokeColor').rgba;
+		this.path.strokeWidth = this.getSetting('strokeWidth');
+	}
+
+	// House style elsewhere removes then adds; keep consistent
+	try { this.path.remove(); } catch (_) {}
+	// this._cancelPath();
+	this.addPathToProject(this.path);
+	this.path = null;
+
+	this.fireEvent({ eventName: 'canvasModified', actionName: 'line' });
+
+	// reset start/end for next stroke
+	this.startPoint = null;
+	this.endPoint = null;
+	}
+
 
   // todo: clean this function -H.A.
   _updateHitResult(e) {
@@ -188,5 +269,9 @@ Wick.Tools.Line = class extends Wick.Tool {
 
     return newHitResult;
   }
+
+	_cancelPath () {
+		if (this.path) { try { this.path.remove(); } catch (_) {} this.path = null; }
+	}
 
 };
