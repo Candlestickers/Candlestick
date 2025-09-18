@@ -48,13 +48,13 @@
 }
 
 
-.flashy {
+.question-mark {
     position: absolute;
     top: 50%;
     left: 50%;
-    margin-left: -66px;
-    margin-top: -80px;
-    width: 120px;
+    margin-left: -524px;
+    margin-top: -140px;
+    width: 1px;
     /* height: 220px; */
     animation: float .6s ease-in-out infinite alternate;
 }
@@ -69,6 +69,7 @@
     width: 120px;
     height: 20px;
     animation: pulse .6s ease-in-out infinite alternate;
+    z-index: -5;
 }
 
 .text {
