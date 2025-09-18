@@ -54,7 +54,7 @@ class SupportUs extends Component {
             <img id="support-modal-title-img-mobile" src={whiteHeart} alt="white heart icon" style={{width: "24px", height: "auto", marginRight: "10px", display: "inline-block"}}></img>
             <p id="support-modal-title-text">Support Us!</p>
           </div>
-          {contentDisplay}
+          {/* {contentDisplay} */}
         </div>
         {footerDisplay}
       </WickModal>
