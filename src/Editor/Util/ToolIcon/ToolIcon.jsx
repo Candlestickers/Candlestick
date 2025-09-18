@@ -176,9 +176,12 @@ import iconSplit from 'resources/tool-icons/split.svg';
 import iconLayerTween from 'resources/tool-icons/layerTween.svg';
 
 // Marks
-import mascotMarkWhite from 'resources/logo-icons/mascot-mark-white.svg';
-import mascotMarkDark from 'resources/logo-icons/mascot-mark-dark.svg';
-import mascotMark from 'resources/logo-icons/mascot-mark.svg';
+// mascot-mark-white.svg
+// mascot-mark-dark.svg
+// mascot-mark.svg
+import mascotMarkWhite from 'resources/logo-icons/CSFlashy.png';
+import mascotMarkDark from 'resources/logo-icons/CSFlashy.png';
+import mascotMark from 'resources/logo-icons/CSFlashy.png';
 import mascot from 'resources/logo-icons/CSFlashy.png';
 
 // Code Editor
