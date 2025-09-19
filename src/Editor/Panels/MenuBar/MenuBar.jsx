@@ -40,7 +40,7 @@ class MenuBar extends Component {
             icon="redheart"
             text="Discord! "
             id="support-us-button"
-            action={() => window.open("https://discord.gg/nEc7C4CbRd")}
+            action={() => window.open("https://discord.gg/5esxxWxd7Z")}
             /> }
           </div>
 
@@ -90,7 +90,7 @@ class MenuBar extends Component {
         <MenuBarSupportButton
           icon="redheart"
           id="support-us-button"
-          action={() => window.open("https://discord.gg/nEc7C4CbRd")}
+          action={() => window.open("https://discord.gg/5esxxWxd7Z")}
         />
         
         <div role="button" onClick={() => this.props.openModal("SimpleProjectSettings")} className="menu-bar-project-name-mobile">
