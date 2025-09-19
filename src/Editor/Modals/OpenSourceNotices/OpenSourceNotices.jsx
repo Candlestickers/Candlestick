@@ -34,7 +34,7 @@ class OpenSourceNotices extends Component {
             className={classNames("open-source-notices-modal-container", this.props.isMobile && "mobile")}
             overlayClassName="open-source-notices-modal-overlay">
                 <div className="open-source-notices-body">                
-                    <h1> <b><a href="https://github.com/Candlestickers/Candlestick">Wick Editor: Candlestick</a></b> Open Source Notices </h1>
+                    <h1> <b><a href="https://github.com/Candlestickers/Candlestick">W.E. Candlestick</a></b> Open Source Notices </h1>
                     <p> 
                         Candlestick is a fork of the Wick Editor.<br></br>The Wick Editor is an open source project that utilizes the shared code of dozens of other open source libraries. Below, you can find a list of the projects we use, links to their repositories, and a copy of their license terms. If we have missed a library, or if you have any questions about this list, please send a message to contact@wickeditor.com.
                     </p>
