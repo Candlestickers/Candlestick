@@ -1,23 +1,27 @@
 self.__precacheManifest = [
   {
-    "revision": "677ccf8ec0d42f379ff9",
-    "url": "/test/static/css/main.75c0ab5b.chunk.css"
+    "revision": "1262bcf8b7edf91e19a0",
+    "url": "/test/static/css/main.6c75230c.chunk.css"
   },
   {
-    "revision": "677ccf8ec0d42f379ff9",
-    "url": "/test/static/js/main.677ccf8e.chunk.js"
+    "revision": "1262bcf8b7edf91e19a0",
+    "url": "/test/static/js/main.1262bcf8.chunk.js"
   },
   {
-    "revision": "17e5c33f3dd5f85bdf5c",
-    "url": "/test/static/css/1.262c9652.chunk.css"
+    "revision": "4ae3b0f5f8b35d4debdb",
+    "url": "/test/static/css/1.584f3eb8.chunk.css"
   },
   {
-    "revision": "17e5c33f3dd5f85bdf5c",
-    "url": "/test/static/js/1.17e5c33f.chunk.js"
+    "revision": "4ae3b0f5f8b35d4debdb",
+    "url": "/test/static/js/1.4ae3b0f5.chunk.js"
   },
   {
     "revision": "5ad1e219c88e053e0b1e",
     "url": "/test/static/js/runtime~main.5ad1e219.js"
+  },
+  {
+    "revision": "492cbcbbb5f95ee693e755467b2704cb",
+    "url": "/test/static/media/CSFlashy.492cbcbb.png"
   },
   {
     "revision": "d6e566ed34379addeeece7367ade0db7",
@@ -524,22 +528,6 @@ self.__precacheManifest = [
     "url": "/test/static/media/layerTween.fc24b5ef.svg"
   },
   {
-    "revision": "e9c9f1bd53236321844cdef6ec7589da",
-    "url": "/test/static/media/mascot-mark-white.e9c9f1bd.svg"
-  },
-  {
-    "revision": "147ab8c4a25cb3178b8879c2eec83269",
-    "url": "/test/static/media/mascot-mark-dark.147ab8c4.svg"
-  },
-  {
-    "revision": "92d68341dadf05923bedcf92d1a2463a",
-    "url": "/test/static/media/mascot-mark.92d68341.svg"
-  },
-  {
-    "revision": "c0d57484649219242a20752273343876",
-    "url": "/test/static/media/CSFlashy.c0d57484.png"
-  },
-  {
     "revision": "1626f4bc3fa927b5c3b889dd36d69c5b",
     "url": "/test/static/media/clear.1626f4bc.svg"
   },
@@ -580,8 +568,8 @@ self.__precacheManifest = [
     "url": "/test/static/media/back.698abbb0.svg"
   },
   {
-    "revision": "ae24f0dfba1b28663e4db2c8b8930264",
-    "url": "/test/static/media/red-heart.ae24f0df.svg"
+    "revision": "6390794c98d55134970e3b800410fe14",
+    "url": "/test/static/media/red-heart.6390794c.svg"
   },
   {
     "revision": "38b1fe2c68a586a29ab4dbd6c20fd3b2",
@@ -752,7 +740,7 @@ self.__precacheManifest = [
     "url": "/test/static/media/white-heart.daf330ed.svg"
   },
   {
-    "revision": "6115eff382cd1bbdc13e7a75d8f11f8e",
+    "revision": "4f2bcb9cb27c9698afd5a6e48c062024",
     "url": "/test/index.html"
   }
 ];
