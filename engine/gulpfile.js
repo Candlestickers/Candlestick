@@ -55,6 +55,7 @@ gulp.task("default", function() {
     .src([
       'src/Wick.js',
       'src/Clipboard.js',
+      'src/Quadtree.js',
       'src/Color.js',
       'src/FileCache.js',
       'src/History.js',
@@ -91,6 +92,7 @@ gulp.task("default", function() {
       'src/base/asset/GIFAsset.js',
       'src/base/asset/SoundAsset.js',
       'src/base/asset/SVGAsset.js',
+      'src/base/WickSound.js',
       'src/base/Tickable.js',
       'src/base/Frame.js',
       'src/base/Clip.js',

@@ -1,9 +1,9 @@
 {
   "name": "wick-editor",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "Wicklets LLC",
   "private": true,
-  "homepage": "https://candlestickers.app/",
+  "homepage": "./",
   "main": "./public/electron.js",
   "repository": {
     "type": "git",
@@ -16,13 +16,13 @@
     "audiobuffer-to-wav": "^1.0.0",
     "base64-arraybuffer": "^0.2.0",
     "bootstrap": "^4.1.3",
-    "classnames": "^2.2.6",
-    "console-feed": "^3.1.10",
+    "classnames": "^2.5.1",
+    "console-feed": "^3.8.0",
     "electron-is-dev": "^1.2.0",
-    "electron-updater": "^4.2.5",
-    "file-saver": "^2.0.0",
+    "electron-updater": "^4.2.0",
+    "file-saver": "^2.0.5",
     "gifuct-js": "^2.1.2",
-    "localforage": "^1.7.3",
+    "localforage": "^1.10.0",
     "node-sass": "^4.9.4",
     "query-string": "^6.9.0",
     "rc-slider": "^8.6.3",
@@ -38,12 +38,12 @@
     "react-dropzone": "^8.0.3",
     "react-hotkeys": "^2.0.0",
     "react-measure": "^2.3.0",
-    "react-modal": "^3.8.1",
+    "react-modal": "^3.16.3",
     "react-numeric-input": "^2.2.3",
     "react-popover": "^0.5.10",
     "react-reflex": "^3.0.6",
     "react-resize-detector": "^3.1.3",
-    "react-rnd": "^10.2.3",
+    "react-rnd": "^10.5.2",
     "react-scripts": "2.0.5",
     "react-select": "^2.1.0",
     "react-sizeme": "^2.6.12",
@@ -53,16 +53,16 @@
     "react-toastify": "^4.5.2",
     "react-tooltip": "^4.2.7",
     "reactstrap": "^6.5.0",
-    "tinycolor2": "^1.4.1",
-    "underscore": "^1.9.1",
-    "url-parse": "^1.4.7"
+    "tinycolor2": "^1.6.0",
+    "underscore": "^1.13.7",
+    "url-parse": "^1.5.10"
   },
   "build": {
-    "appId": "com.wicklets.wickEditor",
-    "productName": "Wick Editor",
+    "appId": "com.candlestickers.candlestick",
+    "productName": "Candlestick",
     "icon": "public/icon.icns",
     "afterSign": "electron-builder-notarize",
-    "copyright": "© 2016-2020 Wicklets LLC",
+    "copyright": "© 2025 Candlestickers",
     "files": [
       "./build/**/*",
       "./public/electron.js"
@@ -74,8 +74,7 @@
     },
     "mac": {
       "target": [
-        "pkg",
-        "dmg"
+        "pkg"
       ],
       "category": "public.app-category.entertainment",
       "hardenedRuntime": true,
@@ -103,21 +102,18 @@
     "eject": "react-scripts eject",
     "dist": "electron-builder",
     "start": "react-scripts start",
-    "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME && cp build/index.html build/404.html",
-
+    "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
     "build-engine": "cd engine; mkdir dist/; gulp; cp -a dist/. ../public/corelibs/wick-engine/",
     "build-engine-windows": "cd engine & mkdir dist  2>nul &    gulp & xcopy /EY dist\\. ..\\public\\corelibs\\wick-engine\\",
     "test": "react-scripts test",
     "engine-tests": "cd engine; python -m SimpleHTTPServer 9999",
     "predeploy": "npm run build",
     "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.app/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
-
     "build:nocname": "react-scripts build",
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error('✖ Deploy test only from development (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error('✖ Deploy to prod only from main/master (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "master-deploy": "npm run check-branch-prod; gh-pages -d build -b gh-pages -m \"deploy prod\"",
     "test-deploy": "npm run check-branch; PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
-
     "electron": "electron .",
     "electron-dev-macos": "ELECTRON_START_URL=http://localhost:3000 electron .",
     "electron-dev-windows": "set ELECTRON_START_URL=http://localhost:3000 && electron .",

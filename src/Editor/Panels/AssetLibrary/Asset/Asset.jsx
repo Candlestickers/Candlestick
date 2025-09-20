@@ -68,11 +68,11 @@ class Asset extends Component {
   renderAddButton = () => {
     if (this.props.asset.classname === 'SoundAsset') {
       return <span className="asset-button add">
-          <ActionButton classsName="add" color="green" text="Add to Frame" action={() => this.props.addSoundToActiveFrame(this.props.asset)}/>
+          <ActionButton classsName="add" color="yellow" text="Add to Frame" action={() => this.props.addSoundToActiveFrame(this.props.asset)}/>
         </span>
     } else {
       return  <span className="asset-button add">
-        <ActionButton classsName="add" color="green" text="Add to Canvas" action={this.addToCanvas}/>
+        <ActionButton classsName="add" color="yellow" text="Add to Canvas" action={this.addToCanvas}/>
       </span>
     }
   }
