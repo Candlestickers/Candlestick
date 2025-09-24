@@ -19,7 +19,7 @@
 
 Wick.Tools.Brush = class extends Wick.Tool {
     static get CROQUIS_WAIT_AMT_MS () {
-        return 100;
+        return 30;
     }
 
     get doubleClickEnabled () {
