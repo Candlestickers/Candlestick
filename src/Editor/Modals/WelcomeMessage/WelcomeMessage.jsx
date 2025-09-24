@@ -124,7 +124,7 @@ class WelcomeModal extends Component {
               {this.renderUpdates()}
               {/* {this.renderPatreonSupporters("desktop-modal")} */}
             </div>
-            <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://discord.gg/nEc7C4CbRd">Discord!</a></div>
+            <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://discord.gg/5esxxWxd7Z">Discord!</a></div>
             <div id="welcome-modal-footer">
               <div id="welcome-modal-accept">
                 <ActionButton
