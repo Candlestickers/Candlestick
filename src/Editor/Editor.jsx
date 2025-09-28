@@ -817,20 +817,21 @@ class Editor extends EditorCore {
         });
     }
 
-  }
+  
 
-  /**
-   * Returns a string representing the render size elements should use in the editor.
-   * @returns {String} "large", "medium" or "small" depending on the width of the window.
-   */
-  getRenderSize = () => {
-    if (window.innerWidth > 1200) {
-      return "large";
-    } else if (window.innerWidth > 850) {
-      return "medium";
-    } else {
-      return "small";
-
+    /**
+     * Returns a string representing the render size elements should use in the editor.
+     * @returns {String} "large", "medium" or "small" depending on the width of the window.
+     */
+    getRenderSize = () => {
+        if (window.innerWidth > 1200) {
+            return "large";
+        } else if (window.innerWidth > 850) {
+            return "medium";
+        } else {
+            return "small";
+        }
+    }
     /**
      *  Combines two custom hotkey objects into a single custom hotkey object.
      *  Any hotkeys in hotkeys2 will overwrite hotkeys1.
@@ -857,7 +858,6 @@ class Editor extends EditorCore {
         });
 
         return newHotKeys;
-
     }
 
     /**
