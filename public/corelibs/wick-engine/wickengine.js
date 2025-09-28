@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.9.18.13.58.19";
+var WICK_ENGINE_BUILD_VERSION = "2025.9.28.7.55.54";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -58241,7 +58241,7 @@ Wick.Tools = {};
 
 Wick.Tools.Brush = class extends Wick.Tool {
   static get CROQUIS_WAIT_AMT_MS() {
-    return 100;
+    return 30;
   }
   get doubleClickEnabled() {
     return false;
@@ -60143,12 +60143,25 @@ Wick.Tools.Pan = class extends Wick.Tool {
   }
   onActivate(e) {}
   onDeactivate(e) {}
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     var d = e.downPoint.subtract(e.point);
     this.paper.view.center = this.paper.view.center.add(d);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.fireEvent({
       eventName: 'canvasViewTransformed'
     });
@@ -60868,12 +60881,25 @@ Wick.Tools.Zoom = class extends Wick.Tool {
   onDeactivate(e) {
     this.deleteZoomBox();
   }
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
     this.deleteZoomBox();
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.createZoomBox(e);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     if (this.zoomBox && this.zoomBoxIsValidSize()) {
       var bounds = this.zoomBox.bounds;
       var viewBounds = this.paper.view.bounds;
@@ -62738,12 +62764,6 @@ Wick.View.Project = class extends Wick.View {
       x: (a.x + b.x) / 2,
       y: (a.y + b.y) / 2
     });
-
-    // predefining threshold settings for two-finger tap undo
-    const TWO_FINGER_TAP_MAX_MS = 1000; // 1 second
-    const TWO_FINGER_TAP_MAX_PX = 9999; // ignore movements
-    const TWO_FINGER_TAP_MAX_SCALE = 1.12; // ignore wiggle
-
     const _dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
     const onPointerDown = ev => {
       // capture to keep receiving events
@@ -62779,15 +62799,16 @@ Wick.View.Project = class extends Wick.View {
         // --- TAP CANDIDATE ---
         this._twoFingerTapCandidate = {
           startAt: ev.timeStamp,
-          startDist,
-          maxTravel: 0,
-          // we’ll update this in move
-          canceled: false
+          valid: true
         };
 
         // Global gesture flags
         Wick.gesture = Wick.gesture || {};
         Wick.gesture.active = true;
+        this._twoFingerTapCandidate = {
+          startAt: ev.timeStamp,
+          valid: true
+        };
         Wick.gesture.type = 'pinch_pan';
         Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
         Wick.gesture.lastStartAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -62804,19 +62825,6 @@ Wick.View.Project = class extends Wick.View {
         travel: Math.max(prev.travel, total)
       });
       if (this._activePointers.size === 2 && this._gesture) {
-        if (this._twoFingerTapCandidate && !this._twoFingerTapCandidate.canceled) {
-          // update max travel across both fingers
-          const ptsNow = Array.from(this._activePointers.values());
-          const maxTravelNow = Math.max(ptsNow[0].travel || 0, ptsNow[1].travel || 0);
-          this._twoFingerTapCandidate.maxTravel = Math.max(this._twoFingerTapCandidate.maxTravel, maxTravelNow);
-
-          // cancel candidate on significant pinch
-          const curDist = _dist(ptsNow[0], ptsNow[1]);
-          const scaleNow = curDist / this._twoFingerTapCandidate.startDist;
-          if (scaleNow > TWO_FINGER_TAP_MAX_SCALE || scaleNow < 1 / TWO_FINGER_TAP_MAX_SCALE) {
-            this._twoFingerTapCandidate.canceled = true;
-          }
-        }
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0],
           p1 = pts[1];
@@ -62840,31 +62848,46 @@ Wick.View.Project = class extends Wick.View {
       }
     };
     const onPointerUpOrCancel = ev => {
-      const hadTwo = this._activePointers.size === 2;
-      // snapshot BEFORE delete (we don’t actually need it now, but keep for debug)
-      // const taps = Array.from(this._activePointers.values());
+      // Remove the pointer that just lifted
       this._activePointers.delete(ev.pointerId);
-      const nowSize = this._activePointers.size;
+      const remaining = this._activePointers.size;
 
-      // Helper to evaluate final tap and reset state
-      const finalizeTwoFingerTap = () => {
+      // Helper to finalize: decide if it's a two-finger tap and reset state
+      const finalizeTwoFingerTap = ts => {
         const cand = this._twoFingerTapCandidate;
-        if (cand && !cand.canceled /* && !this.model.isPublished */) {
-          // (remove the published check for testing — re-enable later if you want)
-          const now = ev.timeStamp;
-          const withinTime = now - cand.startAt <= 700; // slightly generous
-          const withinTravel = cand.maxTravel <= 35; // little wiggle lol
+        if (cand && !cand.canceled) {
+          const now = ts ?? ev.timeStamp;
+          const dur = now - cand.startAt;
+          // For testing, accept anything under 10s
+          if (dur <= 10000) {
+            // Visible confirmation on device (no console needed)
+            try {
+              navigator.vibrate && navigator.vibrate(10);
+            } catch {}
+            alert('Two-finger UNDO'); // remove once verified
 
-          if (withinTime && withinTravel) {
-            if (this.model.undo()) {
+            let didUndo = false;
+            try {
+              if (this.model.project && typeof this.model.project.undo === 'function') {
+                didUndo = this.model.project.undo();
+              } else if (typeof this.model.undo === 'function') {
+                didUndo = this.model.undo();
+              }
+            } catch (err) {
+              console.error('Undo call failed', err);
+            }
+            if (didUndo) {
               this.applyChanges();
               this.fireEvent('canvasModified', {
                 undo: true
               }, 'Undo');
+            } else {
+              alert('Undo stack empty or wrong target');
             }
           }
         }
-        // Clear gesture state
+
+        // Always reset gesture/tap state when evaluation is done
         this._gesture = null;
         this._twoFingerTapCandidate = null;
         if (this._twoFingerTapEndTimer) {
@@ -62876,22 +62899,29 @@ Wick.View.Project = class extends Wick.View {
         Wick.gesture.lastEndAt = performance?.now?.() ?? Date.now();
       };
 
-      // Case A: both fingers are now up -> evaluate immediately
-      if (nowSize === 0) {
+      // Case A: BOTH fingers are up now → evaluate immediately
+      if (remaining === 0) {
         finalizeTwoFingerTap();
         return;
       }
 
-      // Case B: just went from 2 -> 1 fingers 
-      if (hadTwo && nowSize === 1) {
+      // Case B: we just went 2 → 1 fingers → arm a tiny grace window
+      // (Do NOT clear the candidate here!)
+      if (remaining === 1) {
         if (this._twoFingerTapEndTimer) clearTimeout(this._twoFingerTapEndTimer);
         this._twoFingerTapEndTimer = setTimeout(() => {
-          // If after the window we STILL don't have both fingers up, do nothing.
-          // (User kept one finger down => not a tap.)
+          // If the second up arrived during the window, remaining will be 0 now.
           if (this._activePointers.size === 0) {
             finalizeTwoFingerTap();
+          } else {
+            // Not a clean two-finger tap; just clear gesture flags so tools resume.
+            this._gesture = null;
+            // DO NOT clear _twoFingerTapCandidate here; let a future full lift re-evaluate.
+            Wick.gesture.active = false;
+            Wick.gesture.type = null;
           }
-        }, 70); // 50-90ms is a sweet spot; tweak if needed
+          this._twoFingerTapEndTimer = null;
+        }, 120); // 80-150ms works well; 120ms is a good default
         return;
       }
     };

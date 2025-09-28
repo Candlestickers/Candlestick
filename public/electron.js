@@ -29,11 +29,14 @@ function createWindow() {
     mainWindow.autoUpdater = autoUpdater;
 
     // and load the index.html of the app.
-    const startUrl = process.env.ELECTRON_START_URL || url.format({
-            pathname: path.join(__dirname, '/../build/index.html'),
-            protocol: 'file:',
-            slashes: true
-        });
+    const startUrl =
+  process.env.ELECTRON_START_URL ||
+  url.format({
+    pathname: path.join(app.getAppPath(), 'build', 'index.html'),
+    protocol: 'file:',
+    slashes: true,
+  });
+
 
     mainWindow.loadURL(startUrl);
 
@@ -57,6 +60,7 @@ function createWindow() {
     });
 
     mainWindow.setMenu(null); // Disable the file menu in favor of the in-app menu.
+    mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
