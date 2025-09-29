@@ -13,5 +13,5 @@ Choose either "addition" or "edit". If documentation already exists for this con
 **What concept, or code, does this relate to?**
 Add a code sample, or link to a reference item.
 
-**Additional Context**
+**Additional context**
 Add any other context or screenshots about the feature request here.
