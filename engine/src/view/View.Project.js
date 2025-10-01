@@ -370,27 +370,20 @@ Wick.View.Project = class extends Wick.View {
                 const now = ts ?? ev.timeStamp;
                 const dur = now - cand.startAt;
                 // For testing, accept anything under 10s
-                if (dur <= 10000) {
+                if (dur <= 250) {
                     // Visible confirmation on device (no console needed)
                     try { navigator.vibrate && navigator.vibrate(10); } catch {}
-                    alert('Two-finger UNDO'); // remove once verified
+                    // alert('Two-finger UNDO'); // remove once verified
 
-                    let didUndo = false;
                     try {
-                        if (this.model.project && typeof this.model.project.undo === 'function') {
-                            didUndo = this.model.project.undo();
-                        } else if (typeof this.model.undo === 'function') {
-                            didUndo = this.model.undo();
-                        }
-                    } catch (err) {
-                        console.error('Undo call failed', err);
-                    }
 
-                    if (didUndo) {
-                        this.applyChanges();
-                        this.fireEvent('canvasModified', { undo: true }, 'Undo');
-                    } else {
-                        alert('Undo stack empty or wrong target');
+                        this.model.undo();
+                        this.render();
+                        // this.fireEvent('canvasModified', { undo: false }, 'Undo');
+
+                    } catch (err) {
+                        alert('Undo call failed');
+                        alert(err);
                     }
                 }
             }
