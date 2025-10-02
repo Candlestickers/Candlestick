@@ -36,18 +36,10 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://forum.wickeditor.com/t/candlestick-1-0-a-new-fork-of-wick-editor/23174";
         this.updates = [
-            "Rebrand to Candlestick",
-            "New Alignment Options",
-            "New Shape Transformations",
-            "New MP4 Importer",
-            "Fixed GIF Importer",
-            "Runtime Console",
-            "Built-in Gradient Tool",
-            "HTML Favicon & Tab Title",
-            "Line Tool Auto-Snapping",
-            "Stroke & Fill Colors Swap",
-            "Extra Bug Fixes",
-        ] // No More than 9 if patreon removed (8 looks better), no more than 3 if patreon is kept
+            "Corrected Forum Post",
+            "Adjusted Tab Title",
+            "Fixed Undo/Redo Crash",
+        ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
         let t2 = ["Constance Ye", "Dan Doggett", "Anonymous"]
