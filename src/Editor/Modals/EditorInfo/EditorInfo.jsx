@@ -26,34 +26,34 @@ import './_editorinfo.scss';
 import ToolIcon from '../../Util/ToolIcon/ToolIcon';
 
 class WelcomeModal extends Component {
-    render () {
+    render() {
         return (
             <WickModal
-            open={this.props.open} 
-            toggle={this.props.toggle}
-            className="editor-info-modal-container"
-            overlayClassName="editor-info-modal-overlay">
+                open={this.props.open}
+                toggle={this.props.toggle}
+                className="editor-info-modal-container"
+                overlayClassName="editor-info-modal-overlay">
                 <div className="editor-info-modal-body">
                     <div className="editor-info-icon">
-                        <ToolIcon name="mascot"/>
+                        <ToolIcon name="mascot" />
                     </div>
-                    <div className="editor-info-name">W.E. Candlestick</div>
+                    <div className="editor-info-name">Candlestick</div>
                     <div className="editor-info-version">Version {this.props.editorVersion}</div>
                     <a className="editor-info-link" href="https://www.wickeditor.com/#/terms-and-conditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a>
-                    <br/>
+                    <br />
                     <a className="editor-info-link" href="https://www.wickeditor.com/#/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-                    <br/>
+                    <br />
                     <a className="editor-info-link" href="https://www.wickeditor.com/#/cookie-policy" target="_blank" rel="noopener noreferrer">Cookie Policy</a>
-                    <br/>
+                    <br />
                     <a className="editor-info-link" href="https://forum.wickeditor.com" target="_blank" rel="noopener noreferrer">Community Forum</a>
-                    <br/>
+                    <br />
                     <div className="editor-info-open-source-notices">
                         <ActionButton
                             color="gray"
                             text="Open Source Notices"
-                            action={() => {this.props.openModal("OpenSourceNotices")}} />
+                            action={() => { this.props.openModal("OpenSourceNotices") }} />
                     </div>
-                </div> 
+                </div>
             </WickModal>
         );
     }
