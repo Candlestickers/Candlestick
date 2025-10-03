@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.9.28.7.55.54";
+var WICK_ENGINE_BUILD_VERSION = "2025.10.3.12.6.33";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -62782,8 +62782,6 @@ Wick.View.Project = class extends Wick.View {
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0],
           p1 = pts[1];
-
-        // Pinch/pan gesture state (you already had this)
         const startDist = _dist(p0, p1);
         const startMid = {
           x: (p0.x + p1.x) / 2,
@@ -62792,23 +62790,23 @@ Wick.View.Project = class extends Wick.View {
         this._gesture = {
           startDist,
           startMid,
+          prevMid: startMid,
+          // for 2-finger pan
+          prevDist: startDist,
+          // 👈 add this: per-frame pinch delta
           startZoom: this.paper.view.zoom,
           startCenter: this.paper.view.center.clone()
         };
 
-        // --- TAP CANDIDATE ---
+        // --- TAP CANDIDATE (unchanged) ---
         this._twoFingerTapCandidate = {
           startAt: ev.timeStamp,
           valid: true
         };
 
-        // Global gesture flags
+        // --- Global gesture flags (unchanged) ---
         Wick.gesture = Wick.gesture || {};
         Wick.gesture.active = true;
-        this._twoFingerTapCandidate = {
-          startAt: ev.timeStamp,
-          valid: true
-        };
         Wick.gesture.type = 'pinch_pan';
         Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
         Wick.gesture.lastStartAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -62828,22 +62826,54 @@ Wick.View.Project = class extends Wick.View {
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0],
           p1 = pts[1];
-        const curDist = dist(p0, p1);
-        const curMid = mid(p0, p1);
-        if (this._gesture.startDist <= 0.0001) return;
+        const curDist = _dist(p0, p1);
+        const curMid = {
+          x: (p0.x + p1.x) / 2,
+          y: (p0.y + p1.y) / 2
+        };
+        if (this._gesture.startDist <= 1e-6) return;
 
-        // Scale zoom based on pinch distance
-        const scale = curDist / this._gesture.startDist;
-        const targetZoom = this._gesture.startZoom * scale;
-        // Clamp like _applyZoomAndPanChangesFromPaper would
-        this.paper.view.zoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, targetZoom));
+        // ---------- compute pinch scale and target zoom ----------
+        const scaleFromStart = curDist / this._gesture.startDist;
+        const unclampedZoom = this._gesture.startZoom * scaleFromStart;
+        const targetZoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, unclampedZoom));
 
-        // Keep the midpoint under the fingers by translating center by the midpoint delta (in project units)
-        const midDeltaPx = new paper.Point(curMid.x - this._gesture.startMid.x, curMid.y - this._gesture.startMid.y);
-        const midDeltaProj = midDeltaPx.divide(this.paper.view.zoom);
-        this.paper.view.center = this._gesture.startCenter.subtract(midDeltaProj);
+        // Per-frame pinch delta (are we pinching this frame?)
+        const prevDist = this._gesture.prevDist || curDist;
+        const dScale = prevDist > 1e-6 ? curDist / prevDist : 1.0;
+        const pinchingThisFrame = Math.abs(dScale - 1) > 0.0015; // ~0.15% change
 
-        // push zoom/pan to model + re-render (respects limits)
+        // Capture zoom before applying new zoom
+        const prevZoom = this.paper.view.zoom;
+
+        // Apply zoom
+        this.paper.view.zoom = targetZoom;
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > 1e-6;
+
+        // ---------- A) TWO-FINGER PAN ----------
+        // Case 1: NOT pinching → always pan (classic two-finger drag)
+        // Case 2: Pinching → only pan if zoom actually changed (avoid drift at clamp)
+        const shouldPanThisFrame = !pinchingThisFrame || pinchingThisFrame && zoomChanged;
+        if (shouldPanThisFrame && this._gesture.prevMid) {
+          const dMidPx = new paper.Point(curMid.x - this._gesture.prevMid.x, curMid.y - this._gesture.prevMid.y);
+          // screen px -> project units
+          this.paper.view.center = this.paper.view.center.subtract(dMidPx.divide(this.paper.view.zoom));
+        }
+
+        // ---------- B) FOCAL-POINT CORRECTION (only when zoom changed) ----------
+        if (zoomChanged) {
+          const anchorScreen = new paper.Point(curMid.x, curMid.y);
+          const anchorProjBefore = this.paper.view.viewToProject(anchorScreen);
+          const anchorScreenAfter = this.paper.view.projectToView(anchorProjBefore);
+          const deltaPx = anchorScreen.subtract(anchorScreenAfter);
+          this.paper.view.center = this.paper.view.center.subtract(deltaPx.divide(this.paper.view.zoom));
+        }
+
+        // update gesture state for next frame
+        this._gesture.prevMid = curMid;
+        this._gesture.prevDist = curDist;
+
+        // Sync model zoom/pan & render
         this._applyZoomAndPanChangesFromPaper();
       }
     };
@@ -62859,30 +62889,20 @@ Wick.View.Project = class extends Wick.View {
           const now = ts ?? ev.timeStamp;
           const dur = now - cand.startAt;
           // For testing, accept anything under 10s
-          if (dur <= 10000) {
+          if (dur <= 250) {
             // Visible confirmation on device (no console needed)
             try {
               navigator.vibrate && navigator.vibrate(10);
             } catch {}
-            alert('Two-finger UNDO'); // remove once verified
+            // alert('Two-finger UNDO'); // remove once verified
 
-            let didUndo = false;
             try {
-              if (this.model.project && typeof this.model.project.undo === 'function') {
-                didUndo = this.model.project.undo();
-              } else if (typeof this.model.undo === 'function') {
-                didUndo = this.model.undo();
-              }
+              this.model.undo();
+              this.render();
+              // this.fireEvent('canvasModified', { undo: false }, 'Undo');
             } catch (err) {
-              console.error('Undo call failed', err);
-            }
-            if (didUndo) {
-              this.applyChanges();
-              this.fireEvent('canvasModified', {
-                undo: true
-              }, 'Undo');
-            } else {
-              alert('Undo stack empty or wrong target');
+              alert('Undo call failed');
+              alert(err);
             }
           }
         }
