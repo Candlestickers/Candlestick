@@ -293,34 +293,29 @@ Wick.View.Project = class extends Wick.View {
             const pts = Array.from(this._activePointers.values());
             const p0 = pts[0], p1 = pts[1];
 
-            // Pinch/pan gesture state (you already had this)
             const startDist = _dist(p0, p1);
-            const startMid  = { x: (p0.x+p1.x)/2, y: (p0.y+p1.y)/2 };
+            const startMid  = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+
             this._gesture = {
                 startDist,
                 startMid,
+                prevMid: startMid,
+                prevDist: startDist,
                 startZoom: this.paper.view.zoom,
                 startCenter: this.paper.view.center.clone()
             };
 
-            // --- TAP CANDIDATE ---
-            this._twoFingerTapCandidate = {
-                startAt: ev.timeStamp,
-                valid: true
-            };
+            // --- TAP CANDIDATE (unchanged) ---
+            this._twoFingerTapCandidate = { startAt: ev.timeStamp, valid: true };
 
-            // Global gesture flags
+            // --- Global gesture flags (unchanged) ---
             Wick.gesture = Wick.gesture || {};
             Wick.gesture.active = true;
-            this._twoFingerTapCandidate = { 
-                startAt: ev.timeStamp, 
-                valid: true 
-            };
             Wick.gesture.type = 'pinch_pan';
             Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
             Wick.gesture.lastStartAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-
         }
+
 
     };
 
@@ -332,29 +327,65 @@ Wick.View.Project = class extends Wick.View {
     this._activePointers.set(ev.pointerId, { ...prev, ...p, travel: Math.max(prev.travel, total) });
 
     if (this._activePointers.size === 2 && this._gesture) {
-
-
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0], p1 = pts[1];
-        const curDist = dist(p0, p1);
-        const curMid  = mid(p0, p1);
-        if (this._gesture.startDist <= 0.0001) return;
+        const curDist = _dist(p0, p1);
+        const curMid  = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+        if (this._gesture.startDist <= 1e-6) return;
 
+        // pinch scale & target zoom
+        const scaleFromStart = curDist / this._gesture.startDist;
+        const unclampedZoom  = this._gesture.startZoom * scaleFromStart;
+        const targetZoom = Math.max(
+            Wick.View.Project.ZOOM_MIN,
+            Math.min(Wick.View.Project.ZOOM_MAX, unclampedZoom)
+        );
 
-      // Scale zoom based on pinch distance
-      const scale = curDist / this._gesture.startDist;
-      const targetZoom = this._gesture.startZoom * scale;
-      // Clamp like _applyZoomAndPanChangesFromPaper would
-      this.paper.view.zoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, targetZoom));
+        // Per-frame pinch delta (are we pinching this frame?)
+        const prevDist = this._gesture.prevDist || curDist;
+        const dScale = prevDist > 1e-6 ? (curDist / prevDist) : 1.0;
+        const pinchingThisFrame = Math.abs(dScale - 1) > 0.0015; // ~0.15% change
 
-      // Keep the midpoint under the fingers by translating center by the midpoint delta (in project units)
-      const midDeltaPx = new paper.Point(curMid.x - this._gesture.startMid.x, curMid.y - this._gesture.startMid.y);
-      const midDeltaProj = midDeltaPx.divide(this.paper.view.zoom);
-      this.paper.view.center = this._gesture.startCenter.subtract(midDeltaProj);
+        // Capture old zoom then apply new zoom
+        const prevZoom = this.paper.view.zoom;
+        this.paper.view.zoom = targetZoom;
 
-      // push zoom/pan to model + re-render (respects limits)
-      this._applyZoomAndPanChangesFromPaper();
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > 1e-6;
+
+        // NOT pinching? always pan. pinching? only pan if zoom actually changed (avoid drift at clamp)
+        const shouldPanThisFrame = (!pinchingThisFrame) || (pinchingThisFrame && zoomChanged);
+        if (shouldPanThisFrame && this._gesture.prevMid) { // normal 2 finger pan
+            const dMidPx = new paper.Point(
+            curMid.x - this._gesture.prevMid.x,
+            curMid.y - this._gesture.prevMid.y
+            );
+            // screen px -> project units
+            this.paper.view.center = this.paper.view.center.subtract(
+            dMidPx.divide(this.paper.view.zoom)
+            );
+        }
+
+        // focal point correction, combining pan while zooming -H.A.
+        if (zoomChanged) {
+            const anchorScreen = new paper.Point(curMid.x, curMid.y);
+            const anchorProjBefore = this.paper.view.viewToProject(anchorScreen);
+
+            const anchorScreenAfter = this.paper.view.projectToView(anchorProjBefore);
+            const deltaPx = anchorScreen.subtract(anchorScreenAfter);
+
+            this.paper.view.center = this.paper.view.center.subtract(
+            deltaPx.divide(this.paper.view.zoom)
+            );
+        }
+
+        // update for next state
+        this._gesture.prevMid  = curMid;
+        this._gesture.prevDist = curDist;
+
+        // Sync model zoom/pan & render
+        this._applyZoomAndPanChangesFromPaper();
     }
+
   };
 
     const onPointerUpOrCancel = (ev) => {
