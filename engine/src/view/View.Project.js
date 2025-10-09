@@ -326,6 +326,8 @@ Wick.View.Project = class extends Wick.View {
     const total = Math.hypot(p.x - prev.downX, p.y - prev.downY);
     this._activePointers.set(ev.pointerId, { ...prev, ...p, travel: Math.max(prev.travel, total) });
 
+    
+
     if (this._activePointers.size === 2 && this._gesture) {
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0], p1 = pts[1];
@@ -383,6 +385,9 @@ Wick.View.Project = class extends Wick.View {
         this._gesture.prevDist = curDist;
 
         // Sync model zoom/pan & render
+        const now = ev.timeStamp;
+        const dur = now - this._twoFingerTapCandidate.startAt;
+        if(dur > 150)
         this._applyZoomAndPanChangesFromPaper();
     }
 
@@ -401,7 +406,7 @@ Wick.View.Project = class extends Wick.View {
                 const now = ts ?? ev.timeStamp;
                 const dur = now - cand.startAt;
                 // For testing, accept anything under 10s
-                if (dur <= 250) {
+                if (dur <= 150) {
                     // Visible confirmation on device (no console needed)
                     try { navigator.vibrate && navigator.vibrate(10); } catch {}
                     // alert('Two-finger UNDO'); // remove once verified
