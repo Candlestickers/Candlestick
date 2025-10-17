@@ -78,6 +78,23 @@ Wick.Tools.Brush = class extends Wick.Tool {
         return true;
     }
 
+    cancel () {
+        if (!this._isInProgress) return;
+        
+        this._suppressCommit = true;
+        this._gestureInterrupted = true;
+        
+        // Clear any pending work (potrace timeout)
+        if (this._croquisStartTimeout) {
+            clearTimeout(this._croquisStartTimeout);
+            this._croquisStartTimeout = null;
+        }
+
+        this.discard(); // close stroke and nuke the rooster! rooster? rastor— same thing
+        this._isInProgress = false;
+        
+    }
+
     onActivate (e) {
         if(this._isInProgress)
             this.finishStrokeEarly();

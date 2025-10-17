@@ -91,6 +91,10 @@ Wick.View.Project = class extends Wick.View {
 
         this._pan = { x: 0, y: 0 };
         this._zoom = 1;
+
+        // track whether or not we started drawing with one finger
+        this._oneFingerDrawStarted = false;
+
     }
 
     /*
@@ -302,7 +306,34 @@ Wick.View.Project = class extends Wick.View {
         const p = getPoint(ev);
         this._activePointers.set(ev.pointerId, { ...p, downX: p.x, downY: p.y, downTime: ev.timeStamp, travel: 0 });
 
-        if (this._activePointers.size === 2) {
+        if (this._activePointers.size === 1) { // ONE FINGER CHECK
+            // Assume we're drawing, lets set timeout
+            this._oneFingerStartTimer = setTimeout(() => {
+                // If only ONE finger is still down after the delay, lock in one-finger mode.
+                if (this._activePointers.size === 1) {
+                    this._oneFingerDrawStarted = true;
+                }
+            }, Wick.View.Project.ONE_FINGER_DRAW_DELAY);
+        }else if (this._activePointers.size === 2) { // TWO FINGER CHECK
+
+            if (this._oneFingerDrawStarted) {
+                // We started drawing first. Ignore the second finger until all fingers lift.
+                return;
+            }
+
+            // stops any active single-finger drawing, removing the "artifact" stuff
+            if (this.model.activeTool && this.model.activeTool.cancel) {
+                this.model.activeTool.cancel();
+            }
+            
+            // Clear "one finger" & "draw start" timers
+            if (this._oneFingerStartTimer) {
+                clearTimeout(this._oneFingerStartTimer);
+                this._oneFingerStartTimer = null;
+            }
+            this._oneFingerDrawStarted = false; // Force exit from 1-finger mode
+
+
             const pts = Array.from(this._activePointers.values());
             const p0 = pts[0], p1 = pts[1];
 
@@ -338,6 +369,12 @@ Wick.View.Project = class extends Wick.View {
     const p = getPoint(ev);
     const total = Math.hypot(p.x - prev.downX, p.y - prev.downY);
     this._activePointers.set(ev.pointerId, { ...prev, ...p, travel: Math.max(prev.travel, total) });
+
+
+    // If we are in one-finger mode then IGNORE the 2-finger logic
+    if (this._oneFingerDrawStarted) {
+        return; 
+    }
 
     
 
@@ -407,6 +444,13 @@ Wick.View.Project = class extends Wick.View {
   };
 
     const onPointerUpOrCancel = (ev) => {
+
+        // Clear the one-finger timer
+        if (this._oneFingerStartTimer) {
+            clearTimeout(this._oneFingerStartTimer);
+            this._oneFingerStartTimer = null;
+        }
+
         // Remove the pointer that just lifted
         this._activePointers.delete(ev.pointerId);
 
@@ -451,6 +495,7 @@ Wick.View.Project = class extends Wick.View {
 
         // Case A: BOTH fingers are up now → evaluate immediately
         if (remaining === 0) {
+            this._oneFingerDrawStarted = false; 
             finalizeTwoFingerTap();
             return;
         }
