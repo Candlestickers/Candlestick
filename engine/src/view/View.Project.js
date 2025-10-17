@@ -58,6 +58,19 @@ Wick.View.Project = class extends Wick.View {
         return !!this._gesture;
     }
 
+    // minimum distance for gesture detection
+    static get GESTURE_MIN_DIST_SQ() {
+        return 1e-6;
+    }
+
+    static get ONE_FINGER_DRAW_DELAY() {
+        return 80;
+    }
+
+    static get TWO_FINGER_TAP_GRACE() {
+        return 120;
+    }
+
 
     /*
      * Create a new Project View.
@@ -333,7 +346,7 @@ Wick.View.Project = class extends Wick.View {
         const p0 = pts[0], p1 = pts[1];
         const curDist = _dist(p0, p1);
         const curMid  = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
-        if (this._gesture.startDist <= 1e-6) return;
+        if (this._gesture.startDist <= Wick.View.Project.GESTURE_MIN_DIST_SQ) return;
 
         // pinch scale & target zoom
         const scaleFromStart = curDist / this._gesture.startDist;
@@ -352,7 +365,7 @@ Wick.View.Project = class extends Wick.View {
         const prevZoom = this.paper.view.zoom;
         this.paper.view.zoom = targetZoom;
 
-        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > 1e-6;
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > Wick.View.Project.GESTURE_MIN_DIST_SQ;
 
         // NOT pinching? always pan. pinching? only pan if zoom actually changed (avoid drift at clamp)
         const shouldPanThisFrame = (!pinchingThisFrame) || (pinchingThisFrame && zoomChanged);
