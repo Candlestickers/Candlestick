@@ -39,10 +39,6 @@ Wick.Tools.Pan = class extends Wick.Tool {
         return 'move';
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
 
     }

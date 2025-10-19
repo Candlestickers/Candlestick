@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.2.15.56.16";
+var WICK_ENGINE_BUILD_VERSION = "2025.10.18.17.22.6";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -59353,7 +59353,9 @@ Wick.Tool = class {
    */
 
 
-  onActivate(e) {}
+  onActivate(e) {
+    this.setCursor(this.cursor);
+  }
   /**
    * Called when the tool is deactivated (another tool is activated)
    */
@@ -59650,6 +59652,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this._isInProgress = false;
     this._lastMousePoint = new paper.Point(0, 0);
     this._lastMousePressure = 1;
+
+    this._regenCursor();
   }
 
   onDeactivate(e) {
@@ -59815,7 +59819,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
 
   _getRealBrushSize() {
-    var size = this.getSetting('brushSize') + 1;
+    var size = this.getSetting('brushSize'); // originally added 1, removing it seems to not make much of an impact and is slightly more accurate - Baron
 
     if (!this.getSetting('relativeBrushSize')) {
       size *= this.paper.view.zoom;
@@ -60064,6 +60068,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   onActivate(e) {
     this.selectedItems = [];
     this._lastSelection = null;
+    super.onActivate();
   }
 
   onDeactivate(e) {}
@@ -60543,8 +60548,6 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     return true;
   }
 
-  onActivate(e) {}
-
   onDeactivate(e) {
     if (this.path) {
       this.path.remove();
@@ -60638,6 +60641,7 @@ Wick.Tools.Eraser = class extends Wick.Tool {
 
   onActivate(e) {
     this.cursorSize = null;
+    super.onActivate();
   }
 
   onDeactivate(e) {
@@ -60739,8 +60743,6 @@ Wick.Tools.Eyedropper = class extends Wick.Tool {
   get cursor() {
     return 'url(cursors/eyedropper.png) 32 32, auto';
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {
     this._destroyColorPreview();
@@ -60846,8 +60848,6 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
     return true;
   }
 
-  onActivate(e) {}
-
   onDeactivate(e) {}
 
   onMouseDown(e) {
@@ -60929,8 +60929,6 @@ Wick.Tools.Interact = class extends Wick.Tool {
     this._mousePosition = new paper.Point(0, 0);
     this._mouseTargets = [];
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {}
 
@@ -61092,6 +61090,7 @@ Wick.Tools.Line = class extends Wick.Tool {
 
   onActivate(e) {
     this.path.remove();
+    super.onActivate();
   }
 
   onDeactivate(e) {
@@ -61248,8 +61247,6 @@ Wick.Tools.None = class extends Wick.Tool {
     return 'not-allowed';
   }
 
-  onActivate(e) {}
-
   onDeactivate(e) {}
 
   onMouseDown(e) {
@@ -61312,8 +61309,6 @@ Wick.Tools.Pan = class extends Wick.Tool {
   get cursor() {
     return 'move';
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {}
 
@@ -61380,8 +61375,6 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
   get cursor() {
     return 'url("' + this.currentCursorIcon + '") 32 32, auto';
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {
     this._leaveDetailedEditing();
@@ -61708,8 +61701,6 @@ Wick.Tools.Pencil = class extends Wick.Tool {
     return true;
   }
 
-  onActivate(e) {}
-
   onDeactivate(e) {}
 
   onMouseDown(e) {
@@ -61797,8 +61788,6 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
   get isDrawingTool() {
     return true;
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {
     if (this.path) {
@@ -61894,8 +61883,6 @@ Wick.Tools.Text = class extends Wick.Tool {
   get isDrawingTool() {
     return true;
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {
     if (this.editingText) {
@@ -62012,8 +61999,6 @@ Wick.Tools.Zoom = class extends Wick.Tool {
   get cursor() {
     return 'zoom-in';
   }
-
-  onActivate(e) {}
 
   onDeactivate(e) {
     this.deleteZoomBox();

@@ -35,10 +35,6 @@ Wick.Tools.None = class extends Wick.Tool {
         return 'not-allowed'
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
 
     }

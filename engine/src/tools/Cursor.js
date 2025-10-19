@@ -69,6 +69,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	onActivate(e) {
 		this.selectedItems = [];
 		this._lastSelection = null;
+
+        super.onActivate();
 	}
 
 	onDeactivate(e) { }

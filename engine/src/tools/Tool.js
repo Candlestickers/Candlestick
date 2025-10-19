@@ -102,7 +102,7 @@ Wick.Tool = class {
      * Called when the tool is activated
      */
     onActivate (e) {
-
+        this.setCursor(this.cursor);
     }
 
     /**

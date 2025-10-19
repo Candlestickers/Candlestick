@@ -54,6 +54,8 @@ Wick.Tools.Line = class extends Wick.Tool {
 
   onActivate(e) {
     this.path.remove();
+
+    super.onActivate();
   }
 
   onDeactivate(e) {

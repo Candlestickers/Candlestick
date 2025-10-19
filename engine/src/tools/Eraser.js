@@ -50,6 +50,8 @@ Wick.Tools.Eraser = class extends Wick.Tool {
 
     onActivate (e) {
         this.cursorSize = null;
+
+        super.onActivate();
     }
 
     onDeactivate (e) {

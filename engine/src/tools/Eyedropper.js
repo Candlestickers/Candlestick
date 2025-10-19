@@ -44,10 +44,6 @@ Wick.Tools.Eyedropper = class extends Wick.Tool {
         return 'url(cursors/eyedropper.png) 32 32, auto';
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
         this._destroyColorPreview();
     }

@@ -46,10 +46,6 @@ Wick.Tools.Text = class extends Wick.Tool {
         return true;
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
         if(this.editingText) {
             this.finishEditingText();

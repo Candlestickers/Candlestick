@@ -46,10 +46,6 @@ Wick.Tools.Zoom = class extends Wick.Tool {
         return 'zoom-in';
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
         this.deleteZoomBox();
     }

@@ -101,6 +101,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this._lastMousePoint = new paper.Point(0,0);
         this._lastMousePressure = 1;
+
+        this._regenCursor();
     }
 
     onDeactivate (e) {

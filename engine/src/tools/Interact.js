@@ -33,10 +33,6 @@ Wick.Tools.Interact = class extends Wick.Tool {
         this._mouseTargets = [];
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
 
     }

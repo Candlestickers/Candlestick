@@ -52,9 +52,6 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
         return 'url("'+this.currentCursorIcon+'") 32 32, auto';
     }
 
-    onActivate (e) {
-    }
-
     onDeactivate (e) {
         this._leaveDetailedEditing();
     }

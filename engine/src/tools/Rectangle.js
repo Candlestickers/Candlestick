@@ -48,10 +48,6 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
         return true;
     }
 
-    onActivate (e) {
-
-    }
-
     onDeactivate (e) {
         if(this.path) {
             this.path.remove();

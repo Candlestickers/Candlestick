@@ -43,10 +43,6 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
         return true;
     }
 
-    onActivate(e) {
-
-    }
-
     onDeactivate(e) {
 
     }
