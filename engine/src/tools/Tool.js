@@ -217,8 +217,17 @@ Wick.Tool = class {
         var radius = size/2;
 
         var canvas = document.createElement("canvas");
+
+        // brush is too big for browser to allow rendering a circle of the correct size - Baron
+        let maxSize = 63;
+        let tooBig = radius > maxSize;
+        if(tooBig) {
+            radius = maxSize;
+        }
+
         canvas.width = radius * 2 + 2;
         canvas.height = radius * 2 + 2;
+        
         var context = canvas.getContext('2d');
 
         var centerX = canvas.width / 2;
@@ -239,6 +248,34 @@ Wick.Tool = class {
             context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
             context.fillStyle = color;
             context.fill();
+        }
+
+        // draw arrows in the corners to indicate the brush is bigger than it looks - Baron
+        // FIXME: if i can just figure out how to add an image, i could use brushOversize.png and make this more elegant than drawing 4 arrows...
+        if(tooBig) {
+            context.beginPath();
+            context.strokeStyle = 'white';
+            context.lineWidth = 2; // the default cursor has a 1px-wide white outline, but this looks closer for some reason
+            context.lineCap = "round";
+            context.lineJoin = "round";
+            context.fillStyle = 'black';
+            context.shadowColor = 'black';
+            context.shadowBlur = 1;
+            
+            let arrowCoord = 55;
+            let arrowSize = 15;
+            
+            for(let i of [-1, 1]) {
+                for(let j of [-1, 1]) {
+                    context.moveTo(centerX + i*arrowCoord,             centerY + j*arrowCoord);
+                    context.lineTo(centerX + i*(arrowCoord-arrowSize), centerY + j*arrowCoord);
+                    context.lineTo(centerX + i*arrowCoord,             centerY + j*(arrowCoord-arrowSize));
+                    context.lineTo(centerX + i*arrowCoord,             centerY + j*arrowCoord);
+                }
+            }
+
+            context.fill();
+            context.stroke();
         }
 
         return 'url(' + canvas.toDataURL() + ') '+(radius+1)+' '+(radius+1)+',default';

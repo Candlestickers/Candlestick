@@ -258,7 +258,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
     /* Get the actual pixel size of the brush to send to Croquis. */
     _getRealBrushSize () {
-        var size = this.getSetting('brushSize') + 1;
+        var size = this.getSetting('brushSize'); // originally added 1, removing it seems to not make much of an impact and is slightly more accurate - Baron
         if(!this.getSetting('relativeBrushSize')) {
             size *= this.paper.view.zoom;
         }
