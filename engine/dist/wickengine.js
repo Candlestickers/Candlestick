@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.19.14.41.3";
+var WICK_ENGINE_BUILD_VERSION = "2025.10.19.19.15.13";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -59275,6 +59275,11 @@ Wick.Tool = class {
 
   static get DOUBLE_CLICK_MAX_DISTANCE() {
     return 20;
+  } // shared between brush and eraser
+
+
+  static get POTRACE_RESOLUTION() {
+    return 10;
   }
   /**
    * Creates a new Wick Tool.
@@ -59633,7 +59638,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
   constructor() {
     super();
     this.name = 'brush';
-    this.BRUSH_POINT_SPACING = 0.2;
+    this.BRUSH_POINT_SPACING = 0.02;
     this.BRUSH_STABILIZER_LEVEL = 3;
     this.POTRACE_RESOLUTION = 1.0;
     this.MIN_PRESSURE = 0.14;
@@ -59851,7 +59856,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
 
   _getRealBrushSize() {
-    var size = this.getSetting('brushSize') + 1;
+    var size = this.getSetting('brushSize'); // originally added 1, removing it seems to not make much of an impact and is slightly more accurate - Baron
 
     if (!this.getSetting('relativeBrushSize')) {
       size *= this.paper.view.zoom;
@@ -59950,7 +59955,9 @@ Wick.Tools.Brush = class extends Wick.Tool {
       if (strokeBounds.y < 0) strokeBounds.y = 0;
       croppedCanvasCtx.drawImage(canvas, strokeBounds.x, strokeBounds.y, strokeBounds.width, strokeBounds.height, 0, 0, croppedCanvas.width, croppedCanvas.height); // Run potrace and add the resulting path to the project
 
-      var svg = potrace.fromImage(croppedCanvas).toSVG(1 / this.POTRACE_RESOLUTION / this.paper.view.zoom);
+      var svg = potrace.fromImage(croppedCanvas, {
+        optTolerance: 1
+      }).toSVG(1 / this.POTRACE_RESOLUTION / this.paper.view.zoom);
       var potracePath = this.paper.project.importSVG(svg);
       potracePath.fillColor = this.getSetting('fillColor').rgba;
       potracePath.position.x += this.paper.view.bounds.x;
@@ -60699,7 +60706,7 @@ Wick.Tools.Eraser = class extends Wick.Tool {
       this.path = new this.paper.Path({
         strokeColor: 'white',
         strokeCap: 'round',
-        strokeWidth: (this.getSetting('eraserSize') + 1) / this.paper.view.zoom
+        strokeWidth: this.getSetting('eraserSize') / this.paper.view.zoom
       });
     } // Add two points so we always at least have a dot.
 
@@ -60717,7 +60724,6 @@ Wick.Tools.Eraser = class extends Wick.Tool {
 
   onMouseUp(e) {
     if (!this.path) return;
-    var potraceResolution = 0.7;
     this.path.potrace({
       done: tracedPath => {
         this.path.remove();
@@ -60728,7 +60734,7 @@ Wick.Tools.Eraser = class extends Wick.Tool {
           actionName: 'eraser'
         });
       },
-      resolution: potraceResolution * this.paper.view.zoom
+      resolution: Wick.Tool.POTRACE_RESOLUTION * this.paper.view.zoom
     });
   }
 

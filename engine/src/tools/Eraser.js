@@ -75,7 +75,7 @@ Wick.Tools.Eraser = class extends Wick.Tool {
             this.path = new this.paper.Path({
                 strokeColor: 'white',
                 strokeCap: 'round',
-                strokeWidth: (this.getSetting('eraserSize') + 1) / this.paper.view.zoom,
+                strokeWidth: (this.getSetting('eraserSize')) / this.paper.view.zoom,
             });
         }
 
