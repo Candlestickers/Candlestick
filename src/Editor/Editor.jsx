@@ -253,6 +253,11 @@ class Editor extends EditorCore {
 
         // Leave Page warning.
         window.onbeforeunload = function (event) {
+            // don't show warning if in 
+            if(window.location.href === "http://localhost:3000/" || this.window.location.href === "http://10.8.6.169:3000/") {
+                return null;
+            }
+            
             // Don't show the warning if nothing has been done to the project
             if (this.project.numUndoStates > 1) {
                 return null;
