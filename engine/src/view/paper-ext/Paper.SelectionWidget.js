@@ -221,7 +221,7 @@ class SelectionWidget {
      *
      */
     updateTransformation(item, e) {
-        if (!this.mod.initiated) {
+        if (!this.mod || !this.mod.initiated) {
             this.mod = {
                 initiated: true
             }
