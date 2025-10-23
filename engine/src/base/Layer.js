@@ -32,7 +32,7 @@ Wick.Layer = class extends Wick.Base {
 
         this.locked = args.locked === undefined ? false : args.locked;
         this.hidden = args.hidden === undefined ? false : args.hidden;
-        this.opacity = args.opacity;
+        this.opacity = args.opacity === undefined ? 1 : args.opacity;
         this.name = args.name || null;
     }
 
