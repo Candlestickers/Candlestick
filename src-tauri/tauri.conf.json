@@ -1,0 +1,37 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Candlestick",
+  "version": "0.1.0",
+  "identifier": "com.candlestickers.dev",
+  "build": {
+    "frontendDist": [
+      "../build",
+      "../public/builtinlibrary"
+    ],
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm start",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Candlestick",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "../build/icon.png",
+      "../public/icon.icns"
+    ]
+  }
+}
