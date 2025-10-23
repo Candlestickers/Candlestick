@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.3.12.6.33";
+var WICK_ENGINE_BUILD_VERSION = "2025.10.23.9.18.58";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -50321,6 +50321,7 @@ Wick.Project = class extends Wick.Base {
    * @param {function} callback Function with the created Wick Asset. Can be passed undefined on improper file input.
    */
   importFile(file, callback) {
+    console.log(file);
     let imageTypes = Wick.ImageAsset.getValidMIMETypes();
     let soundTypes = Wick.SoundAsset.getValidMIMETypes();
     let fontTypes = Wick.FontAsset.getValidMIMETypes();
@@ -50334,7 +50335,7 @@ Wick.Project = class extends Wick.Base {
 
     // Fix missing mimetype for wickobj files
     var type = file.type;
-    if (file.type === '' && file.name.endsWith('.wickobj')) {
+    if (file.type === 'text/plain' && file.name.endsWith('.wickobj')) {
       type = 'application/json';
     }
     var extension = "";
@@ -58286,6 +58287,19 @@ Wick.Tools.Brush = class extends Wick.Tool {
   get isDrawingTool() {
     return true;
   }
+  cancel() {
+    if (!this._isInProgress) return;
+    this._suppressCommit = true;
+    this._gestureInterrupted = true;
+
+    // Clear any pending work (potrace timeout)
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
+    this.discard(); // close stroke and nuke the rooster! rooster? rastor— same thing
+    this._isInProgress = false;
+  }
   onActivate(e) {
     if (this._isInProgress) this.finishStrokeEarly();
     if (!this.croquis) {
@@ -61647,7 +61661,7 @@ class SelectionWidget {
    *
    */
   updateTransformation(item, e) {
-    if (!this.mod?.initiated) {
+    if (!this.mod.initiated) {
       this.mod = {
         initiated: true
       };
@@ -61661,7 +61675,7 @@ class SelectionWidget {
         this.mod.action = 'rotate';
         this.mod.rotateDelta = 0;
         this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-        this.mod.initialBoxRotation = this.boxRotation ?? 0;
+        this.mod.initialBoxRotation = this.boxRotation || 0;
       } else if (item.data.handleEdge.includes('Center')) {
         this.mod.action = 'move-edge';
         this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
@@ -62557,6 +62571,17 @@ Wick.View.Project = class extends Wick.View {
     return !!this._gesture;
   }
 
+  // minimum distance for gesture detection
+  static get GESTURE_MIN_DIST_SQ() {
+    return 1e-6;
+  }
+  static get ONE_FINGER_DRAW_DELAY() {
+    return 80;
+  }
+  static get TWO_FINGER_TAP_GRACE() {
+    return 120;
+  }
+
   /*
    * Create a new Project View.
    */
@@ -62575,6 +62600,9 @@ Wick.View.Project = class extends Wick.View {
       y: 0
     };
     this._zoom = 1;
+
+    // track whether or not we started drawing with one finger
+    this._oneFingerDrawStarted = false;
   }
 
   /*
@@ -62778,7 +62806,35 @@ Wick.View.Project = class extends Wick.View {
         downTime: ev.timeStamp,
         travel: 0
       });
-      if (this._activePointers.size === 2) {
+      if (this._activePointers.size === 1) {
+        // ONE FINGER CHECK
+        // Assume we're drawing, lets set timeout
+        this._oneFingerStartTimer = setTimeout(() => {
+          // If only ONE finger is still down after the delay, lock in one-finger mode.
+          if (this._activePointers.size === 1) {
+            this._oneFingerDrawStarted = true;
+          }
+        }, Wick.View.Project.ONE_FINGER_DRAW_DELAY);
+      } else if (this._activePointers.size === 2) {
+        // TWO FINGER CHECK
+
+        if (this._oneFingerDrawStarted) {
+          // We started drawing first. Ignore the second finger until all fingers lift.
+          return;
+        }
+
+        // stops any active single-finger drawing, removing the "artifact" stuff
+        if (this.model.activeTool && this.model.activeTool.cancel) {
+          this.model.activeTool.cancel();
+        }
+
+        // Clear "one finger" & "draw start" timers
+        if (this._oneFingerStartTimer) {
+          clearTimeout(this._oneFingerStartTimer);
+          this._oneFingerStartTimer = null;
+        }
+        this._oneFingerDrawStarted = false; // Force exit from 1-finger mode
+
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0],
           p1 = pts[1];
@@ -62791,9 +62847,7 @@ Wick.View.Project = class extends Wick.View {
           startDist,
           startMid,
           prevMid: startMid,
-          // for 2-finger pan
           prevDist: startDist,
-          // 👈 add this: per-frame pinch delta
           startZoom: this.paper.view.zoom,
           startCenter: this.paper.view.center.clone()
         };
@@ -62822,6 +62876,11 @@ Wick.View.Project = class extends Wick.View {
         ...p,
         travel: Math.max(prev.travel, total)
       });
+
+      // If we are in one-finger mode then IGNORE the 2-finger logic
+      if (this._oneFingerDrawStarted) {
+        return;
+      }
       if (this._activePointers.size === 2 && this._gesture) {
         const pts = Array.from(this._activePointers.values());
         const p0 = pts[0],
@@ -62831,9 +62890,9 @@ Wick.View.Project = class extends Wick.View {
           x: (p0.x + p1.x) / 2,
           y: (p0.y + p1.y) / 2
         };
-        if (this._gesture.startDist <= 1e-6) return;
+        if (this._gesture.startDist <= Wick.View.Project.GESTURE_MIN_DIST_SQ) return;
 
-        // ---------- compute pinch scale and target zoom ----------
+        // pinch scale & target zoom
         const scaleFromStart = curDist / this._gesture.startDist;
         const unclampedZoom = this._gesture.startZoom * scaleFromStart;
         const targetZoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, unclampedZoom));
@@ -62843,24 +62902,21 @@ Wick.View.Project = class extends Wick.View {
         const dScale = prevDist > 1e-6 ? curDist / prevDist : 1.0;
         const pinchingThisFrame = Math.abs(dScale - 1) > 0.0015; // ~0.15% change
 
-        // Capture zoom before applying new zoom
+        // Capture old zoom then apply new zoom
         const prevZoom = this.paper.view.zoom;
-
-        // Apply zoom
         this.paper.view.zoom = targetZoom;
-        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > 1e-6;
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > Wick.View.Project.GESTURE_MIN_DIST_SQ;
 
-        // ---------- A) TWO-FINGER PAN ----------
-        // Case 1: NOT pinching → always pan (classic two-finger drag)
-        // Case 2: Pinching → only pan if zoom actually changed (avoid drift at clamp)
+        // NOT pinching? always pan. pinching? only pan if zoom actually changed (avoid drift at clamp)
         const shouldPanThisFrame = !pinchingThisFrame || pinchingThisFrame && zoomChanged;
         if (shouldPanThisFrame && this._gesture.prevMid) {
+          // normal 2 finger pan
           const dMidPx = new paper.Point(curMid.x - this._gesture.prevMid.x, curMid.y - this._gesture.prevMid.y);
           // screen px -> project units
           this.paper.view.center = this.paper.view.center.subtract(dMidPx.divide(this.paper.view.zoom));
         }
 
-        // ---------- B) FOCAL-POINT CORRECTION (only when zoom changed) ----------
+        // focal point correction, combining pan while zooming -H.A.
         if (zoomChanged) {
           const anchorScreen = new paper.Point(curMid.x, curMid.y);
           const anchorProjBefore = this.paper.view.viewToProject(anchorScreen);
@@ -62869,15 +62925,23 @@ Wick.View.Project = class extends Wick.View {
           this.paper.view.center = this.paper.view.center.subtract(deltaPx.divide(this.paper.view.zoom));
         }
 
-        // update gesture state for next frame
+        // update for next state
         this._gesture.prevMid = curMid;
         this._gesture.prevDist = curDist;
 
         // Sync model zoom/pan & render
-        this._applyZoomAndPanChangesFromPaper();
+        const now = ev.timeStamp;
+        const dur = now - this._twoFingerTapCandidate.startAt;
+        if (dur > 150) this._applyZoomAndPanChangesFromPaper();
       }
     };
     const onPointerUpOrCancel = ev => {
+      // Clear the one-finger timer
+      if (this._oneFingerStartTimer) {
+        clearTimeout(this._oneFingerStartTimer);
+        this._oneFingerStartTimer = null;
+      }
+
       // Remove the pointer that just lifted
       this._activePointers.delete(ev.pointerId);
       const remaining = this._activePointers.size;
@@ -62886,10 +62950,10 @@ Wick.View.Project = class extends Wick.View {
       const finalizeTwoFingerTap = ts => {
         const cand = this._twoFingerTapCandidate;
         if (cand && !cand.canceled) {
-          const now = ts ?? ev.timeStamp;
+          const now = ts || ev.timeStamp;
           const dur = now - cand.startAt;
           // For testing, accept anything under 10s
-          if (dur <= 250) {
+          if (dur <= 150) {
             // Visible confirmation on device (no console needed)
             try {
               navigator.vibrate && navigator.vibrate(10);
@@ -62916,11 +62980,12 @@ Wick.View.Project = class extends Wick.View {
         }
         Wick.gesture.active = false;
         Wick.gesture.type = null;
-        Wick.gesture.lastEndAt = performance?.now?.() ?? Date.now();
+        Wick.gesture.lastEndAt = performance.now() || Date.now();
       };
 
       // Case A: BOTH fingers are up now → evaluate immediately
       if (remaining === 0) {
+        this._oneFingerDrawStarted = false;
         finalizeTwoFingerTap();
         return;
       }
