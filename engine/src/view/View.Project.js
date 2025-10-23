@@ -460,7 +460,7 @@ Wick.View.Project = class extends Wick.View {
         const finalizeTwoFingerTap = (ts) => {
             const cand = this._twoFingerTapCandidate;
             if (cand && !cand.canceled) {
-                const now = ts ?? ev.timeStamp;
+                const now = ts || ev.timeStamp;
                 const dur = now - cand.startAt;
                 // For testing, accept anything under 10s
                 if (dur <= 150) {
@@ -490,7 +490,7 @@ Wick.View.Project = class extends Wick.View {
             }
             Wick.gesture.active = false;
             Wick.gesture.type = null;
-            Wick.gesture.lastEndAt = (performance?.now?.() ?? Date.now());
+            Wick.gesture.lastEndAt = (performance.now() || Date.now());
         };
 
         // Case A: BOTH fingers are up now → evaluate immediately

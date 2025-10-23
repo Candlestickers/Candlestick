@@ -60,7 +60,7 @@ function createWindow() {
     });
 
     mainWindow.setMenu(null); // Disable the file menu in favor of the in-app menu.
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
