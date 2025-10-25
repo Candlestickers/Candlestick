@@ -37,7 +37,10 @@ class BuiltinLibrary extends Component {
   }
 
   static get ROOT_ASSET_PATH () {
-    return process.env.PUBLIC_URL + '/builtinlibrary/';
+    if (window.__TAURI__) {
+      return 'builtinlibrary/'; // resources folder will be flattened
+    }
+    return 'builtinlibrary/';
   }
 
   render() {
@@ -62,23 +65,48 @@ class BuiltinLibrary extends Component {
 
   //Fetch file, add to builtinPreviews
   importForPreview = (asset, callback) => {
-    var path = BuiltinLibrary.ROOT_ASSET_PATH + asset.file;
+    const path = BuiltinLibrary.ROOT_ASSET_PATH + asset.file
+    const name = asset.file.split('/').pop()
 
-    fetch (path)
-    .then((response) => response.blob())
-    .then((blob) => {
-        blob.lastModifiedDate = new Date();
-        blob.name = asset.file.split('/').pop();
+    const ext = name.split('.').pop().toLowerCase()
+    const isWickObj = ext === 'wickobj' || ext === 'json'
+    const isAudio = ['mp3', 'wav', 'ogg'].includes(ext)
+    const isVideo = ['mp4', 'webm'].includes(ext)
 
-        this.props.addFileToBuiltinPreviews(asset.file, blob);
+    const ok = r => { if (!r.ok) throw new Error(r.status + ' ' + r.statusText); return r }
 
-        callback && callback(blob);
-    })
-    .catch((error) => {
-        console.error("Error while importing builtin asset (" + asset.name + "," + asset.file + "): ")
-        console.log(error);
-    });
+    let loadPromise
+
+    if (isWickObj) {
+      // JSON should be loaded as text, but wrapped as Blob so FileReader works
+      loadPromise = fetch(path)
+        .then(ok)
+        .then(r => r.text())
+        .then(text => {
+          const blob = new Blob([text], { type: 'application/json' })
+          return new File([blob], name, { type: 'application/json', lastModified: Date.now() })
+        })
+    } else {
+      // Audio/video/binary assets
+      loadPromise = fetch(path)
+        .then(ok)
+        .then(r => r.blob())
+        .then(blob => {
+          const type = blob.type || (isAudio ? 'audio/mpeg' : isVideo ? 'video/mp4' : 'application/octet-stream')
+          return new File([blob], name, { type, lastModified: Date.now() })
+        })
+    }
+
+    loadPromise
+      .then(file => {
+        this.props.addFileToBuiltinPreviews(asset.file, file)
+        callback && callback(file)
+      })
+      .catch(err => {
+        console.error(`Error importing builtin asset (${asset.name}, ${asset.file}):`, err)
+      })
   }
+
 
   //Fetch file to builtinPreviews if necessary, then load into Asset Library
   createWickAsset = (asset) => {

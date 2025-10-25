@@ -5,8 +5,7 @@
   "identifier": "com.candlestickers.dev",
   "build": {
     "frontendDist": [
-      "../build",
-      "../public/builtinlibrary"
+      "../build"
     ],
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm start",
@@ -32,6 +31,9 @@
     "icon": [
       "../build/icon.png",
       "../public/icon.icns"
+    ],
+    "resources": [
+      "../public/builtinlibrary"
     ]
   }
 }
