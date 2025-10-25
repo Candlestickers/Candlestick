@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.23.9.18.58";
+var WICK_ENGINE_BUILD_VERSION = "2025.10.25.11.14.12";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -50336,7 +50336,6 @@ Wick.Project = class extends Wick.Base {
    * @param {function} callback Function with the created Wick Asset. Can be passed undefined on improper file input.
    */
   importFile(file, callback) {
-    console.log(file);
     let imageTypes = Wick.ImageAsset.getValidMIMETypes();
     let soundTypes = Wick.SoundAsset.getValidMIMETypes();
     let fontTypes = Wick.FontAsset.getValidMIMETypes();
@@ -50350,7 +50349,8 @@ Wick.Project = class extends Wick.Base {
 
     // Fix missing mimetype for wickobj files
     var type = file.type;
-    if (file.type === 'text/plain' && file.name.endsWith('.wickobj')) {
+    // TODO: -H.A. find out why wickobj aren't opening in app build versions
+    if (file.type === '' && file.name.endsWith('.wickobj')) {
       type = 'application/json';
     }
     var extension = "";
@@ -61676,7 +61676,7 @@ class SelectionWidget {
    *
    */
   updateTransformation(item, e) {
-    if (!this.mod.initiated) {
+    if (!this.mod || !this.mod.initiated) {
       this.mod = {
         initiated: true
       };
