@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "14": "^3.1.6",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
     "@ffmpeg/ffmpeg": "^0.7.0",
     "@tauri-apps/api": "^2.9.0",
     "ace-builds": "^1.4.12",
