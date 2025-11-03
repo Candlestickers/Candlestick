@@ -7,11 +7,10 @@
     "frontendDist": [
       "../build"
     ],
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm start",
     "beforeBuildCommand": "npm run build"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Candlestick",
