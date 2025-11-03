@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.25.11.14.12";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.3.16.43.3";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -48533,17 +48533,44 @@ Wick.HTMLPreview = class {
    * @param {Wick.Project} project - The project to run.
    * @param {function} callback - Function that's called when the popup is successfully created.
    */
-  static previewProject(project, callback) {
-    Wick.HTMLExport.bundleProject(project, html => {
-      var windowFeatures = "height=" + project.height + ",width=" + project.width;
-      var popupWindow = window.open('', '_blank', windowFeatures);
-      if (popupWindow) {
-        popupWindow.document.title = project.name;
-        popupWindow.document.open();
-        popupWindow.document.write(html);
-        popupWindow.document.close();
+  static async previewProject(project, callback) {
+    Wick.HTMLExport.bundleProject(project, async html => {
+      try {
+        // ⚠️ no "import" calls anywhere here
+        const WebviewWindow = window.__TAURI__.webviewWindow.WebviewWindow;
+        console.log('🟩 Using global WebviewWindow:', WebviewWindow);
+        if (WebviewWindow) {
+          const blob = new Blob([html], {
+            type: 'text/html'
+          });
+          const url = URL.createObjectURL(blob);
+          const preview = new WebviewWindow('preview-' + Date.now(), {
+            title: project.name,
+            width: project.width || 800,
+            height: project.height || 600,
+            url // 👈 load the blob directly
+          });
+          preview.once('tauri://created', () => {
+            console.log('🟩 Preview window opened at', url);
+            callback(preview);
+          });
+          preview.once('tauri://error', e => {
+            console.error('❌ Error creating Tauri window:', e);
+            callback(null);
+          });
+          return;
+        }
+      } catch (e) {
+        console.error('❌ Exception while creating Tauri preview:', e);
       }
-      callback(popupWindow);
+      console.warn('⚠️ Falling back to browser preview');
+      const win = window.open('', '_blank', `height=${project.height},width=${project.width}`);
+      if (win) {
+        win.document.title = project.name;
+        win.document.write(html);
+        win.document.close();
+      }
+      callback(win);
     });
   }
 };
