@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.3.16.43.3";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.4.15.58.0";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -48535,11 +48535,14 @@ Wick.HTMLPreview = class {
    */
   static async previewProject(project, callback) {
     Wick.HTMLExport.bundleProject(project, async html => {
+      // try creating preview window with tauri api... 
       try {
-        // ⚠️ no "import" calls anywhere here
+        // try to create a preview window through tauri
         const WebviewWindow = window.__TAURI__.webviewWindow.WebviewWindow;
-        console.log('🟩 Using global WebviewWindow:', WebviewWindow);
         if (WebviewWindow) {
+          // if successfull in creating the window...
+
+          // create a blob for html to generate url
           const blob = new Blob([html], {
             type: 'text/html'
           });
@@ -48548,22 +48551,19 @@ Wick.HTMLPreview = class {
             title: project.name,
             width: project.width || 800,
             height: project.height || 600,
-            url // 👈 load the blob directly
+            url // load the blob 
           });
           preview.once('tauri://created', () => {
-            console.log('🟩 Preview window opened at', url);
             callback(preview);
           });
-          preview.once('tauri://error', e => {
-            console.error('❌ Error creating Tauri window:', e);
-            callback(null);
-          });
-          return;
+          return; // exit early if tauri worked (else, keep going to browser preview window)
         }
       } catch (e) {
-        console.error('❌ Exception while creating Tauri preview:', e);
+        console.error('Tauri error: ', e);
       }
-      console.warn('⚠️ Falling back to browser preview');
+
+      // no tauri? No problemo, open browser
+      console.warn('Opening browser preview');
       const win = window.open('', '_blank', `height=${project.height},width=${project.width}`);
       if (win) {
         win.document.title = project.name;
