@@ -56,6 +56,72 @@ import WickCodeEditor from './PopOuts/WickCodeEditor/WickCodeEditor';
 
 import EditorWrapper from './EditorWrapper';
 
+
+import { readFile } from '@tauri-apps/plugin-fs'
+import { invoke } from '@tauri-apps/api/core';
+
+// app wick, for handling directly opening files from finder/ file explorer
+async function loadPathIntoEditor(editorThis, filePath) {
+    try {
+
+        const name = filePath.split('/').pop();
+
+        // .WICK/ PROJECT FILE
+        if (
+            name.endsWith('.wick') ||
+            name.endsWith('.mov') ||
+            name.endsWith('.mp4')
+        ) {
+
+
+            const bytes = await readFile(filePath, { encoding: null })
+            const blob = new Blob([bytes])
+            const file = new File([blob], name, {
+                type: name.endsWith('.wick') && 'application/zip' || 'video/mp4'
+            });
+
+
+            editorThis.handleWickFileLoad({ target: { files: [file] } })
+
+            // .WICKOBJ/ ASSET FILE
+        } else if (
+            name.endsWith('.wickobj') ||
+            name.endsWith('.mp3') ||
+            name.endsWith('.wav') ||
+            name.endsWith('.png') ||
+            name.endsWith('.jpeg') ||
+            name.endsWith('.jpg') ||
+            name.endsWith('.gif')
+        ) {
+            if (name.endsWith('.wickobj')) {
+                const json = await readFile(filePath, { encoding: 'utf-8' })
+                const projectData = JSON.parse(json)
+                editorThis.importFileAsAsset(projectData)
+            } else {
+                const bytes = await readFile(filePath, { encoding: null })
+                let mimeType = ''
+
+                if (name.endsWith('.mp3')) mimeType = 'audio/mpeg'
+                else if (name.endsWith('.wav')) mimeType = 'audio/wav'
+                else if (name.endsWith('.png')) mimeType = 'image/png'
+                else if (name.endsWith('.jpeg') || name.endsWith('.jpg')) mimeType = 'image/jpeg'
+                else if (name.endsWith('.gif')) mimeType = 'image/gif'
+
+                const blob = new Blob([bytes], { type: mimeType })
+                const file = new File([blob], name, { type: mimeType })
+                editorThis.importFileAsAsset(file)
+            }
+
+        } else { // if all else fails
+            editorThis.toast('Unsupported file type.', 'error')
+        }
+    } catch (e) {
+        console.error('Failed to open file from system:', e)
+        editorThis.toast('Could not open file.', 'error')
+    }
+}
+
+
 const { version } = require('../../package.json');
 
 var classNames = require('classnames');
@@ -274,6 +340,30 @@ class Editor extends EditorCore {
         }
 
         this.watchForHover();
+
+
+        // check to see if we're in the app
+        if (window.__TAURI__) {
+
+            // Let Rust know we’re alive
+            invoke('frontend_ready').catch(() => { })
+
+            // ask Rust if this window has a pending file
+            // (this is to allow opening wick files by double clicking em')
+            setTimeout(async () => {
+                try {
+                    const path = await invoke('take_pending_file');
+                    if (path) { // open the file if so
+                        console.log('Taking pending file for this window:', path);
+                        await loadPathIntoEditor(this, path);
+                    }
+                } catch (e) {
+                    console.warn('take_pending_file failed', e)
+                }
+            }, 200) // small delay
+        }
+
+
     }
 
     componentDidUpdate = (prevProps, prevState) => {
@@ -817,7 +907,7 @@ class Editor extends EditorCore {
         });
     }
 
-  
+
 
     /**
      * Returns a string representing the render size elements should use in the editor.

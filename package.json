@@ -13,6 +13,7 @@
     "14": "^3.1.6",
     "@ffmpeg/ffmpeg": "^0.7.0",
     "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-fs": "^2.4.4",
     "ace-builds": "^1.4.12",
     "audiobuffer-to-wav": "^1.0.0",
     "base64-arraybuffer": "^0.2.0",

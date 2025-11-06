@@ -37,6 +37,17 @@
     ],
     "resources": [
       "../public/builtinlibrary"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["wick", "mov", "mp4"],
+        "role": "Editor",
+        "name": "Candlestick Project File"
+      },{
+        "ext": ["wickobj", "mp3", "wav", "png", "jpeg", "jpg", "gif"],
+        "role": "Editor",
+        "name": "Candlestick Asset File"
+      }
     ]
   }
 }
