@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.10.26.20.55.41";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.5.23.2.0";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46530,6 +46530,11 @@ WickObjectCache = class {
    * @param {Wick.Base} object - the object to remove from the cache
    */
   removeObject(object) {
+    // let info = "";
+    // info +=   "classname " + object.classname;
+    // info += "\n     uuid " + object.uuid.substring(0, 4);
+    // console.log(info);
+
     if (object.classname === 'Project') {
       object.destroy();
       return; // TODO, remove this.
@@ -46598,6 +46603,10 @@ WickObjectCache = class {
     uuidSet = new Set([...historyIDs, ...uuidSet]);
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
+        let info = "";
+        info += "classname " + object.classname;
+        info += "\n     uuid " + object.uuid.substring(0, 4);
+        console.log(info);
         this.removeObject(object);
       }
     });

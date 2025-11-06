@@ -50,6 +50,11 @@ WickObjectCache = class {
      * @param {Wick.Base} object - the object to remove from the cache
      */
     removeObject (object) {
+        // let info = "";
+        // info +=   "classname " + object.classname;
+        // info += "\n     uuid " + object.uuid.substring(0, 4);
+        // console.log(info);
+        
         if (object.classname === 'Project') {
             object.destroy();
             return; // TODO, remove this.
@@ -124,6 +129,11 @@ WickObjectCache = class {
 
         this.getAllObjects().forEach(object => {
             if(!uuidSet.has(object.uuid)) {
+                let info = "";
+                info +=   "classname " + object.classname;
+                info += "\n     uuid " + object.uuid.substring(0, 4);
+                console.log(info);
+
                 this.removeObject(object);
             }
         });
