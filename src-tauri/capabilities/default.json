@@ -22,7 +22,18 @@
     "fs:allow-resource-meta-recursive",
     "fs:allow-resource-read-recursive",
     "fs:allow-desktop-meta-recursive",
+
+    "core:webview:allow-print",
     
+    "core:webview:default",
+    "core:app:default",
+    "core:window:default",
+    "log:default",
+    "core:menu:default",
+    "core:tray:default",
+    "core:event:default",
+    "core:resources:default",
+    "core:image:default",
     {"identifier": "fs:scope", "allow": [
       {"path": "*"}
     ]}
