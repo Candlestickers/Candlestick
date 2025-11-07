@@ -59,6 +59,7 @@ Wick.View.Path = class extends Wick.View {
                 this.item.strokeColor = this.item.data.originalStyle.strokeColor;
                 this.item.fillColor = this.item.data.originalStyle.fillColor;
                 this.item.strokeWidth = this.item.data.originalStyle.strokeWidth;
+                this.item.data.originalStyle = null;
             }
         }
     }

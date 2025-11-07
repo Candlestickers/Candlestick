@@ -46317,8 +46317,8 @@ Wick.History = class {
     let state = this._generateState(filter);
     let objects = new Set(state.map(obj => obj.uuid));
     let stateObject = {
-      state: this._generateState(filter),
-      objects: objects,
+      state,
+      objects,
       actionName: actionName || "Unknown Action",
       timeSinceLastPush: now - this.lastHistoryPush
     };
@@ -46328,7 +46328,7 @@ Wick.History = class {
   }
 
   /**
-   * Pop the last state in the undo stack off and apply the new last state to the project.
+   * Pop the last state off the undo stack off apply the new state to the project.
    * @returns {boolean} True if the undo stack is non-empty, false otherwise
    */
   popState() {
@@ -46356,8 +46356,9 @@ Wick.History = class {
     if (this._redoStack.length === 0) {
       return false;
     }
-    var recoveredState = this._redoStack.pop().state;
-    this._undoStack.push(recoveredState);
+    let recovered = this._redoStack.pop();
+    this._undoStack.push(recovered);
+    var recoveredState = recovered.state;
     this._recoverState(recoveredState);
     return true;
   }
@@ -49382,18 +49383,21 @@ Wick.Layer = class extends Wick.Base {
     super(args);
     this.locked = args.locked === undefined ? false : args.locked;
     this.hidden = args.hidden === undefined ? false : args.hidden;
+    this.opacity = args.opacity === undefined ? 1 : args.opacity;
     this.name = args.name || null;
   }
   _serialize(args) {
     var data = super._serialize(args);
     data.locked = this.locked;
     data.hidden = this.hidden;
+    data.opacity = this.opacity;
     return data;
   }
   _deserialize(data) {
     super._deserialize(data);
     this.locked = data.locked;
     this.hidden = data.hidden;
+    this.opacity = data.opacity;
   }
   get classname() {
     return 'Layer';
@@ -49413,6 +49417,19 @@ Wick.Layer = class extends Wick.Base {
    */
   get index() {
     return this.parent && this.parent.layers.indexOf(this);
+  }
+
+  /**
+   * The opacity of the layer.
+   * @type {number}
+   */
+  get opacity() {
+    return this._opacity;
+  }
+  set opacity(opacity) {
+    if (typeof opacity === 'number' && !isNaN(opacity)) {
+      this._opacity = Math.max(Math.min(opacity, 1), 0);
+    } else this._opacity = 1;
   }
 
   /**
@@ -63796,7 +63813,7 @@ Wick.View.Layer = class extends Wick.View {
       frame.view.render();
       this.activeFrameLayers.push(frame.view.objectsLayer);
       frame.view.objectsLayer.locked = false;
-      frame.view.objectsLayer.opacity = 1.0;
+      frame.view.objectsLayer.opacity = this.model._opacity;
     }
 
     // Disable mouse events on layers if they are locked.
@@ -63840,7 +63857,7 @@ Wick.View.Layer = class extends Wick.View {
     onionMult = Math.min(1, Math.max(0, onionMult));
     var opacity = onionMult * Wick.View.Layer.BASE_ONION_OPACITY;
     frame.view.objectsLayer.locked = true;
-    frame.view.objectsLayer.opacity = opacity;
+    frame.view.objectsLayer.opacity = opacity * this.model._opacity;
   }
 };
 /*
@@ -64043,6 +64060,7 @@ Wick.View.Path = class extends Wick.View {
         this.item.strokeColor = this.item.data.originalStyle.strokeColor;
         this.item.fillColor = this.item.data.originalStyle.fillColor;
         this.item.strokeWidth = this.item.data.originalStyle.strokeWidth;
+        this.item.data.originalStyle = null;
       }
     }
   }
