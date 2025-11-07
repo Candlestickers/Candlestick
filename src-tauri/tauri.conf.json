@@ -33,6 +33,7 @@
     "targets": "all",
     "icon": [
       "../build/icon.png",
+      "../build/favicon.ico",
       "../public/icon.icns"
     ],
     "resources": [

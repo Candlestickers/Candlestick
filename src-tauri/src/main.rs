@@ -36,21 +36,17 @@ fn frontend_ready(_window: tauri::Window) -> Result<(), String> {
     Ok(())
 }
 
-// Build the app
+// ------- Main Builder --------
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(fs_init())
         .manage(PendingFiles(Mutex::new(HashMap::new())))
         .setup(|app| {
-            // If app launched by double-clicking a file (cold start),
-            // stash it for the *main* window (label: "main").
+            // Handle files passed on app launch (cold start)
             if let Some(arg) = std::env::args().nth(1) {
-                // no need to specify format -H.A.
-                // if arg.ends_with(".wick") || arg.ends_with(".wickobj") || arg.ends_with(".wickobj") {
-                    let pending = app.state::<PendingFiles>();
-                    pending.0.lock().unwrap().insert("main".into(), arg);
-                // 
+                let pending = app.state::<PendingFiles>();
+                pending.0.lock().unwrap().insert("main".into(), arg);
             }
             Ok(())
         })
@@ -58,39 +54,60 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
+            // --- macOS: Handles "Open With" events ---
+            #[cfg(target_os = "macos")]
             if let RunEvent::Opened { urls, .. } = event {
                 for url in urls {
                     if let Some(path) = url_to_path(&url) {
-                        // If app is still launching (no windows yet), store for main window
-                        if app_handle.webview_windows().is_empty() {
-                            let pending = app_handle.state::<PendingFiles>();
-                            pending.0.lock().unwrap().insert("main".into(), path);
-                        } else {
-                            // App already open → spawn new window (same logic as before)
-                            let label = format!("editor-{}", Uuid::new_v4());
-                            let title = format!(
-                                "CS — {}",
-                                std::path::Path::new(&path)
-                                    .file_name()
-                                    .and_then(|n| n.to_str())
-                                    .unwrap_or("Project")
-                            );
-
-                            let _ = tauri::WebviewWindowBuilder::new(
-                                app_handle,
-                                label.clone(),
-                                WebviewUrl::App("index.html".into()),
-                            )
-                            .title(title)
-                            .inner_size(1200.0, 800.0)
-                            .min_inner_size(900.0, 600.0)
-                            .build();
-
-                            let pending = app_handle.state::<PendingFiles>();
-                            pending.0.lock().unwrap().insert(label, path);
-                        }
+                        handle_file_open(app_handle, path);
                     }
                 }
             }
+
+            // --- Windows / Linux: process pending file on startup ---
+            #[cfg(not(target_os = "macos"))]
+            if let RunEvent::Ready = event {
+                // Windows/Linux: handle startup arg file here if passed
+                let path_opt = {
+                    let pending = app_handle.state::<PendingFiles>();
+                    let mut guard = pending.0.lock().unwrap();
+                    guard.remove("main")
+                };
+
+                if let Some(path) = path_opt {
+                    handle_file_open(app_handle, path);
+                }
+
+            }
         });
+}
+
+// ------- File Open Logic (shared) -------
+fn handle_file_open(app_handle: &AppHandle, path: String) {
+    if app_handle.webview_windows().is_empty() {
+        let pending = app_handle.state::<PendingFiles>();
+        pending.0.lock().unwrap().insert("main".into(), path);
+    } else {
+        let label = format!("editor-{}", Uuid::new_v4());
+        let title = format!(
+            "CS — {}",
+            std::path::Path::new(&path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("Project")
+        );
+
+        let _ = tauri::WebviewWindowBuilder::new(
+            app_handle,
+            label.clone(),
+            WebviewUrl::App("index.html".into()),
+        )
+        .title(title)
+        .inner_size(1200.0, 800.0)
+        .min_inner_size(900.0, 600.0)
+        .build();
+
+        let pending = app_handle.state::<PendingFiles>();
+        pending.0.lock().unwrap().insert(label, path);
+    }
 }
