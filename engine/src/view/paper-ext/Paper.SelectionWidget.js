@@ -221,7 +221,7 @@ class SelectionWidget {
      *
      */
     updateTransformation(item, e) {
-        if (!this.mod?.initiated) {
+        if (!this.mod || !this.mod.initiated) {
             this.mod = {
                 initiated: true
             }
@@ -239,7 +239,7 @@ class SelectionWidget {
                 this.mod.action = 'rotate';
                 this.mod.rotateDelta = 0;
                 this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-                this.mod.initialBoxRotation = this.boxRotation ?? 0;
+                this.mod.initialBoxRotation = this.boxRotation || 0;
             } else if (item.data.handleEdge.includes('Center')) {
                 this.mod.action = 'move-edge';
                 this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';

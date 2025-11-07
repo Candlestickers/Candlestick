@@ -26,17 +26,47 @@ Wick.HTMLPreview = class {
      * @param {Wick.Project} project - The project to run.
      * @param {function} callback - Function that's called when the popup is successfully created.
      */
-    static previewProject (project, callback) {
-        Wick.HTMLExport.bundleProject(project, html => {
-            var windowFeatures = "height="+project.height+",width="+project.width;
-            var popupWindow = window.open('', '_blank', windowFeatures);
-            if(popupWindow) {
-                popupWindow.document.title = project.name;
-                popupWindow.document.open();
-                popupWindow.document.write(html);
-                popupWindow.document.close();
+    static async previewProject(project, callback) {
+        Wick.HTMLExport.bundleProject(project, async html => {
+            
+            // try creating preview window with tauri api... 
+            try {
+                
+                // try to create a preview window through tauri
+                const WebviewWindow = window.__TAURI__.webviewWindow.WebviewWindow
+
+                if (WebviewWindow) { // if successfull in creating the window...
+
+                    // create a blob for html to generate url
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+
+                    const preview = new WebviewWindow('preview-' + Date.now(), {
+                        title: project.name,
+                        width: project.width || 800,
+                        height: project.height || 600,
+                        url // load the blob 
+                    })
+
+                    preview.once('tauri://created', () => {
+                        callback(preview);
+                    })
+
+                    return // exit early if tauri worked (else, keep going to browser preview window)
+                }
+            } catch (e) {
+                console.error('Tauri error: ', e);
             }
-            callback(popupWindow);
-        });
+
+            // no tauri? No problemo, open browser
+            console.warn('Opening browser preview');
+            const win = window.open('', '_blank', `height=${project.height},width=${project.width}`)
+            if (win) {
+                win.document.title = project.name
+                win.document.write(html)
+                win.document.close()
+            }
+            callback(win)
+        })
     }
 }

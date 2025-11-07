@@ -55,15 +55,30 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
-
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
     }
 
     onMouseDrag (e) {
         this.deleteZoomBox();
+
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
+
         this.createZoomBox(e);
     }
 
     onMouseUp (e) {
+
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
+
         if(this.zoomBox && this.zoomBoxIsValidSize()) {
             var bounds = this.zoomBox.bounds;
             var viewBounds = this.paper.view.bounds;

@@ -70,6 +70,12 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
+
+        // Ignore clicks during two-finger gesture
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            return;
+        }
+
         if (this.editingText) {
             this.finishEditingText();
         } else if(this.hoveredOverText) {
@@ -95,7 +101,7 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
 
     onMouseDrag (e) {
-
+        if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     }
 
     onMouseUp (e) {
