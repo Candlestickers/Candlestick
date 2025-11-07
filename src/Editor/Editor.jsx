@@ -345,6 +345,8 @@ class Editor extends EditorCore {
         // check to see if we're in the app
         if (window.__TAURI__) {
 
+            window.alert = (text) => window.editor.toast(text);
+
             // Let Rust know we’re alive
             invoke('frontend_ready').catch(() => { })
 
