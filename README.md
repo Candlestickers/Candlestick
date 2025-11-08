@@ -161,7 +161,7 @@ Additional contributions came from:
 
 ___
 ## Additional Terms & Conditions
-<sup>These legal Terms and Conditions listed below and within our software are a legal agreement between you (either as an individual or on behalf of an entity) and our team ("Candlestickers") regarding your use of Candlesticker's applications, such as Candlestick. These terms apply to the executable code version of the Software as well. Source code for the Software is available separately and free of charge under open source software license agreements. If you do not agree to all of our listed terms below and within the software, do not download, install, use, or copy the Software.<sup>
+<sup>These legal Terms and Conditions listed below and within our software are a legal agreement between you (either as an individual or on behalf of an entity) and our team ("Candlestickers") regarding your use of Candlestickers' applications, such as Candlestick. These terms apply to the executable code version of the Software as well. Source code for the Software is available separately and free of charge under open source software license agreements. If you do not agree to all of our listed terms below and within the software, do not download, install, use, or copy the Software.<sup>
 
 **Disclaimers and Limitations of Liability** 
 
