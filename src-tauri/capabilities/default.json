@@ -10,21 +10,15 @@
     "core:window:allow-create",
     "core:webview:allow-create-webview-window",
     "core:webview:allow-internal-toggle-devtools",
-
     "fs:default",
-
     "fs:allow-app-read-recursive",
     "fs:allow-app-write-recursive",
-    
     "fs:allow-desktop-read-recursive",
     "fs:allow-desktop-write-recursive",
-
     "fs:allow-resource-meta-recursive",
     "fs:allow-resource-read-recursive",
     "fs:allow-desktop-meta-recursive",
-
     "core:webview:allow-print",
-    
     "core:webview:default",
     "core:app:default",
     "core:window:default",
@@ -34,8 +28,16 @@
     "core:event:default",
     "core:resources:default",
     "core:image:default",
-    {"identifier": "fs:scope", "allow": [
-      {"path": "*"}
-    ]}
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "*"
+        },
+        {
+          "path": "**"
+        }
+      ]
+    }
   ]
 }

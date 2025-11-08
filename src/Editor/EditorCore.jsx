@@ -2017,7 +2017,7 @@ class EditorCore extends Component {
             const { imageAssets, audioBlob, fps, projectName, width, height } =
                 await MP4ImportPure.importMP4AsSequence({
                     mp4File: file,
-                    fps: Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12")))), // give user the option of FPS
+                    fps: Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12") || 6))), // give user the option of FPS
                     projectName: file.name.replace(".mp4", ''),
                     onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p || 0)}%)` })
                 })
