@@ -12,15 +12,14 @@ Candlestick is a fork of Wick Editor, a free and open-source tool for creating g
 
 ### Getting Started
 
-We plan to update our Node packages in the future. Until then, you may need to use Node Version 14 to install the right packages. If using an M-series Mac, this will require installing Rosetta 2.
+We plan to update our Node packages in the future. Until then, you will need to use Node Version 14 to install the right packages. If using an M-series Mac, this will require installing Rosetta 2.
 
 See the original Wick Editor [README](https://github.com/Wicklets/wick-editor/blob/master/README.md) for older instructions.
-Newer instructions are provided below, with focus towards mac development.
-
+Newer instructions are provided below, with a focus on Mac development.
 
 ### 1. Homebrew
-This is optional as you can download things without, but homebrew is a simple set of command line tools that make the process easier. I recommend downloading it if you haven't already. 
-Quick homebrew check—
+This is optional as you can download things without, but Homebrew is a simple set of command line tools that make the process easier. We recommend downloading it if you haven't already. 
+Quick Homebrew check—
 ```
 brew --version
 ```
@@ -29,8 +28,8 @@ If nothing returns you can download it with [this command](<https://brew.sh/>)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### 2. Python installation
-You may need python to be able to run some of the packages that come with Candlestick.
+### 2. Python
+You may need Python 3.10 to be able to run some of the packages that come with Candlestick.
 First check if you already have python
 ```
 python3 --version
@@ -41,9 +40,10 @@ brew install python@3.10
 ```
 Then run the version command at the end as a check. If you would like to install python without homebrew, [you can download it from their site here](<https://www.python.org/>), and for more detailed steps [check out this article.](<https://www.dataquest.io/blog/installing-python-on-mac/>)
 
-### 3. Node Version Manager installation
-nvm = node version manager
-nvm is a cli library that helps you manage the node versions you have installed on your device. You should be able to [install node versions directly from online](<https://nodejs.org/en/download>), but as we're going for a specific older version and to be more organized, I recommend installing nvm. 
+### 3. Node Version Manager
+(nvm = Node Version Manager)
+
+nvm is a CLI library that helps you manage the Node versions you have installed on your device. You should be able to [install Node versions directly from online](<https://nodejs.org/en/download>), but as we're going for a specific older version and to be more organized, we recommend installing nvm. 
 Run a quick nvm check to see if you have it installed—
 ```
 nvm ls
@@ -58,18 +58,18 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 ```
 which downloads the nvm code to an nvm directory on your system. Try running `nvm ls` or `nvm --version` afterwards, and if you get nothing from both then go back to [this link](<https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating>) and follow the instructions.
 
-<sup>If you're on windows, please see [nvm-windows](https://github.com/coreybutler/nvm-windows).</sup>
+<sup>If you're on Windows, please see [nvm-windows](https://github.com/coreybutler/nvm-windows).</sup>
 
-### 4. Installing npm 14
-The wick editor is a software that hasn't been updated in ~5 years before we picked it back up with our fork.
-For that reason though, it requires an older version of npm (node package manager). 
+### 4. Installing Node 14
+Wick Editor is a software that hasn't been updated in ~5 years before we picked it back up with our fork.
+For that reason though, it requires an older version of Node. 
 
-Try first running this command to install npm v14: 
+Try first running this command to install Node v14: 
 ```
 nvm install 14
 ```
 There's a chance this works, and if it does you may move on to the next step.
-If it doesn't work, and you're on a mac device with an M-chip, the issue is likely because node v14 doesn't have ARM64 support, so you'll likely need to install [rosetta](<https://github.com/nodejs/node/issues/52306#issuecomment-2031073649>) to workaround this issue
+If it doesn't work, and you're on a Mac device with an M-series chip, the issue is likely because Node v14 doesn't have ARM64 support, so you'll likely need to install [Rosetta 2](<https://github.com/nodejs/node/issues/52306#issuecomment-2031073649>) to work around this issue.
 ```
 /usr/sbin/softwareupdate --install-rosetta --agree-to-license
 ```
@@ -81,13 +81,14 @@ Then re-run nvm install.
 ```
 nvm install 14
 ```
-<sup> For anyone on windows you won't need this step
-Things usually get resolved after this. If you still have an error let us know what it says.
-**Side Note:** when nvm installs v14 it uses it by default. You can run `nvm ls` to check that it is, if you don't see an arrow next to version `14._._` then run `nvm use 14` and re-check.
-</sup>
+<sup>For anyone on Windows, you won't need this step</sup>
+
+Things usually get resolved after this. If you still have an error, let us know what it says.
+
+**Side Note:** When nvm installs v14, it uses it by default. You can run `nvm ls` to check that it is, if you don't see an arrow next to version `14._._` then run `nvm use 14` and re-check.
 
 ### 5. Final step, setup and run
-You need to navigate to your project file... if you don't know how to navigate through the terminal then you may use [this online video tutorial](<https://www.youtube.com/watch?v=5XgBd6rjuDQ>) to learn how— it's simple but takes a minute to explain.
+You need to navigate to your project file... if you don't know how to navigate through the terminal then you may use [this online video tutorial](<https://www.youtube.com/watch?v=5XgBd6rjuDQ>) to learn how. It's simple but takes a minute to explain.
 
 If you haven't downloaded our repository yet then do that by either downloading the zip, or using `git clone`
 ```
@@ -102,39 +103,39 @@ npm install
 ```
 <sup>(If at any point you switched terminals, please make sure you're still using npm v14 before running the last command, `npm install`. To ensure you're using npm v14, you may run `nvm use 14`, if you have nvm set up successfully)</sup>
 
-You may see a few warnings, like ummmm... around a little over 300... due to the outdated packages... but don't worry about em' 😅 
-Just so long things download successfully. 
-<sup>programming rule #1, if things work, don't touch it... don't worry though those are things we're slowly fixing</sup>
+You may see a few warnings, like ummmm... a little over 300... due to the outdated packages... but don't worry about em' 😅 As long as things download successfully, it's fine.
+
+<sup>Programming rule #1, if things work, don't touch it... don't worry though those are things we're slowly fixing</sup>
 
 If the terminal says something like `found 0 vulnerabilities` after only 7 lines of loading or such, then there's a change you're in the wrong directory.
 
-Once you have everything setup, all you need to do to test your app is ... first build the engine:
+Once you have everything setup, all you need to do to test your app is... first build the engine:
 ```
 npm run build-engine
 ```
-<sup>^ you'll also need to do this step every time you make changes to your `/engine` directory to be able to see changes</sup>
+<sup>^ You'll also need to do this step every time you make changes to your `/engine` directory to be able to see changes</sup>
 
 Then create a production build of the project:
 ```
 npm run build
 ```
-<sup>^ this command is not always needed while testing, you'll need it most prior to deploying your code</sup>
+<sup>^ This command is not always needed while testing, you'll need it most prior to deploying your code</sup>
 
 And lastly, to run your project in development:
 ```
 npm start
 ```
 
-If it works then you should see something like 
+If it worked, you should see something like this in the terminal.
 ```
 Compiled successfully!
 
-You can now view wick-editor in the browser.
+You can now view Candlestick in the browser.
 
   Local:            http://localhost:3000/
   On Your Network:  http://###.###.#.###:3000/
 ```
-If you go to your browser and open up [http://localhost:3000/](http://localhost:3000/) you should find the project there. You can also test on your mobile devices by going to the network `http://###.###.#.###:3000/` link on another device *connected to the same network* (should work but if it doesn't could be due to certain network restrictions).
+If you go to your browser and open up [http://localhost:3000/](http://localhost:3000/) you should find the project there. You can also test on your mobile devices by going to the network `http://###.###.#.###:3000/` link on another device *connected to the same network* (it should work, but if it doesn't, it could be due to certain network restrictions).
 
 Well that's all!
 If you have any trouble with the process above, you can ask us for help on our [Discord server!](http://url.candlestickers.app/discord)
@@ -152,12 +153,14 @@ Candlestick is under the GNU v3 Public License. See the [LICENSE](LICENSE.md) fo
 
 Wick Editor was created by Luca Damasco and Zach Rispoli. See more credits on the Wick Editor [About Page](https://www.wickeditor.com/#/about/) and [Credits](https://github.com/Wicklets/wick-editor/blob/master/CREDITS.md).
 
-Candlestick was created by [Hamzah Alani](https://forum.wickeditor.com/u/hamzah_alani/summary), [Baron](https://forum.wickeditor.com/u/baronawc/summary), and [Jovanny Rodriguez](https://forum.wickeditor.com/u/jovanny/summary).
+Candlestick was created and is maintained by [Hamzah Alani](https://forum.wickeditor.com/u/hamzah_alani/summary), [Baron](https://forum.wickeditor.com/u/baronawc/summary), and [Jovanny Rodriguez](https://forum.wickeditor.com/u/jovanny/summary).
 
-Additional contributions came from:
+Active contributors:
+- [StickmanRed](https://forum.wickeditor.com/u/stickmanred/summary)
+
+Additional, indirect contributors:
 - [pumpkinhead](https://forum.wickeditor.com/u/pumpkinhead/summary)
 - [SomeoneElse](https://forum.wickeditor.com/u/someoneelse/summary)
-- [StickmanRed](https://forum.wickeditor.com/u/stickmanred/summary)
 
 ___
 ## Additional Terms & Conditions
