@@ -4,7 +4,7 @@
   <br>
 </h1> -->
 
-# [Candlestick](https://candlestickers.github.io/Candlestick/)
+# [Candlestick](https://candlestickers.app/)
 
 Candlestick is a fork of Wick Editor, a free and open-source tool for creating games, animations, and everything in-between.
 
@@ -30,7 +30,7 @@ If nothing returns you can download it with [this command](<https://brew.sh/>)
 
 ### 2. Python
 You may need Python 3.10 to be able to run some of the packages that come with Candlestick.
-First check if you already have python
+First check if you already have Python
 ```
 python3 --version
 ```
@@ -38,10 +38,10 @@ If nothing returns, then run
 ```
 brew install python@3.10
 ```
-Then run the version command at the end as a check. If you would like to install python without homebrew, [you can download it from their site here](<https://www.python.org/>), and for more detailed steps [check out this article.](<https://www.dataquest.io/blog/installing-python-on-mac/>)
+Then run the version command at the end as a check. If you would like to install Python without Homebrew, [you can download it from their site here](<https://www.python.org/>), and for more detailed steps [check out this article.](<https://www.dataquest.io/blog/installing-python-on-mac/>)
 
 ### 3. Node Version Manager
-(nvm = Node Version Manager)
+<sup>(nvm = Node Version Manager)</sup>
 
 nvm is a CLI library that helps you manage the Node versions you have installed on your device. You should be able to [install Node versions directly from online](<https://nodejs.org/en/download>), but as we're going for a specific older version and to be more organized, we recommend installing nvm. 
 Run a quick nvm check to see if you have it installed—
@@ -60,7 +60,7 @@ which downloads the nvm code to an nvm directory on your system. Try running `nv
 
 <sup>If you're on Windows, please see [nvm-windows](https://github.com/coreybutler/nvm-windows).</sup>
 
-### 4. Installing Node 14
+### 4. Installing Node v14
 Wick Editor is a software that hasn't been updated in ~5 years before we picked it back up with our fork.
 For that reason though, it requires an older version of Node. 
 
@@ -95,7 +95,7 @@ If you haven't downloaded our repository yet then do that by either downloading 
 git clone https://github.com/Candlestickers/Candlestick.git
 cd Candlestick
 ```
--# (you may also need to download git first using `brew install git`, or [download Git through this online website](https://git-scm.com/install/))
+-#(You may also need to download git first using `brew install git`, or [download Git through this online website](https://git-scm.com/install/))
 
 If you have the repository set up, then navigate to the directory and run the following command to install the npm packages:
 ```
