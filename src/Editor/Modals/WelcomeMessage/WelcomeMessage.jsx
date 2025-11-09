@@ -36,9 +36,10 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://forum.wickeditor.com/t/candlestick-1-0-a-new-fork-of-wick-editor/23174";
         this.updates = [
-            "Corrected Forum Post",
-            "Adjusted Tab Title",
-            "Fixed Undo/Redo Crash",
+            "Offline Desktop App",
+            "Mobile Gestures",
+            "Layer Opacity Slider",
+            "Various Bug/Crash Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
