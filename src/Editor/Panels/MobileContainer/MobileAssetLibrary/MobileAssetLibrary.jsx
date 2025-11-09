@@ -123,6 +123,7 @@ class MobileAssetLibrary extends Component {
           <ActionButton
             color="inspector"
             action={this.openFileDialog}
+            useClickEvent={true}
             id="button-asset-upload"
             icon="upload-dark"
             iconClassName="mobile-asset-library-icon"

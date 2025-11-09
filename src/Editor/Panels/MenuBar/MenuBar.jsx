@@ -58,6 +58,7 @@ class MenuBar extends Component {
           <MenuBarButton
             text="open"
             action={this.props.openProjectFileDialog}
+            useClickEvent={true}
           />
 
           <MenuBarButton
