@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.7.10.54.45";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.9.21.9.37";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46127,6 +46127,19 @@ Wick.Color = class {
   static average(colorA, colorB) {
     return colorA.multiply(0.5).add(colorB.multiply(0.5));
   }
+
+  /**
+   * A fully transparent version of the color.
+   * @type {Number}
+   */
+  get transparent() {
+    var newColor = new Wick.Color();
+    newColor.r = this.r;
+    newColor.g = this.g;
+    newColor.b = this.b;
+    newColor.a = 0;
+    return newColor;
+  }
 };
 /*
  * Copyright 2020 WICKLETS LLC
@@ -58694,6 +58707,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
       var svg = potrace.fromImage(croppedCanvas).toSVG(1 / this.POTRACE_RESOLUTION / this.paper.view.zoom);
       var potracePath = this.paper.project.importSVG(svg);
       potracePath.fillColor = this.getSetting('fillColor').rgba;
+      potracePath.strokeColor = this.getSetting('strokeColor').transparent.rgba;
       potracePath.position.x += this.paper.view.bounds.x;
       potracePath.position.y += this.paper.view.bounds.y;
       potracePath.position.x += strokeBounds.x / this.paper.view.zoom;

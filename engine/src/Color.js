@@ -129,4 +129,17 @@ Wick.Color = class {
     static average (colorA, colorB) {
         return colorA.multiply(0.5).add(colorB.multiply(0.5));
     }
+
+    /**
+     * A fully transparent version of the color.
+     * @type {Number}
+     */
+    get transparent() {
+        var newColor = new Wick.Color();
+        newColor.r = this.r;
+        newColor.g = this.g;
+        newColor.b = this.b;
+        newColor.a = 0;
+        return newColor;
+    }
 }

@@ -473,6 +473,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
             var potracePath = this.paper.project.importSVG(svg);
 
             potracePath.fillColor = this.getSetting('fillColor').rgba;
+            potracePath.strokeColor = this.getSetting('strokeColor').transparent.rgba;
             potracePath.position.x += this.paper.view.bounds.x;
             potracePath.position.y += this.paper.view.bounds.y;
             potracePath.position.x += strokeBounds.x / this.paper.view.zoom;
