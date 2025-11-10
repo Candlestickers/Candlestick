@@ -1,7 +1,7 @@
 {
-  "name": "Candlestick",
+  "name": "candlestick",
   "version": "1.0.1",
-  "author": "Candlestickers™",
+  "author": "Candlestickers",
   "private": true,
   "homepage": "./",
   "main": "./public/electron.js",

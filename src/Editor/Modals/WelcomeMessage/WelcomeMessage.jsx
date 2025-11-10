@@ -34,20 +34,13 @@ var classNames = require('classnames');
 class WelcomeModal extends Component {
     constructor() {
         super();
-        this.forumPost = "https://forum.wickeditor.com/t/candlestick-1-0-a-new-fork-of-wick-editor/23174";
+        this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
-            "Rebrand to Candlestick",
-            "New Alignment Options",
-            "New Shape Transformations",
-            "New MP4 Importer",
-            "Fixed GIF Importer",
-            "Runtime Console",
-            "Built-in Gradient Tool",
-            "HTML Favicon & Tab Title",
-            "Line Tool Auto-Snapping",
-            "Stroke & Fill Colors Swap",
-            "Extra Bug Fixes",
-        ] // No More than 9 if patreon removed (8 looks better), no more than 3 if patreon is kept
+            "Offline Desktop App",
+            "Mobile Gestures",
+            "Layer Opacity Slider",
+            "Various Bug/Crash Fixes"
+        ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
         let t2 = ["Constance Ye", "Dan Doggett", "Anonymous"]
@@ -124,7 +117,7 @@ class WelcomeModal extends Component {
                             {this.renderUpdates()}
                             {/* {this.renderPatreonSupporters("desktop-modal")} */}
                         </div>
-                        <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://discord.gg/5esxxWxd7Z">Discord!</a></div>
+                        <div id="welcome-modal-forum-link" className="welcome-modal-item">Please report all bugs on our <a className="welcome-modal-highlight" target="_blank" rel="noopener noreferrer" href="https://url.candlestickers.app/discord">Discord!</a></div>
                         <div id="welcome-modal-footer">
                             <div id="welcome-modal-accept">
                                 <ActionButton
