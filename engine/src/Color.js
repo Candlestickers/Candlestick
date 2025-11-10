@@ -132,7 +132,7 @@ Wick.Color = class {
 
     /**
      * A fully transparent version of the color.
-     * @type {Number}
+     * @type {Wick.Color}
      */
     get transparent() {
         var newColor = new Wick.Color();
