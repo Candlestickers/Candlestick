@@ -22,7 +22,7 @@ Candlestick is under the GNU v3 Public License. See the [LICENSE](LICENSE.md) fo
 
 ## Links
 
-* [Candlestick Announcement (The Wick Editor Forums)](http://url.candlestickers.app/updates)
+* [Candlestick Announcement (The Wick Editor Forums)](https://url.candlestickers.app/updates)
 * [Candlestick Community Discord](https://url.candlestickers.app/discord)
 
 ## Credits
