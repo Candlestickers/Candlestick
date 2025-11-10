@@ -110,6 +110,7 @@ class AssetLibrary extends Component {
           <ActionButton
             color="upload"
             action={this.openFileDialog}
+            useClickEvent={true}
             id="button-asset-upload"
             icon="upload"
             tooltip="Upload Assets" />

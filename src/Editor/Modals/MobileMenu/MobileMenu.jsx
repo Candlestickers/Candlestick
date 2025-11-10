@@ -33,7 +33,7 @@ class MobileMenu extends Component {
     };
 
     let items = [{text: "new", icon: "create-white", action: this.props.openNewProjectConfirmation},
-        {text: "open", icon: "load-white", action: this.props.openProjectFileDialog},
+        {text: "open", icon: "load-white", action: this.props.openProjectFileDialog, useClickEvent: true},
         {text: "export", icon: "export", action: () => this.props.openModal('ExportOptions')},
         {text: "settings", icon: "gear-white", action: () => this.props.openModal('SettingsModal')},
         {text: "about", icon: "mascotmarkwhite", action: () => this.props.openModal('EditorInfo')}];
@@ -43,8 +43,8 @@ class MobileMenu extends Component {
         {...modalProps}
         className="mobile-menu-mobile-body">
             <div className="mobile-menu-options-container">
-                {items.map(({text, icon, action}) => 
-                <ActionButton key={text} className="mobile-menu-option" buttonClassName="no-bg mobile-menu-button" iconClassName="mobile-menu-icon" action={action} text={text} icon={icon}/>)}
+                {items.map(({text, icon, action, useClickEvent}) => 
+                <ActionButton key={text} className="mobile-menu-option" buttonClassName="no-bg mobile-menu-button" iconClassName="mobile-menu-icon" action={action} text={text} icon={icon} useClickEvent={useClickEvent}/>)}
             </div>
             <div className="mobile-menu-close">
                 <ActionButton icon="cancel-white" iconClassName="mobile-menu-close-icon" buttonClassName="no-bg" action={this.props.toggle} color="gray"/>

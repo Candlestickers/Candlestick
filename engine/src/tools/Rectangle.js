@@ -30,6 +30,13 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
 
         this.topLeft = null;
         this.bottomRight = null;
+
+        // gesture control variables
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = 0;
+        this._strokeStartedAt = 0;
+
     }
 
     get doubleClickEnabled () {
@@ -60,11 +67,33 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
+
+        // check if gesture is active -H.A.
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            this._suppressCommit = true;
+            return;
+        }
+        // else, reset gesture variables and timestamp
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+        this._strokeStartedAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
         this.topLeft = e.point;
         this.bottomRight = e.point;
     }
 
     onMouseDrag (e) {
+
+        // GESTURE CHECK - H.A.
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            this._suppressCommit = true;
+            if (this.path) { try { this.path.remove(); } catch (_) {} this.path = null; }
+            return;
+        }
+
         if(this.path) this.path.remove();
 
         this.bottomRight = e.point;
@@ -94,6 +123,22 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
+
+        // GESTURE CHECK - H.A.
+        const g = (window.Wick && Wick.gesture) || {};
+        const gestureActiveNow = !!g.active;
+        const gestureStartedDuringStroke =
+            (g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt) ||
+            ((g.seq || 0) !== (this._gestureSeqAtStart || 0));
+        const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+
+        if (interrupted) {
+            if (this.path) { try { this.path.remove(); } catch (_) {} this.path = null; }
+            this._suppressCommit = false;
+            this._gestureInterrupted = false;
+            return;
+        }
+
         if(!this.path) return;
 
         this.path.remove();
@@ -102,4 +147,5 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
 
         this.fireEvent({eventName: 'canvasModified', actionName: 'rectangle'});
     }
+
 }
