@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.11.18.17.12";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.11.18.54.9";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -45754,7 +45754,13 @@ TWEEN.Interpolation = {
 Wick = {
   version: window.WICK_ENGINE_BUILD_VERSION || "dev",
   resourcepath: '../dist/',
-  _originals: {} // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  _originals: {},
+  // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  // adding global variable to track finger gestures -H.A.
+  gesture: {
+    active: false,
+    type: null
+  }
 };
 console.log('Wick Engine version "' + Wick.version + '" is available.');
 
@@ -46326,8 +46332,8 @@ Wick.History = class {
     let state = this._generateState(filter);
     let objects = new Set(state.map(obj => obj.uuid));
     let stateObject = {
-      state: this._generateState(filter),
-      objects: objects,
+      state,
+      objects,
       actionName: actionName || "Unknown Action",
       timeSinceLastPush: now - this.lastHistoryPush
     };
@@ -46337,7 +46343,7 @@ Wick.History = class {
   }
 
   /**
-   * Pop the last state in the undo stack off and apply the new last state to the project.
+   * Pop the last state off the undo stack off apply the new state to the project.
    * @returns {boolean} True if the undo stack is non-empty, false otherwise
    */
   popState() {
@@ -46365,8 +46371,9 @@ Wick.History = class {
     if (this._redoStack.length === 0) {
       return false;
     }
-    var recoveredState = this._redoStack.pop().state;
-    this._undoStack.push(recoveredState);
+    let recovered = this._redoStack.pop();
+    this._undoStack.push(recovered);
+    var recoveredState = recovered.state;
     this._recoverState(recoveredState);
     return true;
   }
@@ -48542,17 +48549,44 @@ Wick.HTMLPreview = class {
    * @param {Wick.Project} project - The project to run.
    * @param {function} callback - Function that's called when the popup is successfully created.
    */
-  static previewProject(project, callback) {
-    Wick.HTMLExport.bundleProject(project, html => {
-      var windowFeatures = "height=" + project.height + ",width=" + project.width;
-      var popupWindow = window.open('', '_blank', windowFeatures);
-      if (popupWindow) {
-        popupWindow.document.title = project.name;
-        popupWindow.document.open();
-        popupWindow.document.write(html);
-        popupWindow.document.close();
+  static async previewProject(project, callback) {
+    Wick.HTMLExport.bundleProject(project, async html => {
+      // try creating preview window with tauri api... 
+      try {
+        // try to create a preview window through tauri
+        const WebviewWindow = window.__TAURI__.webviewWindow.WebviewWindow;
+        if (WebviewWindow) {
+          // if successfull in creating the window...
+
+          // create a blob for html to generate url
+          const blob = new Blob([html], {
+            type: 'text/html'
+          });
+          const url = URL.createObjectURL(blob);
+          const preview = new WebviewWindow('preview-' + Date.now(), {
+            title: project.name,
+            width: project.width || 800,
+            height: project.height || 600,
+            url // load the blob 
+          });
+          preview.once('tauri://created', () => {
+            callback(preview);
+          });
+          return; // exit early if tauri worked (else, keep going to browser preview window)
+        }
+      } catch (e) {
+        console.error('Tauri error: ', e);
       }
-      callback(popupWindow);
+
+      // no tauri? No problemo, open browser
+      console.warn('Opening browser preview');
+      const win = window.open('', '_blank', `height=${project.height},width=${project.width}`);
+      if (win) {
+        win.document.title = project.name;
+        win.document.write(html);
+        win.document.close();
+      }
+      callback(win);
     });
   }
 };
@@ -49364,18 +49398,21 @@ Wick.Layer = class extends Wick.Base {
     super(args);
     this.locked = args.locked === undefined ? false : args.locked;
     this.hidden = args.hidden === undefined ? false : args.hidden;
+    this.opacity = args.opacity === undefined ? 1 : args.opacity;
     this.name = args.name || null;
   }
   _serialize(args) {
     var data = super._serialize(args);
     data.locked = this.locked;
     data.hidden = this.hidden;
+    data.opacity = this.opacity;
     return data;
   }
   _deserialize(data) {
     super._deserialize(data);
     this.locked = data.locked;
     this.hidden = data.hidden;
+    this.opacity = data.opacity;
   }
   get classname() {
     return 'Layer';
@@ -49395,6 +49432,19 @@ Wick.Layer = class extends Wick.Base {
    */
   get index() {
     return this.parent && this.parent.layers.indexOf(this);
+  }
+
+  /**
+   * The opacity of the layer.
+   * @type {number}
+   */
+  get opacity() {
+    return this._opacity;
+  }
+  set opacity(opacity) {
+    if (typeof opacity === 'number' && !isNaN(opacity)) {
+      this._opacity = Math.max(Math.min(opacity, 1), 0);
+    } else this._opacity = 1;
   }
 
   /**
@@ -50343,6 +50393,7 @@ Wick.Project = class extends Wick.Base {
 
     // Fix missing mimetype for wickobj files
     var type = file.type;
+    // TODO: -H.A. find out why wickobj aren't opening in app build versions
     if (file.type === '' && file.name.endsWith('.wickobj')) {
       type = 'application/json';
     }
@@ -57982,6 +58033,8 @@ Wick.Tool = class {
 
     // Attach onActivate event
     this.paperTool.onActivate = e => {
+      // const view = this.project && this.project.view;
+      // if (view && view.gestureActive) return;
       this.onActivate(e);
     };
 
@@ -58248,7 +58301,7 @@ Wick.Tools = {};
 
 Wick.Tools.Brush = class extends Wick.Tool {
   static get CROQUIS_WAIT_AMT_MS() {
-    return 100;
+    return 30;
   }
   get doubleClickEnabled() {
     return false;
@@ -58271,6 +58324,12 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = null;
     this.errorOccured = false;
     this._isInProgress = false;
+
+    // keep track of when mouse event is interrupted by gestures - H.A. 
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
     this._croquisStartTimeout = null;
 
     // These are used to crop the final path image.
@@ -58286,6 +58345,19 @@ Wick.Tools.Brush = class extends Wick.Tool {
   }
   get isDrawingTool() {
     return true;
+  }
+  cancel() {
+    if (!this._isInProgress) return;
+    this._suppressCommit = true;
+    this._gestureInterrupted = true;
+
+    // Clear any pending work (potrace timeout)
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
+    this.discard(); // close stroke and nuke the rooster! rooster? rastor— same thing
+    this._isInProgress = false;
   }
   onActivate(e) {
     if (this._isInProgress) this.finishStrokeEarly();
@@ -58315,13 +58387,39 @@ Wick.Tools.Brush = class extends Wick.Tool {
   onDeactivate(e) {
     // This prevents croquis from leaving stuck brush strokes on the screen.
     this.finishStrokeEarly();
+    if (this.croquis) this.croquis.clearLayer();
   }
   onMouseMove(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     super.onMouseMove(e);
     this._updateCanvasAttributes();
     this._regenCursor();
   }
   onMouseDown(e) {
+    // add in check for wick gestures - H.A.
+    // gesture active? don't even begin
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // not interrupted by hand gestures
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+    // clean up any pending work from a prior aborted stroke (belt & suspenders)
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
+    if (this.croquis) {
+      this.croquis.clearLayer();
+    }
+    this._resetStrokeBounds(new paper.Point(0, 0)); // or e.point if you prefer
+
     if (this._isInProgress) this.discard();
     this._currentDrawingFrame = this.project.activeFrame;
     clearTimeout(this._croquisStartTimeout);
@@ -58350,6 +58448,22 @@ Wick.Tools.Brush = class extends Wick.Tool {
   onMouseDrag(e) {
     if (!this._isInProgress) return;
 
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      if (this._isInProgress) {
+        this._gestureInterrupted = true;
+        this._suppressCommit = true;
+
+        // cancel pending potrace -_-
+        if (this._croquisStartTimeout) {
+          clearTimeout(this._croquisStartTimeout);
+          this._croquisStartTimeout = null;
+        }
+        this.discard(); // abort croquis safely
+      }
+      return;
+    }
+
     // Forward mouse event to croquis canvas
     var point = this._croquisToPaperPoint(e.point);
     this._updateStrokeBounds(point);
@@ -58363,14 +58477,25 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = this.pressure;
   }
   onMouseUp(e) {
+    // Was this stroke interrupted by a gesture ? that's the question... - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      if (this._isInProgress) this.discard();
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this._isInProgress) return;
     this._isInProgress = false;
-    var point = this._croquisToPaperPoint(e.point);
+    const point = this._croquisToPaperPoint(e.point);
     this._calculateStrokeBounds(point);
     try {
       this.croquis.up(point.x, point.y, this.lastPressure);
-    } catch (e) {
-      this.handleBrushError(e);
+    } catch (err) {
+      this.handleBrushError(err);
       return;
     }
     this._potraceCroquisCanvas(point);
@@ -58416,13 +58541,25 @@ Wick.Tools.Brush = class extends Wick.Tool {
     if (!this._isInProgress) return;
     this._isInProgress = false;
 
-    // "Give up" on the current stroke by forcing a mouseup
-    this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+    // prevent any scheduled potrace from the previous stroke
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
 
-    // Clear the current croquis canvas
-    setTimeout(() => {
-      this.croquis.clearLayer();
-    }, 10);
+    // make sure we never commit anything from this aborted stroke
+    this._suppressCommit = true;
+
+    // close the stroke in croquis so it releases internal state
+    try {
+      this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+    } catch (_) {}
+
+    // nuke any raster the abort might have left behind — do it now, not later
+    this.croquis.clearLayer();
+
+    // ensure stale crop bounds don't leak into the next potrace
+    this._resetStrokeBounds(this._lastMousePoint);
   }
 
   /**
@@ -58511,6 +58648,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
   /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */
   _potraceCroquisCanvas(point) {
+    if (this._suppressCommit || this._gestureInterrupted || window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     this.errorOccured = false;
     var strokeBounds = this.strokeBounds.clone();
 
@@ -58523,6 +58665,13 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
     // Give croquis just a little bit to get the canvas ready...
     this._croquisStartTimeout = setTimeout(() => {
+      // check for gesture interruptions
+      if (this._suppressCommit || this._gestureInterrupted || window.Wick && Wick.gesture && Wick.gesture.active) {
+        this._suppressCommit = false;
+        this._gestureInterrupted = false;
+        return;
+      }
+
       // Retrieve Croquis canvas
       var canvas = this.paper.view._element.parentElement.getElementsByClassName('croquis-layer-canvas')[1];
       if (!canvas) {
@@ -58744,6 +58893,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   }
   onMouseDown(e) {
     super.onMouseDown(e);
+    // GESTURES CHECK before running tool -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     if (!e.modifiers) e.modifiers = {};
     this.hitResult = this._updateHitResult(e);
     if (this.gradientColorSelection.isCursorHover) {
@@ -58807,6 +58958,26 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseDrag(e) {
+    // GESTURE CHECK — cancel selection -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      // undo selection box
+      if (this.selectionBox && this.selectionBox.active) {
+        this.selectionBox._active = false;
+        if (this.selectionBox._box) this.selectionBox._box.remove();
+        this.selectionBox._items = [];
+      }
+
+      // Cancel live transform jus tin case
+      if (this._widget && this._widget.currentTransformation) {
+        this._widget.currentTransformation = null;
+        if (typeof this._widget.update === 'function') this._widget.update();
+      }
+
+      // Do not proceed with normal drag logic while gesture is active
+      this.__isDragging = false;
+      // done, that's all -H.A.
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
     this.__isDragging = true;
     if (this.gradientColorSelection.isCursorHover) {
@@ -58843,6 +59014,15 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseUp(e) {
+    // (LAST) GESTURE CHECK . . . can never be too safe -H.A.
+    // this is more useful for two finger undo gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      // remove gradient handles
+      if (this.hoverPreview) this.hoverPreview.remove();
+      if (this.hoverPreview2) this.hoverPreview2.remove();
+      this.__isDragging = false;
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
 
     // remove hover preview and a new one will be rendered if needed
@@ -59091,6 +59271,12 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     this.path = null;
     this.topLeft = null;
     this.bottomRight = null;
+
+    // gesture handling - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59114,10 +59300,33 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else reset gesture check and timestamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.topLeft = e.point;
     this.bottomRight = e.point;
   }
   onMouseDrag(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      return;
+    }
     if (this.path) this.path.remove();
     this.bottomRight = e.point;
 
@@ -59137,6 +59346,22 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     this.path.strokeCap = 'round';
   }
   onMouseUp(e) {
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      // GESTURE CHECK - H.A. (this is getting repetitive ;-;)
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     this.path.remove();
     this.addPathToProject(this.path);
@@ -59176,6 +59401,12 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     this.path = null;
     this.cursorSize = null;
     this.cachedCursor = null;
+
+    // gesture controls - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59210,6 +59441,18 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // If a gesture is active now, don’t begin -_- 
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // track stroke and clear gesture interrupt
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     if (!this.path) {
       this.path = new this.paper.Path({
         strokeColor: 'white',
@@ -59223,12 +59466,30 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     this.path.add(e.point);
   }
   onMouseDrag(e) {
+    // If a two-finger gesture begins mid-stroke, abort! 
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath(); // remove in-progress eraser path 
+      return;
+    }
     if (e.point) {
       this.path.add(e.point);
       this.path.smooth();
     }
   }
   onMouseUp(e) {
+    // Compute interruption (before touching this.path) - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      this._cancelPath(); // safety net right here
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     var potraceResolution = 0.7;
     this.path.potrace({
@@ -59243,6 +59504,14 @@ Wick.Tools.Eraser = class extends Wick.Tool {
       },
       resolution: potraceResolution * this.paper.view.zoom
     });
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
   }
 };
 /*
@@ -59363,6 +59632,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
   constructor() {
     super();
     this.name = 'fillbucket';
+
+    // simple gesture handle -H.A.
+    this._gestureSeqAtStart = 0;
+    this._pendingFill = false;
   }
   get doubleClickEnabled() {
     return false;
@@ -59379,12 +59652,30 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
     return true;
   }
   onActivate(e) {}
-  onDeactivate(e) {}
+  onDeactivate(e) {
+    this._pendingFill = false;
+    this.setCursor('default');
+  }
   onMouseDown(e) {
+    // Don’t start a fill while two-finger gesture is active
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      return;
+    }
+
+    // gesture stamp
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._pendingFill = true;
     setTimeout(() => {
       this.setCursor('wait');
     }, 0);
     setTimeout(() => {
+      // If a gesture started after mousedown, cancel before doing any work
+      const g = window.Wick && Wick.gesture || {};
+      if (!this._pendingFill || g.active || (g.seq || 0) !== (this._gestureSeqAtStart || 0)) {
+        this._pendingFill = false;
+        this.setCursor('default');
+        return;
+      }
       this.paper.hole({
         point: e.point,
         bgColor: new paper.Color(this.project.backgroundColor.hex),
@@ -59395,29 +59686,41 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
           return frame.view.objectsLayer;
         }),
         onFinish: path => {
+          // Final safety check at commit-time as well
+          const g2 = window.Wick && Wick.gesture || {};
+          if (!this._pendingFill || g2.active || (g2.seq || 0) !== (this._gestureSeqAtStart || 0)) {
+            this._pendingFill = false;
+            this.setCursor('default');
+            if (path && typeof path.remove === 'function') {
+              try {
+                path.remove();
+              } catch (_) {}
+            }
+            return;
+          }
           this.setCursor('default');
+          this._pendingFill = false;
           if (path) {
             path.fillColor = this.getSetting('fillColor').rgba;
             path.name = null;
-            this.addPathToProject();
+
+            // Insert where you had it before
             if (e.item) {
               path.insertAbove(e.item);
             } else {
               this.paper.project.activeLayer.addChild(path);
-              this.paper.OrderingUtils.sendToBack([path]);
             }
+
+            // Now add to project/history & fire event
+            this.addPathToProject(path);
             this.fireEvent({
               eventName: 'canvasModified',
               actionName: 'fillbucket'
             });
           }
-        },
-        onError: message => {
-          this.setCursor('default');
-          this.project.errorOccured(message);
         }
       });
-    }, 50);
+    }, 0);
   }
   onMouseDrag(e) {}
   onMouseUp(e) {}
@@ -59578,6 +59881,12 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hoverPreview = new this.paper.Item({
       insert: false
     });
+
+    // HAND GESTURES - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59594,10 +59903,12 @@ Wick.Tools.Line = class extends Wick.Tool {
     return true;
   }
   onActivate(e) {
-    this.path.remove();
+    this._cancelPath();
+    // this.path.remove();
   }
   onDeactivate(e) {
-    this.path.remove();
+    this._cancelPath();
+    // this.path.remove();
   }
   onMouseMove(e) {
     // inherit mousemove class
@@ -59610,7 +59921,7 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hitResult = this._updateHitResult(e);
 
     // alt/ option or command/ control to snap to nearby selection
-    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+    if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
       this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
       this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
       this.hoverPreview.strokeWidth = 1.5;
@@ -59622,12 +59933,33 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hoverPreview.data.wickType = 'gui';
   }
   onMouseDown(e) {
+    // check for gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else reset gesture stamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
     // check if there is a hoverpoint
     // else use e.point for startPoint
     if (!this.startPoint) this.startPoint = e.point;
   }
   onMouseDrag(e) {
-    this.path.remove();
+    // abort mid-process if needed
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath();
+      return;
+    }
+
+    // this.path.remove();
+    this._cancelPath();
 
     // remove the hover preview
     this.hoverPreview.remove();
@@ -59636,7 +59968,7 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hitResult = this._updateHitResult(e);
 
     // snap to point if option/ alt or command/ control
-    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+    if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
       this.endPoint = {
         x: this.hitResult.segment.point.x,
         y: this.hitResult.segment.point.y
@@ -59680,15 +60012,65 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.path.strokeWidth = this.getSetting('strokeWidth');
   }
   onMouseUp(e) {
-    this.hoverPreview.remove();
-    this.path.remove();
-    if (this.endPoint.x !== this.startPoint.x || this.endPoint.y !== this.startPoint.y) {
-      this.addPathToProject(this.path);
-      this.fireEvent({
-        eventName: 'canvasModified',
-        actionName: 'line'
-      });
+    // clean up preview safely
+    if (this.hoverPreview && typeof this.hoverPreview.remove === 'function') {
+      try {
+        this.hoverPreview.remove();
+      } catch (_) {}
     }
+
+    // Compute interruption FIRST
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      // abort; remove any preview path and reset points
+      this._cancelPath();
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      this.startPoint = null;
+      this.endPoint = null;
+      return;
+    }
+
+    // Not interrupted — finalize the line if it’s not a dot
+    if (!this.startPoint || !this.endPoint) {
+      // nothing meaningful to add
+      this._cancelPath();
+      return;
+    }
+    const samePoint = this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y;
+    if (samePoint) {
+      this._cancelPath();
+      this.startPoint = null;
+      this.endPoint = null;
+      return;
+    }
+
+    // Ensure we have a path to add (gesture aborts may have nulled it)
+    if (!this.path) {
+      this.path = new this.paper.Path.Line(this.startPoint, this.endPoint);
+      this.path.strokeCap = 'round';
+      this.path.strokeColor = this.getSetting('strokeColor').rgba;
+      this.path.strokeWidth = this.getSetting('strokeWidth');
+    }
+
+    // House style elsewhere removes then adds; keep consistent
+    try {
+      this.path.remove();
+    } catch (_) {}
+    // this._cancelPath();
+    this.addPathToProject(this.path);
+    this.path = null;
+    this.fireEvent({
+      eventName: 'canvasModified',
+      actionName: 'line'
+    });
+
+    // reset start/end for next stroke
+    this.startPoint = null;
+    this.endPoint = null;
   }
 
   // todo: clean this function -H.A.
@@ -59712,6 +60094,33 @@ Wick.Tools.Line = class extends Wick.Tool {
       }
     }
     return newHitResult;
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
+  }
+  _shouldSnap(e) {
+    // checks if either keys for line snapping are used or user is on touch device
+
+    // If keyboard modifiers are held, always respect them
+    if (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) return true;
+
+    // Mobile / touch-default snapping:
+    const ev = e && e.event;
+    if (ev && typeof ev.pointerType === 'string') {
+      if (ev.pointerType === 'touch' || ev.pointerType === 'pen') return true;
+    }
+
+    // Fallbacks: coarse pointer or UA touch-capable
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+      if ('ontouchstart' in window || navigator && navigator.maxTouchPoints > 0) return true;
+    }
+    return false;
   }
 };
 /*
@@ -59807,12 +60216,25 @@ Wick.Tools.Pan = class extends Wick.Tool {
   }
   onActivate(e) {}
   onDeactivate(e) {}
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     var d = e.downPoint.subtract(e.point);
     this.paper.view.center = this.paper.view.center.add(d);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.fireEvent({
       eventName: 'canvasViewTransformed'
     });
@@ -60144,6 +60566,12 @@ Wick.Tools.Pencil = class extends Wick.Tool {
     this.name = 'pencil';
     this.path = null;
     this._movement = new paper.Point();
+
+    // gesture interrupts - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -60162,6 +60590,18 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   onActivate(e) {}
   onDeactivate(e) {}
   onMouseDown(e) {
+    // handling mobile finger gestures — H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // New stroke: clear latches and stamp gesture/stroke start
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this._movement = new paper.Point();
     if (!this.path) {
       this.path = new this.paper.Path({
@@ -60174,6 +60614,14 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   }
   onMouseDrag(e) {
     if (!this.path) return;
+
+    // If a two-finger gesture begins mid-stroke, abort
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath(); // removes in-progress path
+      return;
+    }
     this._movement = this._movement.add(e.delta);
     if (this._movement.length > Wick.Tools.Pencil.MIN_ADD_POINT_MOVEMENT / this.paper.view.zoom) {
       this._movement = new paper.Point();
@@ -60183,6 +60631,18 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   }
   onMouseUp(e) {
     if (!this.path) return;
+
+    // check for gesture interrupts before finalizing
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      this._cancelPath(); // ensure nothing committed
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     this.path.add(e.point);
     this.path.simplify();
     this.path.remove();
@@ -60192,6 +60652,14 @@ Wick.Tools.Pencil = class extends Wick.Tool {
       eventName: 'canvasModified',
       actionName: 'pencil'
     });
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
   }
 };
 /*
@@ -60223,6 +60691,12 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     this.path = null;
     this.topLeft = null;
     this.bottomRight = null;
+
+    // gesture control variables
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -60246,10 +60720,33 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // check if gesture is active -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else, reset gesture variables and timestamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.topLeft = e.point;
     this.bottomRight = e.point;
   }
   onMouseDrag(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      return;
+    }
     if (this.path) this.path.remove();
     this.bottomRight = e.point;
 
@@ -60272,6 +60769,22 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     this.path.strokeCap = 'round';
   }
   onMouseUp(e) {
+    // GESTURE CHECK - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     this.path.remove();
     this.addPathToProject(this.path);
@@ -60343,6 +60856,10 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // Ignore clicks during two-finger gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      return;
+    }
     if (this.editingText) {
       this.finishEditingText();
     } else if (this.hoveredOverText) {
@@ -60367,7 +60884,9 @@ Wick.Tools.Text = class extends Wick.Tool {
       //this.fireEvent('canvasModified');
     }
   }
-  onMouseDrag(e) {}
+  onMouseDrag(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
+  }
   onMouseUp(e) {}
   reset() {
     this.finishEditingText();
@@ -60435,12 +60954,25 @@ Wick.Tools.Zoom = class extends Wick.Tool {
   onDeactivate(e) {
     this.deleteZoomBox();
   }
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
     this.deleteZoomBox();
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.createZoomBox(e);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     if (this.zoomBox && this.zoomBoxIsValidSize()) {
       var bounds = this.zoomBox.bounds;
       var viewBounds = this.paper.view.bounds;
@@ -61188,7 +61720,7 @@ class SelectionWidget {
    *
    */
   updateTransformation(item, e) {
-    if (!this.mod?.initiated) {
+    if (!this.mod || !this.mod.initiated) {
       this.mod = {
         initiated: true
       };
@@ -61202,7 +61734,7 @@ class SelectionWidget {
         this.mod.action = 'rotate';
         this.mod.rotateDelta = 0;
         this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-        this.mod.initialBoxRotation = this.boxRotation ?? 0;
+        this.mod.initialBoxRotation = this.boxRotation || 0;
       } else if (item.data.handleEdge.includes('Center')) {
         this.mod.action = 'move-edge';
         this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
@@ -62094,6 +62626,20 @@ Wick.View.Project = class extends Wick.View {
   static get PAN_LIMIT() {
     return 10000;
   }
+  get gestureActive() {
+    return !!this._gesture;
+  }
+
+  // minimum distance for gesture detection
+  static get GESTURE_MIN_DIST_SQ() {
+    return 1e-6;
+  }
+  static get ONE_FINGER_DRAW_DELAY() {
+    return 80;
+  }
+  static get TWO_FINGER_TAP_GRACE() {
+    return 120;
+  }
 
   /*
    * Create a new Project View.
@@ -62113,6 +62659,9 @@ Wick.View.Project = class extends Wick.View {
       y: 0
     };
     this._zoom = 1;
+
+    // track whether or not we started drawing with one finger
+    this._oneFingerDrawStarted = false;
   }
 
   /*
@@ -62283,6 +62832,258 @@ Wick.View.Project = class extends Wick.View {
       e.preventDefault();
       this.scrollToZoom(e);
     });
+
+    // --- Mobile multi-touch gestures code starts HERE ---
+    this._svgCanvas.style.touchAction = 'none';
+
+    // Track active pointers
+    this._activePointers = new Map();
+    this._gesture = null; // state during a two-finger gesture
+    this._twoFingerTapEndTimer = null; // tiny grace window between ups
+
+    // get two fingers + 
+    const getPoint = ev => ({
+      x: ev.clientX,
+      y: ev.clientY
+    });
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const mid = (a, b) => ({
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2
+    });
+    const _dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const onPointerDown = ev => {
+      // capture to keep receiving events
+      try {
+        ev.target.setPointerCapture(ev.pointerId);
+      } catch (err) {}
+      const p = getPoint(ev);
+      this._activePointers.set(ev.pointerId, {
+        ...p,
+        downX: p.x,
+        downY: p.y,
+        downTime: ev.timeStamp,
+        travel: 0
+      });
+      if (this._activePointers.size === 1) {
+        // ONE FINGER CHECK
+        // Assume we're drawing, lets set timeout
+        this._oneFingerStartTimer = setTimeout(() => {
+          // If only ONE finger is still down after the delay, lock in one-finger mode.
+          if (this._activePointers.size === 1) {
+            this._oneFingerDrawStarted = true;
+          }
+        }, Wick.View.Project.ONE_FINGER_DRAW_DELAY);
+      } else if (this._activePointers.size === 2) {
+        // TWO FINGER CHECK
+
+        if (this._oneFingerDrawStarted) {
+          // We started drawing first. Ignore the second finger until all fingers lift.
+          return;
+        }
+
+        // stops any active single-finger drawing, removing the "artifact" stuff
+        if (this.model.activeTool && this.model.activeTool.cancel) {
+          this.model.activeTool.cancel();
+        }
+
+        // Clear "one finger" & "draw start" timers
+        if (this._oneFingerStartTimer) {
+          clearTimeout(this._oneFingerStartTimer);
+          this._oneFingerStartTimer = null;
+        }
+        this._oneFingerDrawStarted = false; // Force exit from 1-finger mode
+
+        const pts = Array.from(this._activePointers.values());
+        const p0 = pts[0],
+          p1 = pts[1];
+        const startDist = _dist(p0, p1);
+        const startMid = {
+          x: (p0.x + p1.x) / 2,
+          y: (p0.y + p1.y) / 2
+        };
+        this._gesture = {
+          startDist,
+          startMid,
+          prevMid: startMid,
+          prevDist: startDist,
+          startZoom: this.paper.view.zoom,
+          startCenter: this.paper.view.center.clone()
+        };
+
+        // --- TAP CANDIDATE (unchanged) ---
+        this._twoFingerTapCandidate = {
+          startAt: ev.timeStamp,
+          valid: true
+        };
+
+        // --- Global gesture flags (unchanged) ---
+        Wick.gesture = Wick.gesture || {};
+        Wick.gesture.active = true;
+        Wick.gesture.type = 'pinch_pan';
+        Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
+        Wick.gesture.lastStartAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      }
+    };
+    const onPointerMove = ev => {
+      if (!this._activePointers.has(ev.pointerId)) return;
+      const prev = this._activePointers.get(ev.pointerId);
+      const p = getPoint(ev);
+      const total = Math.hypot(p.x - prev.downX, p.y - prev.downY);
+      this._activePointers.set(ev.pointerId, {
+        ...prev,
+        ...p,
+        travel: Math.max(prev.travel, total)
+      });
+
+      // If we are in one-finger mode then IGNORE the 2-finger logic
+      if (this._oneFingerDrawStarted) {
+        return;
+      }
+      if (this._activePointers.size === 2 && this._gesture) {
+        const pts = Array.from(this._activePointers.values());
+        const p0 = pts[0],
+          p1 = pts[1];
+        const curDist = _dist(p0, p1);
+        const curMid = {
+          x: (p0.x + p1.x) / 2,
+          y: (p0.y + p1.y) / 2
+        };
+        if (this._gesture.startDist <= Wick.View.Project.GESTURE_MIN_DIST_SQ) return;
+
+        // pinch scale & target zoom
+        const scaleFromStart = curDist / this._gesture.startDist;
+        const unclampedZoom = this._gesture.startZoom * scaleFromStart;
+        const targetZoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, unclampedZoom));
+
+        // Per-frame pinch delta (are we pinching this frame?)
+        const prevDist = this._gesture.prevDist || curDist;
+        const dScale = prevDist > 1e-6 ? curDist / prevDist : 1.0;
+        const pinchingThisFrame = Math.abs(dScale - 1) > 0.0015; // ~0.15% change
+
+        // Capture old zoom then apply new zoom
+        const prevZoom = this.paper.view.zoom;
+        this.paper.view.zoom = targetZoom;
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > Wick.View.Project.GESTURE_MIN_DIST_SQ;
+
+        // NOT pinching? always pan. pinching? only pan if zoom actually changed (avoid drift at clamp)
+        const shouldPanThisFrame = !pinchingThisFrame || pinchingThisFrame && zoomChanged;
+        if (shouldPanThisFrame && this._gesture.prevMid) {
+          // normal 2 finger pan
+          const dMidPx = new paper.Point(curMid.x - this._gesture.prevMid.x, curMid.y - this._gesture.prevMid.y);
+          // screen px -> project units
+          this.paper.view.center = this.paper.view.center.subtract(dMidPx.divide(this.paper.view.zoom));
+        }
+
+        // focal point correction, combining pan while zooming -H.A.
+        if (zoomChanged) {
+          const anchorScreen = new paper.Point(curMid.x, curMid.y);
+          const anchorProjBefore = this.paper.view.viewToProject(anchorScreen);
+          const anchorScreenAfter = this.paper.view.projectToView(anchorProjBefore);
+          const deltaPx = anchorScreen.subtract(anchorScreenAfter);
+          this.paper.view.center = this.paper.view.center.subtract(deltaPx.divide(this.paper.view.zoom));
+        }
+
+        // update for next state
+        this._gesture.prevMid = curMid;
+        this._gesture.prevDist = curDist;
+
+        // Sync model zoom/pan & render
+        const now = ev.timeStamp;
+        const dur = now - this._twoFingerTapCandidate.startAt;
+        if (dur > 150) this._applyZoomAndPanChangesFromPaper();
+      }
+    };
+    const onPointerUpOrCancel = ev => {
+      // Clear the one-finger timer
+      if (this._oneFingerStartTimer) {
+        clearTimeout(this._oneFingerStartTimer);
+        this._oneFingerStartTimer = null;
+      }
+
+      // Remove the pointer that just lifted
+      this._activePointers.delete(ev.pointerId);
+      const remaining = this._activePointers.size;
+
+      // Helper to finalize: decide if it's a two-finger tap and reset state
+      const finalizeTwoFingerTap = ts => {
+        const cand = this._twoFingerTapCandidate;
+        if (cand && !cand.canceled) {
+          const now = ts || ev.timeStamp;
+          const dur = now - cand.startAt;
+          // For testing, accept anything under 10s
+          if (dur <= 150) {
+            // Visible confirmation on device (no console needed)
+            try {
+              navigator.vibrate && navigator.vibrate(10);
+            } catch {}
+            // alert('Two-finger UNDO'); // remove once verified
+
+            try {
+              this.model.undo();
+              this.render();
+              // this.fireEvent('canvasModified', { undo: false }, 'Undo');
+            } catch (err) {
+              alert('Undo call failed');
+              alert(err);
+            }
+          }
+        }
+
+        // Always reset gesture/tap state when evaluation is done
+        this._gesture = null;
+        this._twoFingerTapCandidate = null;
+        if (this._twoFingerTapEndTimer) {
+          clearTimeout(this._twoFingerTapEndTimer);
+          this._twoFingerTapEndTimer = null;
+        }
+        Wick.gesture.active = false;
+        Wick.gesture.type = null;
+        Wick.gesture.lastEndAt = performance.now() || Date.now();
+      };
+
+      // Case A: BOTH fingers are up now → evaluate immediately
+      if (remaining === 0) {
+        this._oneFingerDrawStarted = false;
+        finalizeTwoFingerTap();
+        return;
+      }
+
+      // Case B: we just went 2 → 1 fingers → arm a tiny grace window
+      // (Do NOT clear the candidate here!)
+      if (remaining === 1) {
+        if (this._twoFingerTapEndTimer) clearTimeout(this._twoFingerTapEndTimer);
+        this._twoFingerTapEndTimer = setTimeout(() => {
+          // If the second up arrived during the window, remaining will be 0 now.
+          if (this._activePointers.size === 0) {
+            finalizeTwoFingerTap();
+          } else {
+            // Not a clean two-finger tap; just clear gesture flags so tools resume.
+            this._gesture = null;
+            // DO NOT clear _twoFingerTapCandidate here; let a future full lift re-evaluate.
+            Wick.gesture.active = false;
+            Wick.gesture.type = null;
+          }
+          this._twoFingerTapEndTimer = null;
+        }, 120); // 80-150ms works well; 120ms is a good default
+        return;
+      }
+    };
+
+    // Use non-passive so we can preventDefault if ever needed (we currently rely on touch-action: none)
+    this._svgCanvas.addEventListener('pointerdown', onPointerDown, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointermove', onPointerMove, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointerup', onPointerUpOrCancel, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointercancel', onPointerUpOrCancel, {
+      passive: false
+    });
+    // --- end gestures ---
 
     // Connect all Wick Tools into the paper.js project
     for (var toolName in this.model.tools) {
@@ -63027,7 +63828,7 @@ Wick.View.Layer = class extends Wick.View {
       frame.view.render();
       this.activeFrameLayers.push(frame.view.objectsLayer);
       frame.view.objectsLayer.locked = false;
-      frame.view.objectsLayer.opacity = 1.0;
+      frame.view.objectsLayer.opacity = this.model._opacity;
     }
 
     // Disable mouse events on layers if they are locked.
@@ -63071,7 +63872,7 @@ Wick.View.Layer = class extends Wick.View {
     onionMult = Math.min(1, Math.max(0, onionMult));
     var opacity = onionMult * Wick.View.Layer.BASE_ONION_OPACITY;
     frame.view.objectsLayer.locked = true;
-    frame.view.objectsLayer.opacity = opacity;
+    frame.view.objectsLayer.opacity = opacity * this.model._opacity;
   }
 };
 /*
@@ -63274,6 +64075,7 @@ Wick.View.Path = class extends Wick.View {
         this.item.strokeColor = this.item.data.originalStyle.strokeColor;
         this.item.fillColor = this.item.data.originalStyle.fillColor;
         this.item.strokeWidth = this.item.data.originalStyle.strokeWidth;
+        this.item.data.originalStyle = null;
       }
     }
   }
