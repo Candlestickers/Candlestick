@@ -25,6 +25,11 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
         super();
 
         this.name = 'fillbucket';
+
+        // simple gesture handle -H.A.
+        this._gestureSeqAtStart = 0;
+        this._pendingFill = false;
+
     }
 
     get doubleClickEnabled() {
@@ -48,15 +53,34 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
     }
 
     onDeactivate(e) {
-
+        this._pendingFill = false;
+        this.setCursor('default');
     }
 
+
     onMouseDown(e) {
+        // Don’t start a fill while two-finger gesture is active
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            return;
+        }
+
+        // gesture stamp
+        this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+        this._pendingFill = true;
+
         setTimeout(() => {
             this.setCursor('wait');
         }, 0);
 
         setTimeout(() => {
+            // If a gesture started after mousedown, cancel before doing any work
+            const g = (window.Wick && Wick.gesture) || {};
+            if (!this._pendingFill || g.active || ((g.seq || 0) !== (this._gestureSeqAtStart || 0))) {
+                this._pendingFill = false;
+                this.setCursor('default');
+                return;
+            }
+
             this.paper.hole({
                 point: e.point,
                 bgColor: new paper.Color(this.project.backgroundColor.hex),
@@ -67,27 +91,38 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
                     return frame.view.objectsLayer;
                 }),
                 onFinish: (path) => {
+                    // Final safety check at commit-time as well
+                    const g2 = (window.Wick && Wick.gesture) || {};
+                    if (!this._pendingFill || g2.active || ((g2.seq || 0) !== (this._gestureSeqAtStart || 0))) {
+                        this._pendingFill = false;
+                        this.setCursor('default');
+                        if (path && typeof path.remove === 'function') { try { path.remove(); } catch (_) { } }
+                        return;
+                    }
+
                     this.setCursor('default');
+                    this._pendingFill = false;
+
                     if (path) {
                         path.fillColor = this.getSetting('fillColor').rgba;
                         path.name = null;
-                        this.addPathToProject();
+
+                        // Insert where you had it before
                         if (e.item) {
                             path.insertAbove(e.item);
                         } else {
                             this.paper.project.activeLayer.addChild(path);
-                            this.paper.OrderingUtils.sendToBack([path]);
                         }
-                        this.fireEvent({eventName:'canvasModified', actionName:'fillbucket'});
+
+                        // Now add to project/history & fire event
+                        this.addPathToProject(path);
+                        this.fireEvent({ eventName: 'canvasModified', actionName: 'fillbucket' });
                     }
-                },
-                onError: (message) => {
-                    this.setCursor('default');
-                    this.project.errorOccured(message);
                 }
             });
-        }, 50);
+        }, 0);
     }
+
 
     onMouseDrag(e) {
 

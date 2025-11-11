@@ -1,0 +1,54 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Candlestick",
+  "version": "1.0.1",
+  "identifier": "com.candlestickers.dev",
+  "build": {
+    "frontendDist": [
+      "../build"
+    ],
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Candlestick",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "devtools": true,
+        "minWidth": 320,
+        "minHeight": 200,
+        "maximized": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "dangerousDisableAssetCspModification": true
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "../build/icon.png",
+      "../build/favicon.ico",
+      "../public/icon.icns"
+    ],
+    "resources": [
+      "../public/builtinlibrary"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["wick", "mov", "mp4"],
+        "role": "Editor",
+        "name": "Candlestick Project File"
+      },{
+        "ext": ["wickobj", "mp3", "wav", "png", "jpeg", "jpg", "gif"],
+        "role": "Editor",
+        "name": "Candlestick Asset File"
+      }
+    ]
+  }
+}

@@ -139,6 +139,10 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
 	onMouseDown(e) {
 		super.onMouseDown(e);
+		// GESTURES CHECK before running tool -H.A.
+		if (window.Wick && Wick.gesture && Wick.gesture.active)
+			return;
+
 		if (!e.modifiers) e.modifiers = {};
 		this.hitResult = this._updateHitResult(e);
 
@@ -212,6 +216,31 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	}
 
 	onMouseDrag(e) {
+
+		// GESTURE CHECK — cancel selection -H.A.
+		if (window.Wick && Wick.gesture && Wick.gesture.active) {
+			
+			// undo selection box
+			if (this.selectionBox && this.selectionBox.active) {
+				this.selectionBox._active = false;
+				if (this.selectionBox._box) 
+					this.selectionBox._box.remove();
+				this.selectionBox._items = [];
+			}
+
+			// Cancel live transform jus tin case
+			if (this._widget && this._widget.currentTransformation) {
+				this._widget.currentTransformation = null;
+				if(typeof this._widget.update === 'function') this._widget.update();
+			}
+
+			// Do not proceed with normal drag logic while gesture is active
+			this.__isDragging = false;
+			// done, that's all -H.A.
+			return;
+		}
+
+
 		if (!e.modifiers) e.modifiers = {};
 		this.__isDragging = true;
 
@@ -256,6 +285,17 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	}
 
 	onMouseUp(e) {
+
+		// (LAST) GESTURE CHECK . . . can never be too safe -H.A.
+		// this is more useful for two finger undo gesture
+		if (window.Wick && Wick.gesture && Wick.gesture.active) {
+			// remove gradient handles
+			if (this.hoverPreview)  this.hoverPreview.remove();
+			if (this.hoverPreview2) this.hoverPreview2.remove();
+			this.__isDragging = false;
+			return;
+		}
+
 		if (!e.modifiers) e.modifiers = {};
 
 		// remove hover preview and a new one will be rendered if needed

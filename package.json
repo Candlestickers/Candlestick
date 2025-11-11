@@ -1,7 +1,7 @@
 {
-  "name": "wick-editor",
-  "version": "1.0.0",
-  "author": "Wicklets LLC",
+  "name": "candlestick",
+  "version": "1.0.1",
+  "author": "Candlestickers",
   "private": true,
   "homepage": "./",
   "main": "./public/electron.js",
@@ -12,15 +12,18 @@
   "dependencies": {
     "14": "^3.1.6",
     "@ffmpeg/ffmpeg": "^0.7.0",
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-fs": "^2.4.4",
     "ace-builds": "^1.4.12",
     "audiobuffer-to-wav": "^1.0.0",
     "base64-arraybuffer": "^0.2.0",
     "bootstrap": "^4.1.3",
     "classnames": "^2.5.1",
     "console-feed": "^3.8.0",
-    "electron-is-dev": "^1.2.0",
-    "electron-updater": "^4.2.0",
+    "electron-is-dev": "1.2.0",
+    "electron-updater": "4.2.0",
     "file-saver": "^2.0.5",
+    "fs": "0.0.1-security",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
     "node-sass": "^4.9.4",
@@ -92,13 +95,17 @@
       "target": [
         "AppImage"
       ],
-      "category": "Entertainment"
+      "category": "Entertainment",
+      "icon": "build/icon.png"
     },
     "win": {
       "icon": "build/icon.png"
     }
   },
   "scripts": {
+    "tauri": "tauri",
+    "macapp": "tauri build --verbose",
+    "winapp": "tauri build --target x86_64-pc-windows-gnu",
     "eject": "react-scripts eject",
     "dist": "electron-builder",
     "start": "react-scripts start",
@@ -135,6 +142,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@tauri-apps/cli": "^2.9.1",
     "dotenv": "^8.2.0",
     "electron": "^7.2.4",
     "electron-builder": "^22.4.1",
@@ -142,12 +150,12 @@
     "electron-notarize": "^0.3.0",
     "electron-osx-sign": "^0.4.15",
     "electron-packager": "^14.2.1",
+    "gh-pages": "^2.0.1",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-header": "^2.0.9",
     "gulp-rename": "^2.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gh-pages": "^2.0.1"
+    "gulp-uglify": "^3.0.2"
   }
 }
