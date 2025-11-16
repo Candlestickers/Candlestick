@@ -177,6 +177,7 @@ Wick.Tools.Line = class extends Wick.Tool {
 		this.hoverPreview.data.wickType = 'gui';
 
 		this.path = new paper.Path.Line(this.startPoint, this.endPoint);
+		this.path.fillColor = this.getSetting('fillColor').transparent.rgba;
 		this.path.strokeCap = 'round';
 		this.path.strokeColor = this.getSetting('strokeColor').rgba;
 		this.path.strokeWidth = this.getSetting('strokeWidth');

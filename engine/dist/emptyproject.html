@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.9.21.9.37";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.15.20.48.8";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46130,7 +46130,7 @@ Wick.Color = class {
 
   /**
    * A fully transparent version of the color.
-   * @type {Number}
+   * @type {Wick.Color}
    */
   get transparent() {
     var newColor = new Wick.Color();
@@ -60021,6 +60021,7 @@ Wick.Tools.Line = class extends Wick.Tool {
     }
     this.hoverPreview.data.wickType = 'gui';
     this.path = new paper.Path.Line(this.startPoint, this.endPoint);
+    this.path.fillColor = this.getSetting('fillColor').transparent.rgba;
     this.path.strokeCap = 'round';
     this.path.strokeColor = this.getSetting('strokeColor').rgba;
     this.path.strokeWidth = this.getSetting('strokeWidth');
@@ -60619,6 +60620,7 @@ Wick.Tools.Pencil = class extends Wick.Tool {
     this._movement = new paper.Point();
     if (!this.path) {
       this.path = new this.paper.Path({
+        fillColor: this.getSetting('fillColor').transparent.rgba,
         strokeColor: this.getSetting('strokeColor').rgba,
         strokeWidth: this.getSetting('strokeWidth'),
         strokeCap: 'round'
@@ -60881,8 +60883,9 @@ Wick.Tools.Text = class extends Wick.Tool {
       e.item.edit(this.project.view.paper);
     } else {
       var text = new this.paper.PointText(e.point);
-      text.justification = 'left';
+      text.justification = 'center';
       text.fillColor = this.getSetting('fillColor').rgba;
+      text.strokeColor = this.getSetting('strokeColor').transparent.rgba;
       text.content = 'Text';
       text.fontSize = 24;
       var wickText = new Wick.Path({
