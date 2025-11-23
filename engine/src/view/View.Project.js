@@ -668,10 +668,10 @@ Wick.View.Project = class extends Wick.View {
         // Render GUI Layer
         this._svgGUILayer.removeChildren();
         this._svgGUILayer.locked = true;
-        if(this.model.showClipBorders && !this.model.playing && !this.model.isPublished) {
+        // if(this.model.showClipBorders && !this.model.playing && this.model.isPublished) {
             this._svgGUILayer.addChildren(this._generateClipBorders());
             this.paper.project.addLayer(this._svgGUILayer);
-        }
+        // }
 
         // Render black bars (for published projects)
         if(this.model.isPublished && this.model.renderBlackBars) {
@@ -684,9 +684,11 @@ Wick.View.Project = class extends Wick.View {
     }
 
     _generateSVGCanvasStage() {
+        var isPub = this.model.publishedMode;
+        var borderLength = 999;
         var stage = new paper.Path.Rectangle(
-            new this.paper.Point(0, 0),
-            new this.paper.Point(this.model.width, this.model.height),
+            new this.paper.Point(isPub? borderLength/-2 : 0, isPub? borderLength/-2 : 0),
+            new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height),
         );
         stage.remove();
         stage.fillColor = this.model.backgroundColor.rgba;
