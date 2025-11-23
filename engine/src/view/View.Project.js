@@ -685,7 +685,7 @@ Wick.View.Project = class extends Wick.View {
 
     _generateSVGCanvasStage() {
         var isPub = this.model.publishedMode;
-        var borderLength = 999;
+        var borderLength = this.model.width * this.model.height * 20;
         var stage = new paper.Path.Rectangle(
             new this.paper.Point(isPub? borderLength/-2 : 0, isPub? borderLength/-2 : 0),
             new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height),

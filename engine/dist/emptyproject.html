@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.23.8.28.32";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.23.8.43.3";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -63223,7 +63223,9 @@ Wick.View.Project = class extends Wick.View {
   _generateSVGCanvasStage() {
     var isPub = this.model.publishedMode;
     var borderLength = 999;
-    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? borderLength / -2 : 0, isPub ? borderLength / -2 : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
+    // console.log(this);
+    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? this._pan.x : 0, isPub ? this._pan.y : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
+    // this.modal.Project._pan.x
     stage.remove();
     stage.fillColor = this.model.backgroundColor.rgba;
     return stage;
@@ -63274,7 +63276,7 @@ Wick.View.Project = class extends Wick.View {
     new paper.Path.Rectangle({
       from: new paper.Point(borderMin, borderMin),
       to: new paper.Point(borderMax, strokeOffset),
-      fillColor: 'red',
+      fillColor: 'black',
       strokeWidth: 0,
       strokeColor: 'black',
       insert: false
@@ -63283,7 +63285,7 @@ Wick.View.Project = class extends Wick.View {
     new paper.Path.Rectangle({
       from: new paper.Point(borderMin, bottom - strokeOffset),
       to: new paper.Point(borderMax, borderMax),
-      fillColor: 'red',
+      fillColor: 'black',
       strokeWidth: 0,
       strokeColor: 'black',
       insert: false
@@ -63292,7 +63294,7 @@ Wick.View.Project = class extends Wick.View {
     new paper.Path.Rectangle({
       from: new paper.Point(borderMin, -strokeOffset),
       to: new paper.Point(-strokeOffset, bottom + strokeOffset),
-      fillColor: 'red',
+      fillColor: 'black',
       strokeWidth: 1,
       strokeColor: 'black',
       insert: false
@@ -63301,7 +63303,7 @@ Wick.View.Project = class extends Wick.View {
     new paper.Path.Rectangle({
       from: new paper.Point(right + strokeOffset, -strokeOffset),
       to: new paper.Point(borderMax, borderMax),
-      fillColor: 'red',
+      fillColor: 'black',
       strokeWidth: 1,
       strokeColor: 'black',
       insert: false
