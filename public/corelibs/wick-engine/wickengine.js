@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.7.10.54.45";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.23.8.43.3";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -63191,10 +63191,10 @@ Wick.View.Project = class extends Wick.View {
     // Render GUI Layer
     this._svgGUILayer.removeChildren();
     this._svgGUILayer.locked = true;
-    if (this.model.showClipBorders && !this.model.playing && !this.model.isPublished) {
-      this._svgGUILayer.addChildren(this._generateClipBorders());
-      this.paper.project.addLayer(this._svgGUILayer);
-    }
+    // if(this.model.showClipBorders && !this.model.playing && this.model.isPublished) {
+    this._svgGUILayer.addChildren(this._generateClipBorders());
+    this.paper.project.addLayer(this._svgGUILayer);
+    // }
 
     // Render black bars (for published projects)
     if (this.model.isPublished && this.model.renderBlackBars) {
@@ -63206,7 +63206,11 @@ Wick.View.Project = class extends Wick.View {
     }
   }
   _generateSVGCanvasStage() {
-    var stage = new paper.Path.Rectangle(new this.paper.Point(0, 0), new this.paper.Point(this.model.width, this.model.height));
+    var isPub = this.model.publishedMode;
+    var borderLength = 999;
+    // console.log(this);
+    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? this._pan.x : 0, isPub ? this._pan.y : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
+    // this.modal.Project._pan.x
     stage.remove();
     stage.fillColor = this.model.backgroundColor.rgba;
     return stage;
