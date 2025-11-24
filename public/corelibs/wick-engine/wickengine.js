@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.23.8.43.3";
+var WICK_ENGINE_BUILD_VERSION = "2025.11.23.20.56.35";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -63207,10 +63207,8 @@ Wick.View.Project = class extends Wick.View {
   }
   _generateSVGCanvasStage() {
     var isPub = this.model.publishedMode;
-    var borderLength = 999;
-    // console.log(this);
-    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? this._pan.x : 0, isPub ? this._pan.y : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
-    // this.modal.Project._pan.x
+    var borderLength = this.model.width * this.model.height * 20;
+    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? borderLength / -2 : 0, isPub ? borderLength / -2 : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
     stage.remove();
     stage.fillColor = this.model.backgroundColor.rgba;
     return stage;
