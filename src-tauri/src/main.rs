@@ -43,6 +43,23 @@ fn frontend_ready(_window: tauri::Window) -> Result<(), String> {
 
 // ------- Main Builder --------
 fn main() {
+
+    #[cfg(target_os = "linux")]
+    {
+        // Disable GPU compositing (fixes EGL_BAD_PARAMETER)
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+
+        // Force software GL
+        std::env::set_var("LIBGL_ALWAYS_SOFTWARE", "1");
+
+        // Ensure X11 is preferred (Wayland breaks WebKit on some AMD systems)
+        std::env::set_var("WINIT_UNIX_BACKEND", "x11");
+
+        // Helps Steam Deck / Arch KDE
+        std::env::set_var("MOZ_ENABLE_WAYLAND", "0");
+    }
+
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(fs_init())
