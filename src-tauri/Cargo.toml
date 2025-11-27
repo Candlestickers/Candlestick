@@ -1,10 +1,10 @@
 [package]
 name = "app"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Part animation software, part game engine - Candlestickers presents: Candlestick!"
 authors = ["Candlestickers"]
-license = ""
-repository = ""
+license = "GPL-3.0"
+repository = "https://github.com/Candlestickers/Candlestick"
 edition = "2021"
 rust-version = "1.77.2"
 
