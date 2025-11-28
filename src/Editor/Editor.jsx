@@ -496,8 +496,8 @@ class Editor extends EditorCore {
             {
                 width: width,
                 height: height,
-                x: window.innerWidth / 2 - width / 2,
-                y: window.innerHeight / 2 - height / 2,
+                x: 0,
+                y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
                 minWidth: 400,
                 minHeight: 250,
                 consoleHeight: 100,

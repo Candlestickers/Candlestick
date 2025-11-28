@@ -346,7 +346,9 @@ export default function WickCodeEditor(props) {
     )
   }
 
-  const defaultAceCodeProps = {x: 0,y: 0,
+  const defaultAceCodeProps = {
+    x: props.codeEditorWindowProperties.x,
+    y: props.codeEditorWindowProperties.y,
     width: props.codeEditorWindowProperties.width,
     height: props.codeEditorWindowProperties.height,
   };
