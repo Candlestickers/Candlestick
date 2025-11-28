@@ -490,12 +490,10 @@ class Editor extends EditorCore {
     }
 
     getDefaultCodeEditorProperties = () => {
-        var width = Math.round(window.innerWidth  * 0.75);
-        var height = Math.round(window.innerHeight * 0.85);
         return (
             {
-                width: width,
-                height: height,
+                width: window.innerWidth,
+                height: window.innerHeight,
                 x: 0,
                 y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
                 minWidth: 400,
