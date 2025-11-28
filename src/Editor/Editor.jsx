@@ -490,8 +490,8 @@ class Editor extends EditorCore {
     }
 
     getDefaultCodeEditorProperties = () => {
-        var width = window.innerWidth / 2;
-        var height = window.innerHeight / 2;
+        var width = Math.round(window.innerWidth  * 0.75);
+        var height = Math.round(window.innerHeight * 0.85);
         return (
             {
                 width: width,

@@ -347,8 +347,8 @@ export default function WickCodeEditor(props) {
   }
 
   const defaultAceCodeProps = {x: 0,y: 0,
-    width: Math.round(window.innerWidth  *0.75),
-    height: Math.round(window.innerHeight*0.85),
+    width: props.codeEditorWindowProperties.width,
+    height: props.codeEditorWindowProperties.height,
   };
 
   if (props.renderSize === 'small') {
