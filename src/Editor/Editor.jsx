@@ -492,8 +492,8 @@ class Editor extends EditorCore {
     getDefaultCodeEditorProperties = () => {
         return (
             {
-                width: window.innerWidth,
-                height: window.innerHeight,
+                width: window.innerWidth - 510, // magic number: outliner/inspector width
+                height: window.innerHeight - 260, // magic number: toolbar/timeline height
                 x: 0,
                 y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
                 minWidth: 400,
