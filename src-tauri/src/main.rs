@@ -44,6 +44,14 @@ fn frontend_ready(_window: tauri::Window) -> Result<(), String> {
 // ------- Main Builder --------
 fn main() {
 
+    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE","1");
+    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER","1");
+    std::env::set_var("GSK_RENDERER","gl");
+    std::env::set_var("LIBGL_ALWAYS_SOFTWARE","1");
+    std::env::set_var("MESA_GL_VERSION_OVERRIDE","3.2");
+    std::env::set_var("MESA_GLSL_VERSION_OVERRIDE","150");
+    
+
     #[cfg(target_os = "linux")]
     {
         // Disable GPU compositing (fixes EGL_BAD_PARAMETER)
