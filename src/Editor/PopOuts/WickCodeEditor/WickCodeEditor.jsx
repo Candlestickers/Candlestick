@@ -346,13 +346,6 @@ export default function WickCodeEditor(props) {
     )
   }
 
-  const defaultAceCodeProps = {
-    x: props.codeEditorWindowProperties.x,
-    y: props.codeEditorWindowProperties.y,
-    width: props.codeEditorWindowProperties.width,
-    height: props.codeEditorWindowProperties.height,
-  };
-
   if (props.renderSize === 'small') {
     return (
       <Rnd
@@ -395,7 +388,7 @@ export default function WickCodeEditor(props) {
         minHeight={props.codeEditorWindowProperties.minHeight}
         onResizeStop={onResizeHandler}
         onDragStop={onDragHandler}
-        default={defaultAceCodeProps}
+        default={props.codeEditorWindowProperties}
       >
 
         <div className="wick-code-editor-drag-handle">
