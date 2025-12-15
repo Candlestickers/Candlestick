@@ -223,13 +223,6 @@ class ActionMapInterface extends Object {
         id: 'action-convert-selection-to-clip',
         color: 'active-blue'
       },
-      fillGradient: {
-        icon: 'fillbucket',
-        tooltip: 'Fill Gradient',
-        action: this.editor.fillGradientColor,
-        id: 'action-fill-gradient-color',
-        color: 'active-yellow'
-      },
       addAssetToCanvas: {
         icon: 'add',
         tooltip: 'Add To Canvas',
