@@ -568,8 +568,13 @@ class EditorCore extends Component {
                 cancelText: "Cancel",
             });
         } else {
-            this.project.deleteSelectedObjects();
-            this.projectDidChange({ actionName: "Delete Selected Objects" });
+            if(this.project.selection.useGradientGUI) {
+                this.project.selection.deleteSelectedStop();
+                this.projectDidChange({actionName: "Delete Selected Stop"});
+            } else {
+                this.project.deleteSelectedObjects();
+                this.projectDidChange({actionName: "Delete Selected Objects"});
+            }
         }
     }
 

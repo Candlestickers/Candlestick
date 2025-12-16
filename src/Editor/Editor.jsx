@@ -506,11 +506,20 @@ class Editor extends EditorCore {
         );
     }
 
-    updateLastColors = (color) => {
+    updateLastColors = (color, edit) => {
         let newArray = this.state.lastColorsUsed.concat([]); // make a deep copy.
 
-        // Remove a color from the array. If the new color is in the array, remove it.
         let index = newArray.indexOf(color);
+        if (edit) {
+        // Replace the last color with the new color.
+        if (index > -1) {
+            newArray.splice(index, 1);
+            newArray.unshift(color);
+        }
+        else newArray[0] = color;
+        }
+        else {
+        // Remove a color from the array. If the new color is in the array, remove it.
         if (index > -1) {
             newArray.splice(index, 1);
         } else {
@@ -519,6 +528,7 @@ class Editor extends EditorCore {
 
         // Add the new color to the front of the array.
         newArray.unshift(color);
+        }
 
         this.setState({
             lastColorsUsed: newArray,
