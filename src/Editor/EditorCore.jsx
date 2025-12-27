@@ -526,40 +526,6 @@ class EditorCore extends Component {
         this.projectDidChange({ actionName: "Create Button From Selection" });
     }
 
-    fillGradientColor = () => {
-        const startColor = window.gradientStartColor;
-        const endColor = window.gradientEndColor;
-        const selected = this.getSelectedCanvasObjects(); // Get selected objects
-        // if (selected.length < 2) return;
-
-        // const referenceX = selected[0].x; // Use the first selected object's y
-        const paper = window.editor.paper;
-        const gradient = new paper.Gradient();
-
-        gradient.stops = [
-            [new paper.Color(startColor), 0], // [new paper.Color('#ff0000'), 0],
-            [new paper.Color(endColor), 1] // [new paper.Color('#0000ff'), 1]
-        ];
-
-        const gradientFill = {
-            gradient: gradient,
-            origin: new paper.Point(-50, 0),
-            destination: new paper.Point(50, 0)
-        };
-
-        selected.forEach(obj => {
-            let oldPosition = {
-                x: obj.x,
-                y: obj.y
-            }
-            obj.x = 0; obj.y = 0;
-            obj.fillColor = gradientFill;
-            obj.x = oldPosition.x; obj.y = oldPosition.y;
-        });
-
-        this.projectDidChange({ actionName: "Set Gradient Fill Color" });
-    }
-
     /**
      * Updates the focus object of the project.
      * @param {Wick.Clip} object Object to set as focus.
@@ -602,8 +568,13 @@ class EditorCore extends Component {
                 cancelText: "Cancel",
             });
         } else {
-            this.project.deleteSelectedObjects();
-            this.projectDidChange({ actionName: "Delete Selected Objects" });
+            if(this.project.selection.useGradientGUI) {
+                this.project.selection.deleteSelectedStop();
+                this.projectDidChange({actionName: "Delete Selected Stop"});
+            } else {
+                this.project.deleteSelectedObjects();
+                this.projectDidChange({actionName: "Delete Selected Objects"});
+            }
         }
     }
 
