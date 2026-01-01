@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.11.5.23.2.0";
+var WICK_ENGINE_BUILD_VERSION = "2025.12.28.22.36.33";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46607,7 +46607,9 @@ WickObjectCache = class {
         info += "classname " + object.classname;
         info += "\n     uuid " + object.uuid.substring(0, 4);
         console.log(info);
-        this.removeObject(object);
+
+        // debug test to see what happens if no timelines are ever destroyed
+        if (object.classname !== "Timeline") this.removeObject(object);
       }
     });
   }
@@ -46665,6 +46667,27 @@ WickObjectCache = class {
    */
   getObjectsNeedAutosaved() {
     return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
+  }
+  static _getObjectsDebug() {
+    let out = [];
+    let print = "";
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      let line = elem.classname + " " + elem.uuid;
+      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": identifier = " + elem._identifier;
+      //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
+
+      out.push(line);
+    }
+    for (let line of out.sort()) {
+      print += "" + line + "\n";
+    }
+    console.log(print);
+  }
+  static _getObjectsInfoDebug() {
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      console.log("\n\n" + elem.classname + elem.uuid);
+      console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
+    }
   }
 };
 Wick.ObjectCache = new WickObjectCache();
