@@ -21,7 +21,6 @@
     "file-saver": "^2.0.5",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
-    "node-sass": "^4.9.4",
     "query-string": "^6.9.0",
     "rc-slider": "^8.6.3",
     "react": "^16.13.1",
@@ -42,7 +41,7 @@
     "react-reflex": "^3.0.6",
     "react-resize-detector": "^3.1.3",
     "react-rnd": "^10.5.2",
-    "react-scripts": "2.0.5",
+    "react-scripts": "^5.0.1",
     "react-select": "^2.1.0",
     "react-sizeme": "^2.6.12",
     "react-spinners": "^0.9.0",
@@ -57,7 +56,7 @@
   },
   "scripts": {
     "eject": "react-scripts eject",
-    "start": "PORT=3006 react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
     "tauri": "tauri",
     "build-macapp": "tauri build --verbose",
@@ -93,6 +92,10 @@
     "gulp-header": "^2.0.9",
     "gulp-rename": "^2.0.0",
     "gulp-uglify": "^3.0.2",
+    "sass": "^1.83.4",
     "shx": "^0.4.0"
+  },
+  "overrides": {
+    "form-data": "^4.0.4"
   }
 }

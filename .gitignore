@@ -10,7 +10,6 @@
 
 # production
 /build
-/build-ios/WebViewExample/local_html
 /dist
 
 # misc
