@@ -4,13 +4,11 @@
   "author": "Candlestickers",
   "private": true,
   "homepage": "./",
-  "main": "./public/electron.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/Candlestickers/Candlestick"
   },
   "dependencies": {
-    "14": "^3.1.6",
     "@ffmpeg/ffmpeg": "^0.7.0",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-fs": "^2.4.4",
@@ -20,10 +18,7 @@
     "bootstrap": "^4.1.3",
     "classnames": "^2.5.1",
     "console-feed": "^3.8.0",
-    "electron-is-dev": "1.2.0",
-    "electron-updater": "4.2.0",
     "file-saver": "^2.0.5",
-    "fs": "0.0.1-security",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
     "node-sass": "^4.9.4",
@@ -60,56 +55,13 @@
     "underscore": "^1.13.7",
     "url-parse": "^1.5.10"
   },
-  "build": {
-    "appId": "com.candlestickers.candlestick",
-    "productName": "Candlestick",
-    "icon": "public/icon.icns",
-    "afterSign": "electron-builder-notarize",
-    "copyright": "© 2025 Candlestickers",
-    "files": [
-      "./build/**/*",
-      "./public/electron.js"
-    ],
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "license": "build/license_en.txt"
-    },
-    "mac": {
-      "target": [
-        "pkg"
-      ],
-      "category": "public.app-category.entertainment",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "./entitlements.mac.plist",
-      "entitlementsInherit": "./entitlements.mac.plist"
-    },
-    "dmg": {
-      "icon": false
-    },
-    "pkg": {
-      "license": "./build/license_en.txt"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Entertainment",
-      "icon": "build/icon.png"
-    },
-    "win": {
-      "icon": "build/icon.png"
-    }
-  },
   "scripts": {
-    "tauri": "tauri",
-    "macapp": "tauri build --verbose",
-    "winapp": "tauri build --target x86_64-pc-windows-gnu",
     "eject": "react-scripts eject",
-    "dist": "electron-builder",
-    "start": "react-scripts start",
+    "start": "PORT=3006 react-scripts start",
     "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
+    "tauri": "tauri",
+    "build-macapp": "tauri build --verbose",
+    "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
     "build-engine": "cd engine; mkdir dist/; gulp; cp -a dist/. ../public/corelibs/wick-engine/",
     "build-engine-windows": "cd engine & mkdir dist  2>nul &    gulp & xcopy /EY dist\\. ..\\public\\corelibs\\wick-engine\\",
     "test": "react-scripts test",
@@ -120,17 +72,7 @@
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error('✖ Deploy test only from development (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error('✖ Deploy to prod only from main/master (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "master-deploy": "npm run check-branch-prod; gh-pages -d build -b gh-pages -m \"deploy prod\"",
-    "test-deploy": "npm run check-branch; PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
-    "electron": "electron .",
-    "electron-dev-macos": "ELECTRON_START_URL=http://localhost:3000 electron .",
-    "electron-dev-windows": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
-    "postinstall": "electron-builder install-app-deps",
-    "build-packages": "electron-builder --mac --windows --linux",
-    "package-mac": "npm run build; electron-builder --mac",
-    "package-windows": "npm run build; electron-builder --windows",
-    "package-linux": "npm run build; electron-builder --linux",
-    "phonegap-deploy": "npm run build; cd ../wick-editor-phonegap; npm run prepare-dir; cd ../wick-editor; cp -r build/* ../wick-editor-phonegap/www; cd ../wick-editor-phonegap; npm run prepare-app; git add .; git commit -m 'update phonegap build'; git push --force;",
-    "phonegap-predeploy": "npm run build; cd ../wick-editor-phonegap; npm run prepare-dir; cd ../wick-editor; cp -r build/* ../wick-editor-phonegap/www; cd ../wick-editor-phonegap; npm run prepare-app;"
+    "test-deploy": "npm run check-branch; PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\""
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -144,12 +86,6 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.1",
     "dotenv": "^8.2.0",
-    "electron": "^7.2.4",
-    "electron-builder": "^22.4.1",
-    "electron-builder-notarize": "^1.1.2",
-    "electron-notarize": "^0.3.0",
-    "electron-osx-sign": "^0.4.15",
-    "electron-packager": "^14.2.1",
     "gh-pages": "^2.0.1",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
