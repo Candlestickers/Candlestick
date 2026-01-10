@@ -131,8 +131,7 @@ WickObjectCache = class {
 
         this.getAllObjects().forEach(object => {
             if(!uuidSet.has(object.uuid)) {
-                info += "\nclassname " + object.classname;
-                info += "\n     uuid " + object.uuid.substring(0, 4);
+                info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
 
                 this.removeObject(object);
             }
@@ -200,10 +199,10 @@ WickObjectCache = class {
         let out = [];
         let print = "";
         for(let elem of Wick.ObjectCache.getAllObjects()) {
-            let line = elem.classname + " " + elem.uuid;
+            let line = elem.classname.padEnd(10, " ") + elem.uuid;
 
             if(elem._name) line += (": name = " + elem._name);
-            else if(elem._identifier) line += (": identifier = " + elem._identifier);
+            else if(elem._identifier) line += (": id =   " + elem._identifier);
             //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
 
             out.push(line);

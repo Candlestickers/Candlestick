@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.1.10.14.21.50";
+var WICK_ENGINE_BUILD_VERSION = "2026.1.10.14.29.18";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46619,8 +46619,7 @@ WickObjectCache = class {
     let info = "removeUnusedObjects()";
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
-        info += "\nclassname " + object.classname;
-        info += "\n     uuid " + object.uuid.substring(0, 4);
+        info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
         this.removeObject(object);
       }
     });
@@ -46685,8 +46684,8 @@ WickObjectCache = class {
     let out = [];
     let print = "";
     for (let elem of Wick.ObjectCache.getAllObjects()) {
-      let line = elem.classname + " " + elem.uuid;
-      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": identifier = " + elem._identifier;
+      let line = elem.classname.padEnd(10, " ") + elem.uuid;
+      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": id =   " + elem._identifier;
       //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
 
       out.push(line);
