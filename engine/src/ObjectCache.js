@@ -127,18 +127,18 @@ WickObjectCache = class {
 
         uuidSet = new Set([...historyIDs, ...uuidSet]);
 
+        let info = "removeUnusedObjects()"
+
         this.getAllObjects().forEach(object => {
             if(!uuidSet.has(object.uuid)) {
-                let info = "";
-                info +=   "classname " + object.classname;
+                info += "\nclassname " + object.classname;
                 info += "\n     uuid " + object.uuid.substring(0, 4);
-                console.log(info);
 
-                // debug test to see what happens if no timelines are ever destroyed
-                if(object.classname !== "Timeline")
-                    this.removeObject(object);
+                this.removeObject(object);
             }
         });
+
+        console.log(info);
     }
 
     /**

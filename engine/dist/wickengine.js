@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2025.12.28.22.36.33";
+var WICK_ENGINE_BUILD_VERSION = "2026.1.10.14.21.50";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46601,17 +46601,15 @@ WickObjectCache = class {
     let uuidSet = new Set(uuids);
     let historyIDs = project.history.getObjectUUIDs();
     uuidSet = new Set([...historyIDs, ...uuidSet]);
+    let info = "removeUnusedObjects()";
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
-        let info = "";
-        info += "classname " + object.classname;
+        info += "\nclassname " + object.classname;
         info += "\n     uuid " + object.uuid.substring(0, 4);
-        console.log(info);
-
-        // debug test to see what happens if no timelines are ever destroyed
-        if (object.classname !== "Timeline") this.removeObject(object);
+        this.removeObject(object);
       }
     });
+    console.log(info);
   }
 
   /**
@@ -46685,7 +46683,7 @@ WickObjectCache = class {
   }
   static _getObjectsInfoDebug() {
     for (let elem of Wick.ObjectCache.getAllObjects()) {
-      console.log("\n\n" + elem.classname + elem.uuid);
+      console.log("\n\n" + elem.classname + " " + elem.uuid);
       console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
     }
   }
