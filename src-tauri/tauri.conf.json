@@ -20,7 +20,8 @@
         "devtools": true,
         "minWidth": 320,
         "minHeight": 200,
-        "maximized": true
+        "maximized": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {
