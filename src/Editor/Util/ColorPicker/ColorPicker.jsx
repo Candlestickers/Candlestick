@@ -87,29 +87,8 @@ export default function ColorPicker (props) {
     setLastObjects(props.selectedObjects);
 
     // Close pop-up if selection changed
-    if (open) toggle();
-  }
-
-  let color = props.color ? props.color : new window.Wick.Color("#FFFFFF")
-  let colorCSS = color;
-  let colorCSSOpaque = color;
-  if (color instanceof window.paper.Color) {
-    if (color.gradient) {
-      const sortedControlStops = color.gradient.stops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
-
-      colorCSS = 'linear-gradient(to right';
-      colorCSSOpaque = 'linear-gradient(to right';
-      sortedControlStops.forEach(paperControlStop => {
-          colorCSS += `, ${paperControlStop.color.toCSS()} ${paperControlStop.offset * 100}%`;
-          let { red, green, blue } = paperControlStop.color;
-          colorCSSOpaque += `, rgb(${red*256},${green*256},${blue*256}) ${paperControlStop.offset * 100}%`;
-      });
-      colorCSS += ')';
-      colorCSSOpaque += ')';
-    }
-    else {
-      colorCSS = color.toCSS();
-    }
+    if (open)
+      toggle();
   }
   let itemID = props.id;
   let popoverID = itemID+'-popover';
@@ -119,6 +98,7 @@ export default function ColorPicker (props) {
       setTimeout(selectPopover, 200);
     }
     if (!e || !data || !open) {
+      // Either `toggle()` was used, or no mouse-down data was needed
       setOpen(!open);
       return;
     }
@@ -127,17 +107,37 @@ export default function ColorPicker (props) {
     // Don't close if clicked on selected objects
     let clickedCanvas = (e.touches ? e.target : data.downTarget) === props.targetCanvas;
     let selectionUnchanged = arraysEqual(props.selectedObjects, lastObjects);
-    if (!data.clickedPopover && !(clickedCanvas && selectionUnchanged)) {
-      setOpen(false)
-    }
+    if (!data.clickedPopover && !(clickedCanvas && selectionUnchanged))
+      setOpen(false);
   }
 
   function selectPopover () {
     let ele = document.getElementById(popoverID);
-    if (ele) {
+    if (ele)
       ele.focus();
-    }
   }
+
+  let color = props.color ? props.color : new window.Wick.Color("#FFFFFF")
+  let colorCSS = color;
+  let colorCSSOpaque = color;
+  if (color instanceof window.paper.Color) {
+    if (color.gradient) {
+      colorCSS = colorCSSOpaque = 'linear-gradient(to right';
+
+      const sortedControlStops = color.gradient.stops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
+      sortedControlStops.forEach(paperControlStop => {
+          colorCSS += `, ${paperControlStop.color.toCSS()} ${paperControlStop.offset * 100}%`;
+          let { red, green, blue } = paperControlStop.color;
+          colorCSSOpaque += `, rgb(${red*256},${green*256},${blue*256}) ${paperControlStop.offset * 100}%`;
+      });
+      colorCSS += ')';
+      colorCSSOpaque += ')';
+    }
+    else
+      colorCSS = color.toCSS();
+  }
+  // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
+  const [desyncedColor, setDesyncedColor] = useState(color);
 
   return (
       <button
@@ -171,6 +171,8 @@ export default function ColorPicker (props) {
               enableGradient={props.enableGradient}
 
               color={color}
+              desyncedColor={desyncedColor}
+              onDesyncedChange={setDesyncedColor}
               onChangeComplete={props.onChangeComplete}
               onChangeIntermediate={props.onChangeIntermediate}
 
