@@ -26,6 +26,7 @@ Wick.Transformation = class {
      * @param {number} scaleX - The amount of scaling on the x-axis
      * @param {number} scaleY - The amount of scaling on the y-axis
      * @param {number} rotation - Rotation, in degrees
+     * @param {number} skew - Skew, in degrees
      * @param {number} opacity - Opacity, ranging from 0.0 - 1.0
      */
     constructor (args) {
@@ -36,6 +37,7 @@ Wick.Transformation = class {
         this.scaleX = args.scaleX === undefined ? 1 : args.scaleX;
         this.scaleY = args.scaleY === undefined ? 1 : args.scaleY;
         this.rotation = args.rotation === undefined ? 0 : args.rotation;
+        this.skew = args.skew === undefined ? 0 : args.skew;
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
     }
 
@@ -49,6 +51,7 @@ Wick.Transformation = class {
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             rotation: this.rotation,
+            skew: this.skew,
             opacity: this.opacity,
         }
     }
@@ -59,5 +62,56 @@ Wick.Transformation = class {
      */
     copy () {
         return new Wick.Transformation(this.values);
+    }
+
+    /**
+     * Creates a transformation using a 2D matrix.
+     * @param {Array} values A list of matrix values as passed to a paper.js Matrix object.
+     * @returns {Wick.Transformation}
+     */
+    fromMatrix (values) {
+        const [a, b, c, d, tx, ty] = values;
+        const rotationX = Math.atan2(b, a) * 180 / Math.PI,
+              rotationY = Math.atan2(-c, d) * 180 / Math.PI,
+              scaleX    = Math.sqrt(a * a + b * b),
+              scaleY    = Math.sqrt(c * c + d * d);
+        return new Wick.Transformation({
+            x: tx,
+            y: ty,
+            scaleX,
+            scaleY,
+            rotation: rotationX,
+            skew: rotationY - rotationX,
+            opacity: 1
+        });
+    }
+
+    /**
+     * Creates a 2D matrix using this transformation.
+     * @returns {Array} A list of matrix values as passed to a paper.js Matrix object.
+     */
+    toMatrix () {
+        const {x, y, scaleX, scaleY, rotation, skew} = this;
+        const rotationX = rotation * Math.PI / 180,
+              rotationY = (skew + rotation) * Math.PI / 180;
+
+        let a, b, c, d;
+        if (Math.abs(rotationX) === Math.PI / 2) {
+            a = 0;
+            b = Math.sign(rotationX) * scaleX;
+        }
+        else {
+            a = scaleX * Math.cos(rotationX);
+            b = scaleX * Math.sin(rotationX);
+        }
+        if (Math.abs(rotationY) === Math.PI / 2) {
+            d = 0;
+            c = -Math.sign(rotationX) * scaleY;
+        }
+        else {
+            d = scaleY * Math.cos(rotationY);
+            c = -scaleY * Math.sin(rotationY);
+        }
+        return [a, b, c, d, x, y];
     }
 }

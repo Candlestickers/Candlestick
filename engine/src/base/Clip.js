@@ -1319,6 +1319,19 @@ let avgIntersection = {
     
         this._onDirtyTransform();
       }
+      /**
+     * The skew of the clip.
+     * @type {number}
+     */
+      get skew() {
+        return this.transformation.skew;
+      }
+    
+      set skew(skew) {
+        this.transformation.skew = skew;
+    
+        this._onDirtyTransform();
+      }
 
     /**
      * The opacity of the clip.
