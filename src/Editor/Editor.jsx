@@ -344,6 +344,8 @@ class Editor extends EditorCore {
 
         // check to see if we're in the app
         if (window.__TAURI__) {
+            // Force a window resize event shortly after app launches.
+            // This is a hacky fix to make sure the MacOS tauri app doesn't render the UI with a width/height of zero.
 
             window.alert = (text) => window.editor.toast(text);
 
