@@ -85,7 +85,7 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.1",
     "dotenv": "^8.2.0",
-    "gh-pages": "^2.0.1",
+    "gh-pages": "^5.0.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
