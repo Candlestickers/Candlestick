@@ -92,6 +92,9 @@ import iconAlignBottom from 'resources/tool-icons/alignBottom.png';
 // Dropdown Icons -H.A.
 import layersDropdown from 'resources/tool-icons/layersDropdown.png';
 
+// Frame Picker Icons
+import framePickerLayoutGrid from 'resources/tool-icons/frame-picker-layout-grid.svg';
+import framePickerLayoutList from 'resources/tool-icons/frame-picker-layout-list.svg';
 
 // Assets
 import iconImage from 'resources/tool-icons/image.svg';
@@ -297,6 +300,9 @@ const icons = {
   "alignBottom": iconAlignBottom,
 
   "layersDropdown": layersDropdown,
+
+  "framePickerGrid": framePickerLayoutGrid,
+  "framePickerList": framePickerLayoutList,
 
   "lock": iconLock,
   "unlock": iconUnlock,

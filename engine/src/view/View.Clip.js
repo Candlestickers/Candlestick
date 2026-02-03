@@ -215,4 +215,50 @@ Wick.View.Clip = class extends Wick.View {
 
         return group;
     }
+    
+    /**
+     * Creates SVGs of all unique frames in a clip. Used in the frame picker.
+     */
+    fetchSVGs() {
+        // Iterate through the visible layers back-to-front
+        let layers = this.model.timeline.layers.filter(layer => !layer.hidden);
+        layers.reverse();
+        
+        // Find times when the clip's content changes
+        let frameBounds = [];
+        layers.forEach(layer => {
+            layer.frames.forEach(frame => {
+                frameBounds[frame.start] = true;
+                frameBounds[frame.end + 1] = true;
+            });
+        });
+        frameBounds.pop();
+
+        // Construct SVGs at each of those times
+        let frameImages = [];
+        frameBounds.forEach((isContentChange, index) => {
+            let clipContentsSVG = '', clipBounds, identifier = index;
+            layers.forEach(layer => {
+                let frame = layer.getFrameAtPlayheadPosition(index);
+                if (frame && frame.contentful) {
+                    let framePaper = frame.view.objectsLayer;
+                    clipContentsSVG += framePaper.exportSVG({asString: true});
+                    clipBounds = clipBounds ? clipBounds.unite(framePaper.strokeBounds) : framePaper.strokeBounds;
+                    if (frame.identifier) {
+                        identifier = frame.identifier;
+                    }
+                }
+            });
+
+            // Encode the SVG and add to the image list
+            let viewBox = `viewBox="${clipBounds.x} ${clipBounds.y} ${clipBounds.width} ${clipBounds.height}"`;
+            let clipSVG = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" ${viewBox}>
+                <style>svg:not(:root) { overflow: visible; }</style>
+                ${clipContentsSVG}
+            </svg>`;
+            let encodedFrame = window.btoa(clipSVG);
+            frameImages.push({ image: `data:image/svg+xml;base64,${encodedFrame}`, name: identifier, index });
+        });
+        return frameImages;
+    }
 }

@@ -1,0 +1,31 @@
+.wick-frame-picker-button {
+    background-color: transparent;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 3px;
+}
+.wick-frame-picker-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.wick-frame-picker-button-image {
+    margin: 3px;
+    background-color: #636363;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.wick-frame-picker-button-image > * {
+    max-height: 100%;
+}
+
+.wick-frame-picker-button-text {
+    margin: auto 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    text-wrap-mode: nowrap;
+}
