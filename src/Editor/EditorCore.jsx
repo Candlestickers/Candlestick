@@ -1997,6 +1997,23 @@ class EditorCore extends Component {
             return;
         }
 
+        // if file is a PDF, handle differently
+        if(file.type == 'application/pdf'){
+            const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
+
+            // this.hideWaitOverlay();
+            
+            // start up a new project
+            this.setupNewProject();
+            this.projectDidChange({ actionName: 'Reset project' });
+
+            this.showWaitOverlay() // disable clicking anywhere
+
+            // IMPORT PDF CODE GOES HERE
+            
+            return;
+        }
+
         // if not an mp4 file just load it then
         if (file.type !== 'video/mp4') {
             this.importProjectAsWickFile(file);

@@ -26,6 +26,7 @@
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
     "node-sass": "^4.9.4",
+    "pdfjs-dist": "^5.4.624",
     "query-string": "^6.9.0",
     "rc-slider": "^8.6.3",
     "react": "^16.13.1",
