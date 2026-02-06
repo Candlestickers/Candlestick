@@ -94,24 +94,10 @@ Wick.Transformation = class {
         const {x, y, scaleX, scaleY, rotation, skew} = this;
         const rotationX = rotation * Math.PI / 180,
               rotationY = (skew + rotation) * Math.PI / 180;
-
-        let a, b, c, d;
-        if (Math.abs(rotationX) === Math.PI / 2) {
-            a = 0;
-            b = Math.sign(rotationX) * scaleX;
-        }
-        else {
-            a = scaleX * Math.cos(rotationX);
-            b = scaleX * Math.sin(rotationX);
-        }
-        if (Math.abs(rotationY) === Math.PI / 2) {
-            d = 0;
-            c = -Math.sign(rotationX) * scaleY;
-        }
-        else {
-            d = scaleY * Math.cos(rotationY);
-            c = -scaleY * Math.sin(rotationY);
-        }
+        const a = scaleX * Math.cos(rotationX),
+              b = scaleX * Math.sin(rotationX),
+              d = scaleY * Math.cos(rotationY),
+              c = -scaleY * Math.sin(rotationY);
         return [a, b, c, d, x, y];
     }
 }
