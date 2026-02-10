@@ -25,6 +25,7 @@ import GIFImport from './import/GIFImport';
 // import MP4Import from './import/MP4Import';
 import MP4ImportPure from './import/MP4Import_Pure';
 import AudioExport from './export/AudioExport';
+import { importPDFAsSequence } from "./import/PDFImport"
 
 class EditorCore extends Component {
 
@@ -1998,21 +1999,93 @@ class EditorCore extends Component {
         }
 
         // if file is a PDF, handle differently
-        if(file.type == 'application/pdf'){
+        if (file.type === 'application/pdf') {
             const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
 
-            // this.hideWaitOverlay();
-            
             // start up a new project
             this.setupNewProject();
             this.projectDidChange({ actionName: 'Reset project' });
+            // this.showWaitOverlay();
 
-            this.showWaitOverlay() // disable clicking anywhere
+            // GET ALL FRAMES FROM GIF
+            const { pageFiles, width, height } = await importPDFAsSequence({
+                pdfFile: file,
+                scale: 2,
+                onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p)}%)` })
+            })
 
-            // IMPORT PDF CODE GOES HERE
-            
+            this.project.width = width
+            this.project.height = height
+            this.project.name = file.name.replace(".pdf", "")
+            this.projectDidChange({ actionName: 'Adjusted settings based on PDF' });
+
+            // adding all new page image files to the asset library
+            for (const f of pageFiles) {
+                await new Promise(res => this.importFileAsAsset(f, res))
+            }
+
+            await new Promise(res => this.project.loadAssets(res))
+
+            const imageAssets = this.project.assets;
+            // console.log(importedAssets);
+            console.log(imageAssets);
+            console.log(this.project);
+
+            const tl = this.project.activeTimeline;
+            tl.layers[0].name = "PDF";
+            imageAssets.forEach((page, num)=>{
+                console.log(this.project);
+                // window.project.addAsset(page);
+                this.project.createClipInstanceFromAsset(page,this.project.width/2,this.project.height/2);
+                // this.project.moveFrameRight();
+                console.warn(this)
+                console.log(tl);
+                this.movePlayheadForwards();
+
+                // tl.layers[0].addFrame(new window.Wick.Frame());
+                // tl.layers[1].frames[num].start = tl.layers[1].frames[num].end = num;
+                
+                // this.project.insertBlankFrame();
+                // window.project.gotoNextFrame();
+                this.projectDidChange({ actionName: `Added PDF page ${num} files` });
+                
+            })
+            // this.projectDidChange({ actionName: `Added PDF page files to canvas` });
+
+            // await new Promise(resolve => {
+            //     window.Wick.GIFAsset.fromImages(imageAssets, this.project, gifAsset => {
+            //         gifAsset.name = this.project.name
+            //         gifAsset.filename = gifAsset.name
+            //         this.project.addAsset(gifAsset)
+
+            //         // extend timeline to match pages (mirrors MP4 idea)
+            //         this.project._children[1].activeFrame.end = pageFiles.length - 1
+
+            //         this.project.createClipInstanceFromAsset(
+            //             gifAsset,
+            //             this.project.width / 2,
+            //             this.project.height / 2,
+            //             (clip) => {
+            //                 this.selectObject(clip)
+            //                 this.setSelectionAttribute('animationType', 'playOnce')
+            //                 this.setSelectionAttribute('isSynced', true)
+            //                 this.clearSelection()
+
+            //                 const tl = this.project.activeTimeline
+            //                 tl.layers[0].name = "pdf"
+
+            //                 this.projectDidChange({ actionName: 'Opened PDF as sequence' })
+            //                 this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
+            //                 this.hideWaitOverlay()
+            //                 resolve()
+            //             }
+            //         )
+            //     })
+            // })
+
             return;
         }
+
 
         // if not an mp4 file just load it then
         if (file.type !== 'video/mp4') {

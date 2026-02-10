@@ -77,7 +77,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
             const bytes = await readFile(filePath, { encoding: null })
             const blob = new Blob([bytes])
             const file = new File([blob], name, {
-                type: name.endsWith('.wick') && 'application/zip' || 'video/mp4'
+                type: (name.endsWith('.wick') && 'application/zip') || (name.endsWith('.pdf') && 'application/pdf') || 'video/mp4'
             });
 
 
