@@ -138,11 +138,11 @@ class WickInput extends Component {
 
       val = parseFloat(val);
       // Constrain between min and max
-      if (min) {
+      if (typeof min === 'number') {
         val = Math.max(val, min);
       }
 
-      if (max) {
+      if (typeof max === 'number') {
         val = Math.min(val, max);
       }
 

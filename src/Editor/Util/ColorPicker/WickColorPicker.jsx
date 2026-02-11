@@ -5,21 +5,24 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import './_wickcolorpicker.scss';
 import WickGradient from 'Editor/Util/ColorPicker/ColorPickerComponents/WickGradient';
 import WickSpectrum from 'Editor/Util/ColorPicker/ColorPickerComponents/WickSpectrum';
-import tinycolor from 'tinycolor2';
 
 class WickGradientColorPicker extends Component {
     constructor (props) {
         super(props);
 
         this.state = {
-            colorOnDrag: null,
-            outOfSyncColor: this.props.color
+            colorOnDrag: null
         };
         this.editLastColors = false;
         // Used to preserve color when switching solid/gradient
         this.lastReceivedColor = null;
         this.outOfSync = false;
     }
+    componentWillUnmount () {
+        this.outOfSync = false;
+        this.props.onDesyncedChange(this.props.color);
+    }
+
     onChangeIntermediate = (color) => {
         this.props.onChangeIntermediate && this.props.onChangeIntermediate(color);
         this.setState({ colorOnDrag: color });
@@ -60,7 +63,7 @@ class WickGradientColorPicker extends Component {
     switchSolid = (color) => {
         // Exit if color isn't a gradient
         if (!color.stops) return;
-        this.setState({ outOfSyncColor: color.stops[0].color });
+        this.props.onDesyncedChange(color.stops[0].color);
         this.outOfSync = true;
     }
     switchGradient = (color) => {
@@ -69,30 +72,22 @@ class WickGradientColorPicker extends Component {
         if (this.props.color.stops || (this.props.color.gradient && this.props.color.gradient.stops)) {
             // If props.color is already a gradient, use that color
             this.outOfSync = false;
-            this.setState({ outOfSyncColor: this.props.color });
+            this.props.onDesyncedChange(this.props.color);
             return;
         }
-        // Figma's default behavior
-        let colorObject = tinycolor(color);
-        let firstStop = colorObject.toRgbString();
-        let secondStop = colorObject.toHsv();
-        secondStop.v = (secondStop.v < 50) ? (secondStop.v + 40) : (secondStop.v - 40);
-        secondStop = tinycolor(secondStop).toRgbString();
 
         let x = 0, topY = 0, bottomY = 500;
         if (this.props.selectedObjectsBounds) {
-            x = this.props.selectedObjectsBounds.x;
+            x = this.props.selectedObjectsBounds.centerX;
             topY = this.props.selectedObjectsBounds.top;
             bottomY = this.props.selectedObjectsBounds.bottom;
         }
 
-        this.setState({
-            outOfSyncColor: {
-                origin: {x, y: topY},
-                destination: {x, y: bottomY},
-                stops: [{color: firstStop, offset: 0}, {color: secondStop, offset: 1}],
-                radial: false
-            }
+        this.props.onDesyncedChange({
+            origin: {x, y: topY},
+            destination: {x, y: bottomY},
+            stops: [{color, offset: 0}, {color, offset: 1}],
+            radial: false
         });
         this.outOfSync = true;
     }
@@ -126,7 +121,7 @@ class WickGradientColorPicker extends Component {
     renderGradientHeader (color) {
         return (
             <>
-                <div>{/* className="wick-color-picker-action-button">*/}
+                <div>
                     <ActionButton
                         color="tool"
                         id="color-picker-solid-button"
@@ -134,7 +129,7 @@ class WickGradientColorPicker extends Component {
                         isActive={ () => !color.stops }
                         text="Solid" />
                 </div>
-                <div>{/* className="wick-color-picker-action-button spacer">*/}
+                <div>
                     <ActionButton
                         color="tool"
                         id="color-picker-gradient-button"
@@ -187,7 +182,7 @@ class WickGradientColorPicker extends Component {
             this.lastReceivedColor = this.props.color;
             this.outOfSync = false;
         }
-        let color = this.outOfSync ? this.state.outOfSyncColor : this.props.color;
+        let color = this.outOfSync ? this.props.desyncedColor : this.props.color;
         let index = 0;
         if (this.state.colorOnDrag !== null) {
             color = this.state.colorOnDrag;

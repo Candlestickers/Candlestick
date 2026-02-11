@@ -111,10 +111,12 @@ class WickGradient extends Component {
     }
     renderGradientInfo () {
         // Normalize the gradient endpoints to the selection bounds
-        let originX = (this.origin.x - this.props.bounds.left) / this.props.bounds.width;
-        let originY = (this.origin.y - this.props.bounds.top) / this.props.bounds.height;
-        let destinationX = (this.destination.x - this.props.bounds.left) / this.props.bounds.width;
-        let destinationY = (this.destination.y - this.props.bounds.top) / this.props.bounds.height;
+        let originX = (this.origin.x - this.props.bounds.left) / this.props.bounds.width,
+            originY = (this.origin.y - this.props.bounds.top) / this.props.bounds.height,
+            destinationX = (this.destination.x - this.props.bounds.left) / this.props.bounds.width,
+            destinationY = (this.destination.y - this.props.bounds.top) / this.props.bounds.height;
+        let selectedStop = this.controlStops[this.props.selectedControlStopIndex],
+            offset = selectedStop ? selectedStop.offset : 0;
         return (
             <div className="wick-color-picker-gradient-fields">
                 <div className="wick-color-picker-gradient-fields-row">
@@ -145,7 +147,9 @@ class WickGradient extends Component {
                     <ColorPickerInput className="wick-color-picker-gradient-field wick-color-picker-field-stop-offset"
                         labelBefore="Offset"
                         type="numeric"
-                        value={this.controlStops[this.props.selectedControlStopIndex].offset}
+                        value={offset}
+                        min={0}
+                        max={1}
                         onChange={offset => {
                             this.offsetSelectedStop(offset);
                             this.onChangeComplete();
