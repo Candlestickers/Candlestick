@@ -28,19 +28,7 @@ If nothing returns you can download it with [this command](<https://brew.sh/>)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-### 2. Python
-You may need Python 3.10 to be able to run some of the packages that come with Candlestick.
-First check if you already have Python
-```
-python3 --version
-```
-If nothing returns, then run
-```
-brew install python@3.10
-```
-Then run the version command at the end as a check. If you would like to install Python without Homebrew, [you can download it from their site here](<https://www.python.org/>), and for more detailed steps [check out this article.](<https://www.dataquest.io/blog/installing-python-on-mac/>)
-
-### 3. Node Version Manager
+### 2. Node Version Manager
 <sup>(nvm = Node Version Manager)</sup>
 
 nvm is a CLI library that helps you manage the Node versions you have installed on your device. You should be able to [install Node versions directly from online](<https://nodejs.org/en/download>).
@@ -60,7 +48,7 @@ which downloads the nvm code to an nvm directory on your system. Try running `nv
 
 <sup>If you're on Windows, please see [nvm-windows](https://github.com/coreybutler/nvm-windows).</sup>
 
-### 4. Installing Node
+### 3. Installing Node
 Wick Editor uses the active version of Node, 24.
 
 Ensure you're on the correct Node version using `nvm`: 
@@ -68,7 +56,7 @@ Ensure you're on the correct Node version using `nvm`:
 nvm install 24
 ```
 
-### 5. Final step, setup and run
+### 4. Final step, setup and run
 You need to navigate to your project file... if you don't know how to navigate through the terminal then you may use [this online video tutorial](<https://www.youtube.com/watch?v=5XgBd6rjuDQ>) to learn how. It's simple but takes a minute to explain.
 
 If you haven't downloaded our repository yet then do that by either downloading the zip, or using `git clone`

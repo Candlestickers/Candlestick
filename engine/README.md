@@ -26,12 +26,7 @@ Generating the docs also requires [npm](https://www.npmjs.com/).
 
 The Wick Engine uses the in-browser version of Mocha and Chai for tests. 
 
-To run the tests:
-
-```
-cd engine/
-npx http-server 
-```
+To run the tests, run `npm run engine tests`
 
 And then navigate to `localhost:8000/tests/` in your browser.
 
