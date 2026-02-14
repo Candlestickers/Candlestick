@@ -2001,6 +2001,7 @@ class EditorCore extends Component {
         // if file is a PDF, handle differently
         if (file.type === 'application/pdf') {
             const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
+            this.showWaitOverlay() // disable clicking anywhere
 
             // start up a new project
             this.setupNewProject();
@@ -2026,62 +2027,25 @@ class EditorCore extends Component {
 
             await new Promise(res => this.project.loadAssets(res))
 
-            const imageAssets = this.project.assets;
-            // console.log(importedAssets);
-            console.log(imageAssets);
-            console.log(this.project);
-
-            const tl = this.project.activeTimeline;
+            const pages = this.project.assets;
+            let tl = this.project.activeTimeline;
             tl.layers[0].name = "PDF";
-            imageAssets.forEach((page, num)=>{
-                console.log(this.project);
-                // window.project.addAsset(page);
-                this.project.createClipInstanceFromAsset(page,this.project.width/2,this.project.height/2);
-                // this.project.moveFrameRight();
-                console.warn(this)
-                console.log(tl);
-                this.movePlayheadForwards();
 
-                // tl.layers[0].addFrame(new window.Wick.Frame());
-                // tl.layers[1].frames[num].start = tl.layers[1].frames[num].end = num;
-                
-                // this.project.insertBlankFrame();
-                // window.project.gotoNextFrame();
-                this.projectDidChange({ actionName: `Added PDF page ${num} files` });
-                
-            })
-            // this.projectDidChange({ actionName: `Added PDF page files to canvas` });
+            const x = this.project.width / 2
+            const y = this.project.height / 2
+            // add every page asset on a frame
+            for (let i = 0; i < pages.length; i++) {
+                tl.playheadPosition = i + 1
 
-            // await new Promise(resolve => {
-            //     window.Wick.GIFAsset.fromImages(imageAssets, this.project, gifAsset => {
-            //         gifAsset.name = this.project.name
-            //         gifAsset.filename = gifAsset.name
-            //         this.project.addAsset(gifAsset)
-
-            //         // extend timeline to match pages (mirrors MP4 idea)
-            //         this.project._children[1].activeFrame.end = pageFiles.length - 1
-
-            //         this.project.createClipInstanceFromAsset(
-            //             gifAsset,
-            //             this.project.width / 2,
-            //             this.project.height / 2,
-            //             (clip) => {
-            //                 this.selectObject(clip)
-            //                 this.setSelectionAttribute('animationType', 'playOnce')
-            //                 this.setSelectionAttribute('isSynced', true)
-            //                 this.clearSelection()
-
-            //                 const tl = this.project.activeTimeline
-            //                 tl.layers[0].name = "pdf"
-
-            //                 this.projectDidChange({ actionName: 'Opened PDF as sequence' })
-            //                 this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
-            //                 this.hideWaitOverlay()
-            //                 resolve()
-            //             }
-            //         )
-            //     })
-            // })
+                await new Promise(done => {
+                    this.project.createImagePathFromAsset(pages[i], x, y, () => done())
+                })
+            }
+            this.project.focus.timeline.playheadPosition = 1;
+            
+            this.projectDidChange({ actionName: 'Placed PDF pages onto frames' })
+            this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
+            this.hideWaitOverlay(); // disable clicking anywhere
 
             return;
         }
