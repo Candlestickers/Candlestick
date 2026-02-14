@@ -26,10 +26,10 @@ import TabbedInterface from 'Editor/Util/TabbedInterface/TabbedInterface';
 
 import './_exportoptions.scss';
 
-let classNames=require("classnames");
+let classNames = require("classnames");
 
 class ExportOptions extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props);
     this.placeholderName = 'Filename';
     this.state = {
@@ -72,8 +72,8 @@ class ExportOptions extends Component {
   componentDidUpdate = (prevProps) => {
     if (prevProps.projectName !== this.props.projectName) {
       this.setState({
-          name: this.props.projectName,
-        });
+        name: this.props.projectName,
+      });
     }
   }
 
@@ -86,7 +86,7 @@ class ExportOptions extends Component {
 
     let args = {
       name: name,
-      width:  this.state.useAdvanced ? this.state.exportWidth : undefined,
+      width: this.state.useAdvanced ? this.state.exportWidth : undefined,
       height: this.state.useAdvanced ? this.state.exportHeight : undefined,
     }
 
@@ -108,7 +108,9 @@ class ExportOptions extends Component {
     } else if (type === 'IMAGE_SVG') {
       this.props.exportProjectAsImageSVG(name);
       this.props.toggle();
-      
+    } else if (type === 'PDF') {
+      this.props.exportProjectAsPDF(args);
+      this.props.toggle();
     }
   }
 
@@ -166,7 +168,7 @@ class ExportOptions extends Component {
 
   renderAdvancedOptions = () => {
     let optionsValues = Object.keys(this.advancedSizes).concat([this.customSizeTag]);
-    let options = optionsValues.map((val) => {return {label: val, value: val}});
+    let options = optionsValues.map((val) => { return { label: val, value: val } });
 
     return (
       <div className="export-modal-advanced-options">
@@ -175,75 +177,75 @@ class ExportOptions extends Component {
             type="checkbox"
             checked={this.state.useAdvanced}
             onChange={this.toggleAdvancedOptionsCheckbox}
-            label="Resolution Options"/>
+            label="Resolution Options" />
         </div>
         {this.state.useAdvanced &&
           <div className="export-modal-advanced-options-content">
 
-          {/* label is this because overwriting default library react-select */}
+            {/* label is this because overwriting default library react-select */}
 
 
-          <table>
-            <tbody className="advanced-resolution-table">
-              <tr>
-                <td>
-                  <label htmlFor="advanced-resolution-dropdown" className="export-modal-advanced-option-title">
-                    Export Resolution
-                  </label>
-                </td>
-                <td>
+            <table>
+              <tbody className="advanced-resolution-table">
+                <tr>
+                  <td>
+                    <label htmlFor="advanced-resolution-dropdown" className="export-modal-advanced-option-title">
+                      Export Resolution
+                    </label>
+                  </td>
+                  <td>
 
-                </td>
-                <td>
+                  </td>
+                  <td>
 
-                </td>
-              </tr>
+                  </td>
+                </tr>
 
-              <tr>
-                <td>
-                </td>
-                <td>
-                  <label htmlFor="export-width" className="export-modal-resolution-label">
-                    Width (px)
-                  </label>
-                </td>
-                <td>
-                  <label htmlFor="export-height" className="export-modal-resolution-label">
-                    Height (px)
-                  </label>
-                </td>
-              </tr>
+                <tr>
+                  <td>
+                  </td>
+                  <td>
+                    <label htmlFor="export-width" className="export-modal-resolution-label">
+                      Width (px)
+                    </label>
+                  </td>
+                  <td>
+                    <label htmlFor="export-height" className="export-modal-resolution-label">
+                      Height (px)
+                    </label>
+                  </td>
+                </tr>
 
-              <tr>
-                <td>
-                <WickInput
-                  id="advanced-resolution-dropdown"
-                  inputProps={{id: "resolution"}}
-                  type="select"
-                  value={this.state.exportResolution}
-                  options={options}
-                  onChange={(val) => {this.updateExportResolutionType(val)}} />
-                </td>
-                <td>
-                  <WickInput
-                  id="export-width"
-                  type="numeric"
-                  value={this.state.exportWidth}
-                  onChange={(val) => {this.updateExportSize(val, this.state.exportHeight)}}
-                  />
-                </td>
-                <td>
-                <WickInput
-                  id="export-height"
-                  type="numeric"
-                  value={this.state.exportHeight}
-                  onChange={(val) => {this.updateExportSize(this.state.exportWidth, val)}}
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                <tr>
+                  <td>
+                    <WickInput
+                      id="advanced-resolution-dropdown"
+                      inputProps={{ id: "resolution" }}
+                      type="select"
+                      value={this.state.exportResolution}
+                      options={options}
+                      onChange={(val) => { this.updateExportResolutionType(val) }} />
+                  </td>
+                  <td>
+                    <WickInput
+                      id="export-width"
+                      type="numeric"
+                      value={this.state.exportWidth}
+                      onChange={(val) => { this.updateExportSize(val, this.state.exportHeight) }}
+                    />
+                  </td>
+                  <td>
+                    <WickInput
+                      id="export-height"
+                      type="numeric"
+                      value={this.state.exportHeight}
+                      onChange={(val) => { this.updateExportSize(this.state.exportWidth, val) }}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         }
       </div>
     )
@@ -257,15 +259,15 @@ class ExportOptions extends Component {
           title="Animated GIF"
           rows={[
             { text: "Creates a .gif file", icon: "check" },
-            { text: "No Sound",            icon: "cancel" },
-            { text: "Not Interactive",      icon: "cancel" },
+            { text: "No Sound", icon: "cancel" },
+            { text: "Not Interactive", icon: "cancel" },
           ]} />
         <div className="export-modal-button-container">
           <ActionButton
             color='gray-green'
             action={() => { this.createAndToggle("GIF") }}
             text="Export GIF"
-            />
+          />
         </div>
       </div>
     )
@@ -279,15 +281,15 @@ class ExportOptions extends Component {
           title="Video (Beta)"
           rows={[
             { text: "Creates an .mp4 file", icon: "check" },
-            { text: "Has Sound",            icon: "check" },
-            { text: "Not Interactive",       icon: "cancel"},
-          ]}/>
+            { text: "Has Sound", icon: "check" },
+            { text: "Not Interactive", icon: "cancel" },
+          ]} />
         <div className="export-modal-button-container">
           <ActionButton
             color='gray-green'
             action={() => { this.createAndToggle("VIDEO") }}
             text="Export Video (Beta)"
-            />
+          />
         </div>
       </div>
     )
@@ -325,16 +327,16 @@ class ExportOptions extends Component {
             className="export-object-info"
             title="ZIP Archive"
             rows={[
-              { text: "Fully Interactive",    icon: "check" },
+              { text: "Fully Interactive", icon: "check" },
               { text: "Works on other sites", icon: "check" },
-              { text: "Exports a .zip file",  icon: "check" }
+              { text: "Exports a .zip file", icon: "check" }
             ]}>
           </ObjectInfo>
           <div className="export-modal-button-container">
             <ActionButton
-            color='gray-green'
-            action={() => { this.createAndToggle("ZIP") }}
-            text="Export ZIP"
+              color='gray-green'
+              action={() => { this.createAndToggle("ZIP") }}
+              text="Export ZIP"
             />
           </div>
         </div>
@@ -343,9 +345,9 @@ class ExportOptions extends Component {
             className="export-object-info"
             title="HTML"
             rows={[
-              { text: "1-Click open",           icon: "check" },
-              { text: "Easily share projects",  icon: "check" },
-              { text: "Exports a .html file",   icon: "check" }
+              { text: "1-Click open", icon: "check" },
+              { text: "Easily share projects", icon: "check" },
+              { text: "Exports a .html file", icon: "check" }
             ]}>
           </ObjectInfo>
           <div className="export-modal-button-container">
@@ -360,70 +362,70 @@ class ExportOptions extends Component {
     );
   }
 
-    // Renders the body of the "Animation" tab.
-    renderImageInfo = () => {
-      return (
-        <div>
-          <div className={classNames("export-info-container", this.props.isMobile && "mobile")}>
-            <div className={classNames("export-info-item", this.props.isMobile && "mobile")}>
-              <ObjectInfo
-                className="export-object-info"
-                title="Image Sequence"
-                rows={[
-                  {
-                    text: "Creates a .zip archive",
-                    icon: "check"
-                  },
-                  {
-                    text: "Exports .png files",
-                    icon: "check",
-                  },
-                  {
-                    text: "Not interactive",
-                    icon: "cancel"
-                  },
-                ]} />
-              <div className="export-modal-button-container">
+  // Renders the body of the "Animation" tab.
+  renderImageInfo = () => {
+    return (
+      <div>
+        <div className={classNames("export-info-container", this.props.isMobile && "mobile")}>
+          <div className={classNames("export-info-item", this.props.isMobile && "mobile")}>
+            <ObjectInfo
+              className="export-object-info"
+              title="Image Sequence"
+              rows={[
+                {
+                  text: "Creates a .zip archive",
+                  icon: "check"
+                },
+                {
+                  text: "Exports .png files",
+                  icon: "check",
+                },
+                {
+                  text: "Not interactive",
+                  icon: "cancel"
+                },
+              ]} />
+            <div className="export-modal-button-container">
               <ActionButton
                 color='gray-green'
                 action={() => { this.createAndToggle('IMAGE_SEQUENCE') }}
                 text="Export Image Sequence"
-                />
-              </div>
+              />
             </div>
-            <div className={classNames("export-info-item", this.props.isMobile && "mobile")}>
-              <ObjectInfo
-                className="export-object-info"
-                title="Image SVG"
-                rows={[
-                  {
-                    text: "Creates a .svg file",
-                    icon: "check"
-                  },
-                  {
-                    text: "Not Animated",
-                    icon: "cancel",
-                  },
-                  {
-                    text: "Not ineractive",
-                    icon: "cancel"
-                  },
-                ]} />
-              <div className="export-modal-button-container">
+          </div>
+          <div className={classNames("export-info-item", this.props.isMobile && "mobile")}>
+            <ObjectInfo
+              className="export-object-info"
+              title="Image SVG"
+              rows={[
+                {
+                  text: "Creates a .svg file",
+                  icon: "check"
+                },
+                {
+                  text: "Not Animated",
+                  icon: "cancel",
+                },
+                {
+                  text: "Not ineractive",
+                  icon: "cancel"
+                },
+              ]} />
+            <div className="export-modal-button-container">
               <ActionButton
                 color='gray-green'
                 action={() => { this.createAndToggle('IMAGE_SVG') }}
                 text="Export Image SVG"
-                />
-              </div>
+              />
             </div>
           </div>
-          {this.renderAdvancedOptions()}
         </div>
-      );
-    }
+        {this.renderAdvancedOptions()}
+      </div>
+    );
+  }
 
-  renderAudioInfo () {
+  renderAudioInfo() {
     return (
       <div className="export-info-container">
         <div className="wide-export-info-item">
@@ -441,10 +443,43 @@ class ExportOptions extends Component {
               },
             ]} />
           <div className="export-modal-button-container">
-          <ActionButton
-            color='gray-green'
-            action={() => { this.createAndToggle('AUDIO_TRACK') }}
-            text="Export Audio"
+            <ActionButton
+              color='gray-green'
+              action={() => { this.createAndToggle('AUDIO_TRACK') }}
+              text="Export Audio"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderPDFInfo() {
+    return (
+      <div className="export-info-container">
+        <div className="wide-export-info-item">
+          <ObjectInfo
+            className="export-object-info"
+            title="PDF"
+            rows={[
+              {
+                text: "Creates a PDF file",
+                icon: "check"
+              },
+              {
+                text: "Each frame is a page",
+                icon: "check",
+              },
+              {
+                text: "Not Interactive",
+                icon: "cancel"
+              },
+            ]} />
+          <div className="export-modal-button-container">
+            <ActionButton
+              color='gray-green'
+              action={() => { this.createAndToggle('PDF') }}
+              text="Export PDF"
             />
           </div>
         </div>
@@ -454,19 +489,19 @@ class ExportOptions extends Component {
 
   renderDesktop = () => {
     window.allowedExportTypes = window.allowedExportTypes.sort((a, b) => {
-      let order = ["Animation", "Interactive", "Audio", "Images"];
+      let order = ["Animation", "Interactive", "Audio", "Images","PDF"];
 
-      return order.indexOf[a] - order.indexOf[b]; 
+      return order.indexOf[a] - order.indexOf[b];
     });
 
     let allowedExportTypes = window.allowedExportTypes.concat([]);
 
     return (
       <WickModal
-      open={this.props.open}
-      toggle={this.props.toggle}
-      className={classNames("export-modal-body")}
-      overlayClassName="export-modal-overlay">
+        open={this.props.open}
+        toggle={this.props.toggle}
+        className={classNames("export-modal-body")}
+        overlayClassName="export-modal-overlay">
         <div id="export-modal-interior-content">
           <div id="export-modal-title">Export</div>
           <div id="export-modal-name-input">
@@ -480,10 +515,12 @@ class ExportOptions extends Component {
           <TabbedInterface
             tabNames={allowedExportTypes}
             onTabSelect={this.setSubTab}>
-              { allowedExportTypes.indexOf('Animation') > -1 && this.renderAnimatedInfo()}
-              { allowedExportTypes.indexOf('Interactive') > -1 && this.renderInteractiveInfo()}
-              { allowedExportTypes.indexOf('Audio') > -1 && this.renderAudioInfo()}
-              { allowedExportTypes.indexOf('Images') > -1 && this.renderImageInfo()}
+            {allowedExportTypes.indexOf('Animation') > -1 && this.renderAnimatedInfo()}
+            {allowedExportTypes.indexOf('Interactive') > -1 && this.renderInteractiveInfo()}
+            {allowedExportTypes.indexOf('Audio') > -1 && this.renderAudioInfo()}
+            {allowedExportTypes.indexOf('Images') > -1 && this.renderImageInfo()}
+            {this.renderPDFInfo()}
+            {/* TODO add renderPDFInfo to allowed export types —H.A. */}
           </TabbedInterface>
         </div>
       </WickModal>
@@ -493,10 +530,10 @@ class ExportOptions extends Component {
   renderMobile = () => {
     return (
       <WickModal
-      open={this.props.open}
-      toggle={this.props.toggle}
-      className={classNames("export-modal-body", {"advanced-options": (this.state.useAdvanced && (this.state.subTab === "Animation" || this.state.subTab === "Images"))}, "mobile")}
-      overlayClassName={classNames("export-modal-overlay", "mobile")}>
+        open={this.props.open}
+        toggle={this.props.toggle}
+        className={classNames("export-modal-body", { "advanced-options": (this.state.useAdvanced && (this.state.subTab === "Animation" || this.state.subTab === "Images")) }, "mobile")}
+        overlayClassName={classNames("export-modal-overlay", "mobile")}>
         <div id="export-modal-interior-content">
           <div id="export-modal-title">Export</div>
           <div id="export-modal-name-input">

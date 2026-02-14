@@ -151,9 +151,9 @@ export default function initializeDefaultFileHandlers() {
    * Animation, Interactive, Sound, Image
    */
   if (!window.allowedExportTypes) {
-    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images'];
+    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images','PDF'];
   } else if (window.allowedExportTypes.length === 0) {
-    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images'];
+    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images','PDF'];
   }
 
   /**
