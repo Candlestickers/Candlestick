@@ -52,7 +52,7 @@ export default function WickTextInput (props) {
         } 
 
         if (isValidRegex) {
-            valid = valid && val.matches(isValidRegex);
+            valid = valid && isValidRegex.test(val);
         }
 
         return valid;

@@ -29,13 +29,12 @@
     }
   },
   "bundle": {
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
     "active": true,
     "targets": "all",
-    "icon": [
-      "../build/icon.png",
-      "../build/favicon.ico",
-      "../public/icon.icns"
-    ],
     "resources": [
       "../public/builtinlibrary"
     ],

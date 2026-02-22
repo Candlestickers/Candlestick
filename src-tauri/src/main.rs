@@ -131,6 +131,31 @@ async fn render_video_ffmpeg(
 
 // ------- Main Builder --------
 fn main() {
+
+    std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE","1");
+    std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER","1");
+    std::env::set_var("GSK_RENDERER","gl");
+    std::env::set_var("LIBGL_ALWAYS_SOFTWARE","1");
+    std::env::set_var("MESA_GL_VERSION_OVERRIDE","3.2");
+    std::env::set_var("MESA_GLSL_VERSION_OVERRIDE","150");
+    
+
+    #[cfg(target_os = "linux")]
+    {
+        // Disable GPU compositing (fixes EGL_BAD_PARAMETER)
+        std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+
+        // Force software GL
+        std::env::set_var("LIBGL_ALWAYS_SOFTWARE", "1");
+
+        // Ensure X11 is preferred (Wayland breaks WebKit on some AMD systems)
+        std::env::set_var("WINIT_UNIX_BACKEND", "x11");
+
+        // Helps Steam Deck / Arch KDE
+        std::env::set_var("MOZ_ENABLE_WAYLAND", "0");
+    }
+
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .plugin(fs_init())

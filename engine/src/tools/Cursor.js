@@ -44,16 +44,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 		this.selectionBox = new this.paper.SelectionBox(paper);
 		this.selectedItems = [];
 		this.currentCursorIcon = '';
-
-		this.hoverPreview = new this.paper.Item({
-			insert: false
-		});
-		this.hoverPreview2 = new this.paper.Item({
-			insert: false
-		});
-		this._lastSelection = null;
-		this.gradientColorSelection = [false];
-
 	}
 	/**
 	 * Generate the current cursor.
@@ -68,7 +58,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
 	onActivate(e) {
 		this.selectedItems = [];
-		this._lastSelection = null;
 	}
 
 	onDeactivate(e) { }
@@ -76,65 +65,25 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	onMouseMove(e) {
 		super.onMouseMove(e);
 
-		// remove hover preview and a new one will be rendered if needed
-		this.hoverPreview.remove();
-		this.hoverPreview2.remove();
-		this.gradientColorSelection = [false];
-
 		// Find the thing that is currently under the cursor.
 		this.hitResult = this._updateHitResult(e);
 
-		if (this._selection.numObjects === 1) { //&& this._lastSelection._data.wickType==="path" && this._lastSelection._style._values.fillColor._type === "gradient") {
-			this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-			// console.info(this._lastSelection);
-			if (this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient") {
-				let FC = this._lastSelection._json[1][1].fillColor;
-
-				let distToCursor = (xy) => {
-					return Math.sqrt((xy[0] - e.tool._lastPoint.x) ** 2 + (xy[1] - e.tool._lastPoint.y) ** 2)
-				}
-
-				this.hoverPreview = this.createGradPoint({
-					x: FC[2][0],
-					y: FC[2][1]
-				}, window.gradientStartColor, 5);
-
-				this.hoverPreview2 = this.createGradPoint({
-					x: FC[3][0],
-					y: FC[3][1]
-				}, window.gradientEndColor, 5);
-
-				this.gradientColorSelection = [distToCursor(FC[2]), distToCursor(FC[3])];
-				this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length > 0 && Math.min(...this.gradientColorSelection) < 10;
-
-			} // Added gradient stops movement -H.A.
-		}
 		// Update the image being used for the cursor
-		this._setCursor(this.gradientColorSelection.isCursorHover ? this.CURSOR_GRAD : this._getCursor());
-	}
+		this._setCursor(this._getCursor());
 
-	createGradPoint(xy, fill, sz) {
-		let a = new this.paper.Path.Circle(xy, sz / this.paper.view.zoom);
-
-		let color = new this.paper.Color(fill);
-
-		// a.strokeColor = new this.paper.Color({
-		// 	red: 1-color.red,
-		// 	green: 1-color.green,
-		// 	blue: 1-color.blue
-		// });
-
-		a.strokeColor = {
-			red: 1-color.red,
-			green: 1-color.green,
-			blue: 1-color.blue
-		};
-
-		//`rgba(${1-color.red},${1-color.green},${1-color.blue},0.7)`;//'#ffa'; //'rgba(255, 0, 0, 1)';
-		a.strokeWidth = 1.5 / this.paper.view.zoom;
-		a.fillColor = fill; //'#fff';
-		a.data.wickType = 'gui';
-		return a;
+        if(this._selection.useGradientGUI) {
+            // Update the gradient hover stop
+            const widget = this._widget;
+            if(widget._gradientGUI.container.visible) {
+                let item = this.hitResult.item;
+                if(item && item.data.parentItem) item = item.data.parentItem;
+                if(!item || !item.data.handleType) {
+                    widget._buildHoverStop(e.point);
+                } else {
+                    widget._gradientGUI.hoverStop.visible = false;
+                }
+            }
+        }
 	}
 
 	onMouseDown(e) {
@@ -147,9 +96,32 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 		this.hitResult = this._updateHitResult(e);
 
 
-		if (this.gradientColorSelection.isCursorHover) {
-			// selecting gradient
-		} else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {// Clicked the selection box GUI, do nothing
+		if(this._selection.useGradientGUI) {
+            // Clicked the gradient editor GUI, check for stop creation/selection
+            const widget = this._widget;
+            widget._gradientGUI.createdStopOnDown = false;
+            if(widget._gradientGUI.container.visible) {
+                let item = this.hitResult.item;
+                if(item && item.data.parentItem) item = item.data.parentItem;
+                let stopIndex = null;
+
+                if(item && item.data.handleType === 'gradient-stop') {
+                    widget._selectStop(item);
+                    stopIndex = widget._gradientGUI.stops.indexOf(item);
+                } else if(!item || !item.data.handleType) {
+                    stopIndex = widget._createStopFromPoint(e.point);
+                    if(stopIndex !== null) {
+                        widget._gradientGUI.createdStopOnDown = true;
+                    }
+                }
+
+                if(stopIndex !== null) {
+                    this._selection.selectedStopIndex = stopIndex;
+                    this.fireEvent({eventName: 'canvasModified', actionName: 'cursorSelectStop'});
+                }
+            }
+        } else if(this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+			// Clicked the selection box GUI, do nothing
 		} else if (this.hitResult.item && this._isItemSelected(this.hitResult.item)) {
 			// We clicked something that was already selected.
 			// Shift click: Deselect that item
@@ -168,7 +140,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			} // Clicked an item: select that item
 
 
-			this._lastSelection = this.hitResult.item;
 			this._selectItem(this.hitResult.item);
 
 			this.fireEvent({
@@ -244,44 +215,26 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 		if (!e.modifiers) e.modifiers = {};
 		this.__isDragging = true;
 
-		if (this.gradientColorSelection.isCursorHover) {
-
-			this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-
-			// get gradient point
-			let selectedPoint = `hoverPreview${this.gradientColorSelection[0] === Math.min(...this.gradientColorSelection) ? '' : '2'}`;
-			this[selectedPoint].remove();
-			let FC = this._lastSelection._json[1][1].fillColor[2 + 1 * selectedPoint.includes('2')];
-
-			FC[0] += e.delta.x;
-			FC[1] += e.delta.y;
-			this[selectedPoint] = this.createGradPoint({
-				x: FC[0],
-				y: FC[1]
-			}, this[selectedPoint].fillColor, 15);
-			window.gradientStopsTrackPosition[1 * selectedPoint.includes('2')] = [FC];
-
-		} else
-			if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
-				// Update selection drag
-				if (!this._widget.currentTransformation) {
-					this._widget.startTransformation(this.hitResult.item);
-				}
-
-				this._widget.updateTransformation(this.hitResult.item, e);
-			} else if (this.selectionBox.active) {
-				// Selection box is being used, update it with a new point
-				this.selectionBox.drag(e.point);
-			} else if (this.hitResult.item && this.hitResult.type === 'fill') {
-				// We're dragging the selection itself, so move the whole item.
-				if (!this._widget.currentTransformation) {
-					this._widget.startTransformation(this.hitResult.item);
-				}
-
-				this._widget.updateTransformation(this.hitResult.item, e);
-			} else {
-				this.__isDragging = false;
+		if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+			// Update selection drag
+			if (!this._widget.currentTransformation) {
+				this._widget.startTransformation(this.hitResult.item, e);
 			}
+
+			this._widget.updateTransformation(this.hitResult.item, e);
+		} else if (this.selectionBox.active) {
+			// Selection box is being used, update it with a new point
+			this.selectionBox.drag(e.point);
+		} else if (this.hitResult.item && this.hitResult.type === 'fill') {
+			// We're dragging the selection itself, so move the whole item.
+			if (!this._widget.currentTransformation) {
+				this._widget.startTransformation(this.hitResult.item, e);
+			}
+
+			this._widget.updateTransformation(this.hitResult.item, e);
+		} else {
+			this.__isDragging = false;
+		}
 	}
 
 	onMouseUp(e) {
@@ -289,19 +242,11 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 		// (LAST) GESTURE CHECK . . . can never be too safe -H.A.
 		// this is more useful for two finger undo gesture
 		if (window.Wick && Wick.gesture && Wick.gesture.active) {
-			// remove gradient handles
-			if (this.hoverPreview)  this.hoverPreview.remove();
-			if (this.hoverPreview2) this.hoverPreview2.remove();
 			this.__isDragging = false;
 			return;
 		}
 
 		if (!e.modifiers) e.modifiers = {};
-
-		// remove hover preview and a new one will be rendered if needed
-		this.hoverPreview.remove();
-		this.hoverPreview2.remove();
-		this.gradientColorSelection = [false];
 
 		// Find the thing that is currently under the cursor.
 		this.hitResult = this._updateHitResult(e);
@@ -339,31 +284,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 					eventName: 'canvasModified',
 					actionName: 'cursorDrag'
 				});
-			}else if(this._selection.numObjects === 1) { // check to see if we're selecting something
-					this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-					// check to see if object we're selecting is a gradient
-					if(this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient") {
-						let FC = this._lastSelection._json[1][1].fillColor;
-
-						let distToCursor = (xy) => {
-							return Math.sqrt((xy[0] - e.tool._lastPoint.x) ** 2 + (xy[1] - e.tool._lastPoint.y) ** 2)
-						}
-
-						this.hoverPreview = this.createGradPoint({
-							x: FC[2][0],
-							y: FC[2][1]
-						}, window.gradientStartColor, 5);
-
-						this.hoverPreview2 = this.createGradPoint({
-							x: FC[3][0],
-							y: FC[3][1]
-						}, window.gradientEndColor, 5);
-
-						this.gradientColorSelection = [distToCursor(FC[2]), distToCursor(FC[3])];
-						this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length > 0 && Math.min(...this.gradientColorSelection) < 10;
-
-					} // Added gradient stops movement -H.A.
-				}
+			}
 		}
 	}
 
@@ -375,7 +296,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			segments: true,
 			tolerance: this.SELECTION_TOLERANCE,
 			match: result => {
-				return result.item !== this.hoverPreview && !result.item.data.isBorder;
+				return !result.item.data.isBorder;
 			}
 		});
 		if (!newHitResult) newHitResult = new this.paper.HitResult();
@@ -420,6 +341,12 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	_getCursor() {
 		if (!this.hitResult.item) {
 			return this.CURSOR_DEFAULT;
+		} else if (
+			(this.hitResult.item.data.parentItem
+				&& this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop')
+			|| this.hitResult.item.data.handleType === 'gradient-point'
+		) {
+			return this.CURSOR_GRAD;
 		} else if (this.hitResult.item.data.isSelectionBoxGUI) {
 			// Don't show any custom cursor if the mouse is over the border, the border does nothing
 			if (this.hitResult.item.name === 'border') {
