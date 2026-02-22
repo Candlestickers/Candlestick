@@ -28,3 +28,5 @@ yarn-error.log*
 
 # docs
 engine/docs/*
+engine/dist/*
+public/corelibs/wick-engine/*
