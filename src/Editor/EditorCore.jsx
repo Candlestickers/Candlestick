@@ -1273,6 +1273,111 @@ class EditorCore extends Component {
     }
 
     /**
+     * Export the current project as PDF
+     */
+    exportProjectAsPDFFormat = (args) => {
+        this.openModal('ExportMedia');
+        this.setState({
+            renderProgress: 0,
+            renderType: "pdf",
+            renderStatusMessage: "Creating PDF.",
+            exporting: true,
+        });
+
+        const toastID = this.toast('Exporting PDF...', 'info');
+
+        const onProgress = (completed, maxFrames) => {
+            const message = "Rendered " + completed + "/" + maxFrames + " pages";
+            const percentage = 10 + (70 * (completed / maxFrames));
+            this.setState({
+                renderStatusMessage: message,
+                renderProgress: percentage,
+            });
+        };
+
+        const finishFail = (msg) => {
+            this.updateToast(toastID, { type: 'error', text: msg });
+            this.setState({ exporting: false });
+        };
+
+        const onFinish = async (frameImages) => {
+            try {
+                this.setState({ renderStatusMessage: "Building PDF…", renderProgress: 85 });
+
+                if (!frameImages || !frameImages.length) {
+                    finishFail("PDF export failed: no frames rendered.");
+                    return;
+                }
+
+                // Use the ACTUAL rendered frame size (most reliable)
+                const pageW = frameImages[0].naturalWidth || frameImages[0].width || (args.width || this.project.width);
+                const pageH = frameImages[0].naturalHeight || frameImages[0].height || (args.height || this.project.height);
+
+                // Convert to JPEG DataURLs if needed (PDF writer expects JPEG for /DCTDecode)
+                const jpegDataUrls = [];
+                for (let i = 0; i < frameImages.length; i++) {
+                    const src = frameImages[i].src || "";
+                    if (src.startsWith("data:image/jpeg")) {
+                        jpegDataUrls.push(src);
+                    } else {
+                        // Convert PNG/whatever -> JPEG via canvas
+                        const jpeg = await new Promise((resolve) => {
+                                const canvas = document.createElement("canvas");
+                                canvas.width = pageW;
+                                canvas.height = pageH;
+                                const ctx = canvas.getContext("2d");
+
+                                // White background so transparent PNGs don't go black
+                                ctx.fillStyle = "#fff";
+                                ctx.fillRect(0, 0, pageW, pageH);
+
+                                ctx.drawImage(frameImages[i], 0, 0, pageW, pageH);
+                                resolve(canvas.toDataURL("image/jpeg", 0.92));
+                            });
+                        // _toJpegDataUrl(frameImages[i], pageW, pageH);
+                        jpegDataUrls.push(jpeg);
+                    }
+
+                    if (i % 5 === 0) {
+                        this.setState({ renderProgress: 85 + Math.round(10 * (i / frameImages.length)) });
+                    }
+                }
+
+                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH);
+
+                const success = () => {
+                    this.updateToast(toastID, { type: 'success', text: "Successfully saved .pdf file." });
+                };
+
+                const fail = () => {
+                    this.updateToast(toastID, { type: 'error', text: "Error saving .pdf file. Please try again." });
+                };
+
+                window.saveFileFromWick(pdfBlob, this.project.name, '.pdf', success, fail);
+
+                this.setState({
+                    renderStatusMessage: 'Finished creating PDF.',
+                    renderProgress: 100,
+                    exporting: false,
+                });
+            } catch (e) {
+                console.error(e);
+                finishFail("Error creating PDF. Check console for details.");
+            }
+        };
+
+        // Render frames (you CAN request jpeg, but we still convert safely in onFinish)
+        this.project.generateImageSequence({
+            width: args.width,
+            height: args.height,
+            imageType: "image/jpeg",
+            onProgress,
+            onFinish,
+        });
+    };
+
+
+    /**
      * Export the current project as an image sequence
      */
     exportProjectAsImageSequence = (args) => {
@@ -2042,7 +2147,7 @@ class EditorCore extends Component {
                 })
             }
             this.project.focus.timeline.playheadPosition = 1;
-            
+
             this.projectDidChange({ actionName: 'Placed PDF pages onto frames' })
             this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
             this.hideWaitOverlay(); // disable clicking anywhere
@@ -2190,5 +2295,112 @@ class EditorCore extends Component {
     }
 
 }
+
+function _pdf_strToU8(str) {
+    const out = new Uint8Array(str.length)
+    for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) & 0xff
+    return out
+}
+
+function _pdf_b64ToU8(b64) {
+    const bin = atob(b64)
+    const out = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+    return out
+}
+
+function _pdf_concatU8(chunks) {
+    let total = 0
+    for (const c of chunks) total += c.length
+    const out = new Uint8Array(total)
+    let off = 0
+    for (const c of chunks) {
+        out.set(c, off)
+        off += c.length
+    }
+    return out
+}
+
+function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
+    const objects = [] // each entry is Uint8Array of object BODY (no "obj/endobj")
+    const addObj = (bodyU8) => (objects.push(bodyU8), objects.length) // returns obj id (1-based)
+
+    // placeholders
+    const catalogId = addObj(_pdf_strToU8(""))
+    const pagesId = addObj(_pdf_strToU8(""))
+
+    const pageIds = []
+
+    for (let i = 0; i < jpegDataUrls.length; i++) {
+        const url = jpegDataUrls[i]
+        const b64 = url.split(",")[1] || ""
+        const jpg = _pdf_b64ToU8(b64)
+
+        const imgName = `/Im${i}`
+
+        // Image XObject
+        const imgDict =
+            `<< /Type /XObject /Subtype /Image /Width ${pageW} /Height ${pageH} ` +
+            `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`
+        const imgBody = _pdf_concatU8([
+            _pdf_strToU8(imgDict),
+            jpg,
+            _pdf_strToU8("\nendstream\n")
+        ])
+        const imgId = addObj(imgBody)
+
+        // Contents stream (draw image full page)
+        const contents = `q ${pageW} 0 0 ${pageH} 0 0 cm ${imgName} Do Q\n`
+        const contentsDict = `<< /Length ${contents.length} >>\nstream\n${contents}endstream\n`
+        const contentsId = addObj(_pdf_strToU8(contentsDict))
+
+        // Page object
+        const pageObj =
+            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+            `/Resources << /XObject << ${imgName} ${imgId} 0 R >> >> ` +
+            `/Contents ${contentsId} 0 R >>\n`
+        const pageId = addObj(_pdf_strToU8(pageObj))
+        pageIds.push(pageId)
+    }
+
+    // Fill Pages + Catalog
+    const kids = pageIds.map(id => `${id} 0 R`).join(" ")
+    objects[pagesId - 1] = _pdf_strToU8(`<< /Type /Pages /Count ${pageIds.length} /Kids [ ${kids} ] >>\n`)
+    objects[catalogId - 1] = _pdf_strToU8(`<< /Type /Catalog /Pages ${pagesId} 0 R >>\n`)
+
+    // Assemble final PDF
+    const header = _pdf_strToU8("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")
+    const chunks = [header]
+
+    const offsets = new Array(objects.length + 1).fill(0) // offsets[0] unused for xref
+    let cursor = header.length
+
+    for (let i = 0; i < objects.length; i++) {
+        const id = i + 1
+        offsets[id] = cursor
+
+        const objHeader = _pdf_strToU8(`${id} 0 obj\n`)
+        const objFooter = _pdf_strToU8("endobj\n")
+        const objBytes = _pdf_concatU8([objHeader, objects[i], objFooter])
+
+        chunks.push(objBytes)
+        cursor += objBytes.length
+    }
+
+    const xrefStart = cursor
+    let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`
+    for (let i = 1; i <= objects.length; i++) {
+        xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`
+    }
+    const trailer =
+        `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`
+
+    chunks.push(_pdf_strToU8(xref))
+    chunks.push(_pdf_strToU8(trailer))
+
+    const pdfBytes = _pdf_concatU8(chunks)
+    return new Blob([pdfBytes], { type: "application/pdf" })
+}
+
 
 export default EditorCore;
