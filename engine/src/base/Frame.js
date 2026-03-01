@@ -409,6 +409,7 @@ Wick.Frame = class extends Wick.Tickable {
         }
 
         this.addChild(clip);
+        clip._willBeRemoved = false; // Fixes a bug where breaking apart a parent clip causes child clips to be undeletable
 
         // Pre-render the clip's frames
         // (this fixes an issue where clips created from ClipAssets would be "missing" frames)
