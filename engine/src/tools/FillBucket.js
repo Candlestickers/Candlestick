@@ -105,7 +105,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
 
                     if (path) {
                         path.fillColor = this.getSetting('fillColor').rgba;
+                        path.strokeWidth = 1;
+                        path.strokeColor = this.getSetting('fillColor').rgba;
                         path.name = null;
+                        console.log(path);
 
                         // Insert where you had it before
                         if (e.item) {

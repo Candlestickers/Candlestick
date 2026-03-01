@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.2.6.13.0.1";
+var WICK_ENGINE_BUILD_VERSION = "2026.2.28.20.40.58";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -59081,6 +59081,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   _getCursor() {
     if (!this.hitResult.item) {
       return this.CURSOR_DEFAULT;
+    } else if (this.hitResult.item.data.parentItem && this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop' || this.hitResult.item.data.handleType === 'gradient-point') {
+      return this.CURSOR_GRAD;
     } else if (this.hitResult.item.data.isSelectionBoxGUI) {
       // Don't show any custom cursor if the mouse is over the border, the border does nothing
       if (this.hitResult.item.name === 'border') {
@@ -59657,7 +59659,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
           this._pendingFill = false;
           if (path) {
             path.fillColor = this.getSetting('fillColor').rgba;
+            path.strokeWidth = 2;
+            path.strokeColor = this.getSetting('fillColor').rgba;
             path.name = null;
+            console.log(path);
 
             // Insert where you had it before
             if (e.item) {
