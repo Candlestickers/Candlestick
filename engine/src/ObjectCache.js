@@ -133,7 +133,11 @@ WickObjectCache = class {
             if(!uuidSet.has(object.uuid)) {
                 info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
 
-                this.removeObject(object);
+                // Check if the object has a parent in the object cache - StickmanRed
+                let topLevelClip = object.topLevelClip;
+                if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+                    this.removeObject(object);
+                }
             }
         });
 
@@ -210,10 +214,11 @@ WickObjectCache = class {
         for(let line of out.sort()) {
             print += "" + line + "\n";
         }
+        print += "Total: " + Wick.ObjectCache.getAllObjects().length;
         console.log(print);
     }
 
-    static _getObjectsInfoDebug() {
+    static _getObjectsDebugDetailed() {
         for(let elem of Wick.ObjectCache.getAllObjects()) {
             console.log("\n\n" + elem.classname + " " + elem.uuid);
             console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
