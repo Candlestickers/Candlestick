@@ -50,11 +50,6 @@ WickObjectCache = class {
      * @param {Wick.Base} object - the object to remove from the cache
      */
     removeObject (object) {
-        // let info = "";
-        // info +=   "classname " + object.classname;
-        // info += "\n     uuid " + object.uuid.substring(0, 4);
-        // console.log(info);
-        
         if (object.classname === 'Project') {
             object.destroy();
             return; // TODO, remove this.
@@ -127,21 +122,20 @@ WickObjectCache = class {
 
         uuidSet = new Set([...historyIDs, ...uuidSet]);
 
-        let info = "removeUnusedObjects()"
+        // // check what objects were removed during cache clear, like when the project is paused - Baron
+        // let info = "removeUnusedObjects()"
+        // this.getAllObjects().forEach(object => {
+        //     if(!uuidSet.has(object.uuid)) {
+        //         info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
 
-        this.getAllObjects().forEach(object => {
-            if(!uuidSet.has(object.uuid)) {
-                info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
-
-                // Check if the object has a parent in the object cache - StickmanRed
-                let topLevelClip = object.topLevelClip;
-                if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
-                    this.removeObject(object);
-                }
-            }
-        });
-
-        console.log(info);
+        //         // Check if the object has a parent in the object cache - StickmanRed
+        //         let topLevelClip = object.topLevelClip;
+        //         if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+        //             this.removeObject(object);
+        //         }
+        //     }
+        // });
+        // console.log(info);
     }
 
     /**
@@ -199,6 +193,9 @@ WickObjectCache = class {
         return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
     }
 
+    /**
+     * DEBUG: Log basic information about every object in the cache: type, uuid, and id/name if applicable
+     */
     static _getObjectsDebug() {
         let out = [];
         let print = "";
@@ -218,6 +215,9 @@ WickObjectCache = class {
         console.log(print);
     }
 
+    /**
+     * DEBUG: Shortcut to call getObjectByUUID() on all objects in the cache
+     */
     static _getObjectsDebugDetailed() {
         for(let elem of Wick.ObjectCache.getAllObjects()) {
             console.log("\n\n" + elem.classname + " " + elem.uuid);

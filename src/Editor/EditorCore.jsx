@@ -80,7 +80,7 @@ class EditorCore extends Component {
      */
     undoAction = () => {
         let undo = this.project.undo();
-        console.log({ undo })
+        // console.log({ undo })
         if (!undo) {
             this.toast('Nothing to undo.', 'warning');
         } else {
@@ -93,7 +93,7 @@ class EditorCore extends Component {
      */
     redoAction = () => {
         let redo = this.project.redo();
-        console.log({ redo });
+        // console.log({ redo });
         if (!redo) {
             this.toast('Nothing to redo.', 'warning');
         } else {
