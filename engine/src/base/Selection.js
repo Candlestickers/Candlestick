@@ -370,7 +370,6 @@ Wick.Selection = class extends Wick.Base {
             } else if(selection.getSelectedObjects()[0] instanceof window.Wick.FontAsset) {
                 return 'fontasset';
             } else if(selection.getSelectedObjects()[0] instanceof window.Wick.ClipAsset) {
-                console.log(selection.getSelectedObjects()[0]);
                 return 'wickobjasset';
             } else {
                 return 'unknown';
