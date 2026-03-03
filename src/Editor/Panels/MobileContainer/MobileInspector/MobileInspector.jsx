@@ -69,7 +69,7 @@ class MobileInspector extends Component {
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
-      'addAssetToCanvas': ["imageasset", "clipasset"],
+      'addAssetToCanvas': ["imageasset", "wickobjasset"],
     }
 
     /**
@@ -92,7 +92,7 @@ class MobileInspector extends Component {
       "imageasset": "Image Asset",
       "soundasset": "Sound Asset",
       "fontasset": "Font Asset",
-      "clipasset": "Clip Asset",
+      "wickobjasset": "WickObject Asset",
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
@@ -130,7 +130,7 @@ class MobileInspector extends Component {
       "imageasset": ['assetSettings', 'name'],
       "soundasset": ['assetSettings', 'name'],
       "fontasset": [],
-      "clipasset": [],
+      "wickobjasset": [],
       "multiassetmixed": ['assetSettings'],
       "multisoundasset": ['assetSettings'],
       "multiimageasset": ['assetSettings'],

@@ -76,7 +76,7 @@ class Inspector extends Component {
       "imageasset": this.renderAsset,
       "soundasset": this.renderAsset,
       "fontasset": this.renderAsset,
-      "clipasset": this.renderAsset,
+      "wickobjasset": this.renderAsset,
       "multiassetmixed": this.renderAsset,
       "multisoundasset": this.renderAsset,
       "multiimageasset": this.renderAsset,
@@ -90,7 +90,7 @@ class Inspector extends Component {
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
-      'addAssetToCanvas': ["imageasset", "clipasset"],
+      'addAssetToCanvas': ["imageasset", "wickobjasset"],
       // 'alignX': [ "multipath"] // H.A.
     }
 
@@ -114,7 +114,7 @@ class Inspector extends Component {
       "imageasset": "Image Asset",
       "soundasset": "Sound Asset",
       "fontasset": "Font Asset",
-      "clipasset": "Clip Asset",
+      "wickobjasset": "WickObject Asset",
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
