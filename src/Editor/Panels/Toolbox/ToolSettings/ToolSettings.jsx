@@ -32,6 +32,7 @@ class ToolSettings extends Component {
       "cursor": this.renderCursorSettings,
       "brush": this.renderBrushSettings,
       "pencil": this.renderPencilSettings,
+      "lassofill": this.renderLassoFillSettings,
       "eraser": this.renderEraserSettings,
       "rectangle": this.renderRectangleSettings,
       "ellipse": this.renderEllipseSettings,
@@ -83,6 +84,12 @@ class ToolSettings extends Component {
       <div className='settings-input-container'>
         {this.renderStrokeWidth()}
       </div>
+    );
+  }
+
+  renderLassoFillSettings = () => {
+    return (
+      <div className='settings-input-container'></div>
     );
   }
 

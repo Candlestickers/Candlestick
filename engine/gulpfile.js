@@ -110,6 +110,7 @@ gulp.task("default", function() {
       'src/tools/Pan.js',
       'src/tools/PathCursor.js',
       'src/tools/Pencil.js',
+      'src/tools/LassoFill.js',
       'src/tools/Rectangle.js',
       'src/tools/Text.js',
       'src/tools/Zoom.js',

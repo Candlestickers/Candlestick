@@ -195,6 +195,7 @@ describe('Wick.View.Project', function() {
             expect(project.tools.none instanceof Wick.Tools.None).to.equal(true);
             expect(project.tools.pan instanceof Wick.Tools.Pan).to.equal(true);
             expect(project.tools.pencil instanceof Wick.Tools.Pencil).to.equal(true);
+            expect(project.tools.lassofill instanceof Wick.Tools.LassoFill).to.equal(true);
             expect(project.tools.rectangle instanceof Wick.Tools.Rectangle).to.equal(true);
             expect(project.tools.text instanceof Wick.Tools.Text).to.equal(true);
             expect(project.tools.zoom instanceof Wick.Tools.Zoom).to.equal(true);

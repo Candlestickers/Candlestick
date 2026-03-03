@@ -1,3 +1,33 @@
+// Wick.Tools.LassoFill = class extends Wick.Pencil {
+//     /**
+//      * Creates a lasso fill tool.
+//      */
+//     constructor () {
+//         super();
+
+//         this.name = 'lassofill';
+
+//         // this.path = null;
+
+//         // this._movement = new paper.Point();
+
+//         // // gesture interrupts - H.A.
+//         // this._gestureInterrupted = false;
+//         // this._suppressCommit = false;
+//         // this._gestureSeqAtStart = 0;
+//         // this._strokeStartedAt = 0;
+
+//     }
+
+//     _getPath() {
+//         return new this.paper.Path({
+//             fillColor: this.getSetting('fillColor').rgba,
+//             // strokeWidth: this.getSetting('strokeWidth'),
+//             // strokeCap: 'round',
+//         });
+//     }
+// }
+
 /*
  * Copyright 2020 WICKLETS LLC
  *
@@ -17,18 +47,18 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.Pencil = class extends Wick.Tool {
+Wick.Tools.LassoFill = class extends Wick.Tool {
     static get MIN_ADD_POINT_MOVEMENT () {
         return 2;
     }
 
     /**
-     * Creates a pencil tool.
+     * Creates a lasso fill tool.
      */
     constructor () {
         super();
 
-        this.name = 'pencil'
+        this.name = 'lassofill'
 
         this.path = null;
 
@@ -47,7 +77,7 @@ Wick.Tools.Pencil = class extends Wick.Tool {
     }
 
     /**
-     * The pencil cursor.
+     * The lasso fill cursor.
      * @type {string}
      */
     get cursor () {
@@ -149,9 +179,7 @@ Wick.Tools.Pencil = class extends Wick.Tool {
 
     _getPath() {
         return new this.paper.Path({
-            strokeColor: this.getSetting('strokeColor').rgba,
-            strokeWidth: this.getSetting('strokeWidth'),
-            strokeCap: 'round',
+            fillColor: this.getSetting('fillColor').rgba
         });
     }
 }

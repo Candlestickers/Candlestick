@@ -27,6 +27,7 @@ import iconEllipse from 'resources/toolbar-icons/ellipse.svg';
 import iconRectangle from 'resources/toolbar-icons/rectangle.svg';
 import iconLine from 'resources/toolbar-icons/line.svg';
 import iconPencil from 'resources/toolbar-icons/pencil.svg';
+import iconLassoFill from 'resources/toolbar-icons/lassofill.svg';
 import iconEyeDropper from 'resources/toolbar-icons/eyedropper.svg';
 import iconEraser from 'resources/toolbar-icons/eraser.svg';
 import iconText from 'resources/toolbar-icons/text.svg';
@@ -208,6 +209,7 @@ const icons = {
   "rectangle":iconRectangle,
   "line":iconLine,
   "pencil":iconPencil,
+  "lassofill":iconLassoFill,
   "eyedropper":iconEyeDropper,
   "eraser":iconEraser,
   "pan":iconPan,

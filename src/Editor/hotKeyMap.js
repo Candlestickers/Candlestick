@@ -69,6 +69,10 @@ class HotKeyInterface extends Object {
         name: "Activate Pencil",
         sequences: ['p'],
       },
+      'activate-lassofill': {
+        name: "Activate Lasso Fill",
+        sequences: ['u'],
+      },
       'activate-eraser': {
         name: "Activate Eraser",
         sequences: ['e'],
@@ -359,6 +363,7 @@ class HotKeyInterface extends Object {
         "activate-brush",
         "activate-cursor",
         "activate-pencil",
+        "activate-lassofill",
         "activate-eraser",
         "activate-rectangle",
         "activate-ellipse",
@@ -480,6 +485,7 @@ class HotKeyInterface extends Object {
       'activate-brush': (() => this.editor.setActiveTool("brush")),
       'activate-cursor': (() => this.editor.setActiveTool("cursor")),
       'activate-pencil': (() => this.editor.setActiveTool("pencil")),
+      'activate-lassofill': (() => this.editor.setActiveTool("lassofill")),
       'activate-eraser': (() => this.editor.setActiveTool("eraser")),
       'activate-rectangle': (() => this.editor.setActiveTool("rectangle")),
       'activate-ellipse': (() => this.editor.setActiveTool("ellipse")),
