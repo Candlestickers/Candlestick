@@ -1,40 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 23.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 31.5 31.5" style="enable-background:new 0 0 31.5 31.5;" xml:space="preserve">
-<style type="text/css">
-	<!-- .st0{fill:url(#SVGID_1_);}
-	.st1{fill:url(#SVGID_2_);} -->
-	.st0{fill:white;}
-	.st1{fill:white;}
-</style>
-<title>LassoFill_1</title>
-<g>
-	<g>
-		<g id="Icons">
-			
-				<image style="overflow:visible;opacity:0.25;enable-background:new    ;" width="22" height="22" xlink:href="E9D72E788758FAC1.png"  transform="matrix(1 0 0 1 18.778 -4.3256)">
-			</image>
-			
-				<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="24.3154" y1="34.4905" x2="33.3354" y2="23.9105" gradientTransform="matrix(1 0 0 -1 0 35.2386)">
-				<stop  offset="0" style="stop-color:#F0F0F0"/>
-				<stop  offset="0.71" style="stop-color:#CCCCCC"/>
-			</linearGradient>
-			<path class="st0" d="M29.1,8.5L31,6.6c0.7-0.7,0.7-1.8,0-2.5l-3.6-3.6c-0.7-0.7-1.8-0.7-2.5,0L23,2.4c-0.3,0.3-0.3,0.9,0,1.2
-				l4.8,4.9C28.1,8.9,28.7,8.9,29.1,8.5C29.1,8.5,29.1,8.5,29.1,8.5z"/>
-			
-				<image style="overflow:visible;opacity:0.25;enable-background:new    ;" width="39" height="39" xlink:href="E9D72E788758FAC3.png"  transform="matrix(1 0 0 1 -3.222 0.6744)">
-			</image>
-			
-				<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="8.0657" y1="20.6278" x2="17.0957" y2="10.0578" gradientTransform="matrix(1 0 0 -1 0 35.2386)">
-				<stop  offset="0" style="stop-color:#F0F0F0"/>
-				<stop  offset="0.71" style="stop-color:#CCCCCC"/>
-			</linearGradient>
-			<path class="st1" d="M20,5.5l-18,18c-0.2,0.2-0.3,0.4-0.4,0.7L0,29.8c-0.2,0.7,0.2,1.5,0.9,1.7c0.2,0.1,0.5,0.1,0.7,0l5.7-1.6
-				c0.3-0.1,0.5-0.2,0.7-0.4l18-18c0.3-0.3,0.3-0.9,0-1.3c0,0,0,0,0,0l-4.9-4.8C20.9,5.1,20.3,5.1,20,5.5z M6,28.7l-3.8,1
-				c-0.2,0-0.4-0.1-0.4-0.3c0,0,0-0.1,0-0.1l1-3.9c0-0.2,0.2-0.3,0.4-0.2c0.1,0,0.1,0,0.2,0.1l2.8,2.8c0.1,0.1,0.1,0.4,0,0.5
-				C6.1,28.6,6.1,28.7,6,28.7z"/>
-		</g>
-	</g>
-</g>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="13.5" cy="26.5" r="3" stroke="white" stroke-width="3"/>
+<path d="M16 0C24.8366 0 32 6.26801 32 14C32 21.5359 25.1952 27.6795 16.6689 27.9863C16.8809 27.5351 17 27.0315 17 26.5C17 25.9574 16.8766 25.4437 16.6562 24.9854C23.8805 24.69 29 19.5449 29 14C29 8.28863 23.5685 3 16 3C8.43148 3 3 8.28863 3 14C3 18.3267 6.11809 22.4078 10.9199 24.1338C10.3483 24.7567 10 25.5879 10 26.5C10 26.6674 10.0124 26.832 10.0352 26.9932C4.15314 24.9239 0 19.887 0 14C0 6.26801 7.16344 0 16 0Z" fill="white"/>
+<path d="M16 6C21.5228 6 26 9.58172 26 14C26 17.5331 23.1363 20.5284 19.165 21.5879C17.7899 20.0034 15.7627 19 13.5 19C12.0544 19 10.7047 19.4096 9.55957 20.1182C7.3834 18.6507 6 16.4552 6 14C6 9.58172 10.4772 6 16 6Z" fill="white"/>
+<path d="M10.5 28C8.5 29.5 6 30.5 3.5 30.5" stroke="white" stroke-width="3" stroke-linecap="round"/>
 </svg>
