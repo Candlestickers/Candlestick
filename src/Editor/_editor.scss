@@ -102,15 +102,16 @@ body {
 // Toasts
 .Toastify__toast {
   font-family: 'Nunito Sans';
-  font-weight: 800;
-  font-size: 24px;
+  font-weight: normal;
+  font-size: 16px;
   border-radius: 3px;
+  min-height: 0;
 }
 
 .Toastify__toast button{
   font-family: 'Nunito Sans';
-  font-weight: 800;
-  font-size: 24px;
+  font-weight: normal;
+  font-size: 16px;
 }
 
 .info-toast-background {
