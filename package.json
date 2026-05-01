@@ -106,17 +106,16 @@
     "tauri": "tauri",
     "macapp": "tauri build --verbose",
     "winapp": "tauri build --target x86_64-pc-windows-gnu",
-    "copy-pdf-worker": "cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.js public/pdf.worker.min.js",
+    "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.js public/pdf.worker.min.js",
     "eject": "react-scripts eject",
     "dist": "electron-builder",
     "start": "npm run copy-pdf-worker && react-scripts start",
     "build": "npm run copy-pdf-worker && react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
-    "build-engine": "cd engine; mkdir dist/; gulp; cp -a dist/. ../public/corelibs/wick-engine/",
-    "build-engine-windows": "cd engine & mkdir dist  2>nul &    gulp & xcopy /EY dist\\. ..\\public\\corelibs\\wick-engine\\",
+    "build-engine": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
     "test": "react-scripts test",
     "engine-tests": "cd engine; python -m SimpleHTTPServer 9999",
     "predeploy": "npm run build",
-    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.app/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
+    "prerelease-deploy": "npm run build && shx cp -r build/* ../wick-editor-prerelease/ && cd ../wick-editor-prerelease && shx rm CNAME && echo 'test.candlestickers.app/' > CNAME && git add . && git commit -m 'update prerelease build' && git push --force;",
     "build:nocname": "react-scripts build",
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error('✖ Deploy test only from development (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error('✖ Deploy to prod only from main/master (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
@@ -130,8 +129,8 @@
     "package-mac": "npm run build; electron-builder --mac",
     "package-windows": "npm run build; electron-builder --windows",
     "package-linux": "npm run build; electron-builder --linux",
-    "phonegap-deploy": "npm run build; cd ../wick-editor-phonegap; npm run prepare-dir; cd ../wick-editor; cp -r build/* ../wick-editor-phonegap/www; cd ../wick-editor-phonegap; npm run prepare-app; git add .; git commit -m 'update phonegap build'; git push --force;",
-    "phonegap-predeploy": "npm run build; cd ../wick-editor-phonegap; npm run prepare-dir; cd ../wick-editor; cp -r build/* ../wick-editor-phonegap/www; cd ../wick-editor-phonegap; npm run prepare-app;"
+    "phonegap-deploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app && git add . && git commit -m 'update phonegap build' && git push --force;",
+    "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app;"
   },
   "eslintConfig": {
     "extends": "react-app"
