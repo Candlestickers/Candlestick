@@ -99,26 +99,42 @@
     }
 
     function eraseStroke (path, eraserPath) {
-        var res = path.subtract(eraserPath, {
-            insert: false,
-            trace: false,
-        });
-        if(res.children) {
-            // Since the path is only strokes, it's trivial to split it into individual paths
+        if(path.children) {
+            // recursive case: ungroup compound path of strokes
             var children = [];
-            res.children.forEach(function (child) {
+            path.children.forEach(function (child) {
                 child.data = {};
                 children.push(child);
                 child.name = null;
             });
+            // call eraser for each child individually
             children.forEach(function (child) {
                 child.insertAbove(path);
+                eraseStroke(child, eraserPath);
             });
-            res.remove();
         } else {
-            res.remove();
-            if(res.segments.length > 0)
-                res.insertAbove(path);
+            // base case: erasing singular stroke
+            var res = path.subtract(eraserPath, {
+                insert: false,
+                trace: false,
+            });
+            if(res.children) {
+                // Since the path is only strokes, it's trivial to split it into individual paths
+                var children = [];
+                res.children.forEach(function (child) {
+                    child.data = {};
+                    children.push(child);
+                    child.name = null;
+                });
+                children.forEach(function (child) {
+                    child.insertAbove(path);
+                });
+                res.remove();
+            } else {
+                res.remove();
+                if(res.segments.length > 0)
+                    res.insertAbove(path);
+            }
         }
         path.remove();
     }
