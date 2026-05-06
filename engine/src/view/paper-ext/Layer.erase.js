@@ -100,16 +100,17 @@
 
     function eraseStroke (path, eraserPath) {
         if(path.children) {
-            // recursive case: ungroup compound path of strokes
+            // ungroup compound path of strokes because Paper cannot erase compound strokes
             var children = [];
             path.children.forEach(function (child) {
                 child.data = {};
                 children.push(child);
                 child.name = null;
             });
-            // call eraser for each child individually
+            // move each child up, then erase individually
             children.forEach(function (child) {
                 child.insertAbove(path);
+                child.fillColor = null;
                 eraseStroke(child, eraserPath);
             });
         } else {
