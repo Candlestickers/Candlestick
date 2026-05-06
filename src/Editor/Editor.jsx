@@ -853,12 +853,12 @@ class Editor extends EditorCore {
 
         // Default options for the toast:
         let defaultOptions = {
-            position: "top-right",
+            position: "bottom-right",
             autoClose: 3000,
             hideProgressBar: true,
             closeOnClick: true,
             pauseOnHover: true,
-            draggable: true,
+            draggable: false,
             className: (type + '-toast-background'),
             bodyClassName: (type + '-toast-body'),
             progressClassName: (type + '-toast-progress'),
