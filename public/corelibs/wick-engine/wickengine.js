@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.2.28.20.40.58";
+var WICK_ENGINE_BUILD_VERSION = "2026.1.10.14.29.18";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46536,6 +46536,11 @@ WickObjectCache = class {
    * @param {Wick.Base} object - the object to remove from the cache
    */
   removeObject(object) {
+    // let info = "";
+    // info +=   "classname " + object.classname;
+    // info += "\n     uuid " + object.uuid.substring(0, 4);
+    // console.log(info);
+
     if (object.classname === 'Project') {
       object.destroy();
       return; // TODO, remove this.
@@ -46602,11 +46607,14 @@ WickObjectCache = class {
     let uuidSet = new Set(uuids);
     let historyIDs = project.history.getObjectUUIDs();
     uuidSet = new Set([...historyIDs, ...uuidSet]);
+    let info = "removeUnusedObjects()";
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
+        info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
         this.removeObject(object);
       }
     });
+    console.log(info);
   }
 
   /**
@@ -46662,6 +46670,27 @@ WickObjectCache = class {
    */
   getObjectsNeedAutosaved() {
     return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
+  }
+  static _getObjectsDebug() {
+    let out = [];
+    let print = "";
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      let line = elem.classname.padEnd(10, " ") + elem.uuid;
+      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": id =   " + elem._identifier;
+      //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
+
+      out.push(line);
+    }
+    for (let line of out.sort()) {
+      print += "" + line + "\n";
+    }
+    console.log(print);
+  }
+  static _getObjectsInfoDebug() {
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      console.log("\n\n" + elem.classname + " " + elem.uuid);
+      console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
+    }
   }
 };
 Wick.ObjectCache = new WickObjectCache();

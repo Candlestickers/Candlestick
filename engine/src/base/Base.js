@@ -442,6 +442,25 @@ Wick.Base = class {
     }
 
     /**
+     * The top-level clip of this object.
+     * @type {Wick.Clip}
+     */
+    get topLevelClip () {
+        let topLevelClip = this.parentClip;
+
+        while (
+            topLevelClip
+            && topLevelClip.parentClip
+            && !topLevelClip.parentClip.isRoot
+        ) {
+            topLevelClip = topLevelClip.parentClip;
+        }
+
+        return topLevelClip;
+    }
+
+
+    /**
      * The parent Layer of this object.
      * @type {Wick.Layer}
      */
