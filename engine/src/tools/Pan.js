@@ -48,15 +48,27 @@ Wick.Tools.Pan = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
-
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
     }
 
     onMouseDrag (e) {
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
+
         var d = e.downPoint.subtract(e.point);
         this.paper.view.center = this.paper.view.center.add(d);
     }
 
     onMouseUp (e) {
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            return;
+        }
         this.fireEvent({eventName: 'canvasViewTransformed'});
     }
 }

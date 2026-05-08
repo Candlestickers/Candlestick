@@ -1,0 +1,137 @@
+/*
+ * Copyright I don't know
+ */
+
+@import 'Editor/_wickbrand.scss';
+
+$color-picker-stop-width: 24px;
+$color-picker-pointer-radius: 8px;
+
+.wick-color-picker-gradient-slider {
+    position: relative;
+    height: fit-content;
+    background-color: white;
+    margin: 0 3px 6px;
+    border-radius: 2px;
+
+    .wick-custom-slider-background {
+        height: $color-picker-stop-width * 1.5;
+        position: relative;
+    }
+}
+.wick-color-picker-gradient-stop {
+    top: 0;
+    translate: -$color-picker-stop-width / 2;
+    width: $color-picker-stop-width;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: $color-picker-stop-width / 2;
+}
+.wick-color-picker-gradient-arrow:after {
+    content: "";
+    display: block;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid white;
+}
+.wick-color-picker-gradient-color {
+    background-color: white;
+    width: 100%;
+    height: $color-picker-stop-width;
+    padding: 5px;
+    border-radius: 5px;
+}
+.wick-color-picker-gradient-arrow.wick-color-picker-gradient-active:after {
+    border-bottom-color: $wick-cs-tool-border-active;
+}
+.wick-color-picker-gradient-color.wick-color-picker-gradient-active {
+    background-color: $wick-cs-tool-border-active;
+}
+.wick-color-picker-gradient-checker {
+    width: 100%;
+    height: 100%;
+    border: 1px solid;
+    border-radius: 2px;
+    background-color: white;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.wick-color-picker-pointer {
+    width: $color-picker-pointer-radius * 2;
+    height: $color-picker-pointer-radius * 2;
+    translate: -$color-picker-pointer-radius;
+    border-radius: $color-picker-pointer-radius;
+    border: 4px solid white;
+    background-color: black;
+}
+
+.wick-color-picker-slider .wick-custom-slider-background {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.wick-color-picker-bar {
+    height: $color-picker-pointer-radius * 2;
+    border-radius: $color-picker-pointer-radius;
+    padding: 0 $color-picker-pointer-radius;
+    overflow: hidden;
+
+    .wick-color-picker-pointer {
+        top: 0;
+    }
+}
+.wick-color-picker-saturation {
+    width: 100%;
+    height: 115px;
+    border-radius: 2px;
+    overflow: visible;
+
+    .wick-color-picker-pointer {
+        translate: (-$color-picker-pointer-radius) (-$color-picker-pointer-radius);
+    }
+}
+.wick-color-picker-hue {
+    background-color: #f00;
+
+    .wick-custom-slider-background {
+        background-image: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+    }
+}
+
+.wick-color-picker-input-label {
+    color: $editor-primary-property-text;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+.wick-color-picker-fields .wick-color-picker-input-label {
+    flex-direction: column;
+    flex: 1;
+}
+.wick-color-picker-input-label.wick-color-picker-field-hex {
+    flex: 2;
+
+    .wick-color-picker-input-field {
+        text-transform: uppercase;
+    }
+}
+
+.wick-color-picker-checkerboard {
+    overflow: hidden;
+    background-position: center left;
+
+    div {
+        width: 100%;
+        height: 100%;
+    }
+}
+.wick-color-picker-swatch-checker {
+    width: 100%;
+    height: 100%;
+    outline: none;
+    cursor: pointer;
+}

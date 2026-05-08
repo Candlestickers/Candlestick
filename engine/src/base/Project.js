@@ -743,7 +743,7 @@ orderDynamicFrames() {
 
         // Fix missing mimetype for wickobj files
         var type = file.type;
-        
+        // TODO: -H.A. find out why wickobj aren't opening in app build versions
         if (file.type === '' && file.name.endsWith('.wickobj')) {
             type = 'application/json';
         }

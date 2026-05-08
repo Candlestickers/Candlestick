@@ -18,175 +18,282 @@
  */
 
 Wick.Tools.Line = class extends Wick.Tool {
-  /**
-   *
-   */
-  constructor() {
-    super();
-    this.name = 'line';
-    this.path = new this.paper.Path({
-      insert: false
-    });
-    this.startPoint;
-    this.endPoint;
-	this.hitResult = new this.paper.HitResult();
-	this.hoverPreview = new this.paper.Item({
-		insert: false
-	});
-  }
-
-  get doubleClickEnabled() {
-    return false;
-  }
-  /**
-   *
-   * @type {string}
-   */
-
-
-  get cursor() {
-    return 'crosshair';
-  }
-
-  get isDrawingTool() {
-    return true;
-  }
-
-  onActivate(e) {
-    this.path.remove();
-  }
-
-  onDeactivate(e) {
-    this.path.remove();
-  }
-
-  onMouseMove(e) {
-	// inherit mousemove class
-	super.onMouseMove(e); 
-
-	// remove the hover preview
-	this.hoverPreview.remove();
-
-	// find what's under the cursor
-	this.hitResult = this._updateHitResult(e);
-
-	// alt/ option or command/ control to snap to nearby selection
-	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
-		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
-		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
-		this.hoverPreview.strokeWidth = 1.5;
-		this.hoverPreview.fillColor = 'rgba(150,0,0,0.5)';
-
-		this.startPoint = this.hitResult.segment.point;
-	}else{
-		this.startPoint = false;
-	}
-
-	this.hoverPreview.data.wickType = 'gui';
-  }
-
-  onMouseDown(e) {
-	
-	// check if there is a hoverpoint
-	// else use e.point for startPoint
-	if(!this.startPoint)
-	this.startPoint = e.point;
-  }
-
-  onMouseDrag(e) {
-    this.path.remove();
-
-	// remove the hover preview
-	this.hoverPreview.remove();
-
-	// find what's under the cursor
-	this.hitResult = this._updateHitResult(e);
-
-	// snap to point if option/ alt or command/ control
-	if( (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option ) && this.hitResult.type === 'segment') {
-		this.endPoint = {
-			x: this.hitResult.segment.point.x,
-			y: this.hitResult.segment.point.y
-		};
-
-		this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5/this.paper.view.zoom);
-		this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
-		this.hoverPreview.strokeWidth = 1.5;
-		
-		// display red when deleting line by dragging it to start point
-		this.hoverPreview.fillColor = 
-		(this.endPoint.x===this.startPoint.x && this.endPoint.y===this.startPoint.y)?
-		'rgba(150,50,50,0.5)':'rgba(50,50,255,0.5)';
-
-	}else{ // default to cursor position
-		this.endPoint = e.point;
-	}
-
-	// straight line
-	if(e.modifiers.shift){
-		const dy = Math.abs(this.startPoint.y - e.point.y);
-		const dx = Math.abs(this.startPoint.x - e.point.x);
-
-		// diagnol
-		if(dy && dx && (dy/dx)>0.5 && (dx/dy)>0.5){
-			const diff = {
-				x: this.endPoint.x-this.startPoint.x,
-				y: this.endPoint.y-this.startPoint.y
-			}
-			this.endPoint = {
-				x: this.startPoint.x + (dy+dx)/2 * diff.x/Math.abs(diff.x),
-				y: this.startPoint.y + (dy+dx)/2 * diff.y/Math.abs(diff.y)
-			}
-		}else if(dy>dx) // straight vertical
-			this.endPoint.x = this.startPoint.x;
-		else // straight horizontal
-			this.endPoint.y = this.startPoint.y;
-
-	}
-	this.hoverPreview.data.wickType = 'gui';
-
-    this.path = new paper.Path.Line(this.startPoint, this.endPoint);
-    this.path.strokeCap = 'round';
-    this.path.strokeColor = this.getSetting('strokeColor').rgba;
-    this.path.strokeWidth = this.getSetting('strokeWidth');
-  }
-
-  onMouseUp(e) {
-	this.hoverPreview.remove();
-    this.path.remove();
-	if(this.endPoint.x!==this.startPoint.x || this.endPoint.y!==this.startPoint.y){
-		this.addPathToProject(this.path);
-		this.fireEvent({
-		eventName: 'canvasModified',
-		actionName: 'line'
+	/**
+	 *
+	 */
+	constructor() {
+		super();
+		this.name = 'line';
+		this.path = new this.paper.Path({
+			insert: false
 		});
+		this.startPoint;
+		this.endPoint;
+		this.hitResult = new this.paper.HitResult();
+		this.hoverPreview = new this.paper.Item({
+			insert: false
+		});
+
+		// HAND GESTURES - H.A.
+		this._gestureInterrupted = false;
+		this._suppressCommit = false;
+		this._gestureSeqAtStart = 0;
+		this._strokeStartedAt = 0;
+
 	}
-  }
 
-  // todo: clean this function -H.A.
-  _updateHitResult(e) {
-    var newHitResult = this.paper.project.hitTest(e.point, {
-      fill: false,
-      stroke: false,
-      curves: false,
-      segments: true,
-      handles: false,
-      tolerance: 10,
-      match: result => {
-        return result.item !== this.hoverPreview && !result.item.data.isBorder;
-      }
-    });
+	get doubleClickEnabled() {
+		return false;
+	}
+	/**
+	 *
+	 * @type {string}
+	 */
 
-    if (!newHitResult) newHitResult = new this.paper.HitResult();
 
-    if (newHitResult.item && !newHitResult.item.data.isSelectionBoxGUI) {
-      // You can't select children of compound paths, you can only select the whole thing.
-      if (newHitResult.item.parent.className === 'CompoundPath') {
-        newHitResult.item = newHitResult.item.parent;
-      }
-    }
+	get cursor() {
+		return 'crosshair';
+	}
 
-    return newHitResult;
-  }
+	get isDrawingTool() {
+		return true;
+	}
+
+	onActivate(e) {
+		this._cancelPath();
+		// this.path.remove();
+	}
+
+	onDeactivate(e) {
+		this._cancelPath();
+		// this.path.remove();
+	}
+
+	onMouseMove(e) {
+		// inherit mousemove class
+		super.onMouseMove(e);
+
+		// remove the hover preview
+		this.hoverPreview.remove();
+
+		// find what's under the cursor
+		this.hitResult = this._updateHitResult(e);
+
+		// alt/ option or command/ control to snap to nearby selection
+		if ((this._shouldSnap(e)) && this.hitResult.type === 'segment') {
+			this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+			this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
+			this.hoverPreview.strokeWidth = 1.5;
+			this.hoverPreview.fillColor = 'rgba(150,0,0,0.5)';
+
+			this.startPoint = this.hitResult.segment.point;
+		} else {
+			this.startPoint = false;
+		}
+
+		this.hoverPreview.data.wickType = 'gui';
+	}
+
+	onMouseDown(e) {
+
+		// check for gesture
+		if (window.Wick && Wick.gesture && Wick.gesture.active) {
+			this._gestureInterrupted = true;
+			this._suppressCommit = true;
+			return;
+		}
+		// else reset gesture stamp
+		this._gestureInterrupted = false;
+		this._suppressCommit = false;
+		this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+		this._strokeStartedAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+		// check if there is a hoverpoint
+		// else use e.point for startPoint
+		if (!this.startPoint)
+			this.startPoint = e.point;
+	}
+
+	onMouseDrag(e) {
+
+		// abort mid-process if needed
+		if (window.Wick && Wick.gesture && Wick.gesture.active) {
+			this._gestureInterrupted = true;
+			this._suppressCommit = true;
+			this._cancelPath();
+			return;
+		}
+
+		// this.path.remove();
+		this._cancelPath();
+
+		// remove the hover preview
+		this.hoverPreview.remove();
+
+		// find what's under the cursor
+		this.hitResult = this._updateHitResult(e);
+
+		// snap to point if option/ alt or command/ control
+		if ((this._shouldSnap(e)) && this.hitResult.type === 'segment') {
+			this.endPoint = {
+				x: this.hitResult.segment.point.x,
+				y: this.hitResult.segment.point.y
+			};
+
+			this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+			this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
+			this.hoverPreview.strokeWidth = 1.5;
+
+			// display red when deleting line by dragging it to start point
+			this.hoverPreview.fillColor =
+				(this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y) ?
+					'rgba(150,50,50,0.5)' : 'rgba(50,50,255,0.5)';
+
+		} else { // default to cursor position
+			this.endPoint = e.point;
+		}
+
+		// straight line
+		if (e.modifiers.shift) {
+			const dy = Math.abs(this.startPoint.y - e.point.y);
+			const dx = Math.abs(this.startPoint.x - e.point.x);
+
+			// diagnol
+			if (dy && dx && (dy / dx) > 0.5 && (dx / dy) > 0.5) {
+				const diff = {
+					x: this.endPoint.x - this.startPoint.x,
+					y: this.endPoint.y - this.startPoint.y
+				}
+				this.endPoint = {
+					x: this.startPoint.x + (dy + dx) / 2 * diff.x / Math.abs(diff.x),
+					y: this.startPoint.y + (dy + dx) / 2 * diff.y / Math.abs(diff.y)
+				}
+			} else if (dy > dx) // straight vertical
+				this.endPoint.x = this.startPoint.x;
+			else // straight horizontal
+				this.endPoint.y = this.startPoint.y;
+
+		}
+		this.hoverPreview.data.wickType = 'gui';
+
+		this.path = new paper.Path.Line(this.startPoint, this.endPoint);
+		this.path.strokeCap = 'round';
+		this.path.strokeColor = this.getSetting('strokeColor').rgba;
+		this.path.strokeWidth = this.getSetting('strokeWidth');
+	}
+
+	onMouseUp(e) {
+		// clean up preview safely
+		if (this.hoverPreview && typeof this.hoverPreview.remove === 'function') {
+			try { this.hoverPreview.remove(); } catch (_) { }
+		}
+
+		// Compute interruption FIRST
+		const g = (window.Wick && Wick.gesture) || {};
+		const gestureActiveNow = !!g.active;
+		const gestureStartedDuringStroke =
+			(g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt) ||
+			((g.seq || 0) !== (this._gestureSeqAtStart || 0));
+		const interrupted =
+			this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+
+		if (interrupted) {
+			// abort; remove any preview path and reset points
+			this._cancelPath();
+			this._suppressCommit = false;
+			this._gestureInterrupted = false;
+			this.startPoint = null;
+			this.endPoint = null;
+			return;
+		}
+
+		// Not interrupted — finalize the line if it’s not a dot
+		if (!this.startPoint || !this.endPoint) {
+			// nothing meaningful to add
+			this._cancelPath();
+			return;
+		}
+
+		const samePoint = (this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y);
+		if (samePoint) {
+			this._cancelPath();
+			this.startPoint = null;
+			this.endPoint = null;
+			return;
+		}
+
+		// Ensure we have a path to add (gesture aborts may have nulled it)
+		if (!this.path) {
+			this.path = new this.paper.Path.Line(this.startPoint, this.endPoint);
+			this.path.strokeCap = 'round';
+			this.path.strokeColor = this.getSetting('strokeColor').rgba;
+			this.path.strokeWidth = this.getSetting('strokeWidth');
+		}
+
+		// House style elsewhere removes then adds; keep consistent
+		try { this.path.remove(); } catch (_) { }
+		// this._cancelPath();
+		this.addPathToProject(this.path);
+		this.path = null;
+
+		this.fireEvent({ eventName: 'canvasModified', actionName: 'line' });
+
+		// reset start/end for next stroke
+		this.startPoint = null;
+		this.endPoint = null;
+	}
+
+
+	// todo: clean this function -H.A.
+	_updateHitResult(e) {
+		var newHitResult = this.paper.project.hitTest(e.point, {
+			fill: false,
+			stroke: false,
+			curves: false,
+			segments: true,
+			handles: false,
+			tolerance: 10,
+			match: result => {
+				return result.item !== this.hoverPreview && !result.item.data.isBorder;
+			}
+		});
+
+		if (!newHitResult) newHitResult = new this.paper.HitResult();
+
+		if (newHitResult.item && !newHitResult.item.data.isSelectionBoxGUI) {
+			// You can't select children of compound paths, you can only select the whole thing.
+			if (newHitResult.item.parent.className === 'CompoundPath') {
+				newHitResult.item = newHitResult.item.parent;
+			}
+		}
+
+		return newHitResult;
+	}
+
+	_cancelPath() {
+		if (this.path) { try { this.path.remove(); } catch (_) { } this.path = null; }
+	}
+
+	_shouldSnap(e) {
+		// checks if either keys for line snapping are used or user is on touch device
+
+		// If keyboard modifiers are held, always respect them
+		if (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) return true;
+
+		// Mobile / touch-default snapping:
+		const ev = e && e.event;
+		if (ev && typeof ev.pointerType === 'string') {
+			if (ev.pointerType === 'touch' || ev.pointerType === 'pen') return true;
+		}
+
+		// Fallbacks: coarse pointer or UA touch-capable
+		if (typeof window !== 'undefined') {
+			if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+			if ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0)) return true;
+		}
+
+		return false;
+	}
+
 
 };

@@ -24,6 +24,11 @@ Wick = {
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',
     _originals: {}, // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+    // adding global variable to track finger gestures -H.A.
+    gesture: {
+        active: false,
+        type: null
+    }
 }
 
 console.log('Wick Engine version "' + Wick.version + '" is available.');

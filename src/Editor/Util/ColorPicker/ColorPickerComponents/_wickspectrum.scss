@@ -1,0 +1,111 @@
+/*
+ * Copyright 2020 WICKLETS LLC
+ *
+ * This file is part of Wick Editor.
+ *
+ * Wick Editor is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Wick Editor is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+ @import 'Editor/_wickbrand.scss';
+
+ $color-picker-padding: 10px;
+ $color-picker-block-margin: 5px;
+ $color-picker-pointer-radius: 8px;
+
+#btn-color-picker-dropper {
+    width: 25px;
+    height: 25px;
+    margin: auto;
+}
+
+.wick-color-picker-control-body {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    width: 100%;
+    margin-top: $color-picker-block-margin;
+    gap: $color-picker-block-margin;
+}
+
+#wick-color-picker-bar-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-grow: 1;
+    gap: $color-picker-block-margin;
+}
+
+.wick-color-picker-fields {
+    display: flex;
+    flex-direction: row;
+    margin-top: $color-picker-block-margin;
+    gap: $color-picker-block-margin;
+}
+
+.wick-color-picker-color-block-container {
+    position: relative;
+    width: 25px;
+    height: 25px;
+    background-color: white;
+    border-radius: 2px;
+    margin: auto;
+}
+
+.wick-color-picker-swatches-container {
+    height: fit-content;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: $color-picker-block-margin 0;
+}
+
+.wick-color-picker-small-swatch {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #222;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==");
+    background-size: 15px 15px;
+}
+// Swatchbook styling
+.column-swatch {
+    width: 30px;
+    height: 20px;
+}
+.column-swatch:first-child {
+    margin-bottom: 2px;
+}
+.wick-swatch-picker-column {
+    display: flex;
+    flex-direction: column;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.wick-swatch-picker-book {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin: $color-picker-block-margin 0;
+    gap: 8px;
+}
+
+.wick-swatch-color-picker-body {
+    display: flex;
+    flex-direction: column;
+}

@@ -1,0 +1,30 @@
+/*
+ * Copyright I don't know
+ */
+
+@import 'Editor/_wickbrand.scss';
+
+.wick-color-picker-gradient-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    .wick-color-picker-gradient-fields-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 7px;
+
+        input {
+            width: 50%;
+        }
+    }
+    label {
+        justify-content: flex-end;
+        white-space: nowrap;
+        gap: 7px;
+        margin: 0;
+    }
+}
+.wick-color-picker-gradient-fields-row > * {
+    flex: 1;
+}

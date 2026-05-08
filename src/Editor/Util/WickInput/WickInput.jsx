@@ -138,11 +138,11 @@ class WickInput extends Component {
 
       val = parseFloat(val);
       // Constrain between min and max
-      if (min) {
+      if (typeof min === 'number') {
         val = Math.max(val, min);
       }
 
-      if (max) {
+      if (typeof max === 'number') {
         val = Math.min(val, max);
       }
 
@@ -181,25 +181,11 @@ class WickInput extends Component {
   }
 
   renderColor = () => {
-    let wrappedOnChange = (color) => {
-      let newColor = color;
-
-      // TODO: Check if we can just use HEX here.
-      if (color.rgb) {
-        let rgb = color.rgb;
-        let str = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + rgb.a + ")";
-        newColor = str;
-      }
-
-      this.props.updateLastColors && this.props.updateLastColors(newColor);
-      this.props.onChange && this.props.onChange(newColor);
-    };
-
     return (
       <ColorPicker
         className={classNames("wick-color-picker", this.props.className)}
         {...this.props}
-        onChangeComplete={this.props.onChange ? wrappedOnChange : null}
+        onChangeComplete={this.props.onChange}
         />
     );
   }

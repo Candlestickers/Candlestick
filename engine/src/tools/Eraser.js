@@ -30,6 +30,13 @@ Wick.Tools.Eraser = class extends Wick.Tool {
 
         this.cursorSize = null;
         this.cachedCursor = null;
+
+        // gesture controls - H.A.
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = 0;
+        this._strokeStartedAt = 0;
+
     }
 
     get doubleClickEnabled () {
@@ -71,6 +78,20 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
+
+        // If a gesture is active now, don’t begin -_- 
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            this._suppressCommit = true;
+            return;
+        }
+
+        // track stroke and clear gesture interrupt
+        this._gestureInterrupted = false;
+        this._suppressCommit = false;
+        this._gestureSeqAtStart = (window.Wick && Wick.gesture && Wick.gesture.seq) ? Wick.gesture.seq : 0;
+        this._strokeStartedAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
         if (!this.path) {
             this.path = new this.paper.Path({
                 strokeColor: 'white',
@@ -85,6 +106,15 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     }
 
     onMouseDrag (e) {
+
+        // If a two-finger gesture begins mid-stroke, abort! 
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            this._gestureInterrupted = true;
+            this._suppressCommit = true;
+            this._cancelPath(); // remove in-progress eraser path 
+            return;
+        }
+
         if (e.point) {
             this.path.add(e.point);
             this.path.smooth();
@@ -92,6 +122,23 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
+
+        // Compute interruption (before touching this.path) - H.A.
+        const g = (window.Wick && Wick.gesture) || {};
+        const gestureActiveNow = !!g.active;
+        const gestureStartedDuringStroke =
+        (g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt) ||
+        ((g.seq || 0) !== (this._gestureSeqAtStart || 0));
+
+        const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+
+        if (interrupted) {
+            this._cancelPath(); // safety net right here
+            this._suppressCommit = false;
+            this._gestureInterrupted = false;
+            return;
+        }
+
         if(!this.path) return;
 
         var potraceResolution = 0.7;
@@ -106,4 +153,12 @@ Wick.Tools.Eraser = class extends Wick.Tool {
             resolution: potraceResolution * this.paper.view.zoom,
         });
     }
+
+    _cancelPath () {
+        if (this.path) {
+            try { this.path.remove(); } catch (_) {}
+            this.path = null;
+        }
+    }
+
 }

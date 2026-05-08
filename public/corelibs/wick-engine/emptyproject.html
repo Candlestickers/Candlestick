@@ -45754,7 +45754,13 @@ TWEEN.Interpolation = {
 Wick = {
   version: window.WICK_ENGINE_BUILD_VERSION || "dev",
   resourcepath: '../dist/',
-  _originals: {} // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  _originals: {},
+  // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).
+  // adding global variable to track finger gestures -H.A.
+  gesture: {
+    active: false,
+    type: null
+  }
 };
 console.log('Wick Engine version "' + Wick.version + '" is available.');
 
@@ -48572,17 +48578,44 @@ Wick.HTMLPreview = class {
    * @param {Wick.Project} project - The project to run.
    * @param {function} callback - Function that's called when the popup is successfully created.
    */
-  static previewProject(project, callback) {
-    Wick.HTMLExport.bundleProject(project, html => {
-      var windowFeatures = "height=" + project.height + ",width=" + project.width;
-      var popupWindow = window.open('', '_blank', windowFeatures);
-      if (popupWindow) {
-        popupWindow.document.title = project.name;
-        popupWindow.document.open();
-        popupWindow.document.write(html);
-        popupWindow.document.close();
+  static async previewProject(project, callback) {
+    Wick.HTMLExport.bundleProject(project, async html => {
+      // try creating preview window with tauri api... 
+      try {
+        // try to create a preview window through tauri
+        const WebviewWindow = window.__TAURI__.webviewWindow.WebviewWindow;
+        if (WebviewWindow) {
+          // if successfull in creating the window...
+
+          // create a blob for html to generate url
+          const blob = new Blob([html], {
+            type: 'text/html'
+          });
+          const url = URL.createObjectURL(blob);
+          const preview = new WebviewWindow('preview-' + Date.now(), {
+            title: project.name,
+            width: project.width || 800,
+            height: project.height || 600,
+            url // load the blob 
+          });
+          preview.once('tauri://created', () => {
+            callback(preview);
+          });
+          return; // exit early if tauri worked (else, keep going to browser preview window)
+        }
+      } catch (e) {
+        console.error('Tauri error: ', e);
       }
-      callback(popupWindow);
+
+      // no tauri? No problemo, open browser
+      console.warn('Opening browser preview');
+      const win = window.open('', '_blank', `height=${project.height},width=${project.width}`);
+      if (win) {
+        win.document.title = project.name;
+        win.document.write(html);
+        win.document.close();
+      }
+      callback(win);
     });
   }
 };
@@ -50389,6 +50422,7 @@ Wick.Project = class extends Wick.Base {
 
     // Fix missing mimetype for wickobj files
     var type = file.type;
+    // TODO: -H.A. find out why wickobj aren't opening in app build versions
     if (file.type === '' && file.name.endsWith('.wickobj')) {
       type = 'application/json';
     }
@@ -52627,6 +52661,38 @@ Wick.Selection = class extends Wick.Base {
       this._selectedObjectsUUIDs.push(frame.uuid);
     });
   }
+  get useGradientGUI() {
+    return this._useGradientGUI || false;
+  }
+  set useGradientGUI(type) {
+    this._useGradientGUI = type;
+  }
+  get selectedStopIndex() {
+    return this._selectedStopIndex || 0;
+  }
+  set selectedStopIndex(index) {
+    this._selectedStopIndex = index;
+  }
+  deleteSelectedStop() {
+    if (this.useGradientGUI) {
+      let fillColor = this.fillColor;
+      if (fillColor) {
+        let stops = fillColor.gradient.stops;
+        let stopIndex = this.selectedStopIndex;
+        if (stops.length <= 2) {
+          stops[stopIndex].color = stops[1 - stopIndex].color;
+          stopIndex = 1 - stopIndex;
+        } else {
+          stops.splice(stopIndex, 1);
+          if (stopIndex >= stops.length) {
+            stopIndex = stops.length - 1;
+          }
+        }
+        this.selectedStopIndex = stopIndex;
+        this.fillColor = fillColor;
+      }
+    }
+  }
 };
 /*
  * Copyright 2020 WICKLETS LLC
@@ -53047,7 +53113,7 @@ Wick.Timeline = class extends Wick.Base {
       if (namedFrame) {
         this.forceFrame(namedFrame.start);
       }
-    } else if (typeof frame === 'number') {
+    } else if (typeof frame === 'number' && !isNaN(frame)) {
       this.forceFrame(frame);
     } else {
       throw new Error('gotoFrame: Invalid argument: ' + frame);
@@ -58028,6 +58094,8 @@ Wick.Tool = class {
 
     // Attach onActivate event
     this.paperTool.onActivate = e => {
+      // const view = this.project && this.project.view;
+      // if (view && view.gestureActive) return;
       this.onActivate(e);
     };
 
@@ -58294,7 +58362,7 @@ Wick.Tools = {};
 
 Wick.Tools.Brush = class extends Wick.Tool {
   static get CROQUIS_WAIT_AMT_MS() {
-    return 100;
+    return 30;
   }
   get doubleClickEnabled() {
     return false;
@@ -58317,6 +58385,12 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = null;
     this.errorOccured = false;
     this._isInProgress = false;
+
+    // keep track of when mouse event is interrupted by gestures - H.A. 
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
     this._croquisStartTimeout = null;
 
     // These are used to crop the final path image.
@@ -58332,6 +58406,19 @@ Wick.Tools.Brush = class extends Wick.Tool {
   }
   get isDrawingTool() {
     return true;
+  }
+  cancel() {
+    if (!this._isInProgress) return;
+    this._suppressCommit = true;
+    this._gestureInterrupted = true;
+
+    // Clear any pending work (potrace timeout)
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
+    this.discard(); // close stroke and nuke the rooster! rooster? rastor— same thing
+    this._isInProgress = false;
   }
   onActivate(e) {
     if (this._isInProgress) this.finishStrokeEarly();
@@ -58361,13 +58448,39 @@ Wick.Tools.Brush = class extends Wick.Tool {
   onDeactivate(e) {
     // This prevents croquis from leaving stuck brush strokes on the screen.
     this.finishStrokeEarly();
+    if (this.croquis) this.croquis.clearLayer();
   }
   onMouseMove(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     super.onMouseMove(e);
     this._updateCanvasAttributes();
     this._regenCursor();
   }
   onMouseDown(e) {
+    // add in check for wick gestures - H.A.
+    // gesture active? don't even begin
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // not interrupted by hand gestures
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+    // clean up any pending work from a prior aborted stroke (belt & suspenders)
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
+    if (this.croquis) {
+      this.croquis.clearLayer();
+    }
+    this._resetStrokeBounds(new paper.Point(0, 0)); // or e.point if you prefer
+
     if (this._isInProgress) this.discard();
     this._currentDrawingFrame = this.project.activeFrame;
     clearTimeout(this._croquisStartTimeout);
@@ -58396,6 +58509,22 @@ Wick.Tools.Brush = class extends Wick.Tool {
   onMouseDrag(e) {
     if (!this._isInProgress) return;
 
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      if (this._isInProgress) {
+        this._gestureInterrupted = true;
+        this._suppressCommit = true;
+
+        // cancel pending potrace -_-
+        if (this._croquisStartTimeout) {
+          clearTimeout(this._croquisStartTimeout);
+          this._croquisStartTimeout = null;
+        }
+        this.discard(); // abort croquis safely
+      }
+      return;
+    }
+
     // Forward mouse event to croquis canvas
     var point = this._croquisToPaperPoint(e.point);
     this._updateStrokeBounds(point);
@@ -58409,14 +58538,25 @@ Wick.Tools.Brush = class extends Wick.Tool {
     this.lastPressure = this.pressure;
   }
   onMouseUp(e) {
+    // Was this stroke interrupted by a gesture ? that's the question... - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      if (this._isInProgress) this.discard();
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this._isInProgress) return;
     this._isInProgress = false;
-    var point = this._croquisToPaperPoint(e.point);
+    const point = this._croquisToPaperPoint(e.point);
     this._calculateStrokeBounds(point);
     try {
       this.croquis.up(point.x, point.y, this.lastPressure);
-    } catch (e) {
-      this.handleBrushError(e);
+    } catch (err) {
+      this.handleBrushError(err);
       return;
     }
     this._potraceCroquisCanvas(point);
@@ -58462,13 +58602,25 @@ Wick.Tools.Brush = class extends Wick.Tool {
     if (!this._isInProgress) return;
     this._isInProgress = false;
 
-    // "Give up" on the current stroke by forcing a mouseup
-    this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+    // prevent any scheduled potrace from the previous stroke
+    if (this._croquisStartTimeout) {
+      clearTimeout(this._croquisStartTimeout);
+      this._croquisStartTimeout = null;
+    }
 
-    // Clear the current croquis canvas
-    setTimeout(() => {
-      this.croquis.clearLayer();
-    }, 10);
+    // make sure we never commit anything from this aborted stroke
+    this._suppressCommit = true;
+
+    // close the stroke in croquis so it releases internal state
+    try {
+      this.croquis.up(this._lastMousePoint.x, this._lastMousePoint.y, this._lastMousePressure);
+    } catch (_) {}
+
+    // nuke any raster the abort might have left behind — do it now, not later
+    this.croquis.clearLayer();
+
+    // ensure stale crop bounds don't leak into the next potrace
+    this._resetStrokeBounds(this._lastMousePoint);
   }
 
   /**
@@ -58557,6 +58709,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
   /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */
   _potraceCroquisCanvas(point) {
+    if (this._suppressCommit || this._gestureInterrupted || window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     this.errorOccured = false;
     var strokeBounds = this.strokeBounds.clone();
 
@@ -58569,6 +58726,13 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
     // Give croquis just a little bit to get the canvas ready...
     this._croquisStartTimeout = setTimeout(() => {
+      // check for gesture interruptions
+      if (this._suppressCommit || this._gestureInterrupted || window.Wick && Wick.gesture && Wick.gesture.active) {
+        this._suppressCommit = false;
+        this._gestureInterrupted = false;
+        return;
+      }
+
       // Retrieve Croquis canvas
       var canvas = this.paper.view._element.parentElement.getElementsByClassName('croquis-layer-canvas')[1];
       if (!canvas) {
@@ -58709,14 +58873,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     this.selectionBox = new this.paper.SelectionBox(paper);
     this.selectedItems = [];
     this.currentCursorIcon = '';
-    this.hoverPreview = new this.paper.Item({
-      insert: false
-    });
-    this.hoverPreview2 = new this.paper.Item({
-      insert: false
-    });
-    this._lastSelection = null;
-    this.gradientColorSelection = [false];
   }
   /**
    * Generate the current cursor.
@@ -58729,72 +58885,63 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   }
   onActivate(e) {
     this.selectedItems = [];
-    this._lastSelection = null;
   }
   onDeactivate(e) {}
   onMouseMove(e) {
     super.onMouseMove(e);
 
-    // remove hover preview and a new one will be rendered if needed
-    this.hoverPreview.remove();
-    this.hoverPreview2.remove();
-    this.gradientColorSelection = [false];
-
     // Find the thing that is currently under the cursor.
     this.hitResult = this._updateHitResult(e);
-    if (this._selection.numObjects === 1) {
-      //&& this._lastSelection._data.wickType==="path" && this._lastSelection._style._values.fillColor._type === "gradient") {
-      this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-      // console.info(this._lastSelection);
-      if (this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient") {
-        let FC = this._lastSelection._json[1][1].fillColor;
-        let distToCursor = xy => {
-          return Math.sqrt((xy[0] - e.tool._lastPoint.x) ** 2 + (xy[1] - e.tool._lastPoint.y) ** 2);
-        };
-        this.hoverPreview = this.createGradPoint({
-          x: FC[2][0],
-          y: FC[2][1]
-        }, window.gradientStartColor, 5);
-        this.hoverPreview2 = this.createGradPoint({
-          x: FC[3][0],
-          y: FC[3][1]
-        }, window.gradientEndColor, 5);
-        this.gradientColorSelection = [distToCursor(FC[2]), distToCursor(FC[3])];
-        this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length > 0 && Math.min(...this.gradientColorSelection) < 10;
-      } // Added gradient stops movement -H.A.
-    }
+
     // Update the image being used for the cursor
-    this._setCursor(this.gradientColorSelection.isCursorHover ? this.CURSOR_GRAD : this._getCursor());
-  }
-  createGradPoint(xy, fill, sz) {
-    let a = new this.paper.Path.Circle(xy, sz / this.paper.view.zoom);
-    let color = new this.paper.Color(fill);
-
-    // a.strokeColor = new this.paper.Color({
-    // 	red: 1-color.red,
-    // 	green: 1-color.green,
-    // 	blue: 1-color.blue
-    // });
-
-    a.strokeColor = {
-      red: 1 - color.red,
-      green: 1 - color.green,
-      blue: 1 - color.blue
-    };
-
-    //`rgba(${1-color.red},${1-color.green},${1-color.blue},0.7)`;//'#ffa'; //'rgba(255, 0, 0, 1)';
-    a.strokeWidth = 1.5 / this.paper.view.zoom;
-    a.fillColor = fill; //'#fff';
-    a.data.wickType = 'gui';
-    return a;
+    this._setCursor(this._getCursor());
+    if (this._selection.useGradientGUI) {
+      // Update the gradient hover stop
+      const widget = this._widget;
+      if (widget._gradientGUI.container.visible) {
+        let item = this.hitResult.item;
+        if (item && item.data.parentItem) item = item.data.parentItem;
+        if (!item || !item.data.handleType) {
+          widget._buildHoverStop(e.point);
+        } else {
+          widget._gradientGUI.hoverStop.visible = false;
+        }
+      }
+    }
   }
   onMouseDown(e) {
     super.onMouseDown(e);
+    // GESTURES CHECK before running tool -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     if (!e.modifiers) e.modifiers = {};
     this.hitResult = this._updateHitResult(e);
-    if (this.gradientColorSelection.isCursorHover) {
-      // selecting gradient
-    } else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {// Clicked the selection box GUI, do nothing
+    if (this._selection.useGradientGUI) {
+      // Clicked the gradient editor GUI, check for stop creation/selection
+      const widget = this._widget;
+      widget._gradientGUI.createdStopOnDown = false;
+      if (widget._gradientGUI.container.visible) {
+        let item = this.hitResult.item;
+        if (item && item.data.parentItem) item = item.data.parentItem;
+        let stopIndex = null;
+        if (item && item.data.handleType === 'gradient-stop') {
+          widget._selectStop(item);
+          stopIndex = widget._gradientGUI.stops.indexOf(item);
+        } else if (!item || !item.data.handleType) {
+          stopIndex = widget._createStopFromPoint(e.point);
+          if (stopIndex !== null) {
+            widget._gradientGUI.createdStopOnDown = true;
+          }
+        }
+        if (stopIndex !== null) {
+          this._selection.selectedStopIndex = stopIndex;
+          this.fireEvent({
+            eventName: 'canvasModified',
+            actionName: 'cursorSelectStop'
+          });
+        }
+      }
+    } else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+      // Clicked the selection box GUI, do nothing
     } else if (this.hitResult.item && this._isItemSelected(this.hitResult.item)) {
       // We clicked something that was already selected.
       // Shift click: Deselect that item
@@ -58811,7 +58958,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
         this._clearSelection();
       } // Clicked an item: select that item
 
-      this._lastSelection = this.hitResult.item;
       this._selectItem(this.hitResult.item);
       this.fireEvent({
         eventName: 'canvasModified',
@@ -58853,26 +58999,32 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseDrag(e) {
+    // GESTURE CHECK — cancel selection -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      // undo selection box
+      if (this.selectionBox && this.selectionBox.active) {
+        this.selectionBox._active = false;
+        if (this.selectionBox._box) this.selectionBox._box.remove();
+        this.selectionBox._items = [];
+      }
+
+      // Cancel live transform jus tin case
+      if (this._widget && this._widget.currentTransformation) {
+        this._widget.currentTransformation = null;
+        if (typeof this._widget.update === 'function') this._widget.update();
+      }
+
+      // Do not proceed with normal drag logic while gesture is active
+      this.__isDragging = false;
+      // done, that's all -H.A.
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
     this.__isDragging = true;
-    if (this.gradientColorSelection.isCursorHover) {
-      this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-
-      // get gradient point
-      let selectedPoint = `hoverPreview${this.gradientColorSelection[0] === Math.min(...this.gradientColorSelection) ? '' : '2'}`;
-      this[selectedPoint].remove();
-      let FC = this._lastSelection._json[1][1].fillColor[2 + 1 * selectedPoint.includes('2')];
-      FC[0] += e.delta.x;
-      FC[1] += e.delta.y;
-      this[selectedPoint] = this.createGradPoint({
-        x: FC[0],
-        y: FC[1]
-      }, this[selectedPoint].fillColor, 15);
-      window.gradientStopsTrackPosition[1 * selectedPoint.includes('2')] = [FC];
-    } else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+    if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
       // Update selection drag
       if (!this._widget.currentTransformation) {
-        this._widget.startTransformation(this.hitResult.item);
+        this._widget.startTransformation(this.hitResult.item, e);
       }
       this._widget.updateTransformation(this.hitResult.item, e);
     } else if (this.selectionBox.active) {
@@ -58881,7 +59033,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     } else if (this.hitResult.item && this.hitResult.type === 'fill') {
       // We're dragging the selection itself, so move the whole item.
       if (!this._widget.currentTransformation) {
-        this._widget.startTransformation(this.hitResult.item);
+        this._widget.startTransformation(this.hitResult.item, e);
       }
       this._widget.updateTransformation(this.hitResult.item, e);
     } else {
@@ -58889,12 +59041,13 @@ Wick.Tools.Cursor = class extends Wick.Tool {
     }
   }
   onMouseUp(e) {
+    // (LAST) GESTURE CHECK . . . can never be too safe -H.A.
+    // this is more useful for two finger undo gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this.__isDragging = false;
+      return;
+    }
     if (!e.modifiers) e.modifiers = {};
-
-    // remove hover preview and a new one will be rendered if needed
-    this.hoverPreview.remove();
-    this.hoverPreview2.remove();
-    this.gradientColorSelection = [false];
 
     // Find the thing that is currently under the cursor.
     this.hitResult = this._updateHitResult(e);
@@ -58925,26 +59078,6 @@ Wick.Tools.Cursor = class extends Wick.Tool {
           eventName: 'canvasModified',
           actionName: 'cursorDrag'
         });
-      } else if (this._selection.numObjects === 1) {
-        // check to see if we're selecting something
-        this._lastSelection = Wick.ObjectCache.getObjectByUUID(this.project.selection._selectedObjectsUUIDs[0]);
-        // check to see if object we're selecting is a gradient
-        if (this._lastSelection._classname === "Path" && this._lastSelection._json[1][1] && this._lastSelection._json[1][1].fillColor[0] === "gradient") {
-          let FC = this._lastSelection._json[1][1].fillColor;
-          let distToCursor = xy => {
-            return Math.sqrt((xy[0] - e.tool._lastPoint.x) ** 2 + (xy[1] - e.tool._lastPoint.y) ** 2);
-          };
-          this.hoverPreview = this.createGradPoint({
-            x: FC[2][0],
-            y: FC[2][1]
-          }, window.gradientStartColor, 5);
-          this.hoverPreview2 = this.createGradPoint({
-            x: FC[3][0],
-            y: FC[3][1]
-          }, window.gradientEndColor, 5);
-          this.gradientColorSelection = [distToCursor(FC[2]), distToCursor(FC[3])];
-          this.gradientColorSelection.isCursorHover = this.gradientColorSelection.length > 0 && Math.min(...this.gradientColorSelection) < 10;
-        } // Added gradient stops movement -H.A.
       }
     }
   }
@@ -58956,7 +59089,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
       segments: true,
       tolerance: this.SELECTION_TOLERANCE,
       match: result => {
-        return result.item !== this.hoverPreview && !result.item.data.isBorder;
+        return !result.item.data.isBorder;
       }
     });
     if (!newHitResult) newHitResult = new this.paper.HitResult();
@@ -58992,6 +59125,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   _getCursor() {
     if (!this.hitResult.item) {
       return this.CURSOR_DEFAULT;
+    } else if (this.hitResult.item.data.parentItem && this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop' || this.hitResult.item.data.handleType === 'gradient-point') {
+      return this.CURSOR_GRAD;
     } else if (this.hitResult.item.data.isSelectionBoxGUI) {
       // Don't show any custom cursor if the mouse is over the border, the border does nothing
       if (this.hitResult.item.name === 'border') {
@@ -59137,6 +59272,12 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     this.path = null;
     this.topLeft = null;
     this.bottomRight = null;
+
+    // gesture handling - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59160,10 +59301,33 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else reset gesture check and timestamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.topLeft = e.point;
     this.bottomRight = e.point;
   }
   onMouseDrag(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      return;
+    }
     if (this.path) this.path.remove();
     this.bottomRight = e.point;
 
@@ -59183,6 +59347,22 @@ Wick.Tools.Ellipse = class extends Wick.Tool {
     this.path.strokeCap = 'round';
   }
   onMouseUp(e) {
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      // GESTURE CHECK - H.A. (this is getting repetitive ;-;)
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     this.path.remove();
     this.addPathToProject(this.path);
@@ -59222,6 +59402,12 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     this.path = null;
     this.cursorSize = null;
     this.cachedCursor = null;
+
+    // gesture controls - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59256,6 +59442,18 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // If a gesture is active now, don’t begin -_- 
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // track stroke and clear gesture interrupt
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     if (!this.path) {
       this.path = new this.paper.Path({
         strokeColor: 'white',
@@ -59269,12 +59467,30 @@ Wick.Tools.Eraser = class extends Wick.Tool {
     this.path.add(e.point);
   }
   onMouseDrag(e) {
+    // If a two-finger gesture begins mid-stroke, abort! 
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath(); // remove in-progress eraser path 
+      return;
+    }
     if (e.point) {
       this.path.add(e.point);
       this.path.smooth();
     }
   }
   onMouseUp(e) {
+    // Compute interruption (before touching this.path) - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      this._cancelPath(); // safety net right here
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     var potraceResolution = 0.7;
     this.path.potrace({
@@ -59289,6 +59505,14 @@ Wick.Tools.Eraser = class extends Wick.Tool {
       },
       resolution: potraceResolution * this.paper.view.zoom
     });
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
   }
 };
 /*
@@ -59409,6 +59633,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
   constructor() {
     super();
     this.name = 'fillbucket';
+
+    // simple gesture handle -H.A.
+    this._gestureSeqAtStart = 0;
+    this._pendingFill = false;
   }
   get doubleClickEnabled() {
     return false;
@@ -59425,12 +59653,30 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
     return true;
   }
   onActivate(e) {}
-  onDeactivate(e) {}
+  onDeactivate(e) {
+    this._pendingFill = false;
+    this.setCursor('default');
+  }
   onMouseDown(e) {
+    // Don’t start a fill while two-finger gesture is active
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      return;
+    }
+
+    // gesture stamp
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._pendingFill = true;
     setTimeout(() => {
       this.setCursor('wait');
     }, 0);
     setTimeout(() => {
+      // If a gesture started after mousedown, cancel before doing any work
+      const g = window.Wick && Wick.gesture || {};
+      if (!this._pendingFill || g.active || (g.seq || 0) !== (this._gestureSeqAtStart || 0)) {
+        this._pendingFill = false;
+        this.setCursor('default');
+        return;
+      }
       this.paper.hole({
         point: e.point,
         bgColor: new paper.Color(this.project.backgroundColor.hex),
@@ -59441,29 +59687,44 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
           return frame.view.objectsLayer;
         }),
         onFinish: path => {
+          // Final safety check at commit-time as well
+          const g2 = window.Wick && Wick.gesture || {};
+          if (!this._pendingFill || g2.active || (g2.seq || 0) !== (this._gestureSeqAtStart || 0)) {
+            this._pendingFill = false;
+            this.setCursor('default');
+            if (path && typeof path.remove === 'function') {
+              try {
+                path.remove();
+              } catch (_) {}
+            }
+            return;
+          }
           this.setCursor('default');
+          this._pendingFill = false;
           if (path) {
             path.fillColor = this.getSetting('fillColor').rgba;
+            path.strokeWidth = 2;
+            path.strokeColor = this.getSetting('fillColor').rgba;
             path.name = null;
-            this.addPathToProject();
+            console.log(path);
+
+            // Insert where you had it before
             if (e.item) {
               path.insertAbove(e.item);
             } else {
               this.paper.project.activeLayer.addChild(path);
-              this.paper.OrderingUtils.sendToBack([path]);
             }
+
+            // Now add to project/history & fire event
+            this.addPathToProject(path);
             this.fireEvent({
               eventName: 'canvasModified',
               actionName: 'fillbucket'
             });
           }
-        },
-        onError: message => {
-          this.setCursor('default');
-          this.project.errorOccured(message);
         }
       });
-    }, 50);
+    }, 0);
   }
   onMouseDrag(e) {}
   onMouseUp(e) {}
@@ -59624,6 +59885,12 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hoverPreview = new this.paper.Item({
       insert: false
     });
+
+    // HAND GESTURES - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -59640,10 +59907,12 @@ Wick.Tools.Line = class extends Wick.Tool {
     return true;
   }
   onActivate(e) {
-    this.path.remove();
+    this._cancelPath();
+    // this.path.remove();
   }
   onDeactivate(e) {
-    this.path.remove();
+    this._cancelPath();
+    // this.path.remove();
   }
   onMouseMove(e) {
     // inherit mousemove class
@@ -59656,7 +59925,7 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hitResult = this._updateHitResult(e);
 
     // alt/ option or command/ control to snap to nearby selection
-    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+    if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
       this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
       this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
       this.hoverPreview.strokeWidth = 1.5;
@@ -59668,12 +59937,33 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hoverPreview.data.wickType = 'gui';
   }
   onMouseDown(e) {
+    // check for gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else reset gesture stamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+
     // check if there is a hoverpoint
     // else use e.point for startPoint
     if (!this.startPoint) this.startPoint = e.point;
   }
   onMouseDrag(e) {
-    this.path.remove();
+    // abort mid-process if needed
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath();
+      return;
+    }
+
+    // this.path.remove();
+    this._cancelPath();
 
     // remove the hover preview
     this.hoverPreview.remove();
@@ -59682,7 +59972,7 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.hitResult = this._updateHitResult(e);
 
     // snap to point if option/ alt or command/ control
-    if ((e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) && this.hitResult.type === 'segment') {
+    if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
       this.endPoint = {
         x: this.hitResult.segment.point.x,
         y: this.hitResult.segment.point.y
@@ -59726,15 +60016,65 @@ Wick.Tools.Line = class extends Wick.Tool {
     this.path.strokeWidth = this.getSetting('strokeWidth');
   }
   onMouseUp(e) {
-    this.hoverPreview.remove();
-    this.path.remove();
-    if (this.endPoint.x !== this.startPoint.x || this.endPoint.y !== this.startPoint.y) {
-      this.addPathToProject(this.path);
-      this.fireEvent({
-        eventName: 'canvasModified',
-        actionName: 'line'
-      });
+    // clean up preview safely
+    if (this.hoverPreview && typeof this.hoverPreview.remove === 'function') {
+      try {
+        this.hoverPreview.remove();
+      } catch (_) {}
     }
+
+    // Compute interruption FIRST
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      // abort; remove any preview path and reset points
+      this._cancelPath();
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      this.startPoint = null;
+      this.endPoint = null;
+      return;
+    }
+
+    // Not interrupted — finalize the line if it’s not a dot
+    if (!this.startPoint || !this.endPoint) {
+      // nothing meaningful to add
+      this._cancelPath();
+      return;
+    }
+    const samePoint = this.endPoint.x === this.startPoint.x && this.endPoint.y === this.startPoint.y;
+    if (samePoint) {
+      this._cancelPath();
+      this.startPoint = null;
+      this.endPoint = null;
+      return;
+    }
+
+    // Ensure we have a path to add (gesture aborts may have nulled it)
+    if (!this.path) {
+      this.path = new this.paper.Path.Line(this.startPoint, this.endPoint);
+      this.path.strokeCap = 'round';
+      this.path.strokeColor = this.getSetting('strokeColor').rgba;
+      this.path.strokeWidth = this.getSetting('strokeWidth');
+    }
+
+    // House style elsewhere removes then adds; keep consistent
+    try {
+      this.path.remove();
+    } catch (_) {}
+    // this._cancelPath();
+    this.addPathToProject(this.path);
+    this.path = null;
+    this.fireEvent({
+      eventName: 'canvasModified',
+      actionName: 'line'
+    });
+
+    // reset start/end for next stroke
+    this.startPoint = null;
+    this.endPoint = null;
   }
 
   // todo: clean this function -H.A.
@@ -59758,6 +60098,33 @@ Wick.Tools.Line = class extends Wick.Tool {
       }
     }
     return newHitResult;
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
+  }
+  _shouldSnap(e) {
+    // checks if either keys for line snapping are used or user is on touch device
+
+    // If keyboard modifiers are held, always respect them
+    if (e.modifiers.alt || e.modifiers.command || e.modifiers.control || e.modifiers.option) return true;
+
+    // Mobile / touch-default snapping:
+    const ev = e && e.event;
+    if (ev && typeof ev.pointerType === 'string') {
+      if (ev.pointerType === 'touch' || ev.pointerType === 'pen') return true;
+    }
+
+    // Fallbacks: coarse pointer or UA touch-capable
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true;
+      if ('ontouchstart' in window || navigator && navigator.maxTouchPoints > 0) return true;
+    }
+    return false;
   }
 };
 /*
@@ -59853,12 +60220,25 @@ Wick.Tools.Pan = class extends Wick.Tool {
   }
   onActivate(e) {}
   onDeactivate(e) {}
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     var d = e.downPoint.subtract(e.point);
     this.paper.view.center = this.paper.view.center.add(d);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.fireEvent({
       eventName: 'canvasViewTransformed'
     });
@@ -60190,6 +60570,12 @@ Wick.Tools.Pencil = class extends Wick.Tool {
     this.name = 'pencil';
     this.path = null;
     this._movement = new paper.Point();
+
+    // gesture interrupts - H.A.
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -60208,6 +60594,18 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   onActivate(e) {}
   onDeactivate(e) {}
   onMouseDown(e) {
+    // handling mobile finger gestures — H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+
+    // New stroke: clear latches and stamp gesture/stroke start
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this._movement = new paper.Point();
     if (!this.path) {
       this.path = new this.paper.Path({
@@ -60220,6 +60618,14 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   }
   onMouseDrag(e) {
     if (!this.path) return;
+
+    // If a two-finger gesture begins mid-stroke, abort
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      this._cancelPath(); // removes in-progress path
+      return;
+    }
     this._movement = this._movement.add(e.delta);
     if (this._movement.length > Wick.Tools.Pencil.MIN_ADD_POINT_MOVEMENT / this.paper.view.zoom) {
       this._movement = new paper.Point();
@@ -60229,6 +60635,18 @@ Wick.Tools.Pencil = class extends Wick.Tool {
   }
   onMouseUp(e) {
     if (!this.path) return;
+
+    // check for gesture interrupts before finalizing
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      this._cancelPath(); // ensure nothing committed
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     this.path.add(e.point);
     this.path.simplify();
     this.path.remove();
@@ -60238,6 +60656,14 @@ Wick.Tools.Pencil = class extends Wick.Tool {
       eventName: 'canvasModified',
       actionName: 'pencil'
     });
+  }
+  _cancelPath() {
+    if (this.path) {
+      try {
+        this.path.remove();
+      } catch (_) {}
+      this.path = null;
+    }
   }
 };
 /*
@@ -60269,6 +60695,12 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     this.path = null;
     this.topLeft = null;
     this.bottomRight = null;
+
+    // gesture control variables
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = 0;
+    this._strokeStartedAt = 0;
   }
   get doubleClickEnabled() {
     return false;
@@ -60292,10 +60724,33 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // check if gesture is active -H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      return;
+    }
+    // else, reset gesture variables and timestamp
+    this._gestureInterrupted = false;
+    this._suppressCommit = false;
+    this._gestureSeqAtStart = window.Wick && Wick.gesture && Wick.gesture.seq ? Wick.gesture.seq : 0;
+    this._strokeStartedAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     this.topLeft = e.point;
     this.bottomRight = e.point;
   }
   onMouseDrag(e) {
+    // GESTURE CHECK - H.A.
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      this._suppressCommit = true;
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      return;
+    }
     if (this.path) this.path.remove();
     this.bottomRight = e.point;
 
@@ -60318,6 +60773,22 @@ Wick.Tools.Rectangle = class extends Wick.Tool {
     this.path.strokeCap = 'round';
   }
   onMouseUp(e) {
+    // GESTURE CHECK - H.A.
+    const g = window.Wick && Wick.gesture || {};
+    const gestureActiveNow = !!g.active;
+    const gestureStartedDuringStroke = g.lastStartAt && this._strokeStartedAt && g.lastStartAt >= this._strokeStartedAt || (g.seq || 0) !== (this._gestureSeqAtStart || 0);
+    const interrupted = this._suppressCommit || this._gestureInterrupted || gestureActiveNow || gestureStartedDuringStroke;
+    if (interrupted) {
+      if (this.path) {
+        try {
+          this.path.remove();
+        } catch (_) {}
+        this.path = null;
+      }
+      this._suppressCommit = false;
+      this._gestureInterrupted = false;
+      return;
+    }
     if (!this.path) return;
     this.path.remove();
     this.addPathToProject(this.path);
@@ -60389,6 +60860,10 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
   }
   onMouseDown(e) {
+    // Ignore clicks during two-finger gesture
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      return;
+    }
     if (this.editingText) {
       this.finishEditingText();
     } else if (this.hoveredOverText) {
@@ -60413,7 +60888,9 @@ Wick.Tools.Text = class extends Wick.Tool {
       //this.fireEvent('canvasModified');
     }
   }
-  onMouseDrag(e) {}
+  onMouseDrag(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) return;
+  }
   onMouseUp(e) {}
   reset() {
     this.finishEditingText();
@@ -60481,12 +60958,25 @@ Wick.Tools.Zoom = class extends Wick.Tool {
   onDeactivate(e) {
     this.deleteZoomBox();
   }
-  onMouseDown(e) {}
+  onMouseDown(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
+  }
   onMouseDrag(e) {
     this.deleteZoomBox();
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     this.createZoomBox(e);
   }
   onMouseUp(e) {
+    if (window.Wick && Wick.gesture && Wick.gesture.active) {
+      this._gestureInterrupted = true;
+      return;
+    }
     if (this.zoomBox && this.zoomBoxIsValidSize()) {
       var bounds = this.zoomBox.bounds;
       var viewBounds = this.paper.view.bounds;
@@ -61055,6 +61545,56 @@ class SelectionWidget {
     this._item = new paper.Group({
       insert: false
     });
+    let startPath = new paper.Path.Circle({
+      radius: SelectionWidget.ENDPOINT_RADIUS,
+      fillColor: SelectionWidget.BOX_STROKE_COLOR,
+      insert: false,
+      applyMatrix: false,
+      data: {
+        handleType: 'gradient-point',
+        handleEdge: 'start'
+      }
+    });
+    let endPath = new paper.Path.Circle({
+      radius: SelectionWidget.ENDPOINT_RADIUS,
+      fillColor: SelectionWidget.BOX_STROKE_COLOR,
+      insert: false,
+      applyMatrix: false,
+      data: {
+        handleType: 'gradient-point',
+        handleEdge: 'end'
+      }
+    });
+    let linePath = new paper.Path.Line({
+      from: [0, 0],
+      to: [0, 0],
+      insert: false,
+      strokeColor: SelectionWidget.BOX_STROKE_COLOR,
+      strokeWidth: SelectionWidget.BOX_STROKE_WIDTH,
+      strokeScaling: false,
+      applyMatrix: false
+    });
+    let hoverStop = this._buildGradientStop(true);
+    this._gradientGUI = {
+      container: new paper.Group({
+        applyMatrix: false,
+        data: {
+          isSelectionBoxGUI: true
+        }
+      }),
+      startPath,
+      endPath,
+      linePath,
+      stops: [],
+      selectedStop: null,
+      hoverStop,
+      createdStopOnDown: false,
+      stroke: false,
+      radial: false,
+      startpoint: new paper.Point(0, 0),
+      endpoint: new paper.Point(0, 0),
+      lineVector: new paper.Point(0, 0)
+    };
   }
 
   /**
@@ -61175,7 +61715,7 @@ class SelectionWidget {
     return this._currentTransformation;
   }
   set currentTransformation(currentTransformation) {
-    if (['translate', 'scale', 'rotate'].indexOf(currentTransformation) === -1) {
+    if (['translate', 'scale', 'rotate', 'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
       console.error('Paper.SelectionWidget: Invalid transformation type: ' + currentTransformation);
       currentTransformation = null;
     } else {
@@ -61188,6 +61728,7 @@ class SelectionWidget {
    * @param {number} boxRotation - the rotation of the selection GUI. Optional, defaults to 0
    * @param {paper.Item[]} items - the items to build the GUI around
    * @param {paper.Point} pivot - the pivot point that the selection rotates around. Defaults to (0,0)
+   * @param {string|boolean} useGradientGUI - whether to use a gradient editing GUI. Defaults to false
    */
   build(args) {
     if (!args) args = {};
@@ -61197,6 +61738,7 @@ class SelectionWidget {
     this._itemsInSelection = args.items;
     this._boxRotation = args.boxRotation;
     this._pivot = args.pivot;
+    this._useGradientGUI = args.useGradientGUI;
     this._boundingBox = this._calculateBoundingBox();
     this.item.remove();
     this.item.removeChildren();
@@ -61208,7 +61750,11 @@ class SelectionWidget {
     }
     if (this._itemsInSelection.length > 0) {
       this._center = this._calculateBoundingBoxOfItems(this._itemsInSelection).center;
-      this._buildGUI();
+      if (args.useGradientGUI) {
+        this._buildGradientGUI(args.selectedStopIndex);
+      } else {
+        this._buildGUI();
+      }
       this.layer.addChild(this.item);
     }
   }
@@ -61216,7 +61762,10 @@ class SelectionWidget {
   /**
    *
    */
-  startTransformation(item) {
+  startTransformation(item, e) {
+    if (this._useGradientGUI) {
+      return this.startGradientTransformation(item, e);
+    }
     this._ghost = this._buildGhost();
     this._layer.addChild(this._ghost);
     if (item.data.handleType === 'rotation') {
@@ -61234,7 +61783,10 @@ class SelectionWidget {
    *
    */
   updateTransformation(item, e) {
-    if (!this.mod?.initiated) {
+    if (this.currentTransformation.substring(0, 8) === 'gradient') {
+      return this.updateGradientTransformation(item, e);
+    }
+    if (!this.mod || !this.mod.initiated) {
       this.mod = {
         initiated: true
       };
@@ -61248,7 +61800,7 @@ class SelectionWidget {
         this.mod.action = 'rotate';
         this.mod.rotateDelta = 0;
         this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-        this.mod.initialBoxRotation = this.boxRotation ?? 0;
+        this.mod.initialBoxRotation = this.boxRotation || 0;
       } else if (item.data.handleEdge.includes('Center')) {
         this.mod.action = 'move-edge';
         this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
@@ -61370,6 +61922,9 @@ class SelectionWidget {
    */
   finishTransformation(item) {
     if (!this._currentTransformation) return;
+    if (this.currentTransformation.substring(0, 8) === 'gradient') {
+      return this.finishGradientTransformation();
+    }
     this._ghost.remove();
     if (this.mod.action === 'translate') {
       this.translateSelection(this.mod.offset);
@@ -61611,6 +62166,345 @@ class SelectionWidget {
     });
     return bounds || new paper.Rectangle();
   }
+  _buildGradientGUI(selectedStopIndex) {
+    // this better not be a group
+    let item = this._itemsInSelection[0];
+    let color, stops, startpoint, endpoint;
+    if (this._useGradientGUI === 'stroke') {
+      color = item.strokeColor;
+      this._gradientGUI.stroke = true;
+    } else {
+      color = item.fillColor;
+      this._gradientGUI.stroke = false;
+    }
+    if (color.gradient) {
+      this._gradientGUI.radial = color.gradient.radial;
+      stops = color.gradient.stops;
+      startpoint = color.origin;
+      endpoint = color.destination;
+    } else {
+      // This is a solid color.
+      this._gradientGUI.radial = false;
+      stops = [{
+        color: color.clone(),
+        offset: 0
+      }, {
+        color: color.clone(),
+        offset: 1
+      }];
+      let bounds = this._calculateBoundingBoxOfItems(this._itemsInSelection);
+      startpoint = bounds.topCenter;
+      endpoint = bounds.bottomCenter;
+    }
+    this._gradientGUI.startpoint = startpoint;
+    this._gradientGUI.endpoint = endpoint;
+    this._gradientGUI.lineVector = endpoint.subtract(startpoint);
+    let container = this._gradientGUI.container;
+    container.removeChildren();
+    this._transformContainer();
+    container.addChildren(this._buildGradientLine());
+    container.addChildren(this._buildGradientStops(stops));
+    container.addChild(this._buildHoverStop());
+    this._selectStop(this._gradientGUI.stops[selectedStopIndex]);
+    this.item.addChild(container);
+    container.children.forEach(child => {
+      child.data.isSelectionBoxGUI = true;
+    });
+  }
+
+  /**
+   * Update the gradient line GUI.
+   * @param {paper.Color} color The paper.js gradient color object.
+   * @returns {paper.Path[]} The start point, end point, and connecting line paths.
+   */
+  _buildGradientLine() {
+    let length = this._gradientGUI.lineVector.length;
+    this._gradientGUI.endPath.position.x = length;
+    this._gradientGUI.linePath.segments[1].point.x = length;
+
+    // Scale the GUI to appear the same size
+    const scaling = 1 / paper.view.zoom;
+    this._gradientGUI.startPath.scaling = scaling;
+    this._gradientGUI.endPath.scaling = scaling;
+    return [this._gradientGUI.linePath, this._gradientGUI.startPath, this._gradientGUI.endPath];
+  }
+
+  /**
+   * Update the gradient stops GUI.
+   * @param {paper.Color} color The paper.js gradient color object.
+   * @returns {paper.Path[]} The list of color stop paths.
+   */
+  _buildGradientStops(paperStops) {
+    let stopList = this._gradientGUI.stops;
+    paperStops.forEach((paperStop, idx) => {
+      if (idx >= stopList.length) {
+        stopList.push(this._buildGradientStop());
+      }
+      let stop = stopList[idx];
+      stop.data.setColor(paperStop.color);
+      stop.data.setOffset(paperStop.offset);
+      stop.data.setScaling();
+    });
+    stopList.length = paperStops.length;
+    return stopList;
+  }
+  _buildGradientStop(isHover) {
+    const ARROW_HEIGHT = SelectionWidget.COLOR_STOP_RECT_RADIUS / 5;
+    const COLOR_BOX_CENTER = [0, -(SelectionWidget.COLOR_STOP_RECT_RADIUS + ARROW_HEIGHT)];
+    const COLOR_BOX_INNER_SIZE = 2 * (SelectionWidget.COLOR_STOP_RECT_RADIUS - SelectionWidget.COLOR_STOP_RECT_PADDING);
+    const COLOR_BOX_OUTER_SIZE = 2 * SelectionWidget.COLOR_STOP_RECT_RADIUS;
+    let stopObj = new paper.Group({
+      pivot: [0, 0],
+      position: [0, -SelectionWidget.ENDPOINT_RADIUS],
+      applyMatrix: false,
+      insert: false,
+      data: {
+        handleType: 'gradient-stop',
+        color: 'black',
+        offset: 0,
+        selected: false
+      }
+    });
+    let colorBox = new paper.Path.Rectangle({
+      center: COLOR_BOX_CENTER,
+      size: [COLOR_BOX_INNER_SIZE, COLOR_BOX_INNER_SIZE],
+      fillColor: 'red',
+      strokeWidth: 0,
+      data: {
+        isSelectionBoxGUI: true,
+        parentItem: stopObj
+      }
+    });
+    let outerBox = new paper.Path.Rectangle({
+      center: COLOR_BOX_CENTER,
+      size: [COLOR_BOX_OUTER_SIZE, COLOR_BOX_OUTER_SIZE],
+      fillColor: '#ffffff',
+      strokeWidth: SelectionWidget.COLOR_STOP_OUTLINE_WIDTH,
+      data: {
+        isSelectionBoxGUI: true,
+        parentItem: stopObj
+      }
+    });
+    outerBox.addTo(stopObj);
+    colorBox.addTo(stopObj);
+    let arrow;
+    if (!isHover) {
+      arrow = new paper.Path({
+        segments: [[-ARROW_HEIGHT, -ARROW_HEIGHT], [0, 0], [ARROW_HEIGHT, -ARROW_HEIGHT]],
+        closed: true,
+        fillColor: SelectionWidget.DESELECTED_COLOR,
+        strokeWidth: SelectionWidget.COLOR_STOP_OUTLINE_WIDTH,
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj
+        }
+      });
+      arrow.addTo(stopObj);
+    }
+    stopObj.strokeColor = SelectionWidget.DESELECTED_COLOR;
+    if (isHover) {
+      // Don't include the hover stop in cursor hit tests
+      stopObj.data.isBorder = true;
+      outerBox.data.isBorder = true;
+      colorBox.data.isBorder = true;
+    }
+    stopObj.data.setColor = color => {
+      colorBox.fillColor = color;
+      stopObj.data.color = color;
+    };
+    stopObj.data.setOffset = offset => {
+      stopObj.position.x = this._gradientGUI.lineVector.length * offset;
+      stopObj.data.offset = offset;
+    };
+    stopObj.data.setSelected = selected => {
+      stopObj.strokeColor = selected ? SelectionWidget.SELECTED_COLOR : SelectionWidget.DESELECTED_COLOR;
+      if (arrow) arrow.fillColor = selected ? SelectionWidget.SELECTED_COLOR : SelectionWidget.DESELECTED_COLOR;
+      stopObj.data.selected = selected;
+    };
+    stopObj.data.setScaling = () => {
+      const scaling = 1 / paper.view.zoom;
+      stopObj.scaling = scaling;
+      stopObj.position.y = -SelectionWidget.ENDPOINT_RADIUS * scaling;
+    };
+    stopObj.data.setScaling();
+    return stopObj;
+  }
+  _buildHoverStop(point) {
+    this._gradientGUI.hoverStop.visible = false;
+    if (point) {
+      let offset = this._calculateValidOffset(point);
+      if (offset !== null) {
+        this._interpolateStop(this._gradientGUI.hoverStop, offset);
+        this._gradientGUI.hoverStop.visible = true;
+        this._gradientGUI.hoverStop.data.setScaling();
+      }
+    }
+    return this._gradientGUI.hoverStop;
+  }
+  startGradientTransformation(item, e) {
+    if (item && item.data.parentItem) item = item.data.parentItem;
+    this._gradientGUI.hoverStop.remove();
+    if (item && item.data.handleType === 'gradient-stop') {
+      this.currentTransformation = 'gradient-stop';
+    } else if (item && item.data.handleType === 'gradient-point') {
+      this.currentTransformation = 'gradient-point';
+      this._gradientGUI.initialStartpoint = this._gradientGUI.startpoint;
+      this._gradientGUI.initialEndpoint = this._gradientGUI.endpoint;
+      this._gradientGUI.initialLineVector = this._gradientGUI.lineVector;
+    } else if (this._gradientGUI.createdStopOnDown) {
+      // Move the new color stop
+      this.currentTransformation = 'gradient-stop';
+      this._gradientGUI.createdStopOnDown = false;
+    } else {
+      // We have to set a currentTransformation for Cursor.js
+      this.currentTransformation = 'gradient-none';
+    }
+  }
+  updateGradientTransformation(item, e) {
+    if (item && item.data.parentItem) item = item.data.parentItem;
+    if (this.currentTransformation === 'gradient-stop') {
+      let offset = this._calculateOffset(e.point);
+      if (offset < 0) offset = 0;
+      if (offset > 1) offset = 1;
+      this._gradientGUI.selectedStop.data.setOffset(offset);
+    } else if (this.currentTransformation === 'gradient-point') {
+      if (item.data.handleEdge === 'start') {
+        this._gradientGUI.startpoint = e.point;
+      } else {
+        this._gradientGUI.endpoint = e.point;
+      }
+      if (e.modifiers.shift) {
+        this._gradientGUI.lineVector = this._gradientGUI.initialLineVector;
+        if (item.data.handleEdge === 'start') {
+          this._gradientGUI.endpoint = e.point.add(this._gradientGUI.lineVector);
+        } else {
+          this._gradientGUI.startpoint = e.point.subtract(this._gradientGUI.lineVector);
+        }
+      } else {
+        if (item.data.handleEdge === 'start') {
+          this._gradientGUI.endpoint = this._gradientGUI.initialEndpoint;
+        } else {
+          this._gradientGUI.startpoint = this._gradientGUI.initialStartpoint;
+        }
+        this._gradientGUI.lineVector = this._gradientGUI.endpoint.subtract(this._gradientGUI.startpoint);
+      }
+      this._transformContainer();
+      this._buildGradientLine();
+      this._gradientGUI.stops.forEach(stopObj => {
+        stopObj.data.setOffset(stopObj.data.offset);
+        stopObj.data.setScaling();
+      });
+    }
+    if (this.currentTransformation !== 'gradient-none') this._updateItems();
+  }
+  finishGradientTransformation(item, e) {
+    if (!this._currentTransformation) return;
+    if (this.currentTransformation !== 'gradient-none') this._updateItems();
+    this._currentTransformation = null;
+  }
+  _updateItems() {
+    let colorObj = {
+      origin: this._gradientGUI.startpoint,
+      destination: this._gradientGUI.endpoint,
+      stops: this._gradientGUI.stops.map(stopPath => {
+        return {
+          color: stopPath.data.color,
+          offset: stopPath.data.offset
+        };
+      }),
+      radial: this._gradientGUI.radial
+    };
+
+    // there better not be any groups
+    if (this._gradientGUI.stroke) {
+      this._itemsInSelection.forEach(item => {
+        item.strokeColor = colorObj;
+      });
+    } else {
+      this._itemsInSelection.forEach(item => {
+        item.fillColor = colorObj;
+      });
+    }
+  }
+  _selectStop(stopObj) {
+    if (this._gradientGUI.selectedStop) {
+      this._gradientGUI.selectedStop.data.setSelected(false);
+    }
+    this._gradientGUI.selectedStop = stopObj;
+    stopObj.data.setSelected(true);
+  }
+  _createStopFromPoint(point) {
+    let offset = this._calculateValidOffset(point);
+    if (offset !== null) {
+      // Create and select a new color stop
+      let newStop = this._buildGradientStop();
+      this._interpolateStop(newStop, offset);
+      this._gradientGUI.stops.push(newStop);
+      this._gradientGUI.container.addChild(newStop);
+      this._selectStop(newStop);
+      this._updateItems();
+      return this._gradientGUI.stops.length - 1;
+    }
+    return null;
+  }
+  _interpolateStop(stop, offset) {
+    // Assuming unsorted stops list, find the stops right before and after given offset
+    let stops = this._gradientGUI.stops;
+    let stop1, stop2;
+    let index1 = 0;
+    let index2 = 1;
+    stops.forEach(stop => {
+      let stopOffset = stop.data.offset;
+      if (index1 <= stopOffset && stopOffset <= offset) {
+        stop1 = stop;
+        index1 = stopOffset;
+      } else if (offset <= stopOffset && stopOffset <= index2) {
+        stop2 = stop;
+        index2 = stopOffset;
+      }
+    });
+    let color;
+    if (!stop1) {
+      // Offset is the leftmost stop, use the color of nextStop
+      color = stop2.data.color.clone();
+    } else if (!stop2) {
+      // Offset is the rightmost stop, use the color of prevStop
+      color = stop1.data.color.clone();
+    } else {
+      // Both stops exist, interpolate the color
+      let offsetRelative = (offset - index1) / (index2 - index1);
+      let color1 = stop1.data.color;
+      let color2 = stop2.data.color;
+      color = color1.add(color2.subtract(color1).multiply(offsetRelative));
+      color.alpha = color1.alpha + (color2.alpha - color1.alpha) * offsetRelative;
+    }
+    stop.data.setColor(color);
+    stop.data.setOffset(offset);
+  }
+  _transformContainer() {
+    let container = this._gradientGUI.container;
+    container.matrix.reset();
+    container.translate(this._gradientGUI.startpoint);
+    container.rotate(this._gradientGUI.lineVector.angle, this._gradientGUI.startpoint);
+  }
+  _calculateDistanceFromLine(point) {
+    let pointVector = point.subtract(this._gradientGUI.startpoint);
+    let lineVector = this._gradientGUI.lineVector.normalize();
+    return lineVector.cross(pointVector);
+  }
+  _calculateOffset(point) {
+    let pointVector = point.subtract(this._gradientGUI.startpoint);
+    let lineVector = this._gradientGUI.lineVector;
+    return lineVector.dot(pointVector) / (lineVector.length * lineVector.length);
+  }
+  _calculateValidOffset(point) {
+    let distance = -this._calculateDistanceFromLine(point);
+    if (distance < 0 || distance > SelectionWidget.COLOR_STOP_CREATION_DISTANCE / paper.view.zoom) {
+      return null;
+    }
+    let offset = this._calculateOffset(point);
+    return 0 <= offset && offset <= 1 ? offset : null;
+  }
 }
 ;
 SelectionWidget.BOX_STROKE_WIDTH = 1;
@@ -61627,6 +62521,13 @@ SelectionWidget.ROTATION_HOTSPOT_RADIUS = 20;
 SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR = 'rgba(100,150,255,0.5)';
 SelectionWidget.GHOST_STROKE_COLOR = 'rgba(0, 0, 0, 1.0)';
 SelectionWidget.GHOST_STROKE_WIDTH = 1;
+SelectionWidget.ENDPOINT_RADIUS = 8;
+SelectionWidget.COLOR_STOP_RECT_RADIUS = 12;
+SelectionWidget.COLOR_STOP_RECT_PADDING = 2;
+SelectionWidget.COLOR_STOP_OUTLINE_WIDTH = 2;
+SelectionWidget.COLOR_STOP_CREATION_DISTANCE = SelectionWidget.ENDPOINT_RADIUS + 2.2 * SelectionWidget.COLOR_STOP_RECT_RADIUS;
+SelectionWidget.SELECTED_COLOR = '#0c8ce9';
+SelectionWidget.DESELECTED_COLOR = '#cccccc';
 paper.PaperScope.inject({
   SelectionWidget: SelectionWidget
 });
@@ -62140,6 +63041,20 @@ Wick.View.Project = class extends Wick.View {
   static get PAN_LIMIT() {
     return 10000;
   }
+  get gestureActive() {
+    return !!this._gesture;
+  }
+
+  // minimum distance for gesture detection
+  static get GESTURE_MIN_DIST_SQ() {
+    return 1e-6;
+  }
+  static get ONE_FINGER_DRAW_DELAY() {
+    return 80;
+  }
+  static get TWO_FINGER_TAP_GRACE() {
+    return 120;
+  }
 
   /*
    * Create a new Project View.
@@ -62159,6 +63074,9 @@ Wick.View.Project = class extends Wick.View {
       y: 0
     };
     this._zoom = 1;
+
+    // track whether or not we started drawing with one finger
+    this._oneFingerDrawStarted = false;
   }
 
   /*
@@ -62330,6 +63248,258 @@ Wick.View.Project = class extends Wick.View {
       this.scrollToZoom(e);
     });
 
+    // --- Mobile multi-touch gestures code starts HERE ---
+    this._svgCanvas.style.touchAction = 'none';
+
+    // Track active pointers
+    this._activePointers = new Map();
+    this._gesture = null; // state during a two-finger gesture
+    this._twoFingerTapEndTimer = null; // tiny grace window between ups
+
+    // get two fingers + 
+    const getPoint = ev => ({
+      x: ev.clientX,
+      y: ev.clientY
+    });
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const mid = (a, b) => ({
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2
+    });
+    const _dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const onPointerDown = ev => {
+      // capture to keep receiving events
+      try {
+        ev.target.setPointerCapture(ev.pointerId);
+      } catch (err) {}
+      const p = getPoint(ev);
+      this._activePointers.set(ev.pointerId, {
+        ...p,
+        downX: p.x,
+        downY: p.y,
+        downTime: ev.timeStamp,
+        travel: 0
+      });
+      if (this._activePointers.size === 1) {
+        // ONE FINGER CHECK
+        // Assume we're drawing, lets set timeout
+        this._oneFingerStartTimer = setTimeout(() => {
+          // If only ONE finger is still down after the delay, lock in one-finger mode.
+          if (this._activePointers.size === 1) {
+            this._oneFingerDrawStarted = true;
+          }
+        }, Wick.View.Project.ONE_FINGER_DRAW_DELAY);
+      } else if (this._activePointers.size === 2) {
+        // TWO FINGER CHECK
+
+        if (this._oneFingerDrawStarted) {
+          // We started drawing first. Ignore the second finger until all fingers lift.
+          return;
+        }
+
+        // stops any active single-finger drawing, removing the "artifact" stuff
+        if (this.model.activeTool && this.model.activeTool.cancel) {
+          this.model.activeTool.cancel();
+        }
+
+        // Clear "one finger" & "draw start" timers
+        if (this._oneFingerStartTimer) {
+          clearTimeout(this._oneFingerStartTimer);
+          this._oneFingerStartTimer = null;
+        }
+        this._oneFingerDrawStarted = false; // Force exit from 1-finger mode
+
+        const pts = Array.from(this._activePointers.values());
+        const p0 = pts[0],
+          p1 = pts[1];
+        const startDist = _dist(p0, p1);
+        const startMid = {
+          x: (p0.x + p1.x) / 2,
+          y: (p0.y + p1.y) / 2
+        };
+        this._gesture = {
+          startDist,
+          startMid,
+          prevMid: startMid,
+          prevDist: startDist,
+          startZoom: this.paper.view.zoom,
+          startCenter: this.paper.view.center.clone()
+        };
+
+        // --- TAP CANDIDATE (unchanged) ---
+        this._twoFingerTapCandidate = {
+          startAt: ev.timeStamp,
+          valid: true
+        };
+
+        // --- Global gesture flags (unchanged) ---
+        Wick.gesture = Wick.gesture || {};
+        Wick.gesture.active = true;
+        Wick.gesture.type = 'pinch_pan';
+        Wick.gesture.seq = (Wick.gesture.seq || 0) + 1;
+        Wick.gesture.lastStartAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      }
+    };
+    const onPointerMove = ev => {
+      if (!this._activePointers.has(ev.pointerId)) return;
+      const prev = this._activePointers.get(ev.pointerId);
+      const p = getPoint(ev);
+      const total = Math.hypot(p.x - prev.downX, p.y - prev.downY);
+      this._activePointers.set(ev.pointerId, {
+        ...prev,
+        ...p,
+        travel: Math.max(prev.travel, total)
+      });
+
+      // If we are in one-finger mode then IGNORE the 2-finger logic
+      if (this._oneFingerDrawStarted) {
+        return;
+      }
+      if (this._activePointers.size === 2 && this._gesture) {
+        const pts = Array.from(this._activePointers.values());
+        const p0 = pts[0],
+          p1 = pts[1];
+        const curDist = _dist(p0, p1);
+        const curMid = {
+          x: (p0.x + p1.x) / 2,
+          y: (p0.y + p1.y) / 2
+        };
+        if (this._gesture.startDist <= Wick.View.Project.GESTURE_MIN_DIST_SQ) return;
+
+        // pinch scale & target zoom
+        const scaleFromStart = curDist / this._gesture.startDist;
+        const unclampedZoom = this._gesture.startZoom * scaleFromStart;
+        const targetZoom = Math.max(Wick.View.Project.ZOOM_MIN, Math.min(Wick.View.Project.ZOOM_MAX, unclampedZoom));
+
+        // Per-frame pinch delta (are we pinching this frame?)
+        const prevDist = this._gesture.prevDist || curDist;
+        const dScale = prevDist > 1e-6 ? curDist / prevDist : 1.0;
+        const pinchingThisFrame = Math.abs(dScale - 1) > 0.0015; // ~0.15% change
+
+        // Capture old zoom then apply new zoom
+        const prevZoom = this.paper.view.zoom;
+        this.paper.view.zoom = targetZoom;
+        const zoomChanged = Math.abs(this.paper.view.zoom - prevZoom) > Wick.View.Project.GESTURE_MIN_DIST_SQ;
+
+        // NOT pinching? always pan. pinching? only pan if zoom actually changed (avoid drift at clamp)
+        const shouldPanThisFrame = !pinchingThisFrame || pinchingThisFrame && zoomChanged;
+        if (shouldPanThisFrame && this._gesture.prevMid) {
+          // normal 2 finger pan
+          const dMidPx = new paper.Point(curMid.x - this._gesture.prevMid.x, curMid.y - this._gesture.prevMid.y);
+          // screen px -> project units
+          this.paper.view.center = this.paper.view.center.subtract(dMidPx.divide(this.paper.view.zoom));
+        }
+
+        // focal point correction, combining pan while zooming -H.A.
+        if (zoomChanged) {
+          const anchorScreen = new paper.Point(curMid.x, curMid.y);
+          const anchorProjBefore = this.paper.view.viewToProject(anchorScreen);
+          const anchorScreenAfter = this.paper.view.projectToView(anchorProjBefore);
+          const deltaPx = anchorScreen.subtract(anchorScreenAfter);
+          this.paper.view.center = this.paper.view.center.subtract(deltaPx.divide(this.paper.view.zoom));
+        }
+
+        // update for next state
+        this._gesture.prevMid = curMid;
+        this._gesture.prevDist = curDist;
+
+        // Sync model zoom/pan & render
+        const now = ev.timeStamp;
+        const dur = now - this._twoFingerTapCandidate.startAt;
+        if (dur > 150) this._applyZoomAndPanChangesFromPaper();
+      }
+    };
+    const onPointerUpOrCancel = ev => {
+      // Clear the one-finger timer
+      if (this._oneFingerStartTimer) {
+        clearTimeout(this._oneFingerStartTimer);
+        this._oneFingerStartTimer = null;
+      }
+
+      // Remove the pointer that just lifted
+      this._activePointers.delete(ev.pointerId);
+      const remaining = this._activePointers.size;
+
+      // Helper to finalize: decide if it's a two-finger tap and reset state
+      const finalizeTwoFingerTap = ts => {
+        const cand = this._twoFingerTapCandidate;
+        if (cand && !cand.canceled) {
+          const now = ts || ev.timeStamp;
+          const dur = now - cand.startAt;
+          // For testing, accept anything under 10s
+          if (dur <= 150) {
+            // Visible confirmation on device (no console needed)
+            try {
+              navigator.vibrate && navigator.vibrate(10);
+            } catch {}
+            // alert('Two-finger UNDO'); // remove once verified
+
+            try {
+              this.model.undo();
+              this.render();
+              // this.fireEvent('canvasModified', { undo: false }, 'Undo');
+            } catch (err) {
+              alert('Undo call failed');
+              alert(err);
+            }
+          }
+        }
+
+        // Always reset gesture/tap state when evaluation is done
+        this._gesture = null;
+        this._twoFingerTapCandidate = null;
+        if (this._twoFingerTapEndTimer) {
+          clearTimeout(this._twoFingerTapEndTimer);
+          this._twoFingerTapEndTimer = null;
+        }
+        Wick.gesture.active = false;
+        Wick.gesture.type = null;
+        Wick.gesture.lastEndAt = performance.now() || Date.now();
+      };
+
+      // Case A: BOTH fingers are up now → evaluate immediately
+      if (remaining === 0) {
+        this._oneFingerDrawStarted = false;
+        finalizeTwoFingerTap();
+        return;
+      }
+
+      // Case B: we just went 2 → 1 fingers → arm a tiny grace window
+      // (Do NOT clear the candidate here!)
+      if (remaining === 1) {
+        if (this._twoFingerTapEndTimer) clearTimeout(this._twoFingerTapEndTimer);
+        this._twoFingerTapEndTimer = setTimeout(() => {
+          // If the second up arrived during the window, remaining will be 0 now.
+          if (this._activePointers.size === 0) {
+            finalizeTwoFingerTap();
+          } else {
+            // Not a clean two-finger tap; just clear gesture flags so tools resume.
+            this._gesture = null;
+            // DO NOT clear _twoFingerTapCandidate here; let a future full lift re-evaluate.
+            Wick.gesture.active = false;
+            Wick.gesture.type = null;
+          }
+          this._twoFingerTapEndTimer = null;
+        }, 120); // 80-150ms works well; 120ms is a good default
+        return;
+      }
+    };
+
+    // Use non-passive so we can preventDefault if ever needed (we currently rely on touch-action: none)
+    this._svgCanvas.addEventListener('pointerdown', onPointerDown, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointermove', onPointerMove, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointerup', onPointerUpOrCancel, {
+      passive: false
+    });
+    this._svgCanvas.addEventListener('pointercancel', onPointerUpOrCancel, {
+      passive: false
+    });
+    // --- end gestures ---
+
     // Connect all Wick Tools into the paper.js project
     for (var toolName in this.model.tools) {
       var tool = this.model.tools[toolName];
@@ -62451,10 +63621,10 @@ Wick.View.Project = class extends Wick.View {
     // Render GUI Layer
     this._svgGUILayer.removeChildren();
     this._svgGUILayer.locked = true;
-    if (this.model.showClipBorders && !this.model.playing && !this.model.isPublished) {
-      this._svgGUILayer.addChildren(this._generateClipBorders());
-      this.paper.project.addLayer(this._svgGUILayer);
-    }
+    // if(this.model.showClipBorders && !this.model.playing && this.model.isPublished) {
+    this._svgGUILayer.addChildren(this._generateClipBorders());
+    this.paper.project.addLayer(this._svgGUILayer);
+    // }
 
     // Render black bars (for published projects)
     if (this.model.isPublished && this.model.renderBlackBars) {
@@ -62466,7 +63636,9 @@ Wick.View.Project = class extends Wick.View {
     }
   }
   _generateSVGCanvasStage() {
-    var stage = new paper.Path.Rectangle(new this.paper.Point(0, 0), new this.paper.Point(this.model.width, this.model.height));
+    var isPub = this.model.publishedMode;
+    var borderLength = this.model.width * this.model.height * 20;
+    var stage = new paper.Path.Rectangle(new this.paper.Point(isPub ? borderLength / -2 : 0, isPub ? borderLength / -2 : 0), new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height));
     stage.remove();
     stage.fillColor = this.model.backgroundColor.rgba;
     return stage;
@@ -62755,7 +63927,9 @@ Wick.View.Selection = class extends Wick.View {
     this._widget.build({
       boxRotation: this.model.widgetRotation,
       items: this._getSelectedObjectViews(),
-      pivot: new paper.Point(this.model.pivotPoint.x, this.model.pivotPoint.y)
+      pivot: new paper.Point(this.model.pivotPoint.x, this.model.pivotPoint.y),
+      useGradientGUI: this.model.useGradientGUI,
+      selectedStopIndex: this.model.selectedStopIndex
     });
   }
   _getSelectedObjects() {
