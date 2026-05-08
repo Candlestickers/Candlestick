@@ -122,19 +122,19 @@ WickObjectCache = class {
 
         uuidSet = new Set([...historyIDs, ...uuidSet]);
 
-        // // check what objects were removed during cache clear, like when the project is paused - Baron
+        // check what objects were removed during cache clear, like when the project is paused - Baron
         // let info = "removeUnusedObjects()"
-        // this.getAllObjects().forEach(object => {
-        //     if(!uuidSet.has(object.uuid)) {
-        //         info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
+        this.getAllObjects().forEach(object => {
+            if(!uuidSet.has(object.uuid)) {
+                // info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
 
-        //         // Check if the object has a parent in the object cache - StickmanRed
-        //         let topLevelClip = object.topLevelClip;
-        //         if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
-        //             this.removeObject(object);
-        //         }
-        //     }
-        // });
+                // Check if the object has a parent in the object cache - StickmanRed
+                let topLevelClip = object.topLevelClip;
+                if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+                    this.removeObject(object);
+                }
+            }
+        });
         // console.log(info);
     }
 
