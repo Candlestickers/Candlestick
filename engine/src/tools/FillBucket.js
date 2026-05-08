@@ -121,6 +121,9 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
                         this.addPathToProject(path);
                         this.fireEvent({ eventName: 'canvasModified', actionName: 'fillbucket' });
                     }
+                }, onError: (message) => {
+                    this.setCursor('default');
+                    this.project.errorOccured(message);
                 }
             });
         }, 0);
