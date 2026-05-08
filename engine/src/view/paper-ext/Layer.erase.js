@@ -110,7 +110,7 @@
             // move each child up, then erase individually
             children.forEach(function (child) {
                 child.insertAbove(path);
-                child.fillColor = null;
+                child.style = path.style;
                 eraseStroke(child, eraserPath);
             });
         } else {
