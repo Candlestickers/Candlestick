@@ -27,5 +27,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # docs
-emptyproject.html
-wickengine.js
+/engine/docs/
+/engine/dist/
+/public/corelibs/wick-engine/
+/engine/dist
