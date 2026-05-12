@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.2.28.22.21.36";
+var WICK_ENGINE_BUILD_VERSION = "2026.5.12.1.8.2";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46602,11 +46602,21 @@ WickObjectCache = class {
     let uuidSet = new Set(uuids);
     let historyIDs = project.history.getObjectUUIDs();
     uuidSet = new Set([...historyIDs, ...uuidSet]);
+
+    // check what objects were removed during cache clear, like when the project is paused - Baron
+    // let info = "removeUnusedObjects()"
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
-        this.removeObject(object);
+        // info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
+
+        // Check if the object has a parent in the object cache - StickmanRed
+        let topLevelClip = object.topLevelClip;
+        if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+          this.removeObject(object);
+        }
       }
     });
+    // console.log(info);
   }
 
   /**
@@ -46662,6 +46672,36 @@ WickObjectCache = class {
    */
   getObjectsNeedAutosaved() {
     return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
+  }
+
+  /**
+   * DEBUG: Log basic information about every object in the cache: type, uuid, and id/name if applicable
+   */
+  static _getObjectsDebug() {
+    let out = [];
+    let print = "";
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      let line = elem.classname.padEnd(10, " ") + elem.uuid;
+      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": id =   " + elem._identifier;
+      //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
+
+      out.push(line);
+    }
+    for (let line of out.sort()) {
+      print += "" + line + "\n";
+    }
+    print += "Total: " + Wick.ObjectCache.getAllObjects().length;
+    console.log(print);
+  }
+
+  /**
+   * DEBUG: Shortcut to call getObjectByUUID() on all objects in the cache
+   */
+  static _getObjectsDebugDetailed() {
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      console.log("\n\n" + elem.classname + " " + elem.uuid);
+      console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
+    }
   }
 };
 Wick.ObjectCache = new WickObjectCache();
@@ -49164,6 +49204,18 @@ Wick.Base = class {
    */
   get parentClip() {
     return this._getParentByClassName('Clip');
+  }
+
+  /**
+   * The top-level clip of this object.
+   * @type {Wick.Clip}
+   */
+  get topLevelClip() {
+    let topLevelClip = this.parentClip;
+    while (topLevelClip && topLevelClip.parentClip && !topLevelClip.parentClip.isRoot) {
+      topLevelClip = topLevelClip.parentClip;
+    }
+    return topLevelClip;
   }
 
   /**
@@ -51983,8 +52035,12 @@ Wick.Selection = class extends Wick.Base {
         return 'soundasset';
       } else if (selection.getSelectedObjects()[0] instanceof window.Wick.SVGAsset) {
         return 'svgasset';
+      } else if (selection.getSelectedObjects()[0] instanceof window.Wick.FontAsset) {
+        return 'fontasset';
+      } else if (selection.getSelectedObjects()[0] instanceof window.Wick.ClipAsset) {
+        return 'clipasset';
       } else {
-        return 'multiassetmixed';
+        return 'unknown';
       }
     } else {
       return 'unknown';
@@ -59683,6 +59739,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
               actionName: 'fillbucket'
             });
           }
+        },
+        onError: message => {
+          this.setCursor('default');
+          this.project.errorOccured(message);
         }
       });
     }, 0);
@@ -60432,7 +60492,12 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     });
     if (!newHitResult) newHitResult = new this.paper.HitResult();
     if (this.detailedEditing !== null) {
-      if (this._getWickUUID(newHitResult.item) !== this._getWickUUID(this.detailedEditing)) {
+      // Bugfix: newHitResult.item might be inside a CompoundPath
+      var targetItem = newHitResult.item;
+      if (targetItem && targetItem.parent.className === 'CompoundPath') {
+        targetItem = targetItem.parent;
+      }
+      if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
         // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
         return new this.paper.HitResult();
       }
@@ -60841,6 +60906,10 @@ Wick.Tools.Text = class extends Wick.Tool {
           asString: false
         })
       });
+      if (!this.project.activeFrame) {
+        // Automatically add a frame is there isn't one
+        this.project.insertBlankFrame();
+      }
       this.project.activeFrame.addPath(wickText);
       this.project.view.render();
       this.editingText = wickText.view.item;
@@ -61073,25 +61142,42 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     path.remove();
   }
   function eraseStroke(path, eraserPath) {
-    var res = path.subtract(eraserPath, {
-      insert: false,
-      trace: false
-    });
-    if (res.children) {
-      // Since the path is only strokes, it's trivial to split it into individual paths
+    if (path.children) {
+      // ungroup compound path of strokes because Paper cannot erase compound strokes
       var children = [];
-      res.children.forEach(function (child) {
+      path.children.forEach(function (child) {
         child.data = {};
         children.push(child);
         child.name = null;
       });
+      // move each child up, then erase individually
       children.forEach(function (child) {
         child.insertAbove(path);
+        child.style = path.style;
+        eraseStroke(child, eraserPath);
       });
-      res.remove();
     } else {
-      res.remove();
-      if (res.segments.length > 0) res.insertAbove(path);
+      // base case: erasing singular stroke
+      var res = path.subtract(eraserPath, {
+        insert: false,
+        trace: false
+      });
+      if (res.children) {
+        // Since the path is only strokes, it's trivial to split it into individual paths
+        var children = [];
+        res.children.forEach(function (child) {
+          child.data = {};
+          children.push(child);
+          child.name = null;
+        });
+        children.forEach(function (child) {
+          child.insertAbove(path);
+        });
+        res.remove();
+      } else {
+        res.remove();
+        if (res.segments.length > 0) res.insertAbove(path);
+      }
     }
     path.remove();
   }
@@ -63582,10 +63668,10 @@ Wick.View.Project = class extends Wick.View {
     // Render GUI Layer
     this._svgGUILayer.removeChildren();
     this._svgGUILayer.locked = true;
-    // if(this.model.showClipBorders && !this.model.playing && this.model.isPublished) {
-    this._svgGUILayer.addChildren(this._generateClipBorders());
-    this.paper.project.addLayer(this._svgGUILayer);
-    // }
+    if (this.model.showClipBorders && !this.model.playing && !this.model.isPublished) {
+      this._svgGUILayer.addChildren(this._generateClipBorders());
+      this.paper.project.addLayer(this._svgGUILayer);
+    }
 
     // Render black bars (for published projects)
     if (this.model.isPublished && this.model.renderBlackBars) {
