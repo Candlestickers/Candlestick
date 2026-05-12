@@ -668,14 +668,14 @@ class SelectionWidget {
             outline.remove();
             outline.fillColor = 'rgba(0,0,0,0)';
             outline.strokeColor = SelectionWidget.GHOST_STROKE_COLOR;
-            outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2;
+            outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2 / paper.view.zoom;
             ghost.addChild(outline);
 
             var outline2 = outline.clone();
             outline2.remove();
             outline2.fillColor = 'rgba(0,0,0,0)';
             outline2.strokeColor = '#ffffff';
-            outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH;
+            outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom;
             ghost.addChild(outline2);
         });
 
@@ -684,7 +684,7 @@ class SelectionWidget {
             to: this.boundingBox.bottomRight,
             fillColor: 'rgba(0,0,0,0)',
             strokeColor: SelectionWidget.GHOST_STROKE_COLOR,
-            strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH,
+            strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom,
             applyMatrix: false,
         });
         boundsOutline.rotate(this.boxRotation, this._center);
