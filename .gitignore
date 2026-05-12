@@ -30,4 +30,3 @@ yarn-error.log*
 /engine/docs/
 /engine/dist/
 /public/corelibs/wick-engine/
-/engine/dist
