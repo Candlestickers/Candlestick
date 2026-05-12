@@ -261,7 +261,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             curves: true,
             segments: true,
             handles: this.detailedEditing !== null,
-            tolerance: this.SELECTION_TOLERANCE,
+            tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
             match: (result => {
                 return result.item !== this.hoverPreview
                     && !result.item.data.isBorder;

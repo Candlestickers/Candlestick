@@ -547,7 +547,7 @@ class SelectionWidget {
             name: 'border',
             from: this.boundingBox.topLeft,
             to: this.boundingBox.bottomRight,
-            strokeWidth: SelectionWidget.BOX_STROKE_WIDTH,
+            strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
             strokeColor: SelectionWidget.BOX_STROKE_COLOR,
             insert: false,
         });
@@ -563,7 +563,7 @@ class SelectionWidget {
             var border = new paper.Path.Rectangle({
                 from: bounds.topLeft,
                 to: bounds.bottomRight,
-                strokeWidth: SelectionWidget.BOX_STROKE_WIDTH,
+                strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
                 strokeColor: SelectionWidget.BOX_STROKE_COLOR,
             });
             //border.rotate(-this.boxRotation, this._center);
