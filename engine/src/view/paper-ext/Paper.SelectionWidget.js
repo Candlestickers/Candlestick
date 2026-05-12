@@ -731,6 +731,9 @@ class SelectionWidget {
             color = item.fillColor;
             this._gradientGUI.stroke = false;
         }
+
+        if(!color) color = new paper.Color(0, 0, 0);
+
         if(color.gradient) {
             this._gradientGUI.radial = color.gradient.radial;
             stops = color.gradient.stops;
