@@ -36,6 +36,11 @@ class WickGradientColorPicker extends Component {
         this.setState({ colorOnDrag: null });
     }
     onGradientChange = (color, args) => {
+        // Set null gradient stops to black
+        for(let stop of color.stops) {
+            stop.color = stop.color || '#000000';
+        }
+
         // Sort color stops, keep the selected stop
         let index;
         if (args && typeof args.stopIndex === 'number') {

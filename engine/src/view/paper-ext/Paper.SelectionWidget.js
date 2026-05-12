@@ -872,7 +872,8 @@ class SelectionWidget {
         }
 
         stopObj.data.setColor = (color) => {
-            colorBox.fillColor = color;
+            // if color is null, display black as placeholder
+            colorBox.fillColor = color || 'black';
             stopObj.data.color = color;
         }
         stopObj.data.setOffset = (offset) => {
@@ -1042,15 +1043,15 @@ class SelectionWidget {
         let color;
         if(!stop1) {
             // Offset is the leftmost stop, use the color of nextStop
-            color = stop2.data.color.clone();
+            color = stop2.data.color ? stop2.data.color.clone() : new paper.Color('black');
         } else if(!stop2) {
             // Offset is the rightmost stop, use the color of prevStop
-            color = stop1.data.color.clone();
+            color = stop1.data.color ? stop1.data.color.clone() : new paper.Color('black');
         } else {
             // Both stops exist, interpolate the color
             let offsetRelative = (offset - index1) / (index2 - index1);
-            let color1 = stop1.data.color;
-            let color2 = stop2.data.color;
+            let color1 = stop1.data.color || new paper.Color('black');
+            let color2 = stop2.data.color || new paper.Color('black');
             color = color1.add(color2.subtract(color1).multiply(offsetRelative));
             color.alpha = color1.alpha + (color2.alpha - color1.alpha) * offsetRelative;
         }
