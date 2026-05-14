@@ -12,7 +12,8 @@
 /build
 /build-ios/WebViewExample/local_html
 /build-electron
-/dist
+/engine/dist/
+/public/corelibs/wick-engine/
 
 # misc
 .DS_Store
@@ -27,6 +28,4 @@ yarn-debug.log*
 yarn-error.log*
 
 # docs
-engine/docs/*
-engine/dist/*
-public/corelibs/wick-engine/*
+/engine/docs/
