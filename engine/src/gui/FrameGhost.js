@@ -76,6 +76,7 @@ Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
 
     finish () {
         var timeline = this.model.parentTimeline;
+        var selection = this.model.project.selection; // this.model might be removed from project if moved to a nonexistent layer, so save the selection now
         timeline.playheadPosition += this.moveCols;
         timeline.deferFrameGapResolve();
 
@@ -93,6 +94,8 @@ Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
             delete frame._originalLayerIndex;
             if(layer) {
                 layer.addFrame(frame);
+            } else {
+                selection.deselect(frame);
             }
         });
 
