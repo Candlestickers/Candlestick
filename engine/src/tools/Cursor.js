@@ -117,6 +117,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
                 if(stopIndex !== null) {
                     this._selection.selectedStopIndex = stopIndex;
+					widget._updateItems();
                     this.fireEvent({eventName: 'canvasModified', actionName: 'cursorSelectStop'});
                 }
             }
