@@ -201,6 +201,10 @@ class WickGradientColorPicker extends Component {
         }
         let bounds = this.reducePaperBounds(this.props.selectedObjectsBounds);
 
+        // Fixes bug where canvas gradient tool disappears on undo
+        if (color.stops) {
+            this.props.setGradientActive(index);
+        }
         return (
             <div className="wick-color-picker">
                 {this.renderHeader(color)}

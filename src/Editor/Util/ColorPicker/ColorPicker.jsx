@@ -81,10 +81,14 @@ function arraysEqual(arr1, arr2) {
 }
 
 export default function ColorPicker (props) {
+  let selectedObjects =
+    (typeof props.getSelection === 'function') ?
+    props.getSelection()._selectedObjectsUUIDs.toSorted() : null;
+
   const [open, setOpen] = useState(false);
-  const [lastObjects, setLastObjects] = useState(props.selectedObjects);
-  if (!arraysEqual(props.selectedObjects, lastObjects)) {
-    setLastObjects(props.selectedObjects);
+  const [lastObjects, setLastObjects] = useState(selectedObjects);
+  if (!arraysEqual(selectedObjects, lastObjects)) {
+    setLastObjects(selectedObjects);
 
     // Close pop-up if selection changed
     if (open)
@@ -106,7 +110,7 @@ export default function ColorPicker (props) {
     // Don't close if click started on popover
     // Don't close if clicked on selected objects
     let clickedCanvas = (e.touches ? e.target : data.downTarget) === props.targetCanvas;
-    let selectionUnchanged = arraysEqual(props.selectedObjects, lastObjects);
+    let selectionUnchanged = arraysEqual(selectedObjects, lastObjects);
     if (!data.clickedPopover && !(clickedCanvas && selectionUnchanged))
       setOpen(false);
   }
@@ -138,6 +142,32 @@ export default function ColorPicker (props) {
   }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
+
+  // Bring functions involving selection down to avoid repeating code
+  let selectionGiven = (typeof props.getSelection === 'function');
+  let setGradientActive = (stopIndex) => {
+    if (!selectionGiven) return;
+    let selection = props.getSelection();
+
+    if (stopIndex !== undefined && selection.useGradientGUI) return;
+    selection.useGradientGUI = props.stroke ? 'stroke' : 'fill';
+    selection.selectedStopIndex = stopIndex || 0;
+    props.renderSelection();
+  };
+  let setGradientInactive = () => {
+    if (!selectionGiven) return;
+    let selection = props.getSelection();
+
+    selection.useGradientGUI = false;
+    selection.selectedStopIndex = 0;
+    props.renderSelection();
+  };
+  let getSelectedStopIndex = () => selectionGiven && props.getSelection().selectedStopIndex;
+  let setSelectedStopIndex = (index) => {
+    if (!selectionGiven) return;
+    props.getSelection().selectedStopIndex = index;
+  };
+  let selectedObjectsBounds = selectionGiven && props.getSelection().view._getSelectedObjectsBounds();
 
   return (
       <button
@@ -176,11 +206,11 @@ export default function ColorPicker (props) {
               onChangeComplete={props.onChangeComplete}
               onChangeIntermediate={props.onChangeIntermediate}
 
-              selectedObjectsBounds={props.selectedObjectsBounds}
-              setGradientActive={props.setGradientActive}
-              setGradientInactive={props.setGradientInactive}
-              getSelectedStopIndex={props.getSelectedStopIndex}
-              setSelectedStopIndex={props.setSelectedStopIndex}
+              selectedObjectsBounds={selectedObjectsBounds}
+              setGradientActive={setGradientActive}
+              setGradientInactive={setGradientInactive}
+              getSelectedStopIndex={getSelectedStopIndex}
+              setSelectedStopIndex={setSelectedStopIndex}
 
               lastColorsUsed={props.lastColorsUsed}
               updateLastColors={props.updateLastColors}
