@@ -34,6 +34,19 @@
 .btn-color-picker-background-opaque {
   flex-basis: 50%;
 }
+.btn-color-picker-stroke {
+  overflow: visible;
+  background-origin: border-box, border-box;
+  background-clip: border-box, border-box;
+  border-color: transparent;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.btn-color-picker-stroke .btn-color-picker-background-opaque {
+  flex-basis: unset;
+  height: 100%;
+  margin: 25% -4px -4px -4px;
+}
 
 .color-picker-control-div {
   display: flex;

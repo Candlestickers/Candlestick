@@ -142,6 +142,10 @@ export default function ColorPicker (props) {
       colorCSSOpaque = `linear-gradient(rgb(${color.red*255},${color.green*255},${color.blue*255}))`;
     }
   }
+  else if (typeof color === 'string') {
+    // Used as a background-image
+    colorCSS = colorCSSOpaque = `linear-gradient(${color})`;
+  }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
 
@@ -173,18 +177,16 @@ export default function ColorPicker (props) {
 
   return (
       <button
-        className="btn-color-picker"
+        className={"btn-color-picker" + (props.stroke ? " btn-color-picker-stroke" : "")}
         aria-label="color picker button"
         id={itemID}
         onClick={toggle}
-        style={props.stroke ?
-          { borderColor: colorCSS } :
-          { backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`, backgroundColor: 'white' }
-        }>
-          {!props.stroke &&
+        style={{
+          backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`,
+          backgroundColor: 'white'
+        }}>
           <div className="btn-color-picker-background-opaque"
             style={{ backgroundImage: colorCSSOpaque }} />
-          }
           <Popover
             tabIndex={-1}
             id={popoverID}
