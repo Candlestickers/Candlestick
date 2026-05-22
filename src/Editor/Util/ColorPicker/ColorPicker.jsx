@@ -132,13 +132,15 @@ export default function ColorPicker (props) {
       sortedControlStops.forEach(paperControlStop => {
           colorCSS += `, ${paperControlStop.color.toCSS()} ${paperControlStop.offset * 100}%`;
           let { red, green, blue } = paperControlStop.color;
-          colorCSSOpaque += `, rgb(${red*256},${green*256},${blue*256}) ${paperControlStop.offset * 100}%`;
+          colorCSSOpaque += `, rgb(${red*255},${green*255},${blue*255}) ${paperControlStop.offset * 100}%`;
       });
       colorCSS += ')';
       colorCSSOpaque += ')';
     }
-    else
-      colorCSS = color.toCSS();
+    else {
+      colorCSS = `linear-gradient(${color.toCSS()})`;
+      colorCSSOpaque = `linear-gradient(rgb(${color.red*255},${color.green*255},${color.blue*255}))`;
+    }
   }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
@@ -177,11 +179,9 @@ export default function ColorPicker (props) {
         onClick={toggle}
         style={props.stroke ?
           { borderColor: colorCSS } :
-          color.gradient ?
-          { backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`, backgroundColor: 'white' } :
-          { backgroundColor: colorCSS }
+          { backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`, backgroundColor: 'white' }
         }>
-          {(!props.stroke && color.gradient) &&
+          {!props.stroke &&
           <div className="btn-color-picker-background-opaque"
             style={{ backgroundImage: colorCSSOpaque }} />
           }
