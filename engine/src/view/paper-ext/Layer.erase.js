@@ -115,6 +115,16 @@
             });
         } else {
             // base case: erasing singular stroke
+            if (path instanceof paper.Path && path.closed && eraserPath.contains(path.firstSegment.point)) {
+                // Fixes bug with paper.js path subtract
+                // If eraserPath contains the first segment of a closed path, convert to an open path
+                var start = path.firstSegment,
+                    end = start.clone();
+                start.handleIn = [0,0];
+                end.handleOut = [0,0];
+                path.addSegment(end);
+                path.closed = false;
+            }
             var res = path.subtract(eraserPath, {
                 insert: false,
                 trace: false,
