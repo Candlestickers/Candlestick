@@ -379,9 +379,9 @@ Wick.Tools.Brush = class extends Wick.Tool {
         }
 
         // Update croquis element canvas size
-        if(this.croquis.getCanvasWidth() !== this.paper.view._element.width ||
-           this.croquis.getCanvasHeight() !== this.paper.view._element.height) {
-            this.croquis.setCanvasSize(this.paper.view._element.width, this.paper.view._element.height);
+        if(this.croquis.getCanvasWidth() !== this.paper.view._viewSize.width ||
+           this.croquis.getCanvasHeight() !== this.paper.view._viewSize.height) {
+            this.croquis.setCanvasSize(this.paper.view._viewSize.width, this.paper.view._viewSize.height);
         }
 
         // Fake brush opacity in croquis by changing the opacity of the croquis canvas
