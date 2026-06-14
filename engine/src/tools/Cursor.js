@@ -294,7 +294,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			stroke: true,
 			curves: true,
 			segments: true,
-			tolerance: this.SELECTION_TOLERANCE,
+			tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
 			match: result => {
 				return !result.item.data.isBorder;
 			}
