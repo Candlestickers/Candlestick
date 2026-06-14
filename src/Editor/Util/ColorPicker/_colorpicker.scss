@@ -45,7 +45,10 @@
 .btn-color-picker-stroke .btn-color-picker-background-opaque {
   flex-basis: unset;
   height: 100%;
-  margin: 25% -4px -4px -4px;
+  // percent-based margin is calculated based on width of an element
+  // therefore, pill-shaped buttons (e.g. in inspector) need a workaround
+  margin: 0 -4px;
+  transform: translateY(50%); // cover bottom half
 }
 
 .color-picker-control-div {

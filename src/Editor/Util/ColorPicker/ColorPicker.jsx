@@ -145,6 +145,8 @@ export default function ColorPicker (props) {
   else if (typeof color === 'string') {
     // Used as a background-image
     colorCSS = colorCSSOpaque = `linear-gradient(${color})`;
+    // regex to remove alpha from color string
+    colorCSSOpaque = colorCSSOpaque.replace(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/g, 'rgb($1, $2, $3)');
   }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
