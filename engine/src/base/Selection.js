@@ -367,8 +367,12 @@ Wick.Selection = class extends Wick.Base {
                 return 'soundasset';
             } else if (selection.getSelectedObjects()[0] instanceof window.Wick.SVGAsset) {
                 return 'svgasset';
+            } else if(selection.getSelectedObjects()[0] instanceof window.Wick.FontAsset) {
+                return 'fontasset';
+            } else if(selection.getSelectedObjects()[0] instanceof window.Wick.ClipAsset) {
+                return 'clipasset';
             } else {
-                return 'multiassetmixed'
+                return 'unknown';
             }
         } else {
             return 'unknown';
