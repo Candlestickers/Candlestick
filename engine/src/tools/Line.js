@@ -252,7 +252,7 @@ Wick.Tools.Line = class extends Wick.Tool {
 			curves: false,
 			segments: true,
 			handles: false,
-			tolerance: 10,
+			tolerance: 20 / this.paper.view.zoom,
 			match: result => {
 				return result.item !== this.hoverPreview && !result.item.data.isBorder;
 			}
