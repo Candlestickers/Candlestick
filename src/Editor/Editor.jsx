@@ -350,6 +350,16 @@ class Editor extends EditorCore {
         };
         document.addEventListener('mousemove', this._mouseMoveHandler);
 
+        // Paste event listener — fires because we no longer call e.preventDefault() on the
+        // Cmd+V keydown for 'paste'. This gives us clipboardData with real File objects
+        // (original filenames, Finder file copies, Discord/Figma images, etc.)
+        this._pasteHandler = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            this._handlePasteEvent(e);
+        };
+        document.addEventListener('paste', this._pasteHandler);
+
 
 
         // check to see if we're in the app
@@ -381,6 +391,7 @@ class Editor extends EditorCore {
     // apparently need this for cleanup -H.A.
     componentWillUnmount = () => {
         document.removeEventListener('mousemove', this._mouseMoveHandler);
+        document.removeEventListener('paste', this._pasteHandler);
         window.removeEventListener('resize', this.resizeProps.onWindowResize);
     }
 
