@@ -1950,7 +1950,8 @@ class EditorCore extends Component {
             // Mark whatever image is currently in the system clipboard as stale,
             // so the next paste prefers the wick clipboard over it.
             this._getClipboardImageFingerprint().then(fp => {
-                this._staleClipboardFingerprint = fp;
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
             });
         } else {
             this.toast('There is nothing to copy.', 'warning');
@@ -1976,7 +1977,8 @@ class EditorCore extends Component {
             this.projectDidChange({ actionName: "Cut Selection" });
             // Same stale-image marking as copy
             this._getClipboardImageFingerprint().then(fp => {
-                this._staleClipboardFingerprint = fp;
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
             });
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
@@ -2003,7 +2005,8 @@ class EditorCore extends Component {
 
                         // If this is the stale image left over from a previous in-editor copy/cut,
                         // skip it and fall through to the wick clipboard paste instead ;-;
-                        if (this._staleClipboardFingerprint && fp === this._staleClipboardFingerprint) break;
+                        const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+                        if (stale && fp === stale) break;
 
                         const ext = imageType.split('/')[1] || 'png';
                         this._pasteImageCount = (this._pasteImageCount || 0) + 1;
@@ -2027,8 +2030,8 @@ class EditorCore extends Component {
                                     this.project.copySelectionToClipboard();
                                 }
                                 // Mark this system clipboard image as stale so future pastes
-                                // prefer the wick clipboard copy we just made above
-                                this._staleClipboardFingerprint = fp;
+                                // Written to localStorage so other open windows share the state.
+                                localStorage.setItem('wickEditorStaleClipboardFP', fp);
                                 this.projectDidChange({ actionName: "Paste Image from Clipboard" });
                             });
                         });
