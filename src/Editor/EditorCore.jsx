@@ -1997,23 +1997,41 @@ class EditorCore extends Component {
                     if (imageType) {
                         const blob = await item.getType(imageType);
 
-                        // If the user last did an in-editor copy/cut, check whether this
-                        // clipboard image is the same stale one that was already there.
-                        // If so, skip image paste and prefer the wick clipboard instead.
-                        if (this._staleClipboardFingerprint) {
-                            const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
-                            const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
-                            if (fp === this._staleClipboardFingerprint) break;
-                        }
+                        // Compute fingerprint once for both the stale-check and the post-paste mark
+                        const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                        const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
+
+                        // If this is the stale image left over from a previous in-editor copy/cut,
+                        // skip it and fall through to the wick clipboard paste instead ;-;
+                        if (this._staleClipboardFingerprint && fp === this._staleClipboardFingerprint) break;
 
                         const ext = imageType.split('/')[1] || 'png';
                         this._pasteImageCount = (this._pasteImageCount || 0) + 1;
                         const num = String(this._pasteImageCount).padStart(2, '0');
                         const file = new File([blob], `pasted-image-${num}.${ext}`, { type: imageType });
                         const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
-                        this.createAssets([file], [], { create: true, location: loc });
-                        // New image was pasted — clear the stale marker
-                        this._staleClipboardFingerprint = null;
+
+                        // Import asset, then place on canvas so we can grab the placed object
+                        // copy it to the wick clipboard and mark this system image as stale so that we dont re-copy it and when pasting we past the editor image and not another image added to the asset library of the same image we just imported…
+                        // light yagimi out
+                        this.importFileAsAsset(file, (asset) => {
+                            if (!asset) return;
+                            const paper = this.project.view.paper;
+                            const canvasPos = paper.project.view.element.getBoundingClientRect();
+                            const dropPoint = paper.view.viewToProject(
+                                new window.paper.Point(loc.x - canvasPos.x, loc.y - canvasPos.y)
+                            );
+                            this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                                if (path) {
+                                    this.selectObject(path);
+                                    this.project.copySelectionToClipboard();
+                                }
+                                // Mark this system clipboard image as stale so future pastes
+                                // prefer the wick clipboard copy we just made above
+                                this._staleClipboardFingerprint = fp;
+                                this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                            });
+                        });
                         return;
                     }
                 }
