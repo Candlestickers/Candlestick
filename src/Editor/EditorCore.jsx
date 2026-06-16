@@ -1922,11 +1922,36 @@ class EditorCore extends Component {
     }
 
     /**
+     * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
+     * Used to detect when a clipboard image has become "stale" after an in-editor copy.
+     */
+    _getClipboardImageFingerprint = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return null;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (imageType) {
+                    const blob = await item.getType(imageType);
+                    const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                    return blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    /**
      * Copies the selection state and selected objects to the clipboard.
      */
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
+            // Mark whatever image is currently in the system clipboard as stale,
+            // so the next paste prefers the wick clipboard over it.
+            this._getClipboardImageFingerprint().then(fp => {
+                this._staleClipboardFingerprint = fp;
+            });
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -1949,6 +1974,10 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
+            // Same stale-image marking as copy
+            this._getClipboardImageFingerprint().then(fp => {
+                this._staleClipboardFingerprint = fp;
+            });
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
@@ -1958,7 +1987,40 @@ class EditorCore extends Component {
      * Attempts to paste in objects on the clipboard if they are available.
      * @return {[type]} [description]
      */
-    pasteFromClipboard = () => {
+    pasteFromClipboard = async () => {
+        // Check for an image in the system clipboard first
+        if (navigator.clipboard && navigator.clipboard.read) {
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const item of clipboardItems) {
+                    const imageType = item.types.find(t => t.startsWith('image/'));
+                    if (imageType) {
+                        const blob = await item.getType(imageType);
+
+                        // If the user last did an in-editor copy/cut, check whether this
+                        // clipboard image is the same stale one that was already there.
+                        // If so, skip image paste and prefer the wick clipboard instead.
+                        if (this._staleClipboardFingerprint) {
+                            const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                            const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                            if (fp === this._staleClipboardFingerprint) break;
+                        }
+
+                        const ext = imageType.split('/')[1] || 'png';
+                        this._pasteImageCount = (this._pasteImageCount || 0) + 1;
+                        const num = String(this._pasteImageCount).padStart(2, '0');
+                        const file = new File([blob], `pasted-image-${num}.${ext}`, { type: imageType });
+                        const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                        this.createAssets([file], [], { create: true, location: loc });
+                        // New image was pasted — clear the stale marker
+                        this._staleClipboardFingerprint = null;
+                        return;
+                    }
+                }
+            } catch (err) {
+                // Clipboard API unavailable or permission denied — go back to the normal wick paste then -H.A.
+            }
+        }
         if (this.project.pasteClipboardContents()) {
             this.projectDidChange({ actionName: "Paste from Clipboard" });
         } else {

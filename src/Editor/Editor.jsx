@@ -341,6 +341,16 @@ class Editor extends EditorCore {
 
         this.watchForHover();
 
+        // Track mouse position to use whn pasting images 👀
+        this._lastMouseX = 0;
+        this._lastMouseY = 0;
+        this._mouseMoveHandler = (e) => {
+            this._lastMouseX = e.clientX;
+            this._lastMouseY = e.clientY;
+        };
+        document.addEventListener('mousemove', this._mouseMoveHandler);
+
+
 
         // check to see if we're in the app
         if (window.__TAURI__) {
@@ -366,6 +376,12 @@ class Editor extends EditorCore {
         }
 
 
+    }
+
+    // apparently need this for cleanup -H.A.
+    componentWillUnmount = () => {
+        document.removeEventListener('mousemove', this._mouseMoveHandler);
+        window.removeEventListener('resize', this.resizeProps.onWindowResize);
     }
 
     componentDidUpdate = (prevProps, prevState) => {
@@ -1172,6 +1188,7 @@ class Editor extends EditorCore {
                                                                     onEyedropperPickedColor={this.onEyedropperPickedColor}
                                                                     createAssets={this.createAssets}
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
+                                                                    openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
                                                                 />);
                                                             }}
