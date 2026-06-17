@@ -1019,13 +1019,35 @@ class EditorCore extends Component {
      * @param {File} file - File object to create an asset of.
      * @param {Function} callback - (optional) Callback to return asset to. If the import was unsuccessful, null is sent to the callback.
      */
-    importFileAsAsset = (file, callback) => {
-        // Reuse an existing asset with the same filename to avoid duplicates
-        const existingAsset = this.project.getAssets().find(a => a.filename === file.name);
-        if (existingAsset) {
-            if (callback) callback(existingAsset);
-            return;
-        }
+    importFileAsAsset = async (file, callback) => {
+        // Content-based dedup: fingerprint the new file (size + first 64 bytes)
+        // then compare against all existing assets via their data-URL base64.
+        try {
+            const fpBytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+            const newFp = file.size + ':' + btoa(String.fromCharCode(...fpBytes));
+
+            for (const asset of this.project.getAssets()) {
+                const src = asset.src;
+                if (!src || !src.includes(',')) continue;
+                const base64 = src.split(',')[1];
+                // Compute byte size from base64 length minus padding
+                const paddingCount = (base64.match(/=/g) || []).length;
+                const assetSize = Math.floor(base64.length / 4 * 3) - paddingCount;
+                if (assetSize !== file.size) continue; // fast size pre-check
+                // Decode first 88 base64 chars → first ≥64 raw bytes
+                try {
+                    const decoded = atob(base64.slice(0, 88));
+                    const assetBytes = new Uint8Array(Math.min(64, decoded.length));
+                    for (let i = 0; i < assetBytes.length; i++) assetBytes[i] = decoded.charCodeAt(i);
+                    const assetFp = assetSize + ':' + btoa(String.fromCharCode(...assetBytes));
+                    if (assetFp === newFp) {
+                        if (callback) callback(asset);
+                        return;
+                    }
+                } catch (_) {}
+            }
+        } catch (_) {}
+
         this.project.importFile(file, (asset) => {
             if (callback) callback(asset);
 
