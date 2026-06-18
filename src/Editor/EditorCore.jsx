@@ -2294,6 +2294,8 @@ function _pdf_concatU8(chunks) {
 
 function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
     const objects = [] // each entry is Uint8Array of object BODY (no "obj/endobj")
+    //this warning for unexpected use of comma operator is kinda annoying therefore added the eslint
+// eslint-disable-next-line
     const addObj = (bodyU8) => (objects.push(bodyU8), objects.length) // returns obj id (1-based)
 
     // placeholders
