@@ -106,6 +106,7 @@ Wick.Project = class extends Wick.Base {
         this.activeTool = 'cursor';
 
         this._toolSettings = new Wick.ToolSettings();
+        this._toolSettings.project = this
         this._toolSettings.onSettingsChanged((name, value) => {
             if (name === 'fillColor') {
                 this.selection.fillColor = value.rgba;

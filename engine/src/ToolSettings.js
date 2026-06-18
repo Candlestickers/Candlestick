@@ -122,6 +122,8 @@ Wick.ToolSettings = class {
         this._settings = {};
         this._onSettingsChangedCallback = () => {};
 
+        this.project = null
+
         this.resetAllSettings();
         this.loadSettingsFromLocalstorage();
     }
@@ -194,6 +196,13 @@ Wick.ToolSettings = class {
             localforage.setItem(this.getStorageKey(name), value.rgba);
         } else {
             localforage.setItem(this.getStorageKey(name), value);
+        }
+        if (setting.name === "imageSmoothing"){
+            this.project.getAssets("Image").forEach(asset => {
+                asset.getInstances().forEach(img => {
+                    img.view.item.smoothing = setting.value
+                })
+            })
         }
     }
 

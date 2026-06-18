@@ -52,7 +52,6 @@ Wick.View.Frame = class extends Wick.View {
      * Update the view based on the model
      */
     render() {
-        this.adjustImageSmoothing()
         this._renderObjects();
     }
 
@@ -82,15 +81,6 @@ Wick.View.Frame = class extends Wick.View {
         });
 
         this.objectsLayer.addChildren(children);
-    }
-
-    adjustImageSmoothing(){
-        let bool = this.model.project.toolSettings.getSetting('imageSmoothing');
-        this.model.paths.forEach(path => {
-            if (path.pathType === 'image') {
-                path.view.item.smoothing = bool;
-            }
-        })
     }
 
     _applyDrawableChanges() {
