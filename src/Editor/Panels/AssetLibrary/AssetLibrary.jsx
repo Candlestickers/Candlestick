@@ -24,6 +24,7 @@ import Asset from './Asset/Asset';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import WickInput from 'Editor/Util/WickInput/WickInput';
 import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
+import naturalCompare from 'natural-compare';
 
 import './_assetlibrary.scss';
 
@@ -87,8 +88,8 @@ class AssetLibrary extends Component {
   sortAssets = (assets) => {
     let copiedAssets = [].concat(assets);
 
-    // Perform alphabetic sort.
-    copiedAssets.sort( (a,b) => a.name.localeCompare(b.name) );
+    // Perform natural sort.
+    copiedAssets.sort((a, b) => naturalCompare(a.name.toLowerCase(), b.name.toLowerCase()));
     return copiedAssets;
   }
 

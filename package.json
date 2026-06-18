@@ -28,6 +28,7 @@
     "node-sass": "^4.9.4",
     "pdfjs-dist": "^2.16.105",
     "query-string": "^6.9.0",
+    "natural-compare": "^1.4.0",
     "rc-slider": "^8.6.3",
     "react": "^16.13.1",
     "react-ace": "^6.3.2",
