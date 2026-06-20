@@ -2079,17 +2079,16 @@ class EditorCore extends Component {
             const stale = localStorage.getItem('wickEditorStaleClipboardFP');
 
             if (!stale || fp !== stale) {
-                // Determine final filename — use original when it's preseny,
-                // fall back to sequential name for generic browser-generated names
-                let finalFile = imageFile;
-                const genericNames = ['image', 'image.png', 'image.jpg', 'image.jpeg', 'image.gif', 'image.webp'];
-                if (!imageFile.name || genericNames.includes(imageFile.name.toLowerCase())) {
-                    this._pasteImageCount = (this._pasteImageCount || 0) + 1;
-                    const num = String(this._pasteImageCount).padStart(2, '0');
-                    const ext = (imageFile.type || 'image/png').split('/')[1] || 'png';
-                    // if it's a generic file name, make sure to add the number counter at the end to avoid having too many files of the same name (ex: full asset library all just "image.png")
-                    finalFile = new File([imageFile], genericNames.includes(imageFile.name.toLowerCase())?`${imageFile.name.replaceAll(".","-")}-${num}.${ext}`:`pasted-image-${num}.${ext}`, { type: imageFile.type });
-                }
+                // naming convention stuff here -H.A.
+                const rawName = imageFile.name || ('pasted-image.' + ((imageFile.type || 'image/png').split('/')[1] || 'png'));
+                const dotIdx = rawName.lastIndexOf('.');
+                const stem = dotIdx >= 0 ? rawName.slice(0, dotIdx) : rawName;
+                const extPart = dotIdx >= 0 ? rawName.slice(dotIdx) : '';
+                const assetNames = new Set(this.project.getAssets().map(function(a) { return a.filename; }));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = stem + '-' + counter + extPart; }
+                const finalFile = counter > 0 ? new File([imageFile], finalName, { type: imageFile.type }) : imageFile;
 
                 const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
                 this.importFileAsAsset(finalFile, (asset) => {
