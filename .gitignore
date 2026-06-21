@@ -29,3 +29,5 @@ yarn-error.log*
 
 # docs
 /engine/docs/
+
+/src-tauri/binaries/
