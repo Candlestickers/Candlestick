@@ -2055,10 +2055,10 @@ class EditorCore extends Component {
     exportSelectedClip = () => {
         var clip = this.project.selection.getSelectedObject();
         if (!clip) return;
-        if (!(clip instanceof window.Wick.Clip)) return;
+        if (!([window.Wick.Clip, window.Wick.Button, window.Wick.Path].some((o) => clip instanceof o))) return;
 
         window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
-            window.saveFileFromWick(file, (clip.identifier || 'object'), '.wickobj');
+            window.saveFileFromWick(file, (clip.identifier || /*Clip::f87f8b7d-62c3-4576-a5bb-61ce87768ce9*/ `${clip.classname}::${clip.uuid}`), '.wickobj');
         });
     }
 
