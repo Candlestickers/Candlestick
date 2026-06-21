@@ -46,7 +46,7 @@ export default function initializeDefaultFileHandlers() {
      * @param {function} failureCallback Callback to be called if save is unsuccessful.
      */
     window.saveFileFromWick = (file, name, extension, successCallback, failureCallback) => {
-      const filename = name + timeStamp() + extension; // name + timeStamp() + extension; // --HA
+      const filename = name + extension; // name + timeStamp() + extension; // --HA
       saveAs(file, filename);
       successCallback && successCallback() // Unfortunately, we can't check for success or failure from  browser...
     }
