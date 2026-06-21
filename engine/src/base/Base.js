@@ -518,6 +518,9 @@ Wick.Base = class {
             this._children = [];
         }
 
+        // Fix for #142
+        child.identifier = this._getUniqueIdentifier(child.identifier);
+
         child._parent = this;
         child._setProject(this.project);
 
@@ -540,6 +543,8 @@ Wick.Base = class {
      */
     insertChild(child, index) {
         var classname = child.classname;
+
+        child.identifier = this._getUniqueIdentifier(child.identifier); // fix for the 3 people who have used this.
 
         if (child._parent === this) {
             let result = 0;
@@ -590,6 +595,7 @@ Wick.Base = class {
      */
     getLinkedAssets () {
         // Implemented by Wick.Frame and Wick.Clip
+        console.warn(`getLinkedAssets() is implemented by Wick.Frame and Wick.Clip, but this is object is a Wick.${this.classname}.`)
         return [];
     }
 
