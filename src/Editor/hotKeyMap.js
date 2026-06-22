@@ -560,8 +560,10 @@ class HotKeyInterface extends Object {
 
   wrapHotkeyFunction = (e, name, fn) => {
     if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-      // If we are not on a text input area, use the hotkey's function
-      e.preventDefault();
+      // If we are not on a text input area, use the hotkey's function.
+      // Don't prevent default for 'paste' — we need the browser to fire the paste
+      // event so our listener can access clipboardData (files, real filenames, etc.)
+      if (name !== 'paste') e.preventDefault();
       fn();
 
       // Start the repeat timers if this hotkey is repeatable
