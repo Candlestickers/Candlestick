@@ -341,6 +341,26 @@ class Editor extends EditorCore {
 
         this.watchForHover();
 
+        // Track mouse position to use whn pasting images 👀
+        this._lastMouseX = 0;
+        this._lastMouseY = 0;
+        this._mouseMoveHandler = (e) => {
+            this._lastMouseX = e.clientX;
+            this._lastMouseY = e.clientY;
+        };
+        document.addEventListener('mousemove', this._mouseMoveHandler);
+
+        // Paste event listener — fires because we no longer call e.preventDefault() on the
+        // Cmd+V keydown for 'paste'. This gives us clipboardData with real File objects
+        // (original filenames, Finder file copies, Discord/Figma images, etc.)
+        this._pasteHandler = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            this._handlePasteEvent(e);
+        };
+        document.addEventListener('paste', this._pasteHandler);
+
+
 
         // check to see if we're in the app
         if (window.__TAURI__) {
@@ -366,6 +386,13 @@ class Editor extends EditorCore {
         }
 
 
+    }
+
+    // apparently need this for cleanup -H.A.
+    componentWillUnmount = () => {
+        document.removeEventListener('mousemove', this._mouseMoveHandler);
+        document.removeEventListener('paste', this._pasteHandler);
+        window.removeEventListener('resize', this.resizeProps.onWindowResize);
     }
 
     componentDidUpdate = (prevProps, prevState) => {
@@ -1172,6 +1199,7 @@ class Editor extends EditorCore {
                                                                     onEyedropperPickedColor={this.onEyedropperPickedColor}
                                                                     createAssets={this.createAssets}
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
+                                                                    openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
                                                                 />);
                                                             }}

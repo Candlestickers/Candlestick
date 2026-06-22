@@ -83,10 +83,15 @@ const canvasTarget = {
     let draggedItem = monitor.getItem();
     if(draggedItem.files && draggedItem.files.length > 0) {
       // Dropped a file from native filesystem
-      if(draggedItem.files[0].name.endsWith('.wick')) {
+      var file = draggedItem.files[0];
+      var name = file.name;
+      if(name.endsWith('.wick')) {
         // Wick Project (.wick file)
-        var file = draggedItem.files[0];
         props.importProjectAsWickFile(file);
+      } else if(file.type === 'video/mp4' || name.endsWith('.mp4') ||
+                file.type === 'application/pdf' || name.endsWith('.pdf')) {
+        // MP4/PDF → open as new project
+        props.openProjectFile(file);
       } else {
         // Assets (images, sounds, etc)
         props.createAssets(draggedItem.files, [], {create: true, location: dropLocation});
