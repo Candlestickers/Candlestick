@@ -132,6 +132,8 @@ class Editor extends EditorCore {
         // Set path for engine dependencies
         window.Wick.resourcepath = 'corelibs/wick-engine/';
 
+        this.openToasts = []
+
         // "Live" editor states
         this.project = null;
         this.paper = null;
@@ -851,17 +853,27 @@ class Editor extends EditorCore {
         // If no options are given, set the options param to an empty object so only the default options are used.
         if (!options) options = {};
 
+        //Check if this has already been toasted
+        if(this.openToasts.includes(message)){
+            return;
+        }
+
+        this.openToasts.push(message);
+
         // Default options for the toast:
         let defaultOptions = {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: true,
+            position: "bottom-right",
+            autoClose: 2000,
+            hideProgressBar: false,
             closeOnClick: true,
             pauseOnHover: true,
-            draggable: true,
+            draggable: false,
             className: (type + '-toast-background'),
             bodyClassName: (type + '-toast-body'),
             progressClassName: (type + '-toast-progress'),
+            onClose: () => {
+                this.openToasts.splice(this.openToasts.indexOf(message) , 1);
+            }
         };
 
         // Mix default options and options param:
