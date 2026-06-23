@@ -2053,12 +2053,20 @@ class EditorCore extends Component {
     }
 
     exportSelectedClip = () => {
-        var clip = this.project.selection.getSelectedObject();
-        if (!clip) return;
-        if (!([window.Wick.Clip, window.Wick.Button, window.Wick.Path].some((o) => clip instanceof o))) return;
+        var object = this.project.selection.getSelectedObject();
+        if (!object) return;
+        if (!object instanceof Wick.Base || !(object instanceof Wick.Asset))) return;
+        if (object._temporary) return;
+
+        var cname = object.classname;
+        if(cname === 'Path') {
+            var pt = object.path;
+            if(pt === 'path') return; // no need to export paths
+            cname = `Path::${}`; // could be: (some real Rust/C++ codebase has this), Path::image, or Path::text
+        }
 
         window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
-            window.saveFileFromWick(file, (clip.identifier || /*Clip::f87f8b7d-62c3-4576-a5bb-61ce87768ce9*/ `${clip.classname}::${clip.uuid}`), '.wickobj');
+            window.saveFileFromWick(file, (clip.identifier || object.identifier !== null ? object.identifier : cname), '.wickobj');
         });
     }
 
