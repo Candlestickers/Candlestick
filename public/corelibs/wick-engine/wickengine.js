@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.6.24.21.42.55";
+var WICK_ENGINE_BUILD_VERSION = "2026.6.24.22.18.26";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
