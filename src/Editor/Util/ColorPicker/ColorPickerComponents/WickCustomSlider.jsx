@@ -11,6 +11,7 @@ class WickCustomSlider extends Component {
     }
     componentWillUnmount () {
         this.unbindEvents();
+        this.state.hoverOffset = null;
     }
     calculateOffset = (e) => {
         if (!this.container.current) return;
@@ -99,6 +100,7 @@ class WickCustomSlider extends Component {
                 <div className="wick-custom-slider-background"
                     ref={this.container}
                     onMouseMove={this.handleContainerHover}
+                    onMouseLeave={this.handleContainerExit}
                     onMouseDown={e => {this.handleContainer(e); this.bindEvents();}}
                     onTouchStart={this.handleContainer}
                     onTouchMove={this.handleMouseMove}
@@ -119,6 +121,7 @@ class WickCustomSlider extends Component {
         else
             this.setState({ hoverOffset: this.calculateOffset(e) });
     }
+    handleContainerExit = (e) => this.setState({ hoverOffset: null });
     renderHoverPointer () {
         if (!this.state.hoverOffset) return (<></>);
         let offset = this.state.hoverOffset,
