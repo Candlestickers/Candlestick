@@ -928,7 +928,7 @@ class Editor extends EditorCore {
     getRenderSize = () => {
         if (window.innerWidth > 1200) {
             return "large";
-        } else if (window.innerWidth > 850) {
+        } else if (window.innerWidth > 800) {
             return "medium";
         } else {
             return "small";
@@ -1058,20 +1058,6 @@ class Editor extends EditorCore {
             return this.hotKeyInterface.getEssentialKeyHandlers(this.state.customHotKeys)
         } else {
             return this.hotKeyInterface.getHandlers(this.state.customHotKeys)
-        }
-    }
-
-    /**
-     * Returns a string representing the render size elements should use in the editor.
-     * @returns {String} "large", "medium" or "small" depending on the width of the window.
-     */
-    getRenderSize = () => {
-        if (window.innerWidth > 1200) {
-            return "large";
-        } else if (window.innerWidth > 800) {
-            return "medium";
-        } else {
-            return "small";
         }
     }
 
