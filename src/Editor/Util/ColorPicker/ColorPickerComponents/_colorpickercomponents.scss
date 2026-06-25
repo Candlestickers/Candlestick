@@ -3,7 +3,7 @@
  */
 
 @use 'sass:math';
-@import 'Editor/_wickbrand.scss';
+@use 'Editor/_wickbrand.scss' as *;
 
 $color-picker-stop-width: 24px;
 $color-picker-pointer-radius: 8px;
