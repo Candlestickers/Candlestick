@@ -176,6 +176,7 @@ class WickGradient extends Component {
             <>
                 {this.renderHeader()}
                 <GradientSlider
+                    getHoverColor={offset => this.interpolateColor(offset)}
                     containerDown={this.containerMouseDown}
                     controlStopDown={this.controlStopMouseDown}
                     onMouseMove={offset => { this.offsetSelectedStop(offset.x); this.onChangeIntermediate(); }}
