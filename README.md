@@ -15,7 +15,7 @@ Candlestick is a fork of Wick Editor, a free and open-source tool for creating g
 We plan to update our Node packages in the future. Until then, you will need to use Node Version 14 to install the right packages. If using an M-series Mac, this will require installing Rosetta 2.
 
 See the original Wick Editor [README](https://github.com/Wicklets/wick-editor/blob/master/README.md) for older instructions.
-Newer instructions are provided below, with a focus on Mac development.
+Newer instructions are provided below, with a focus on Mac development. If you're a Windows user, look at [StickmanRed](https://github.com/StickmanRed)'s guide [here](https://github.com/StickmanRed/wick-editor/discussions/40). You should still read these instructions first, though.
 
 ### 1. Homebrew
 This is optional as you can download things without, but Homebrew is a simple set of command line tools that make the process easier. We recommend downloading it if you haven't already. 

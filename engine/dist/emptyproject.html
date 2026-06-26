@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.6.24.22.26.36";
+var WICK_ENGINE_BUILD_VERSION = "2026.6.25.22.50.52";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46617,11 +46617,21 @@ WickObjectCache = class {
     let uuidSet = new Set(uuids);
     let historyIDs = project.history.getObjectUUIDs();
     uuidSet = new Set([...historyIDs, ...uuidSet]);
+
+    // check what objects were removed during cache clear, like when the project is paused - Baron
+    // let info = "removeUnusedObjects()"
     this.getAllObjects().forEach(object => {
       if (!uuidSet.has(object.uuid)) {
-        this.removeObject(object);
+        // info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
+
+        // Check if the object has a parent in the object cache - StickmanRed
+        let topLevelClip = object.topLevelClip;
+        if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+          this.removeObject(object);
+        }
       }
     });
+    // console.log(info);
   }
 
   /**
@@ -46677,6 +46687,36 @@ WickObjectCache = class {
    */
   getObjectsNeedAutosaved() {
     return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
+  }
+
+  /**
+   * DEBUG: Log basic information about every object in the cache: type, uuid, and id/name if applicable
+   */
+  static _getObjectsDebug() {
+    let out = [];
+    let print = "";
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      let line = elem.classname.padEnd(10, " ") + elem.uuid;
+      if (elem._name) line += ": name = " + elem._name;else if (elem._identifier) line += ": id =   " + elem._identifier;
+      //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
+
+      out.push(line);
+    }
+    for (let line of out.sort()) {
+      print += "" + line + "\n";
+    }
+    print += "Total: " + Wick.ObjectCache.getAllObjects().length;
+    console.log(print);
+  }
+
+  /**
+   * DEBUG: Shortcut to call getObjectByUUID() on all objects in the cache
+   */
+  static _getObjectsDebugDetailed() {
+    for (let elem of Wick.ObjectCache.getAllObjects()) {
+      console.log("\n\n" + elem.classname + " " + elem.uuid);
+      console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
+    }
   }
 };
 Wick.ObjectCache = new WickObjectCache();
@@ -49179,6 +49219,18 @@ Wick.Base = class {
    */
   get parentClip() {
     return this._getParentByClassName('Clip');
+  }
+
+  /**
+   * The top-level clip of this object.
+   * @type {Wick.Clip}
+   */
+  get topLevelClip() {
+    let topLevelClip = this.parentClip;
+    while (topLevelClip && topLevelClip.parentClip && !topLevelClip.parentClip.isRoot) {
+      topLevelClip = topLevelClip.parentClip;
+    }
+    return topLevelClip;
   }
 
   /**
@@ -51998,8 +52050,12 @@ Wick.Selection = class extends Wick.Base {
         return 'soundasset';
       } else if (selection.getSelectedObjects()[0] instanceof window.Wick.SVGAsset) {
         return 'svgasset';
+      } else if (selection.getSelectedObjects()[0] instanceof window.Wick.FontAsset) {
+        return 'fontasset';
+      } else if (selection.getSelectedObjects()[0] instanceof window.Wick.ClipAsset) {
+        return 'clipasset';
       } else {
-        return 'multiassetmixed';
+        return 'unknown';
       }
     } else {
       return 'unknown';
@@ -53467,6 +53523,10 @@ Wick.Path = class extends Wick.Base {
     var data = super._serialize(args);
     data.json = this.json;
     delete data.json[1].data;
+    if (typeof data.json[0] !== "string") {
+      // This is a gradient-colored path
+      delete data.json[1][1].data;
+    }
 
     // optimization: replace dataurls with asset uuids
     if (data.json[0] === 'Raster' && data.json[1].source.startsWith('data:')) {
@@ -56086,6 +56146,7 @@ Wick.Frame = class extends Wick.Tickable {
       clip.remove();
     }
     this.addChild(clip);
+    clip._willBeRemoved = false; // Fixes a bug where breaking apart a parent clip causes child clips to be undeletable
 
     // Pre-render the clip's frames
     // (this fixes an issue where clips created from ClipAssets would be "missing" frames)
@@ -57897,7 +57958,7 @@ Wick.Clip = class extends Wick.Tickable {
   }
   _onActive() {
     super._onActive();
-    if (this.animationType === 'loop') {
+    if (this.isFocus || this.animationType === 'loop') {
       this.timeline.advance();
     } else if (this.animationType === 'single') {
       this.timeline.playheadPosition = this.singleFrameNumber;
@@ -57910,7 +57971,7 @@ Wick.Clip = class extends Wick.Tickable {
         }
       }
     }
-    if (this.isSynced) {
+    if (this.isSynced && !this.isFocus) {
       this.timeline.playheadPosition = this.syncFrame;
     }
     this._tickChildren();
@@ -59058,7 +59119,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
       stroke: true,
       curves: true,
       segments: true,
-      tolerance: this.SELECTION_TOLERANCE,
+      tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
       match: result => {
         return !result.item.data.isBorder;
       }
@@ -59096,6 +59157,8 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   _getCursor() {
     if (!this.hitResult.item) {
       return this.CURSOR_DEFAULT;
+    } else if (this.hitResult.item.data.parentItem && this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop' || this.hitResult.item.data.handleType === 'gradient-point') {
+      return this.CURSOR_GRAD;
     } else if (this.hitResult.item.data.isSelectionBoxGUI) {
       // Don't show any custom cursor if the mouse is over the border, the border does nothing
       if (this.hitResult.item.name === 'border') {
@@ -59672,7 +59735,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
           this._pendingFill = false;
           if (path) {
             path.fillColor = this.getSetting('fillColor').rgba;
+            path.strokeWidth = 1;
+            path.strokeColor = this.getSetting('fillColor').rgba;
             path.name = null;
+            console.log(path);
 
             // Insert where you had it before
             if (e.item) {
@@ -59688,6 +59754,10 @@ Wick.Tools.FillBucket = class extends Wick.Tool {
               actionName: 'fillbucket'
             });
           }
+        },
+        onError: message => {
+          this.setCursor('default');
+          this.project.errorOccured(message);
         }
       });
     }, 0);
@@ -59892,11 +59962,12 @@ Wick.Tools.Line = class extends Wick.Tool {
 
     // alt/ option or command/ control to snap to nearby selection
     if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
-      this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+      let globalPoint = this.hitResult.item.parent.localToGlobal(this.hitResult.segment.point);
+      this.hoverPreview = new this.paper.Path.Circle(globalPoint, 5 / this.paper.view.zoom);
       this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
       this.hoverPreview.strokeWidth = 1.5;
       this.hoverPreview.fillColor = 'rgba(150,0,0,0.5)';
-      this.startPoint = this.hitResult.segment.point;
+      this.startPoint = globalPoint;
     } else {
       this.startPoint = false;
     }
@@ -59939,11 +60010,12 @@ Wick.Tools.Line = class extends Wick.Tool {
 
     // snap to point if option/ alt or command/ control
     if (this._shouldSnap(e) && this.hitResult.type === 'segment') {
+      let globalPoint = this.hitResult.item.parent.localToGlobal(this.hitResult.segment.point);
       this.endPoint = {
-        x: this.hitResult.segment.point.x,
-        y: this.hitResult.segment.point.y
+        x: globalPoint.x,
+        y: globalPoint.y
       };
-      this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, 5 / this.paper.view.zoom);
+      this.hoverPreview = new this.paper.Path.Circle(globalPoint, 5 / this.paper.view.zoom);
       this.hoverPreview.strokeColor = 'rgba(100,100,100,0)';
       this.hoverPreview.strokeWidth = 1.5;
 
@@ -60051,7 +60123,7 @@ Wick.Tools.Line = class extends Wick.Tool {
       curves: false,
       segments: true,
       handles: false,
-      tolerance: 10,
+      tolerance: 20 / this.paper.view.zoom,
       match: result => {
         return result.item !== this.hoverPreview && !result.item.data.isBorder;
       }
@@ -60238,10 +60310,10 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     this.CURSOR_SEGMENT = 'cursors/segment.png';
     this.CURSOR_CURVE = 'cursors/curve.png';
     this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR = 'rgba(100,150,255,1.0)';
-    this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH = 1.5;
+    this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH = 3;
     this.HOVER_PREVIEW_SEGMENT_FILL_COLOR = '#ffffff';
     this.HOVER_PREVIEW_SEGMENT_RADIUS = 5;
-    this.HOVER_PREVIEW_CURVE_STROKE_WIDTH = 2;
+    this.HOVER_PREVIEW_CURVE_STROKE_WIDTH = 3;
     this.HOVER_PREVIEW_CURVE_STROKE_COLOR = this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR;
     this.hitResult = new this.paper.HitResult();
     this.draggingCurve = new this.paper.Curve();
@@ -60279,12 +60351,12 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
       // Hovering over a segment, draw a circle where the segment is
       this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, this.HOVER_PREVIEW_SEGMENT_RADIUS / this.paper.view.zoom);
       this.hoverPreview.strokeColor = this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR;
-      this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH;
+      this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH / this.paper.view.zoom;
       this.hoverPreview.fillColor = this.HOVER_PREVIEW_SEGMENT_FILL_COLOR;
     } else if (this.hitResult.type === 'curve' && !this.hitResult.item.data.isSelectionBoxGUI) {
       // Hovering over a curve, render a copy of the curve that can be bent
       this.hoverPreview = new this.paper.Path();
-      this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_CURVE_STROKE_WIDTH;
+      this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_CURVE_STROKE_WIDTH / this.paper.view.zoom;
       this.hoverPreview.strokeColor = this.HOVER_PREVIEW_CURVE_STROKE_COLOR;
       this.hoverPreview.add(new this.paper.Point(this.hitResult.location.curve.point1));
       this.hoverPreview.add(new this.paper.Point(this.hitResult.location.curve.point2));
@@ -60430,14 +60502,19 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
       curves: true,
       segments: true,
       handles: this.detailedEditing !== null,
-      tolerance: this.SELECTION_TOLERANCE,
+      tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
       match: result => {
         return result.item !== this.hoverPreview && !result.item.data.isBorder;
       }
     });
     if (!newHitResult) newHitResult = new this.paper.HitResult();
     if (this.detailedEditing !== null) {
-      if (this._getWickUUID(newHitResult.item) !== this._getWickUUID(this.detailedEditing)) {
+      // Bugfix: newHitResult.item might be inside a CompoundPath
+      var targetItem = newHitResult.item;
+      if (targetItem && targetItem.parent.className === 'CompoundPath') {
+        targetItem = targetItem.parent;
+      }
+      if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
         // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
         return new this.paper.HitResult();
       }
@@ -60846,6 +60923,10 @@ Wick.Tools.Text = class extends Wick.Tool {
           asString: false
         })
       });
+      if (!this.project.activeFrame) {
+        // Automatically add a frame is there isn't one
+        this.project.insertBlankFrame();
+      }
       this.project.activeFrame.addPath(wickText);
       this.project.view.render();
       this.editingText = wickText.view.item;
@@ -61078,25 +61159,52 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     path.remove();
   }
   function eraseStroke(path, eraserPath) {
-    var res = path.subtract(eraserPath, {
-      insert: false,
-      trace: false
-    });
-    if (res.children) {
-      // Since the path is only strokes, it's trivial to split it into individual paths
+    if (path.children) {
+      // ungroup compound path of strokes because Paper cannot erase compound strokes
       var children = [];
-      res.children.forEach(function (child) {
+      path.children.forEach(function (child) {
         child.data = {};
         children.push(child);
         child.name = null;
       });
+      // move each child up, then erase individually
       children.forEach(function (child) {
         child.insertAbove(path);
+        child.style = path.style;
+        eraseStroke(child, eraserPath);
       });
-      res.remove();
     } else {
-      res.remove();
-      if (res.segments.length > 0) res.insertAbove(path);
+      // base case: erasing singular stroke
+      if (path instanceof paper.Path && path.closed && eraserPath.contains(path.firstSegment.point)) {
+        // Fixes bug with paper.js path subtract
+        // If eraserPath contains the first segment of a closed path, convert to an open path
+        var start = path.firstSegment,
+          end = start.clone();
+        start.handleIn = [0, 0];
+        end.handleOut = [0, 0];
+        path.addSegment(end);
+        path.closed = false;
+      }
+      var res = path.subtract(eraserPath, {
+        insert: false,
+        trace: false
+      });
+      if (res.children) {
+        // Since the path is only strokes, it's trivial to split it into individual paths
+        var children = [];
+        res.children.forEach(function (child) {
+          child.data = {};
+          children.push(child);
+          child.name = null;
+        });
+        children.forEach(function (child) {
+          child.insertAbove(path);
+        });
+        res.remove();
+      } else {
+        res.remove();
+        if (res.segments.length > 0) res.insertAbove(path);
+      }
     }
     path.remove();
   }
@@ -61983,7 +62091,7 @@ class SelectionWidget {
       name: 'border',
       from: this.boundingBox.topLeft,
       to: this.boundingBox.bottomRight,
-      strokeWidth: SelectionWidget.BOX_STROKE_WIDTH,
+      strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
       strokeColor: SelectionWidget.BOX_STROKE_COLOR,
       insert: false
     });
@@ -62000,7 +62108,7 @@ class SelectionWidget {
       var border = new paper.Path.Rectangle({
         from: bounds.topLeft,
         to: bounds.bottomRight,
-        strokeWidth: SelectionWidget.BOX_STROKE_WIDTH,
+        strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
         strokeColor: SelectionWidget.BOX_STROKE_COLOR
       });
       //border.rotate(-this.boxRotation, this._center);
@@ -62090,13 +62198,13 @@ class SelectionWidget {
       outline.remove();
       outline.fillColor = 'rgba(0,0,0,0)';
       outline.strokeColor = SelectionWidget.GHOST_STROKE_COLOR;
-      outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2;
+      outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2 / paper.view.zoom;
       ghost.addChild(outline);
       var outline2 = outline.clone();
       outline2.remove();
       outline2.fillColor = 'rgba(0,0,0,0)';
       outline2.strokeColor = '#ffffff';
-      outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH;
+      outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom;
       ghost.addChild(outline2);
     });
     var boundsOutline = new paper.Path.Rectangle({
@@ -62104,7 +62212,7 @@ class SelectionWidget {
       to: this.boundingBox.bottomRight,
       fillColor: 'rgba(0,0,0,0)',
       strokeColor: SelectionWidget.GHOST_STROKE_COLOR,
-      strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH,
+      strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom,
       applyMatrix: false
     });
     boundsOutline.rotate(this.boxRotation, this._center);
@@ -62592,7 +62700,7 @@ paper.SelectionBox = class {
     this._box = new this.paper.Path.Rectangle({
       from: this._start,
       to: this._end,
-      strokeWidth: 1,
+      strokeWidth: 1 / this.paper.view.zoom,
       strokeColor: 'black'
     });
   }
@@ -63587,10 +63695,10 @@ Wick.View.Project = class extends Wick.View {
     // Render GUI Layer
     this._svgGUILayer.removeChildren();
     this._svgGUILayer.locked = true;
-    // if(this.model.showClipBorders && !this.model.playing && this.model.isPublished) {
-    this._svgGUILayer.addChildren(this._generateClipBorders());
-    this.paper.project.addLayer(this._svgGUILayer);
-    // }
+    if (this.model.showClipBorders && !this.model.playing && !this.model.isPublished) {
+      this._svgGUILayer.addChildren(this._generateClipBorders());
+      this.paper.project.addLayer(this._svgGUILayer);
+    }
 
     // Render black bars (for published projects)
     if (this.model.isPublished && this.model.renderBlackBars) {

@@ -294,7 +294,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			stroke: true,
 			curves: true,
 			segments: true,
-			tolerance: this.SELECTION_TOLERANCE,
+			tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
 			match: result => {
 				return !result.item.data.isBorder;
 			}
@@ -341,6 +341,12 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 	_getCursor() {
 		if (!this.hitResult.item) {
 			return this.CURSOR_DEFAULT;
+		} else if (
+			(this.hitResult.item.data.parentItem
+				&& this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop')
+			|| this.hitResult.item.data.handleType === 'gradient-point'
+		) {
+			return this.CURSOR_GRAD;
 		} else if (this.hitResult.item.data.isSelectionBoxGUI) {
 			// Don't show any custom cursor if the mouse is over the border, the border does nothing
 			if (this.hitResult.item.name === 'border') {

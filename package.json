@@ -1,6 +1,6 @@
 {
   "name": "candlestick",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Candlestickers",
   "private": true,
   "homepage": "./",
@@ -21,6 +21,7 @@
     "file-saver": "^2.0.5",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
+    "pdfjs-dist": "^2.16.105",
     "query-string": "^6.9.0",
     "rc-slider": "^8.6.3",
     "react": "^16.13.1",
@@ -55,23 +56,29 @@
     "url-parse": "^1.5.10"
   },
   "scripts": {
-    "eject": "react-scripts eject",
-    "start": "react-scripts start",
-    "build": "react-scripts build && echo 'candlestickers.app' > ./build/CNAME;",
     "tauri": "tauri",
+    "macapp": "tauri build --verbose",
+    "winapp": "tauri build --target x86_64-pc-windows-gnu",
     "build-macapp": "tauri build --verbose",
     "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
-    "build-engine": "cd engine; mkdir dist/; gulp; cp -a dist/. ../public/corelibs/wick-engine/",
-    "build-engine-windows": "cd engine & mkdir dist  2>nul &    gulp & xcopy /EY dist\\. ..\\public\\corelibs\\wick-engine\\",
+    "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.js public/pdf.worker.min.js",
+    "eject": "react-scripts eject",
+    "start": "npm run copy-pdf-worker && react-scripts start",
+    "build": "npm run copy-pdf-worker && react-scripts build && echo 'candlestickers.app' > ./build/CNAME",
+    "build:nocname": "npm run copy-pdf-worker && react-scripts build",
+    "build-engine": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
+    "build-engine-windows": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
     "test": "react-scripts test",
-    "engine-tests": "cd engine/; npx http-server",
+    "engine-tests": "cd engine && npx http-server",
     "predeploy": "npm run build",
-    "prerelease-deploy": "npm run build; cp -r build/* ../wick-editor-prerelease/; cd ../wick-editor-prerelease; rm CNAME; echo 'test.candlestickers.app/' > CNAME; git add .; git commit -m 'update prerelease build'; git push --force;",
-    "build:nocname": "react-scripts build",
+    "prerelease-deploy": "npm run build && shx cp -r build/* ../wick-editor-prerelease/ && cd ../wick-editor-prerelease && shx rm CNAME && echo 'test.candlestickers.app/' > CNAME && git add . && git commit -m 'update prerelease build' && git push --force",
+    "build:nocname:test": "PUBLIC_URL=/test/ npm run build:nocname",
     "check-branch": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(b!=='development'){console.error('✖ Deploy test only from development (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
     "check-branch-prod": "node -e \"const {execSync}=require('child_process'); const b=(process.env.GITHUB_HEAD_REF||process.env.GITHUB_REF_NAME||execSync('git rev-parse --abbrev-ref HEAD')).toString().trim(); if(!['main','master'].includes(b)){console.error('✖ Deploy to prod only from main/master (current: '+b+')'); process.exit(1);} console.log('✔ Branch ok:', b);\"",
-    "master-deploy": "npm run check-branch-prod; gh-pages -d build -b gh-pages -m \"deploy prod\"",
-    "test-deploy": "npm run check-branch; PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\""
+    "master-deploy": "npm run check-branch-prod && gh-pages -d build -b gh-pages -m \"deploy prod\"",
+    "test-deploy": "npm run check-branch && PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test -m \"deploy test\"",
+    "phonegap-deploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app && git add . && git commit -m 'update phonegap build' && git push --force",
+    "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -96,6 +103,20 @@
     "shx": "^0.4.0"
   },
   "overrides": {
-    "form-data": "^4.0.4"
+    "form-data": "^4.0.4",
+    "ajv": "^8",
+    "fork-ts-checker-webpack-plugin": {
+      "ajv-keywords": "^5",
+      "schema-utils": "^4"
+    },
+    "babel-loader": {
+      "ajv": "^6"
+    },
+    "file-loader": {
+      "ajv": "^6"
+    },
+    "eslint": {
+      "ajv": "^6"
+    }
   }
 }

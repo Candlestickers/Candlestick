@@ -567,6 +567,8 @@ class HotKeyInterface extends Object {
       // Start the repeat timers if this hotkey is repeatable
       var options = this.keyMap[name];
       if(options.repeatable) {
+        clearInterval(this.repeatKeyInterval);
+        clearTimeout(this.repeatKeyTimeout);
         this.repeatKeyTimeout = setTimeout(() => {
           this.repeatKeyInterval = setInterval(() => {
             fn();

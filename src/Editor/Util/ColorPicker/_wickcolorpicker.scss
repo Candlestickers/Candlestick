@@ -32,18 +32,13 @@ $color-picker-block-margin: 5px;
     margin-left: auto;
 }
 
-// Style color picker inputs like the inspector.
-.wick-color-picker input {
-    font-size: 1rem;
-}
-
-.wick-color-picker span {
-    padding-bottom: 0px !important;
-    color: $editor-primary-property-text !important;
-}
-
 .wick-color-picker-header {
     height: $color-picker-bar-height;
     display: flex;
     align-items: stretch;
+}
+
+// Style color picker inputs like the inspector.
+.wick-color-picker span {
+    color: $editor-primary-property-text;
 }

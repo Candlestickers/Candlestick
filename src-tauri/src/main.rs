@@ -41,6 +41,94 @@ fn frontend_ready(_window: tauri::Window) -> Result<(), String> {
     Ok(())
 }
 
+// FFMPEG for MP4 exporter
+use std::{fs, process::Command};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Frame {
+    name: String,
+    data: Vec<u8>,
+}
+
+#[tauri::command]
+async fn render_video_ffmpeg(
+    frames: Vec<Frame>,
+    audio: Option<Vec<u8>>,
+    fps: f32,
+    _width: u32,
+    _height: u32,
+    name: String,
+) -> Result<(), String> {
+
+    let temp_dir = std::env::temp_dir().join("candlestick_render");
+    let _ = fs::remove_dir_all(&temp_dir);
+    fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+
+    // Write frame images
+    for frame in frames {
+        fs::write(
+            temp_dir.join(frame.name),
+            frame.data
+        ).map_err(|e| e.to_string())?;
+    }
+
+    // Write audio if exists
+    let has_audio = audio.is_some();
+    if let Some(ref audio_data) = audio {
+        fs::write(
+            temp_dir.join("audio.wav"),
+            audio_data
+        ).map_err(|e| e.to_string())?;
+    }
+
+    let output_path = temp_dir.join(format!("{}.mp4", name));
+
+    let mut cmd = Command::new("ffmpeg");
+    cmd.current_dir(&temp_dir)
+        .args([
+            "-y",
+            "-r", &fps.to_string(),
+            "-i", "frame%12d.jpg",
+        ]);
+
+    if has_audio {
+        cmd.args(["-i", "audio.wav"]);
+    }
+
+    cmd.args([
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-preset", "fast",
+        "-crf", "18",
+    ]);
+
+    if has_audio {
+        cmd.args(["-c:a", "aac", "-shortest"]);
+    }
+
+    cmd.arg(&output_path);
+
+    let status = cmd.status().map_err(|e| e.to_string())?;
+
+    if !status.success() {
+        return Err("ffmpeg failed to render video".into());
+    }
+
+    // Open file automatically for user
+    #[cfg(target_os = "macos")]
+    Command::new("open").arg(&output_path).spawn().ok();
+
+    #[cfg(target_os = "windows")]
+    Command::new("explorer").arg(&output_path).spawn().ok();
+
+    #[cfg(target_os = "linux")]
+    Command::new("xdg-open").arg(&output_path).spawn().ok();
+
+    Ok(())
+}
+
+
 // ------- Main Builder --------
 fn main() {
 
@@ -80,7 +168,11 @@ fn main() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![frontend_ready, take_pending_file])
+        .invoke_handler(tauri::generate_handler![
+            frontend_ready,
+            take_pending_file,
+            render_video_ffmpeg,
+        ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
