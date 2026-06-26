@@ -114,8 +114,20 @@ class VideoExport {
   static _generateVideo = async ({ images, audio, args }) => {
     let { project, onProgress, onFinish } = args
 
-    // Dynamic import so the module is only loaded when video export is triggered
-    const { FFmpeg } = await import('@ffmpeg/ffmpeg')
+    // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
+    // The ESM build creates a { type: 'module' } worker which disables importScripts(),
+    // causing webpack to intercept the dynamic import(coreURL) and fail at runtime.
+    // The UMD build creates a classic worker that uses importScripts() correctly.
+    if (!window.FFmpegWASM) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = window.location.origin + '/corelibs/ffmpeg/ffmpeg.umd.js'
+        script.onload = resolve
+        script.onerror = () => reject(new Error('Failed to load ffmpeg.umd.js'))
+        document.head.appendChild(script)
+      })
+    }
+    const { FFmpeg } = window.FFmpegWASM
     const ffmpeg = new FFmpeg()
 
     // log info 
