@@ -512,6 +512,7 @@ Wick.Base = class {
      * @param {Wick.Base} child - the child to add.
      */
     addChild(child) {
+        if(!(child instanceof Wick.Base)) throw new TypeError("Child isn't a valid wick object.");
         var classname = child.classname;
 
         if (!this._children) {
@@ -519,7 +520,7 @@ Wick.Base = class {
         }
 
         // Fix for #142
-        child.identifier = this._getUniqueIdentifier(child.identifier);
+        child.identifier = this._getUniqueIdentifierQuick(child.identifier);
 
         child._parent = this;
         child._setProject(this.project);
@@ -542,9 +543,10 @@ Wick.Base = class {
      * @returns {boolean} - true if an item before index was moved
      */
     insertChild(child, index) {
+        if(!(child instanceof Wick.Base)) throw new TypeError("Child isn't a valid wick object.");
         var classname = child.classname;
 
-        child.identifier = this._getUniqueIdentifier(child.identifier); // fix for the 3 people who have used this.
+        child.identifier = this._getUniqueIdentifierQuick(child.identifier); // fix for the 3 people who have used this.
 
         if (child._parent === this) {
             let result = 0;
@@ -650,6 +652,17 @@ Wick.Base = class {
             return identifier;
         } else {
             return this._getUniqueIdentifier(identifier + '_copy');
+        }
+    }
+
+    _getUniqueIdentifierQuick(identifier) {
+        var cnames = this.getChildren().map(c => c.identifier);
+        var matching = cnames.filter(n => n.includes(identifier))
+
+        if(this._identiferNameIsPartOfWickAPI(identifier) || this._identifierNameExistsInWindowContext(identifier) || matching.length > 0) {
+            return identifier + '_copy'.repeat(matching.length + 1);
+        } else {
+            return identifier;
         }
     }
 
