@@ -197,13 +197,6 @@ Wick.ToolSettings = class {
         } else {
             localforage.setItem(this.getStorageKey(name), value);
         }
-        if (setting.name === "imageSmoothing"){
-            this.project.getAssets("Image").forEach(asset => {
-                asset.getInstances().forEach(img => {
-                    img.view.item.smoothing = setting.value
-                })
-            })
-        }
     }
 
     /**
