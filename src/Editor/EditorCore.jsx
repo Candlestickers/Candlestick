@@ -19,6 +19,7 @@
 
 import { Component } from 'react';
 import queryString from 'query-string';
+// import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
 import GIFImport from './import/GIFImport';
@@ -1018,7 +1019,35 @@ class EditorCore extends Component {
      * @param {File} file - File object to create an asset of.
      * @param {Function} callback - (optional) Callback to return asset to. If the import was unsuccessful, null is sent to the callback.
      */
-    importFileAsAsset = (file, callback) => {
+    importFileAsAsset = async (file, callback) => {
+        // Content-based dedup: fingerprint the new file (size + first 64 bytes)
+        // then compare against all existing assets via their data-URL base64.
+        try {
+            const fpBytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+            const newFp = file.size + ':' + btoa(String.fromCharCode(...fpBytes));
+
+            for (const asset of this.project.getAssets()) {
+                const src = asset.src;
+                if (!src || !src.includes(',')) continue;
+                const base64 = src.split(',')[1];
+                // Compute byte size from base64 length minus padding
+                const paddingCount = (base64.match(/=/g) || []).length;
+                const assetSize = Math.floor(base64.length / 4 * 3) - paddingCount;
+                if (assetSize !== file.size) continue; // fast size pre-check
+                // Decode first 88 base64 chars → first ≥64 raw bytes
+                try {
+                    const decoded = atob(base64.slice(0, 88));
+                    const assetBytes = new Uint8Array(Math.min(64, decoded.length));
+                    for (let i = 0; i < assetBytes.length; i++) assetBytes[i] = decoded.charCodeAt(i);
+                    const assetFp = assetSize + ':' + btoa(String.fromCharCode(...assetBytes));
+                    if (assetFp === newFp) {
+                        if (callback) callback(asset);
+                        return;
+                    }
+                } catch (_) {}
+            }
+        } catch (_) {}
+
         this.project.importFile(file, (asset) => {
             if (callback) callback(asset);
 
@@ -1922,11 +1951,37 @@ class EditorCore extends Component {
     }
 
     /**
+     * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
+     * Used to detect when a clipboard image has become "stale" after an in-editor copy.
+     */
+    _getClipboardImageFingerprint = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return null;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (imageType) {
+                    const blob = await item.getType(imageType);
+                    const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                    return blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    /**
      * Copies the selection state and selected objects to the clipboard.
      */
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
+            // Mark whatever image is currently in the system clipboard as stale,
+            // so the next paste prefers the wick clipboard over it.
+            this._getClipboardImageFingerprint().then(fp => {
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
+            });
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -1949,16 +2004,122 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
+            // Same stale-image marking as copy
+            this._getClipboardImageFingerprint().then(fp => {
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
+            });
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
     }
 
     /**
-     * Attempts to paste in objects on the clipboard if they are available.
-     * @return {[type]} [description]
+     * Called by the hotkey handler for Cmd+V
      */
     pasteFromClipboard = () => {
+        // No-op — handled by the paste event listener registered in Editor.componentDidMount
+    }
+
+    /**
+     * Core paste handler — called from the document 'paste' event listener.
+     * Uses e.clipboardData which gives us real File objects with filenames and etc. -H.A.
+     */
+    _handlePasteEvent = async (e) => {
+        const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+
+        // imageFile  — what gets imported (PNG JPEG etc. or TIFF→PNG converted)
+        // rawFileForFP — raw bytes used for fingerprint (must match _getClipboardImageFingerprint)
+        let imageFile = null, rawFileForFP = null;
+
+        // Pass 1: directly usable image formats (PNG, JPEG, GIF, WEBP)
+        // getAsFile() returns a File with the ORIGINAL filename when copied from Finder/Discord/etc.
+        for (const item of items) {
+            if (item.kind !== 'file') continue;
+            if (['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(item.type)) {
+                imageFile = rawFileForFP = item.getAsFile();
+                break;
+            }
+        }
+
+        // Pass 2: TIFF (macOS clipboard for Finder/app copies) → convert to PNG via canvas
+        if (!imageFile) {
+            for (const item of items) {
+                if (item.kind !== 'file' || item.type !== 'image/tiff') continue;
+                const tiffFile = item.getAsFile();
+                if (!tiffFile) continue;
+                rawFileForFP = tiffFile;
+                try {
+                    const pngBlob = await new Promise((resolve, reject) => {
+                        const url = URL.createObjectURL(tiffFile);
+                        const img = new Image();
+                        img.onload = () => {
+                            const c = document.createElement('canvas');
+                            c.width = img.naturalWidth; c.height = img.naturalHeight;
+                            c.getContext('2d').drawImage(img, 0, 0);
+                            c.toBlob(b => { URL.revokeObjectURL(url); resolve(b); }, 'image/png');
+                        };
+                        img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+                        img.src = url;
+                    });
+                    // Replace .tiff/.tif extension with .png in the filename
+                    const pngName = (tiffFile.name || 'image.tiff').replace(/\.tiff?$/i, '.png');
+                    imageFile = new File([pngBlob], pngName, { type: 'image/png' });
+                } catch (_) {
+                    rawFileForFP = null;
+                }
+                break;
+            }
+        }
+
+        if (imageFile && rawFileForFP) {
+            // Fingerprint from rawFileForFP keeps consistency with _getClipboardImageFingerprint
+            const fpBytes = new Uint8Array(await rawFileForFP.slice(0, 64).arrayBuffer());
+            const fp = rawFileForFP.size + ':' + btoa(String.fromCharCode(...fpBytes));
+            const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+
+            if (!stale || fp !== stale) {
+                // naming convention stuff here -H.A.
+                const rawName = imageFile.name || ('pasted-image.' + ((imageFile.type || 'image/png').split('/')[1] || 'png'));
+                const dotIdx = rawName.lastIndexOf('.');
+                const stem = dotIdx >= 0 ? rawName.slice(0, dotIdx) : rawName;
+                const extPart = dotIdx >= 0 ? rawName.slice(dotIdx) : '';
+                const assetNames = new Set(this.project.getAssets().map(function(a) { return a.filename; }));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = stem + '-' + counter + extPart; }
+                const finalFile = counter > 0 ? new File([imageFile], finalName, { type: imageFile.type }) : imageFile;
+
+                const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                this.importFileAsAsset(finalFile, (asset) => {
+                    if (!asset) return;
+                    const paper = this.project.view.paper;
+                    const canvasPos = paper.project.view.element.getBoundingClientRect();
+                    // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
+                    const relX = loc.x - canvasPos.left;
+                    const relY = loc.y - canvasPos.top;
+                    const onCanvas = relX >= 0 && relX <= canvasPos.width && relY >= 0 && relY <= canvasPos.height;
+                    const dropPoint = paper.view.viewToProject(
+                        new window.paper.Point(
+                            onCanvas ? relX : canvasPos.width / 2,
+                            onCanvas ? relY : canvasPos.height / 2
+                        )
+                    );
+                    this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                        if (path) {
+                            this.clearSelection();
+                            this.selectObject(path);
+                            this.project.copySelectionToClipboard();
+                        }
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                    });
+                });
+                return;
+            }
+        }
+
+        // No image in paste event (or image was stale) — fall back to Wick clipboard
         if (this.project.pasteClipboardContents()) {
             this.projectDidChange({ actionName: "Paste from Clipboard" });
         } else {
