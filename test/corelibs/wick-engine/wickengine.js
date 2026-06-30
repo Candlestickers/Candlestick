@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.6.29.19.34.18";
+var WICK_ENGINE_BUILD_VERSION = "2026.6.30.13.28.4";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -58952,13 +58952,16 @@ Wick.Tools.Cursor = class extends Wick.Tool {
         }
         if (stopIndex !== null) {
           this._selection.selectedStopIndex = stopIndex;
+          widget._updateItems();
           this.fireEvent({
             eventName: 'canvasModified',
             actionName: 'cursorSelectStop'
           });
         }
+        if (item && item.data.handleType && item.data.handleType.startsWith('gradient-') || stopIndex !== null) return;
       }
-    } else if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+    }
+    if (this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
       // Clicked the selection box GUI, do nothing
     } else if (this.hitResult.item && this._isItemSelected(this.hitResult.item)) {
       // We clicked something that was already selected.
@@ -62237,6 +62240,7 @@ class SelectionWidget {
       color = item.fillColor;
       this._gradientGUI.stroke = false;
     }
+    if (!color) color = new paper.Color(0, 0, 0);
     if (color.gradient) {
       this._gradientGUI.radial = color.gradient.radial;
       stops = color.gradient.stops;
@@ -62313,6 +62317,7 @@ class SelectionWidget {
     const COLOR_BOX_CENTER = [0, -(SelectionWidget.COLOR_STOP_RECT_RADIUS + ARROW_HEIGHT)];
     const COLOR_BOX_INNER_SIZE = 2 * (SelectionWidget.COLOR_STOP_RECT_RADIUS - SelectionWidget.COLOR_STOP_RECT_PADDING);
     const COLOR_BOX_OUTER_SIZE = 2 * SelectionWidget.COLOR_STOP_RECT_RADIUS;
+    const CHECKER_SIZE = 8;
     let stopObj = new paper.Group({
       pivot: [0, 0],
       position: [0, -SelectionWidget.ENDPOINT_RADIUS],
@@ -62335,6 +62340,17 @@ class SelectionWidget {
         parentItem: stopObj
       }
     });
+    let opaqueColorBox = new paper.Path.Rectangle({
+      center: [-COLOR_BOX_INNER_SIZE / 4, COLOR_BOX_CENTER[1]],
+      size: [COLOR_BOX_INNER_SIZE / 2, COLOR_BOX_INNER_SIZE],
+      fillColor: 'red',
+      strokeWidth: 0,
+      data: {
+        isSelectionBoxGUI: true,
+        parentItem: stopObj,
+        isBorder: true
+      }
+    });
     let outerBox = new paper.Path.Rectangle({
       center: COLOR_BOX_CENTER,
       size: [COLOR_BOX_OUTER_SIZE, COLOR_BOX_OUTER_SIZE],
@@ -62345,8 +62361,61 @@ class SelectionWidget {
         parentItem: stopObj
       }
     });
+    let checker = new paper.Group({
+      children: [new paper.Path.Rectangle({
+        position: [0, 0],
+        size: CHECKER_SIZE * 3,
+        fillColor: '#e6e6e6',
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj,
+          isBorder: true
+        }
+      }), new paper.Path.Rectangle({
+        position: [0, -CHECKER_SIZE],
+        size: CHECKER_SIZE,
+        fillColor: '#d4d4d4',
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj,
+          isBorder: true
+        }
+      }), new paper.Path.Rectangle({
+        position: [-CHECKER_SIZE, 0],
+        size: CHECKER_SIZE,
+        fillColor: '#d4d4d4',
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj,
+          isBorder: true
+        }
+      }), new paper.Path.Rectangle({
+        position: [0, CHECKER_SIZE],
+        size: CHECKER_SIZE,
+        fillColor: '#d4d4d4',
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj,
+          isBorder: true
+        }
+      }), new paper.Path.Rectangle({
+        position: [CHECKER_SIZE, 0],
+        size: CHECKER_SIZE,
+        fillColor: '#d4d4d4',
+        data: {
+          isSelectionBoxGUI: true,
+          parentItem: stopObj,
+          isBorder: true
+        }
+      })],
+      strokeWidth: 0
+    });
     outerBox.addTo(stopObj);
+    checker.position = COLOR_BOX_CENTER;
+    checker.scaling = COLOR_BOX_INNER_SIZE / (CHECKER_SIZE * 3);
+    checker.addTo(stopObj);
     colorBox.addTo(stopObj);
+    opaqueColorBox.addTo(stopObj);
     let arrow;
     if (!isHover) {
       arrow = new paper.Path({
@@ -62369,7 +62438,10 @@ class SelectionWidget {
       colorBox.data.isBorder = true;
     }
     stopObj.data.setColor = color => {
-      colorBox.fillColor = color;
+      // if color is null, display black as placeholder
+      colorBox.fillColor = color || 'black';
+      opaqueColorBox.fillColor = color || 'black';
+      opaqueColorBox.fillColor.alpha = 1;
       stopObj.data.color = color;
     };
     stopObj.data.setOffset = offset => {
@@ -62526,15 +62598,15 @@ class SelectionWidget {
     let color;
     if (!stop1) {
       // Offset is the leftmost stop, use the color of nextStop
-      color = stop2.data.color.clone();
+      color = stop2.data.color ? stop2.data.color.clone() : new paper.Color('black');
     } else if (!stop2) {
       // Offset is the rightmost stop, use the color of prevStop
-      color = stop1.data.color.clone();
+      color = stop1.data.color ? stop1.data.color.clone() : new paper.Color('black');
     } else {
       // Both stops exist, interpolate the color
       let offsetRelative = (offset - index1) / (index2 - index1);
-      let color1 = stop1.data.color;
-      let color2 = stop2.data.color;
+      let color1 = stop1.data.color || new paper.Color('black');
+      let color2 = stop2.data.color || new paper.Color('black');
       color = color1.add(color2.subtract(color1).multiply(offsetRelative));
       color.alpha = color1.alpha + (color2.alpha - color1.alpha) * offsetRelative;
     }
