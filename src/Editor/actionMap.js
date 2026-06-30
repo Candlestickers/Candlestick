@@ -136,6 +136,7 @@ class ActionMapInterface extends Object {
         tooltip: 'Export as .wickobj file',
         action: this.editor.exportSelectedClip,
         id: 'action-export-selection-as-wickobj',
+        color: '#00ffea'
       },
       addTweenToSelection: {
         icon: 'addTween',
