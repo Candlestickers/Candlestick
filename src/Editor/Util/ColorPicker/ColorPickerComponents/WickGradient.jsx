@@ -15,13 +15,13 @@ class WickGradient extends Component {
     }
     interpolateColor = (offset) => {
         const sortedStops = this.controlStops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
-        if (offset <= sortedStops[0].offset) return sortedStops[0].color;
-        if (offset >= sortedStops[sortedStops.length - 1].offset) return sortedStops[sortedStops.length - 1].color;
+        if (offset <= sortedStops[0].offset) return sortedStops[0].color || '#000000';
+        if (offset >= sortedStops[sortedStops.length - 1].offset) return sortedStops[sortedStops.length - 1].color || '#000000';
         let next = sortedStops.findIndex(stop => (stop.offset > offset));
         let firstStop = sortedStops[next - 1];
         let nextStop = sortedStops[next];
         let percent = (offset - firstStop.offset) / (nextStop.offset - firstStop.offset) * 100;
-        return tinycolor.mix(firstStop.color, nextStop.color, percent).toRgbString();
+        return tinycolor.mix(firstStop.color || '#000000', nextStop.color || '#000000', percent).toRgbString();
     }
 
     controlStopMouseDown = (index) => {
@@ -30,7 +30,8 @@ class WickGradient extends Component {
     }
     containerMouseDown = (offset) => {
         let color = this.interpolateColor(offset.x);
-        this.controlStops.push({ color, offset: offset.x });
+        // if color is null, use black as default
+        this.controlStops.push({ color: color || '#000000', offset: offset.x });
         this.onChangeComplete({ stopIndex: this.controlStops.length - 1 });
     }
     colorSelectedStop = (color) => {
@@ -38,7 +39,7 @@ class WickGradient extends Component {
         this.controlStops[this.props.selectedControlStopIndex] = { color, offset };
     }
     offsetSelectedStop = (offset) => {
-        let color = this.controlStops[this.props.selectedControlStopIndex].color;
+        let color = this.controlStops[this.props.selectedControlStopIndex].color || '#000000';
         this.controlStops[this.props.selectedControlStopIndex] = { color, offset };
     }
     deleteSelectedStop = () => {
@@ -104,7 +105,7 @@ class WickGradient extends Component {
         let linearGradient = 'linear-gradient(to right';
         const sortedControlStops = this.controlStops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
         sortedControlStops.forEach(controlStopObject => {
-            linearGradient += `, ${controlStopObject.color} ${controlStopObject.offset * 100}%`
+            linearGradient += `, ${controlStopObject.color || '#000000'} ${controlStopObject.offset * 100}%`
         });
         linearGradient += ')';
         return linearGradient;
@@ -175,6 +176,7 @@ class WickGradient extends Component {
             <>
                 {this.renderHeader()}
                 <GradientSlider
+                    getHoverColor={offset => this.interpolateColor(offset)}
                     containerDown={this.containerMouseDown}
                     controlStopDown={this.controlStopMouseDown}
                     onMouseMove={offset => { this.offsetSelectedStop(offset.x); this.onChangeIntermediate(); }}
@@ -187,7 +189,7 @@ class WickGradient extends Component {
                 <WickColorPicker {...this.props}
                     onChangeIntermediate={color => { this.colorSelectedStop(color); this.onChangeIntermediate(); }}
                     onChangeComplete={color => { this.colorSelectedStop(color); this.onChangeComplete({ stopColor: color }); }}
-                    color={this.controlStops[this.props.selectedControlStopIndex].color} />
+                    color={this.controlStops[this.props.selectedControlStopIndex].color || new window.Wick.Color('#000000')} />
             </>
         );
     }
