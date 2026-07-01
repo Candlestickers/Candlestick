@@ -30,4 +30,6 @@ yarn-error.log*
 # docs
 /engine/docs/
 
+pnpm-lock.yaml # for users of pnpm
+
 /src-tauri/binaries/
