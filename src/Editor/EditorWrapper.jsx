@@ -72,6 +72,7 @@ export default function EditorWrapper(props) {
                     createButtonFromSelection={props.editor.createButtonFromSelection}
                     updateProjectSettings={props.editor.updateProjectSettings}
                     exportProjectAsGif={props.editor.exportProjectAsAnimatedGIF}
+                    exportProjectAsPDF={props.editor.exportProjectAsPDFFormat}
                     exportProjectAsVideo={props.editor.exportProjectAsVideo}
                     exportProjectAsStandaloneZip={props.editor.exportProjectAsStandaloneZip}
                     exportProjectAsStandaloneHTML={props.editor.exportProjectAsStandaloneHTML}

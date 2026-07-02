@@ -19,12 +19,14 @@
 
 import { Component } from 'react';
 import queryString from 'query-string';
+// import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
 import GIFImport from './import/GIFImport';
 // import MP4Import from './import/MP4Import';
 import MP4ImportPure from './import/MP4Import_Pure';
 import AudioExport from './export/AudioExport';
+import { importPDFAsSequence } from "./import/PDFImport"
 
 class EditorCore extends Component {
 
@@ -526,40 +528,6 @@ class EditorCore extends Component {
         this.projectDidChange({ actionName: "Create Button From Selection" });
     }
 
-    fillGradientColor = () => {
-        const startColor = window.gradientStartColor;
-        const endColor = window.gradientEndColor;
-        const selected = this.getSelectedCanvasObjects(); // Get selected objects
-        // if (selected.length < 2) return;
-
-        // const referenceX = selected[0].x; // Use the first selected object's y
-        const paper = window.editor.paper;
-        const gradient = new paper.Gradient();
-
-        gradient.stops = [
-            [new paper.Color(startColor), 0], // [new paper.Color('#ff0000'), 0],
-            [new paper.Color(endColor), 1] // [new paper.Color('#0000ff'), 1]
-        ];
-
-        const gradientFill = {
-            gradient: gradient,
-            origin: new paper.Point(-50, 0),
-            destination: new paper.Point(50, 0)
-        };
-
-        selected.forEach(obj => {
-            let oldPosition = {
-                x: obj.x,
-                y: obj.y
-            }
-            obj.x = 0; obj.y = 0;
-            obj.fillColor = gradientFill;
-            obj.x = oldPosition.x; obj.y = oldPosition.y;
-        });
-
-        this.projectDidChange({ actionName: "Set Gradient Fill Color" });
-    }
-
     /**
      * Updates the focus object of the project.
      * @param {Wick.Clip} object Object to set as focus.
@@ -602,8 +570,13 @@ class EditorCore extends Component {
                 cancelText: "Cancel",
             });
         } else {
-            this.project.deleteSelectedObjects();
-            this.projectDidChange({ actionName: "Delete Selected Objects" });
+            if(this.project.selection.useGradientGUI) {
+                this.project.selection.deleteSelectedStop();
+                this.projectDidChange({actionName: "Delete Selected Stop"});
+            } else {
+                this.project.deleteSelectedObjects();
+                this.projectDidChange({actionName: "Delete Selected Objects"});
+            }
         }
     }
 
@@ -1046,7 +1019,35 @@ class EditorCore extends Component {
      * @param {File} file - File object to create an asset of.
      * @param {Function} callback - (optional) Callback to return asset to. If the import was unsuccessful, null is sent to the callback.
      */
-    importFileAsAsset = (file, callback) => {
+    importFileAsAsset = async (file, callback) => {
+        // Content-based dedup: fingerprint the new file (size + first 64 bytes)
+        // then compare against all existing assets via their data-URL base64.
+        try {
+            const fpBytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+            const newFp = file.size + ':' + btoa(String.fromCharCode(...fpBytes));
+
+            for (const asset of this.project.getAssets()) {
+                const src = asset.src;
+                if (!src || !src.includes(',')) continue;
+                const base64 = src.split(',')[1];
+                // Compute byte size from base64 length minus padding
+                const paddingCount = (base64.match(/=/g) || []).length;
+                const assetSize = Math.floor(base64.length / 4 * 3) - paddingCount;
+                if (assetSize !== file.size) continue; // fast size pre-check
+                // Decode first 88 base64 chars → first ≥64 raw bytes
+                try {
+                    const decoded = atob(base64.slice(0, 88));
+                    const assetBytes = new Uint8Array(Math.min(64, decoded.length));
+                    for (let i = 0; i < assetBytes.length; i++) assetBytes[i] = decoded.charCodeAt(i);
+                    const assetFp = assetSize + ':' + btoa(String.fromCharCode(...assetBytes));
+                    if (assetFp === newFp) {
+                        if (callback) callback(asset);
+                        return;
+                    }
+                } catch (_) {}
+            }
+        } catch (_) {}
+
         this.project.importFile(file, (asset) => {
             if (callback) callback(asset);
 
@@ -1270,6 +1271,111 @@ class EditorCore extends Component {
         });
 
     }
+
+    /**
+     * Export the current project as PDF
+     */
+    exportProjectAsPDFFormat = (args) => {
+        this.openModal('ExportMedia');
+        this.setState({
+            renderProgress: 0,
+            renderType: "pdf",
+            renderStatusMessage: "Creating PDF.",
+            exporting: true,
+        });
+
+        const toastID = this.toast('Exporting PDF...', 'info');
+
+        const onProgress = (completed, maxFrames) => {
+            const message = "Rendered " + completed + "/" + maxFrames + " pages";
+            const percentage = 10 + (70 * (completed / maxFrames));
+            this.setState({
+                renderStatusMessage: message,
+                renderProgress: percentage,
+            });
+        };
+
+        const finishFail = (msg) => {
+            this.updateToast(toastID, { type: 'error', text: msg });
+            this.setState({ exporting: false });
+        };
+
+        const onFinish = async (frameImages) => {
+            try {
+                this.setState({ renderStatusMessage: "Building PDF…", renderProgress: 85 });
+
+                if (!frameImages || !frameImages.length) {
+                    finishFail("PDF export failed: no frames rendered.");
+                    return;
+                }
+
+                // Use the ACTUAL rendered frame size (most reliable)
+                const pageW = frameImages[0].naturalWidth || frameImages[0].width || (args.width || this.project.width);
+                const pageH = frameImages[0].naturalHeight || frameImages[0].height || (args.height || this.project.height);
+
+                // Convert to JPEG DataURLs if needed (PDF writer expects JPEG for /DCTDecode)
+                const jpegDataUrls = [];
+                for (let i = 0; i < frameImages.length; i++) {
+                    const src = frameImages[i].src || "";
+                    if (src.startsWith("data:image/jpeg")) {
+                        jpegDataUrls.push(src);
+                    } else {
+                        // Convert PNG/whatever -> JPEG via canvas
+                        const jpeg = await new Promise((resolve) => {
+                                const canvas = document.createElement("canvas");
+                                canvas.width = pageW;
+                                canvas.height = pageH;
+                                const ctx = canvas.getContext("2d");
+
+                                // White background so transparent PNGs don't go black
+                                ctx.fillStyle = "#fff";
+                                ctx.fillRect(0, 0, pageW, pageH);
+
+                                ctx.drawImage(frameImages[i], 0, 0, pageW, pageH);
+                                resolve(canvas.toDataURL("image/jpeg", 0.92));
+                            });
+                        // _toJpegDataUrl(frameImages[i], pageW, pageH);
+                        jpegDataUrls.push(jpeg);
+                    }
+
+                    if (i % 5 === 0) {
+                        this.setState({ renderProgress: 85 + Math.round(10 * (i / frameImages.length)) });
+                    }
+                }
+
+                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH);
+
+                const success = () => {
+                    this.updateToast(toastID, { type: 'success', text: "Successfully saved .pdf file." });
+                };
+
+                const fail = () => {
+                    this.updateToast(toastID, { type: 'error', text: "Error saving .pdf file. Please try again." });
+                };
+
+                window.saveFileFromWick(pdfBlob, this.project.name, '.pdf', success, fail);
+
+                this.setState({
+                    renderStatusMessage: 'Finished creating PDF.',
+                    renderProgress: 100,
+                    exporting: false,
+                });
+            } catch (e) {
+                console.error(e);
+                finishFail("Error creating PDF. Check console for details.");
+            }
+        };
+
+        // Render frames (you CAN request jpeg, but we still convert safely in onFinish)
+        this.project.generateImageSequence({
+            width: args.width,
+            height: args.height,
+            imageType: "image/jpeg",
+            onProgress,
+            onFinish,
+        });
+    };
+
 
     /**
      * Export the current project as an image sequence
@@ -1845,11 +1951,37 @@ class EditorCore extends Component {
     }
 
     /**
+     * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
+     * Used to detect when a clipboard image has become "stale" after an in-editor copy.
+     */
+    _getClipboardImageFingerprint = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return null;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (imageType) {
+                    const blob = await item.getType(imageType);
+                    const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                    return blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    /**
      * Copies the selection state and selected objects to the clipboard.
      */
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
+            // Mark whatever image is currently in the system clipboard as stale,
+            // so the next paste prefers the wick clipboard over it.
+            this._getClipboardImageFingerprint().then(fp => {
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
+            });
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -1872,16 +2004,122 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
+            // Same stale-image marking as copy
+            this._getClipboardImageFingerprint().then(fp => {
+                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                else localStorage.removeItem('wickEditorStaleClipboardFP');
+            });
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
     }
 
     /**
-     * Attempts to paste in objects on the clipboard if they are available.
-     * @return {[type]} [description]
+     * Called by the hotkey handler for Cmd+V
      */
     pasteFromClipboard = () => {
+        // No-op — handled by the paste event listener registered in Editor.componentDidMount
+    }
+
+    /**
+     * Core paste handler — called from the document 'paste' event listener.
+     * Uses e.clipboardData which gives us real File objects with filenames and etc. -H.A.
+     */
+    _handlePasteEvent = async (e) => {
+        const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+
+        // imageFile  — what gets imported (PNG JPEG etc. or TIFF→PNG converted)
+        // rawFileForFP — raw bytes used for fingerprint (must match _getClipboardImageFingerprint)
+        let imageFile = null, rawFileForFP = null;
+
+        // Pass 1: directly usable image formats (PNG, JPEG, GIF, WEBP)
+        // getAsFile() returns a File with the ORIGINAL filename when copied from Finder/Discord/etc.
+        for (const item of items) {
+            if (item.kind !== 'file') continue;
+            if (['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(item.type)) {
+                imageFile = rawFileForFP = item.getAsFile();
+                break;
+            }
+        }
+
+        // Pass 2: TIFF (macOS clipboard for Finder/app copies) → convert to PNG via canvas
+        if (!imageFile) {
+            for (const item of items) {
+                if (item.kind !== 'file' || item.type !== 'image/tiff') continue;
+                const tiffFile = item.getAsFile();
+                if (!tiffFile) continue;
+                rawFileForFP = tiffFile;
+                try {
+                    const pngBlob = await new Promise((resolve, reject) => {
+                        const url = URL.createObjectURL(tiffFile);
+                        const img = new Image();
+                        img.onload = () => {
+                            const c = document.createElement('canvas');
+                            c.width = img.naturalWidth; c.height = img.naturalHeight;
+                            c.getContext('2d').drawImage(img, 0, 0);
+                            c.toBlob(b => { URL.revokeObjectURL(url); resolve(b); }, 'image/png');
+                        };
+                        img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+                        img.src = url;
+                    });
+                    // Replace .tiff/.tif extension with .png in the filename
+                    const pngName = (tiffFile.name || 'image.tiff').replace(/\.tiff?$/i, '.png');
+                    imageFile = new File([pngBlob], pngName, { type: 'image/png' });
+                } catch (_) {
+                    rawFileForFP = null;
+                }
+                break;
+            }
+        }
+
+        if (imageFile && rawFileForFP) {
+            // Fingerprint from rawFileForFP keeps consistency with _getClipboardImageFingerprint
+            const fpBytes = new Uint8Array(await rawFileForFP.slice(0, 64).arrayBuffer());
+            const fp = rawFileForFP.size + ':' + btoa(String.fromCharCode(...fpBytes));
+            const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+
+            if (!stale || fp !== stale) {
+                // naming convention stuff here -H.A.
+                const rawName = imageFile.name || ('pasted-image.' + ((imageFile.type || 'image/png').split('/')[1] || 'png'));
+                const dotIdx = rawName.lastIndexOf('.');
+                const stem = dotIdx >= 0 ? rawName.slice(0, dotIdx) : rawName;
+                const extPart = dotIdx >= 0 ? rawName.slice(dotIdx) : '';
+                const assetNames = new Set(this.project.getAssets().map(function(a) { return a.filename; }));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = stem + '-' + counter + extPart; }
+                const finalFile = counter > 0 ? new File([imageFile], finalName, { type: imageFile.type }) : imageFile;
+
+                const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                this.importFileAsAsset(finalFile, (asset) => {
+                    if (!asset) return;
+                    const paper = this.project.view.paper;
+                    const canvasPos = paper.project.view.element.getBoundingClientRect();
+                    // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
+                    const relX = loc.x - canvasPos.left;
+                    const relY = loc.y - canvasPos.top;
+                    const onCanvas = relX >= 0 && relX <= canvasPos.width && relY >= 0 && relY <= canvasPos.height;
+                    const dropPoint = paper.view.viewToProject(
+                        new window.paper.Point(
+                            onCanvas ? relX : canvasPos.width / 2,
+                            onCanvas ? relY : canvasPos.height / 2
+                        )
+                    );
+                    this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                        if (path) {
+                            this.clearSelection();
+                            this.selectObject(path);
+                            this.project.copySelectionToClipboard();
+                        }
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                    });
+                });
+                return;
+            }
+        }
+
+        // No image in paste event (or image was stale) — fall back to Wick clipboard
         if (this.project.pasteClipboardContents()) {
             this.projectDidChange({ actionName: "Paste from Clipboard" });
         } else {
@@ -1996,6 +2234,59 @@ class EditorCore extends Component {
             console.warn('handleWickFileLoad: no files recieved');
             return;
         }
+
+        // if file is a PDF, handle differently
+        if (file.type === 'application/pdf') {
+            const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
+            this.showWaitOverlay() // disable clicking anywhere
+
+            // start up a new project
+            this.setupNewProject();
+            this.projectDidChange({ actionName: 'Reset project' });
+            // this.showWaitOverlay();
+
+            // GET ALL FRAMES FROM GIF
+            const { pageFiles, width, height } = await importPDFAsSequence({
+                pdfFile: file,
+                scale: 2,
+                onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p)}%)` })
+            })
+
+            this.project.width = width
+            this.project.height = height
+            this.project.name = file.name.replace(".pdf", "")
+            this.projectDidChange({ actionName: 'Adjusted settings based on PDF' });
+
+            // adding all new page image files to the asset library
+            for (const f of pageFiles) {
+                await new Promise(res => this.importFileAsAsset(f, res))
+            }
+
+            await new Promise(res => this.project.loadAssets(res))
+
+            const pages = this.project.assets;
+            let tl = this.project.activeTimeline;
+            tl.layers[0].name = "PDF";
+
+            const x = this.project.width / 2
+            const y = this.project.height / 2
+            // add every page asset on a frame
+            for (let i = 0; i < pages.length; i++) {
+                tl.playheadPosition = i + 1
+
+                await new Promise(done => {
+                    this.project.createImagePathFromAsset(pages[i], x, y, () => done())
+                })
+            }
+            this.project.focus.timeline.playheadPosition = 1;
+
+            this.projectDidChange({ actionName: 'Placed PDF pages onto frames' })
+            this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
+            this.hideWaitOverlay(); // disable clicking anywhere
+
+            return;
+        }
+
 
         // if not an mp4 file just load it then
         if (file.type !== 'video/mp4') {
@@ -2136,5 +2427,114 @@ class EditorCore extends Component {
     }
 
 }
+
+function _pdf_strToU8(str) {
+    const out = new Uint8Array(str.length)
+    for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) & 0xff
+    return out
+}
+
+function _pdf_b64ToU8(b64) {
+    const bin = atob(b64)
+    const out = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+    return out
+}
+
+function _pdf_concatU8(chunks) {
+    let total = 0
+    for (const c of chunks) total += c.length
+    const out = new Uint8Array(total)
+    let off = 0
+    for (const c of chunks) {
+        out.set(c, off)
+        off += c.length
+    }
+    return out
+}
+
+function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
+    const objects = [] // each entry is Uint8Array of object BODY (no "obj/endobj")
+    //this warning for unexpected use of comma operator is kinda annoying therefore added the eslint
+// eslint-disable-next-line
+    const addObj = (bodyU8) => (objects.push(bodyU8), objects.length) // returns obj id (1-based)
+
+    // placeholders
+    const catalogId = addObj(_pdf_strToU8(""))
+    const pagesId = addObj(_pdf_strToU8(""))
+
+    const pageIds = []
+
+    for (let i = 0; i < jpegDataUrls.length; i++) {
+        const url = jpegDataUrls[i]
+        const b64 = url.split(",")[1] || ""
+        const jpg = _pdf_b64ToU8(b64)
+
+        const imgName = `/Im${i}`
+
+        // Image XObject
+        const imgDict =
+            `<< /Type /XObject /Subtype /Image /Width ${pageW} /Height ${pageH} ` +
+            `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`
+        const imgBody = _pdf_concatU8([
+            _pdf_strToU8(imgDict),
+            jpg,
+            _pdf_strToU8("\nendstream\n")
+        ])
+        const imgId = addObj(imgBody)
+
+        // Contents stream (draw image full page)
+        const contents = `q ${pageW} 0 0 ${pageH} 0 0 cm ${imgName} Do Q\n`
+        const contentsDict = `<< /Length ${contents.length} >>\nstream\n${contents}endstream\n`
+        const contentsId = addObj(_pdf_strToU8(contentsDict))
+
+        // Page object
+        const pageObj =
+            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+            `/Resources << /XObject << ${imgName} ${imgId} 0 R >> >> ` +
+            `/Contents ${contentsId} 0 R >>\n`
+        const pageId = addObj(_pdf_strToU8(pageObj))
+        pageIds.push(pageId)
+    }
+
+    // Fill Pages + Catalog
+    const kids = pageIds.map(id => `${id} 0 R`).join(" ")
+    objects[pagesId - 1] = _pdf_strToU8(`<< /Type /Pages /Count ${pageIds.length} /Kids [ ${kids} ] >>\n`)
+    objects[catalogId - 1] = _pdf_strToU8(`<< /Type /Catalog /Pages ${pagesId} 0 R >>\n`)
+
+    // Assemble final PDF
+    const header = _pdf_strToU8("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")
+    const chunks = [header]
+
+    const offsets = new Array(objects.length + 1).fill(0) // offsets[0] unused for xref
+    let cursor = header.length
+
+    for (let i = 0; i < objects.length; i++) {
+        const id = i + 1
+        offsets[id] = cursor
+
+        const objHeader = _pdf_strToU8(`${id} 0 obj\n`)
+        const objFooter = _pdf_strToU8("endobj\n")
+        const objBytes = _pdf_concatU8([objHeader, objects[i], objFooter])
+
+        chunks.push(objBytes)
+        cursor += objBytes.length
+    }
+
+    const xrefStart = cursor
+    let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`
+    for (let i = 1; i <= objects.length; i++) {
+        xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`
+    }
+    const trailer =
+        `trailer\n<< /Size ${objects.length + 1} /Root ${catalogId} 0 R >>\nstartxref\n${xrefStart}\n%%EOF\n`
+
+    chunks.push(_pdf_strToU8(xref))
+    chunks.push(_pdf_strToU8(trailer))
+
+    const pdfBytes = _pdf_concatU8(chunks)
+    return new Blob([pdfBytes], { type: "application/pdf" })
+}
+
 
 export default EditorCore;

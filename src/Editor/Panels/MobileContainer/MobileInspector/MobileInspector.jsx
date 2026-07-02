@@ -69,7 +69,7 @@ class MobileInspector extends Component {
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
-      'addAssetToCanvas': ["imageasset"],
+      'addAssetToCanvas': ["imageasset", "clipasset"],
     }
 
     /**
@@ -91,6 +91,8 @@ class MobileInspector extends Component {
       "multicanvas": "Multi-Canvas",
       "imageasset": "Image Asset",
       "soundasset": "Sound Asset",
+      "fontasset": "Font Asset",
+      "clipasset": "Clip Asset",
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
@@ -127,6 +129,8 @@ class MobileInspector extends Component {
       "multicanvas": ['transform'],
       "imageasset": ['assetSettings', 'name'],
       "soundasset": ['assetSettings', 'name'],
+      "fontasset": ['name'],
+      "clipasset": ['name'],
       "multiassetmixed": ['assetSettings'],
       "multisoundasset": ['assetSettings'],
       "multiimageasset": ['assetSettings'],
@@ -153,7 +157,12 @@ class MobileInspector extends Component {
    * @return {string} fill color opacity from 0 to 1.
    */
   getSelectionFillColorOpacity = () => {
-    return this.getSelectionAttribute('fillColor').alpha;
+    let color = this.getSelectionAttribute('fillColor');
+    if (color instanceof window.paper.Color && color.gradient) {
+      let maxOpacity = color.gradient.stops.reduce((total, stop) => stop.color.alpha > total ? stop.color.alpha : total, 0);
+      return maxOpacity;
+    }
+    return color.alpha;
   }
 
   /**
@@ -162,8 +171,25 @@ class MobileInspector extends Component {
    */
   setSelectionFillColorOpacity = (value) => {
     var color = this.getSelectionAttribute('fillColor');
-    color.alpha = value;
-    this.setSelectionAttribute('fillColor', color);
+    if (color instanceof window.paper.Color && color.gradient) {
+      let maxOpacity = color.gradient.stops.reduce((total, stop) => stop.color.alpha > total ? stop.color.alpha : total, 0);
+      if (maxOpacity === 0) {
+        color.gradient.stops.forEach(stop => {
+          stop.color.alpha = value;
+        });
+      }
+      else {
+        let changeFactor = value / maxOpacity;
+        color.gradient.stops.forEach(stop => {
+          stop.color.alpha *= changeFactor;
+        });
+      }
+
+    }
+    else {
+      color.alpha = value;
+      this.setSelectionAttribute('fillColor', color);
+    }
   }
 
   /**
@@ -178,6 +204,20 @@ class MobileInspector extends Component {
     this.props.setSelectionAttribute(attribute, newValue);
   }
 
+  /**
+   * Updates the value of a selection attribute without adding to the undo stack.
+   * @param {string} attribute Name of the attribute to update.
+   * @param {string|number} newValue  New value of the attribute to update.
+   */
+  setSelectionAttributeIntermediate = (attribute, newValue) => {
+    if (attribute === 'fillColorOpacity') {
+      return this.setSelectionFillColorOpacity(newValue);
+    }
+    this.props.project.selection[attribute] = newValue;
+    this.props.project.view.render();
+    this.props.project.guiElement.draw();
+  }
+
   // Inspector Row Types
 
   /**
@@ -189,8 +229,15 @@ class MobileInspector extends Component {
         <div className="mobile-inspector-col-left">
           <MobileInspectorColor
             tooltip="Stroke"
-            val={this.getSelectionAttribute('strokeColor').toCSS()}
+            val={this.getSelectionAttribute('strokeColor')}
             onChange={(col) => this.setSelectionAttribute('strokeColor', col)}
+            onChangeIntermediate={(col) => this.setSelectionAttributeIntermediate('strokeColor', col)}
+            enableGradient={true}
+            selectionProps={{
+              getSelection: () => this.props.project.selection,
+              renderSelection: () => this.props.project.view.render(),
+              targetCanvas: this.props.project.view._svgCanvas
+            }}
             id={"mobile-inspector-selection-stroke-color"}
             stroke={true}
             divider={false}
@@ -202,8 +249,15 @@ class MobileInspector extends Component {
 
           <MobileInspectorColor
             tooltip="Fill"
-            val={this.getSelectionAttribute('fillColor').toCSS()}
+            val={this.getSelectionAttribute('fillColor')}
             onChange={(col) => this.setSelectionAttribute('fillColor', col)}
+            onChangeIntermediate={(col) => this.setSelectionAttributeIntermediate('fillColor', col)}
+            enableGradient={true}
+            selectionProps={{
+              getSelection: () => this.props.project.selection,
+              renderSelection: () => this.props.project.view.render(),
+              targetCanvas: this.props.project.view._svgCanvas
+            }}
             id={"mobile-inspector-selection-fill-color"}
             divider={false}
             colorPickerType={this.props.colorPickerType}

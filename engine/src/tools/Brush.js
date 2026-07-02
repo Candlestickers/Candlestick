@@ -522,6 +522,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
         var mask = null;
         layer.children.forEach(otherPath => {
             if(otherPath === mask) return;
+            if(!(otherPath instanceof this.paper.Path || otherPath instanceof this.paper.CompoundPath)) return;
             if(mask) {
                 var newMask = mask.unite(otherPath);
 

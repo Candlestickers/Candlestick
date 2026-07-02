@@ -77,7 +77,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
             const bytes = await readFile(filePath, { encoding: null })
             const blob = new Blob([bytes])
             const file = new File([blob], name, {
-                type: name.endsWith('.wick') && 'application/zip' || 'video/mp4'
+                type: (name.endsWith('.wick') && 'application/zip') || (name.endsWith('.pdf') && 'application/pdf') || 'video/mp4'
             });
 
 
@@ -232,7 +232,7 @@ class Editor extends EditorCore {
 
         // Wick Project File Input
         this.openProjectFileFromClient = window.createFileInput({
-            accept: '.zip, .wick, .mp4',
+            accept: '.zip, .wick, .mp4, .pdf',
             onChange: this.handleWickFileLoad,
         });
 
@@ -341,6 +341,26 @@ class Editor extends EditorCore {
 
         this.watchForHover();
 
+        // Track mouse position to use whn pasting images 👀
+        this._lastMouseX = 0;
+        this._lastMouseY = 0;
+        this._mouseMoveHandler = (e) => {
+            this._lastMouseX = e.clientX;
+            this._lastMouseY = e.clientY;
+        };
+        document.addEventListener('mousemove', this._mouseMoveHandler);
+
+        // Paste event listener — fires because we no longer call e.preventDefault() on the
+        // Cmd+V keydown for 'paste'. This gives us clipboardData with real File objects
+        // (original filenames, Finder file copies, Discord/Figma images, etc.)
+        this._pasteHandler = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            this._handlePasteEvent(e);
+        };
+        document.addEventListener('paste', this._pasteHandler);
+
+
 
         // check to see if we're in the app
         if (window.__TAURI__) {
@@ -366,6 +386,13 @@ class Editor extends EditorCore {
         }
 
 
+    }
+
+    // apparently need this for cleanup -H.A.
+    componentWillUnmount = () => {
+        document.removeEventListener('mousemove', this._mouseMoveHandler);
+        document.removeEventListener('paste', this._pasteHandler);
+        window.removeEventListener('resize', this.resizeProps.onWindowResize);
     }
 
     componentDidUpdate = (prevProps, prevState) => {
@@ -490,14 +517,12 @@ class Editor extends EditorCore {
     }
 
     getDefaultCodeEditorProperties = () => {
-        var width = window.innerWidth / 2;
-        var height = window.innerHeight / 2;
         return (
             {
-                width: width,
-                height: height,
-                x: window.innerWidth / 2 - width / 2,
-                y: window.innerHeight / 2 - height / 2,
+                width: window.innerWidth - 510, // magic number: outliner/inspector width
+                height: window.innerHeight - 260, // magic number: toolbar/timeline height
+                x: 0,
+                y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
                 minWidth: 400,
                 minHeight: 250,
                 consoleHeight: 100,
@@ -508,11 +533,20 @@ class Editor extends EditorCore {
         );
     }
 
-    updateLastColors = (color) => {
+    updateLastColors = (color, edit) => {
         let newArray = this.state.lastColorsUsed.concat([]); // make a deep copy.
 
-        // Remove a color from the array. If the new color is in the array, remove it.
         let index = newArray.indexOf(color);
+        if (edit) {
+        // Replace the last color with the new color.
+        if (index > -1) {
+            newArray.splice(index, 1);
+            newArray.unshift(color);
+        }
+        else newArray[0] = color;
+        }
+        else {
+        // Remove a color from the array. If the new color is in the array, remove it.
         if (index > -1) {
             newArray.splice(index, 1);
         } else {
@@ -521,6 +555,7 @@ class Editor extends EditorCore {
 
         // Add the new color to the front of the array.
         newArray.unshift(color);
+        }
 
         this.setState({
             lastColorsUsed: newArray,
@@ -1164,6 +1199,7 @@ class Editor extends EditorCore {
                                                                     onEyedropperPickedColor={this.onEyedropperPickedColor}
                                                                     createAssets={this.createAssets}
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
+                                                                    openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
                                                                 />);
                                                             }}
@@ -1330,7 +1366,6 @@ class Editor extends EditorCore {
                                                         updateLastColors={this.updateLastColors}
                                                         lastColorsUsed={this.state.lastColorsUsed}
                                                         getClipAnimationTypes={this.getClipAnimationTypes}
-                                                        selection={this.project.selection.getSelectedObjects()}
                                                     />
                                                 </DockedPanel>
                                             </ReflexElement>

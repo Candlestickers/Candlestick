@@ -122,11 +122,20 @@ WickObjectCache = class {
 
         uuidSet = new Set([...historyIDs, ...uuidSet]);
 
+        // check what objects were removed during cache clear, like when the project is paused - Baron
+        // let info = "removeUnusedObjects()"
         this.getAllObjects().forEach(object => {
             if(!uuidSet.has(object.uuid)) {
-                this.removeObject(object);
+                // info += "\n" + object.classname.padEnd(10, " ") + object.uuid;
+
+                // Check if the object has a parent in the object cache - StickmanRed
+                let topLevelClip = object.topLevelClip;
+                if (!topLevelClip || !uuidSet.has(topLevelClip.uuid)) {
+                    this.removeObject(object);
+                }
             }
         });
+        // console.log(info);
     }
 
     /**
@@ -182,6 +191,38 @@ WickObjectCache = class {
      */
     getObjectsNeedAutosaved () {
         return Object.keys(this._objectsNeedAutosave).map(uuid => this.getObjectByUUID(uuid));
+    }
+
+    /**
+     * DEBUG: Log basic information about every object in the cache: type, uuid, and id/name if applicable
+     */
+    static _getObjectsDebug() {
+        let out = [];
+        let print = "";
+        for(let elem of Wick.ObjectCache.getAllObjects()) {
+            let line = elem.classname.padEnd(10, " ") + elem.uuid;
+
+            if(elem._name) line += (": name = " + elem._name);
+            else if(elem._identifier) line += (": id =   " + elem._identifier);
+            //else if(elem._parent._identifier) line += (": parent = " + elem._parent._identifier);
+
+            out.push(line);
+        }
+        for(let line of out.sort()) {
+            print += "" + line + "\n";
+        }
+        print += "Total: " + Wick.ObjectCache.getAllObjects().length;
+        console.log(print);
+    }
+
+    /**
+     * DEBUG: Shortcut to call getObjectByUUID() on all objects in the cache
+     */
+    static _getObjectsDebugDetailed() {
+        for(let elem of Wick.ObjectCache.getAllObjects()) {
+            console.log("\n\n" + elem.classname + " " + elem.uuid);
+            console.log(Wick.ObjectCache.getObjectByUUID(elem.uuid));
+        }
     }
 }
 

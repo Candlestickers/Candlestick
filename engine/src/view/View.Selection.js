@@ -168,6 +168,8 @@ Wick.View.Selection = class extends Wick.View {
             boxRotation: this.model.widgetRotation,
             items: this._getSelectedObjectViews(),
             pivot: new paper.Point(this.model.pivotPoint.x, this.model.pivotPoint.y),
+            useGradientGUI: this.model.useGradientGUI,
+            selectedStopIndex: this.model.selectedStopIndex
         });
     }
 

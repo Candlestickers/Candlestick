@@ -684,9 +684,11 @@ Wick.View.Project = class extends Wick.View {
     }
 
     _generateSVGCanvasStage() {
+        var isPub = this.model.publishedMode;
+        var borderLength = this.model.width * this.model.height * 20;
         var stage = new paper.Path.Rectangle(
-            new this.paper.Point(0, 0),
-            new this.paper.Point(this.model.width, this.model.height),
+            new this.paper.Point(isPub? borderLength/-2 : 0, isPub? borderLength/-2 : 0),
+            new this.paper.Point(isPub ? borderLength : this.model.width, isPub ? borderLength : this.model.height),
         );
         stage.remove();
         stage.fillColor = this.model.backgroundColor.rgba;

@@ -36,9 +36,9 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
-            "Offline Desktop App",
-            "Mobile Gestures",
-            "Layer Opacity Slider",
+            "Updated Color Picker",
+            "PDF Import and Export",
+            "Pasting Images from Clipboard",
             "Various Bug/Crash Fixes"
         ]
 

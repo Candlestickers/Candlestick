@@ -39,13 +39,6 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
 
-
-// setting default gradient colors
-window.gradientStartColor = '#ff0000ff';
-window.gradientEndColor = '#0000ffff';
-window.gradientIsRadial = true;
-window.gradientStopsTrackPosition = [[0,0],[0,0]];
-
 window.EditorGradientColorSwapState = false;
 
 class Inspector extends Component {
@@ -53,10 +46,7 @@ class Inspector extends Component {
     super(props);
 
     this.state = {
-      logs: [],
-      gradientStartColor: window.gradientStartColor || "#ff0000",
-      gradientEndColor: window.gradientEndColor || "#0000ff",
-      gradientRadial: true
+      logs: []
     };
 
     this.handleConsoleLog = (log) => {
@@ -85,6 +75,8 @@ class Inspector extends Component {
       "multicanvas": this.renderMultiCanvas,
       "imageasset": this.renderAsset,
       "soundasset": this.renderAsset,
+      "fontasset": this.renderAsset,
+      "clipasset": this.renderAsset,
       "multiassetmixed": this.renderAsset,
       "multisoundasset": this.renderAsset,
       "multiimageasset": this.renderAsset,
@@ -95,11 +87,10 @@ class Inspector extends Component {
      */
     this.actionRules = {
       'breakApart': ["clip", "button",],
-      'fillGradient': ["gradient","path","multipath"], // adding in extra action for gradient, ignore this one
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
-      'addAssetToCanvas': ["imageasset"],
+      'addAssetToCanvas': ["imageasset", "clipasset"],
       // 'alignX': [ "multipath"] // H.A.
     }
 
@@ -122,6 +113,8 @@ class Inspector extends Component {
       "multicanvas": "Multi-Canvas",
       "imageasset": "Image Asset",
       "soundasset": "Sound Asset",
+      "fontasset": "Font Asset",
+      "clipasset": "Clip Asset",
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
@@ -140,78 +133,6 @@ class Inspector extends Component {
 
     if(window.project.playing && this.consoleEndRef.current) {
       this.consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-
-    
-    const selection = this.props.selection;
-    // make sure selection is single gradient Path object
-    if (
-    selection.length>0 &&
-    selection.length === 1 &&
-    selection[0]._classname === "Path" &&
-    selection[0].fillColor.gradient
-    ){
-    
-      // when object is first selected ... set gradient settings color to object color
-      if(prevProps.selection.length===0 || prevProps.selection[0]._uuid !== selection[0]._uuid){
-        const fill = [
-          selection[0].fillColor.gradient.stops[0]._color,
-          selection[0].fillColor.gradient.stops[1]._color
-        ];
-    
-        const num2Hex = (n) => Math.round(n * 255).toString(16).padStart(2, '0');
-        const fil2Hex = (n) => `#${num2Hex(n._components[0])}${num2Hex(n._components[1])}${num2Hex(n._components[2])}${num2Hex(n._alpha)}`;
-    
-        const startHex = fil2Hex(fill[0]);
-        const endHex = fil2Hex(fill[1]);
-    
-        const radBool = (selection[0].fillColor._components[0]._radial);
-
-        if (window.gradientStartColor !== startHex || window.gradientEndColor !== endHex || window.gradientIsRadial !== radBool) {
-          window.gradientStartColor = startHex;
-          window.gradientEndColor = endHex;
-
-          window.gradientIsRadial = radBool;
-    
-          this.setState({
-            gradientStartColor: startHex,
-            gradientEndColor: endHex,
-            gradientRadial: radBool
-          });
-          // this.setState({ gradientRadial: radBool });
-        }
-      //  console.error((selection[0].fillColor._components[0]._radial));
-      }else{ // as long as object is selected ... set its gradient to gradient settings
-            
-        const paper = window.editor.paper;
-        const gradient = new paper.Gradient();
-        gradient.stops = [
-          [new paper.Color(this.state.gradientStartColor), 0],
-          [new paper.Color(this.state.gradientEndColor), 1],
-        ];
-
-        // gradient.radial = true; // TODO add in the option to toggle this... 
-        gradient.radial = this.state.gradientRadial; // || true;
-
-        const item = selection[0];
-        const bounds = selection[0].fillColor._components; //item.bounds;
-
-        let GSTP = window.gradientStopsTrackPosition;
-        const newfillColor = {
-          gradient: gradient,
-          origin: new paper.Point(GSTP[0][0]||bounds[1].x, GSTP[0][1]||bounds[1].y),
-          destination: new paper.Point(GSTP[1][0]||bounds[2].x, GSTP[1][1]||bounds[2].y),
-        };
-        window.gradientStopsTrackPosition = [[0,0],[0,0]];
-
-          item.fillColor = newfillColor;
-          this.props.project.view.render();
-          this.props.project.guiElement.draw();
-          if(this.props.projectDidChange)
-            this.props.projectDidChange({ actionName: "Live Gradient Update" });
-
-      }
-
     }
   }
 
@@ -234,7 +155,12 @@ class Inspector extends Component {
    * @return {string} fill color opacity from 0 to 1.
    */
   getSelectionFillColorOpacity = () => {
-    return this.getSelectionAttribute('fillColor').alpha;
+    let color = this.getSelectionAttribute('fillColor');
+    if (color instanceof window.paper.Color && color.gradient) {
+      let maxOpacity = color.gradient.stops.reduce((total, stop) => stop.color.alpha > total ? stop.color.alpha : total, 0);
+      return maxOpacity;
+    }
+    return color.alpha;
   }
 
   /**
@@ -243,8 +169,25 @@ class Inspector extends Component {
    */
   setSelectionFillColorOpacity = (value) => {
     var color = this.getSelectionAttribute('fillColor');
-    color.alpha = value;
-    this.setSelectionAttribute('fillColor', color);
+    if (color instanceof window.paper.Color && color.gradient) {
+      let maxOpacity = color.gradient.stops.reduce((total, stop) => stop.color.alpha > total ? stop.color.alpha : total, 0);
+      if (maxOpacity === 0) {
+        color.gradient.stops.forEach(stop => {
+          stop.color.alpha = value;
+        });
+      }
+      else {
+        let changeFactor = value / maxOpacity;
+        color.gradient.stops.forEach(stop => {
+          stop.color.alpha *= changeFactor;
+        });
+      }
+
+    }
+    else {
+      color.alpha = value;
+      this.setSelectionAttribute('fillColor', color);
+    }
   }
 
   /**
@@ -257,6 +200,20 @@ class Inspector extends Component {
       return this.setSelectionFillColorOpacity(newValue);
     }
     this.props.setSelectionAttribute(attribute, newValue);
+  }
+
+  /**
+   * Updates the value of a selection attribute without adding to the undo stack.
+   * @param {string} attribute Name of the attribute to update.
+   * @param {string|number} newValue  New value of the attribute to update.
+   */
+  setSelectionAttributeIntermediate = (attribute, newValue) => {
+    if (attribute === 'fillColorOpacity') {
+      return this.setSelectionFillColorOpacity(newValue);
+    }
+    this.props.project.selection[attribute] = newValue;
+    this.props.project.view.render();
+    this.props.project.guiElement.draw();
   }
 
   // Inspector Row Types
@@ -285,8 +242,15 @@ class Inspector extends Component {
         <InspectorColorNumericInput
           tooltip1="Fill"
           tooltip2="Opacity"
-          val1={this.getSelectionAttribute('fillColor').toCSS()}
+          val1={this.getSelectionAttribute('fillColor')}
           onChange1={(col) => this.setSelectionAttribute('fillColor', col)}
+          onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('fillColor', col)}
+          enableGradient={true}
+          selectionProps={{
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.view.render(),
+            targetCanvas: this.props.project.view._svgCanvas
+          }}
           id={"inspector-selection-fill-color"}
           val2={this.getSelectionAttribute('fillColorOpacity')}
           onChange2={(val) => this.setSelectionAttribute('fillColorOpacity', val)}
@@ -300,8 +264,15 @@ class Inspector extends Component {
           tooltip1="Stroke"
           tooltip2="Weight"
 
-          val1={this.getSelectionAttribute('strokeColor').toCSS()}
+          val1={this.getSelectionAttribute('strokeColor')}
           onChange1={(col) => this.setSelectionAttribute('strokeColor', col)}
+          onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('strokeColor', col)}
+          enableGradient={true}
+          selectionProps={{
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.view.render(),
+            targetCanvas: this.props.project.view._svgCanvas
+          }}
           id={"inspector-selection-stroke-color"}
           stroke={true}
 
@@ -864,148 +835,12 @@ class Inspector extends Component {
    * Renders the inspector view for all properties of a selection with path properties.
    */
   renderPathContent = () => {
-
-    if (this.props.selection && this.props.selection[0].fillColor.gradient)
-      return(
-        <div className="inspector-content">
-          {this.renderSelectionTransformProperties()}
-          {this.renderSelectionColor()}
-
-          
-          
-          <div
-          className="inspector-item"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            // gap: '8px',
-            color: 'white',
-            fontSize: '18px'
-          }}
-        >
-          <label>Gradient:</label>
-
-          {/* Start Color Block */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
-          {/* <label>Left</label> */}
-            <input
-              type="color"
-              value={this.state.gradientStartColor.slice(0, 7)}
-              onChange={(e) => {
-                const alpha = this.state.gradientStartColor.slice(7) || 'ff';
-                const fullColor = e.target.value + alpha;
-                window.gradientStartColor = fullColor;
-                this.setState({ gradientStartColor: fullColor });
-              }}
-            />
-            <input
-              type="text"
-              value={this.state.gradientStartColor}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^#[0-9A-Fa-f]{6,8}$/.test(val)) {
-                  window.gradientStartColor = val;
-                  this.setState({ gradientStartColor: val });
-                }
-              }}
-              style={{ width: '90px' }}
-              title="Start Color HEX"
-            />
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="255"
-            value={parseInt(this.state.gradientStartColor.slice(7) || 'ff', 16)}
-            onChange={(e) => {
-              const alpha = Number(e.target.value).toString(16).padStart(2, '0');
-              const fullColor = this.state.gradientStartColor.slice(0, 7) + alpha;
-              window.gradientStartColor = fullColor;
-              this.setState({ gradientStartColor: fullColor });
-            }}
-            style={{ width: '100%' }}
-            title="Start Alpha"
-          />
-
-          {/* End Color Block */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '13px'}}>
-          {/* <label>Right</label> */}
-            <input
-              type="color"
-              value={this.state.gradientEndColor.slice(0, 7)}
-              onChange={(e) => {
-                const alpha = this.state.gradientEndColor.slice(7) || 'ff';
-                const fullColor = e.target.value + alpha;
-                window.gradientEndColor = fullColor;
-                this.setState({ gradientEndColor: fullColor });
-              }}
-            />
-            <input
-              type="text"
-              value={this.state.gradientEndColor}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^#[0-9A-Fa-f]{6,8}$/.test(val)) {
-                  window.gradientEndColor = val;
-                  this.setState({ gradientEndColor: val });
-                }
-              }}
-              style={{ width: '90px' }}
-              title="End Color HEX"
-            />
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="255"
-            value={parseInt(this.state.gradientEndColor.slice(7) || 'ff', 16)}
-            onChange={(e) => {
-              const alpha = Number(e.target.value).toString(16).padStart(2, '0');
-              const fullColor = this.state.gradientEndColor.slice(0, 7) + alpha;
-              window.gradientEndColor = fullColor;
-              this.setState({ gradientEndColor: fullColor });
-            }}
-            style={{ width: '100%' }}
-            title="End Alpha"
-          />
-          {/* radial & linear mode */}
-        <div style={{ margin: '2px', display: 'flex', gap: '2px' }}>
-          <input
-            type="checkbox"
-            className="wick-checkbox"
-            id="gradient-mode-toggle"
-            checked={window.gradientIsRadial}
-            onChange={(e) => {
-              const isRadial = e.target.checked;
-              window.gradientIsRadial = isRadial;
-              this.setState({ gradientRadial: isRadial });
-            }}
-          />
-          <label
-            htmlFor="gradient-mode-toggle"
-            className="wick-label"
-            style={{
-              margin: 0,
-              padding: 0,
-              lineHeight: 'normal'
-            }}
-          >
-            Radial mode 
-          </label>
-        </div>
-        </div>
-
-
-
+    return(
+      <div className="inspector-content">
+        {this.renderSelectionTransformProperties()}
+        {this.renderSelectionColor()}
       </div>
-      );
-    else 
-      return(
-        <div className="inspector-content">
-          {this.renderSelectionTransformProperties()}
-          {this.renderSelectionColor()}
-        </div>
-      )
+    )
 
   }
 
@@ -1164,10 +999,7 @@ class Inspector extends Component {
 
     Object.keys(this.actionRules).forEach(action => {
         let actionList = this.actionRules[action];
-        if(actionList.indexOf(selectionType) > -1 && 
-          // extra operators to make sure gradient button only shows for non-gradient path objects
-          (actionList[0]!=="gradient" || !this.props.selection[0].fillColor.gradient))
-          actions.push(action);
+        if (actionList.indexOf(selectionType) > -1) actions.push(action);
     });
 
     return(

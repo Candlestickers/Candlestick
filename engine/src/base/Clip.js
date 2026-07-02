@@ -1628,7 +1628,7 @@ let avgIntersection = {
     _onActive() {
         super._onActive();
 
-        if (this.animationType === 'loop') {
+        if (this.isFocus || this.animationType === 'loop') {
             this.timeline.advance();
         } else if (this.animationType === 'single') {
             this.timeline.playheadPosition = this.singleFrameNumber;
@@ -1642,7 +1642,7 @@ let avgIntersection = {
             }
         } 
         
-        if (this.isSynced) {
+        if (this.isSynced && !this.isFocus) {
             this.timeline.playheadPosition = this.syncFrame;
         }
 

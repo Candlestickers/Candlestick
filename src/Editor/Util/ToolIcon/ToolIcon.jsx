@@ -34,6 +34,8 @@ import iconFillBucket from 'resources/toolbar-icons/fillbucket.svg';
 import iconPathCursor from 'resources/toolbar-icons/pathcursor.svg';
 import iconSpectrum from 'resources/toolbar-icons/spectrum.svg';
 import iconSwatches from 'resources/toolbar-icons/swatches.svg';
+import iconLinear from 'resources/toolbar-icons/linear.svg';
+import iconRadial from 'resources/toolbar-icons/radial.svg';
 
 import iconDelete from 'resources/toolbar-icons/delete.svg';
 import iconUndo from 'resources/toolbar-icons/undo.svg';
@@ -307,6 +309,8 @@ const icons = {
   "layerTween": iconLayerTween,
   "spectrum": iconSpectrum,
   "swatches": iconSwatches,
+  "linear": iconLinear,
+  "radial": iconRadial,
   "group": iconGroup,
   "mascotmark": mascotMark,
   "mascotmarkdark": mascotMarkDark,
