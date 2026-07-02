@@ -79,6 +79,7 @@ export default function WickCodeEditor(props) {
     if ((list.length === 0 || missing) && props.scriptToEdit !== 'add') {
       props.editScript('add'); // updates parent state: scriptToEdit + opens editor
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.script, props.scriptToEdit]);
 
   const editorThemeSelectRef = useRef();
