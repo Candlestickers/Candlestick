@@ -2104,7 +2104,13 @@ class EditorCore extends Component {
 
                 const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
                 this.importFileAsAsset(finalFile, (asset) => {
-                    if (!asset) return;
+                    if (!asset) {
+                        // import failed — mark this image as stale so future pastes
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
                     const paper = this.project.view.paper;
                     const canvasPos = paper.project.view.element.getBoundingClientRect();
                     // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
