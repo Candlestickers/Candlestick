@@ -10,10 +10,9 @@
 
 # production
 /build
-/build-ios/WebViewExample/local_html
-/build-electron
-/engine/dist/
+/dist
 /public/corelibs/wick-engine/
+/engine/dist/
 
 # misc
 .DS_Store
@@ -31,5 +30,5 @@ yarn-error.log*
 /engine/docs/
 
 pnpm-lock.yaml # for users of pnpm
-
-/src-tauri/binaries/
+engine/docs/*
+src-tauri/binaries/*
