@@ -35,7 +35,7 @@ Wick.Base = class {
             Wick._originals[this.classname] = new Wick[this.classname];
         }
 
-        this._tag = [];
+        this._tag = args.tags || [];
 
         if (!args) args = {};
 
@@ -73,6 +73,11 @@ Wick.Base = class {
       return [...this._tag];
     }
 
+    set tags(n) {
+        this._tag = n;
+        Wick.ObjectCache.addObject(this); // update tags in object cache
+    }
+
     /**
      * Returns true if this object has the given tag.
      * @param {string} tag - The given tag.
@@ -107,6 +112,7 @@ Wick.Base = class {
     addTag(tag) {
       if(typeof tag !== 'string') throw new TypeError(`Tag should be of type 'string' but is of type ${typeof tag}.`);
       this._tag.push(tag);
+      Wick.ObjectCache.addObject(this);
     }
 
     /**
