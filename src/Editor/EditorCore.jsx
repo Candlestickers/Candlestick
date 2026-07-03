@@ -1979,8 +1979,9 @@ class EditorCore extends Component {
             // Mark whatever image is currently in the system clipboard as stale,
             // so the next paste prefers the wick clipboard over it.
             this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
+                // Only update the stale marker when we successfully read the clipboard
+                // If fp is null, clipboard.read() was either blocked or is empty -H.A.
+                if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
             });
         } else {
             this.toast('There is nothing to copy.', 'warning');
@@ -2006,8 +2007,7 @@ class EditorCore extends Component {
             this.projectDidChange({ actionName: "Cut Selection" });
             // Same stale-image marking as copy
             this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
+                if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
             });
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
@@ -2018,7 +2018,19 @@ class EditorCore extends Component {
      * Called by the hotkey handler for Cmd+V
      */
     pasteFromClipboard = () => {
-        // No-op — handled by the paste event listener registered in Editor.componentDidMount
+        // handled by the 'paste' event listener (see Editor componentDidMount -H.A.)
+    }
+
+    /**
+     * Pastes from the wick-internal clipboard used by UI buttons (which do NOT
+     * fire a browser paste event, so _handlePasteEvent never runs for them)
+     */
+    pasteWickClipboard = () => {
+        if (this.project.pasteClipboardContents())
+            this.projectDidChange({ actionName: "Paste from Clipboard" });
+        else
+            this.toast('There is nothing in the clipboard to paste.', 'warning');
+        
     }
 
     /**
@@ -2092,7 +2104,13 @@ class EditorCore extends Component {
 
                 const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
                 this.importFileAsAsset(finalFile, (asset) => {
-                    if (!asset) return;
+                    if (!asset) {
+                        // import failed — mark this image as stale so future pastes
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
                     const paper = this.project.view.paper;
                     const canvasPos = paper.project.view.element.getBoundingClientRect();
                     // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
