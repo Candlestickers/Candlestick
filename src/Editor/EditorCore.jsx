@@ -2025,12 +2025,77 @@ class EditorCore extends Component {
      * Pastes from the wick-internal clipboard used by UI buttons (which do NOT
      * fire a browser paste event, so _handlePasteEvent never runs for them)
      */
-    pasteWickClipboard = () => {
+    pasteWickClipboard = async () => {
+        // Button clicks are direct user gestures, so navigator.clipboard.read() is allowed
+        // even on iOS Safari. Try system clipboard image first before wick clipboard. -H.A.
+        if (await this._tryImportSystemClipboardImage()) return;
+
         if (this.project.pasteClipboardContents())
             this.projectDidChange({ actionName: "Paste from Clipboard" });
         else
             this.toast('There is nothing in the clipboard to paste.', 'warning');
-        
+    }
+
+    /**
+     * Reads an image from the system clipboard via navigator.clipboard.read()
+     * Returns true if paste successful, false to fall back to wick clipboard
+     * MUST BE CALLED from direct "user-gesture" (click) so iOS Safari grants 
+     * clipboard access -H.A.
+     */
+    _tryImportSystemClipboardImage = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return false;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (!imageType) continue;
+                const blob = await item.getType(imageType);
+                const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+                if (stale && fp === stale) return false; // stale — caller should use wick clipboard
+
+                const ext = (imageType.split('/')[1] || 'png');
+                const rawName = 'pasted-image.' + ext;
+                const assetNames = new Set(this.project.getAssets().map(a => a.filename));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = 'pasted-image-' + counter + '.' + ext; }
+                const finalFile = new File([blob], finalName, { type: imageType });
+
+                const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                this.importFileAsAsset(finalFile, (asset) => {
+                    if (!asset) {
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
+                    const paper = this.project.view.paper;
+                    const canvasPos = paper.project.view.element.getBoundingClientRect();
+                    const relX = loc.x - canvasPos.left;
+                    const relY = loc.y - canvasPos.top;
+                    const onCanvas = relX >= 0 && relX <= canvasPos.width && relY >= 0 && relY <= canvasPos.height;
+                    const dropPoint = paper.view.viewToProject(
+                        new window.paper.Point(
+                            onCanvas ? relX : canvasPos.width / 2,
+                            onCanvas ? relY : canvasPos.height / 2
+                        )
+                    );
+                    this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                        if (path) {
+                            this.clearSelection();
+                            this.selectObject(path);
+                            this.project.copySelectionToClipboard();
+                        }
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                    });
+                });
+                return true;
+            }
+        } catch (e) {}
+        return false;
     }
 
     /**
@@ -2136,6 +2201,9 @@ class EditorCore extends Component {
                 return;
             }
         }
+
+        // iOS Safari doesn't populate clipboardData with images — try Clipboard API as fallback
+        if (!imageFile && await this._tryImportSystemClipboardImage()) return;
 
         // No image in paste event (or image was stale) — fall back to Wick clipboard
         if (this.project.pasteClipboardContents()) {
