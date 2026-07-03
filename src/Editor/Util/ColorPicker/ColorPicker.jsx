@@ -83,7 +83,8 @@ function arraysEqual(arr1, arr2) {
 export default function ColorPicker (props) {
   let selectedObjects =
     (typeof props.getSelection === 'function') ?
-    props.getSelection()._selectedObjectsUUIDs.toSorted() : null;
+    [...props.getSelection()._selectedObjectsUUIDs] : null;
+  if (selectedObjects) selectedObjects.sort();
 
   const [open, setOpen] = useState(false);
   const [lastObjects, setLastObjects] = useState(selectedObjects);
@@ -128,7 +129,8 @@ export default function ColorPicker (props) {
     if (color.gradient) {
       colorCSS = colorCSSOpaque = 'linear-gradient(to right';
 
-      const sortedControlStops = color.gradient.stops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
+      const sortedControlStops = [...color.gradient.stops];
+      sortedControlStops.sort((objectA, objectB) => objectA.offset - objectB.offset);
       sortedControlStops.forEach(paperControlStop => {
           colorCSS += `, ${paperControlStop.color.toCSS()} ${paperControlStop.offset * 100}%`;
           let { red, green, blue } = paperControlStop.color;
@@ -144,9 +146,9 @@ export default function ColorPicker (props) {
   }
   else if (typeof color === 'string') {
     // Used as a background-image
-    colorCSS = colorCSSOpaque = `linear-gradient(${color})`;
+    colorCSS = colorCSSOpaque = `linear-gradient(${color}, ${color})`;
     // regex to remove alpha from color string
-    colorCSSOpaque = colorCSSOpaque.replace(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/g, 'rgb($1, $2, $3)');
+    colorCSSOpaque = colorCSSOpaque.replaceAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/g, 'rgb($1, $2, $3)');
   }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
