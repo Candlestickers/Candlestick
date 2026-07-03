@@ -140,8 +140,9 @@ export default function ColorPicker (props) {
       colorCSSOpaque += ')';
     }
     else {
-      colorCSS = `linear-gradient(${color.toCSS()})`;
-      colorCSSOpaque = `linear-gradient(rgb(${color.red*255},${color.green*255},${color.blue*255}))`;
+      colorCSS = color.toCSS(); colorCSSOpaque = `rgb(${color.red*255},${color.green*255},${color.blue*255})`;
+      colorCSS = `linear-gradient(${colorCSS}, ${colorCSS})`;
+      colorCSSOpaque = `linear-gradient(${colorCSSOpaque}, ${colorCSSOpaque})`;
     }
   }
   else if (typeof color === 'string') {
