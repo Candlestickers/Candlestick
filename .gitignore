@@ -27,5 +27,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # docs
+/engine/docs/
+
+pnpm-lock.yaml # for users of pnpm
 engine/docs/*
 src-tauri/binaries/*

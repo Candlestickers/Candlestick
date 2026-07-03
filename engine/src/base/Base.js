@@ -35,6 +35,8 @@ Wick.Base = class {
             Wick._originals[this.classname] = new Wick[this.classname];
         }
 
+        this._tag = args.tags || [];
+
         if (!args) args = {};
 
         this._uuid = args.uuid || uuidv4();
@@ -61,6 +63,69 @@ Wick.Base = class {
         this._temporary = false; // Defines if this object is "temporary"
 
         Wick.ObjectCache.addObject(this);
+    }
+
+    /**
+     * Tags of this object.
+     * @returns {string[]}
+     */
+    get tags() {
+      return [...this._tag];
+    }
+
+    set tags(n) {
+        this._tag = n;
+        Wick.ObjectCache.addObject(this); // update tags in object cache
+    }
+
+    /**
+     * Returns true if this object has the given tag.
+     * @param {string} tag - The given tag.
+     * @returns {boolean} - If the given tag is inside this object.
+     */
+    hasTag(tag) {
+      return this.tags.includes(tag);
+    }
+
+    /**
+     * Returns true if object has any of the given tags
+     * @param  {...string} tags - The given tags.
+     * @returns {boolean}
+     */
+    hasAnyTags(...tags) {
+        return this.tags.some(t => tags.includes(t));
+    }
+
+    /**
+     * Returns true if object all the given tags.
+     * @param  {...any} tags - The given tags.
+     * @returns {boolean}
+     */
+    hasTags(...tags) {
+        return this.tags.every(t => tags.includes(t));
+    }
+
+    /**
+     * Adds the given tag to the tag list.
+     * @param {string} tag - The given tag
+     */
+    addTag(tag) {
+      if(typeof tag !== 'string') throw new TypeError(`Tag should be of type 'string' but is of type ${typeof tag}.`);
+      this._tag.push(tag);
+      Wick.ObjectCache.addObject(this);
+    }
+
+    /**
+     * Adds multiple tags at once.
+     * @param {...string} tags - The given tags.
+     * @example
+     * this.addTags('dinosaur', 'bullet');
+     * this.addTags(...['dinosaur', 'bullet']);
+     */
+    addTags(...tags) {
+      if(tags.some(v => typeof v !== 'string')) throw new TypeError(`Tag given is not of type string.`);
+
+      this._tag = this._tag.concat(tags);
     }
 
     /**
@@ -382,6 +447,7 @@ Wick.Base = class {
     /**
      * Gets all children with a given classname(s).
      * @param {Array|string} classname - (optional) A string, or list of strings, of classnames.
+     * @returns {Wick.Base[]} - Children that match cases.
      */
     getChildren(classname) {
         // Lazily generate children list from serialized data
@@ -393,11 +459,25 @@ Wick.Base = class {
         }
 
         if (classname instanceof Array) {
-            let classNames = new Set(classname);
             var children = [];
 
-            if (this._children !== undefined) {
-                children = this._children.filter(child => classNames.has(child.classname));
+            if(this._children !== undefined) {
+                if(this._children.length === 0)
+                    return [];
+                else {
+                    var tags = [], classnames = [];
+
+                    for(var cname of classname) {
+                        if(cname[0] == "#")
+                            tags.push(cname.slice(1));
+                        else
+                            classnames.push(cname);
+                    }
+
+                    var cwtags = this._children.map(c => c.hasTags(tags)), cwclassnames = this._children.map(c => classnames.includes(c.classname));
+
+                    return cwtags.concat(cwclassnames);
+                }
             }
 
             return children;

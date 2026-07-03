@@ -985,12 +985,13 @@ let avgIntersection = {
 
     return Math.hypot(a[0] + (b[0] - a[0]) * t1 - p.x, a[1] + (b[1] - a[1]) * t1 - p.y);
   }
+
   /**
    * Perform hit test with other clip.
-   * @returns {object} Hit information
+   * @param {Wick.Clip | string} arg1 - Another clip.
+   * @param {Partial<{mode: 'CIRCLE' | 'RECTANGLE' | 'CONVEX', offset: boolean, overlap: boolean, intersections: boolean, radius: number}> | undefined} arg2 - Configurations.
+   * @returns {object | boolean} Hit information.
    */
-
-
   hits(arg1, arg2) {
     // Interpretations of arg1 and arg2
     // (clip), (clip, options) -> hit clip
@@ -1056,7 +1057,7 @@ let avgIntersection = {
     let results = [];
 
     for (let h = 0; h < hits.length; h++) {
-      other = hits[h]; // TODO after tag system is implemented, 
+      other = typeof tag !== "string" ? hits[h] : (hits[h].hasTag(tag) ? other : this); // Tag system is implemented! 
       // check either all==true or the tag condition is satisfied
 
       if (other !== this) {
@@ -1078,16 +1079,16 @@ let avgIntersection = {
 
     return results;
   }
+
   /**
      * Returns true if this clip collides with another clip.
      * @param {Wick.Clip} other - The other clip to check collision with.
      * @returns {boolean} True if this clip collides the other clip.
      */
-
-
   hitTest(other) {
-        // TODO: write intersects so we don't rely on paper Rectangle objects
-        return this.absoluteBounds.intersects(other.absoluteBounds);
+      return Boolean(this.hits(other, {
+        mode: "RECTANGLE"
+      }));
     } // Returns a rectangle in the coordinate space of the root clip
     // guaranteed to bound the object
   

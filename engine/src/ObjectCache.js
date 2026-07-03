@@ -21,14 +21,19 @@
 // This should probably not be global, and instead, each Wick.Project should own an ObjectCache.
 // It's too hard to test if there's a shared ObjectCache between many projects.
 
+// NOTE 2:
+// If many projects exist at the same time collisions and errors may occur.
+
 /**
  * Global utility class for storing and retrieving large file data.
  */
-WickObjectCache = class {
+class WickObjectCache {
     /**
      * Create a WickObjectCache.
      */
     constructor () {
+        this._tags = {};
+        this._tagset = new Set();
         this._objects = {};
         this._objectsNeedAutosave = {};
     }
@@ -39,10 +44,35 @@ WickObjectCache = class {
      */
     addObject (object) {
         this._objects[object.uuid] = object;
+        object.tags.forEach(t => {
+            if(this._tags[t] === undefined && !this._tagset.has(t)) {
+                this._tags[t] = [];
+                this._tagset.add(t);
+            }
+
+            this._tags[t].push(object.uuid);
+        })
 
         /*object.children.forEach(child => {
             this.addObject(child);
         });*/
+    }
+
+    /**
+     * Returns all objects UUIDs which have the specified tag.
+     * @param {string} tag - Specified tag.
+     * @returns {string[]?} - UUIDs or null, if tag doesn't exist.
+     */
+    getObjectUUIDsByTag(tag) {
+        if(!this._tagset.has(tag) || this._tags[t] === undefined)
+            return null;
+
+        return this._tags[t];
+    }
+
+    getObjectByTag(tag) {
+        const uuids = this.getObjectUUIDsByTag(tag)
+        return uuids.map(u => this.getObjectByUUID(u)).filter(c => c instanceof Wick.Base);
     }
 
     /**
@@ -54,6 +84,12 @@ WickObjectCache = class {
             object.destroy();
             return; // TODO, remove this.
         }
+
+        object.tags.forEach(t => {
+            this._tags[t] = this._tags[t].filter(tt => tt !== object.uuid);
+            this._tagset.delete(t);
+        });
+        
         delete this._objects[object.uuid];
     }
 
@@ -103,6 +139,14 @@ WickObjectCache = class {
         }
 
         return allObjects;
+    }
+
+    /**
+     * Tags
+     * @type {Set<string>}
+     */
+    get tags() {
+        return this._tagset;
     }
 
     /**
@@ -225,5 +269,7 @@ WickObjectCache = class {
         }
     }
 }
+
+window.WickObjectCache = WickObjectCache;
 
 Wick.ObjectCache = new WickObjectCache();
