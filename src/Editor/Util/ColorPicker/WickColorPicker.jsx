@@ -50,7 +50,7 @@ class WickGradientColorPicker extends Component {
             index = this.props.getSelectedStopIndex();
         }
         let selectedStop = color.stops[index];
-        color.stops = color.stops.toSorted((stop1, stop2) => stop1.offset - stop2.offset);
+        color.stops.sort((stop1, stop2) => stop1.offset - stop2.offset);
         let newIndex = color.stops.indexOf(selectedStop);
         if (newIndex < 0) newIndex = 0;
 
