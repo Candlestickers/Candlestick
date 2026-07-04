@@ -30,7 +30,7 @@ class EditorSettings extends Component {
     super();
 
     this.state = {
-
+      clipboardMode: localStorage.getItem('wickEditorClipboardMode') || 'device',
     }
   }
 
@@ -40,8 +40,29 @@ class EditorSettings extends Component {
     for (let i = 0; i < options.length; i++) {
       optionsLabels.push({label: options[i], value: options[i]});
     }
+
+    const clipboardOptions = [
+      { label: 'Device & Wick Clipboard', value: 'device' },
+      { label: 'Wick Clipboard Only',     value: 'wick'   },
+    ];
+
     return (
       <div className="editor-settings-modal-body">
+        <div className="editor-settings-group">
+          <label htmlFor="clipboard-mode" className="editor-settings-group-title">Clipboard</label>
+            Mode:
+            <WickInput
+              type="select"
+              id="clipboard-mode"
+              value={this.state.clipboardMode}
+              options={clipboardOptions}
+              onChange={(val) => {
+                this.setState({ clipboardMode: val.value });
+                localStorage.setItem('wickEditorClipboardMode', val.value);
+              }}
+            />
+        </div>
+
         <div className="editor-settings-group">
           <label htmlFor="onion-skin-style" className="editor-settings-group-title">Onion Skinning</label>
             Style:
