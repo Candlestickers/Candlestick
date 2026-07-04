@@ -1961,9 +1961,10 @@ class EditorCore extends Component {
         if(stored) return stored;
         const ua = navigator.userAgent;
         // see device & browser
-        const isIOS    = /iPad|iPhone|iPod/.test(ua);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-        const defaultMode = (isIOS || isSafari) ? 'wick' : 'device';
+        const isIOS     = /iPad|iPhone|iPod/.test(ua);
+        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
+        const isFirefox = /Firefox\/\d/.test(ua);
+        const defaultMode = (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
         localStorage.setItem('wickEditorClipboardMode', defaultMode);
         return defaultMode;
     }

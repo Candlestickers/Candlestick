@@ -32,9 +32,10 @@ class EditorSettings extends Component {
     this.state = {
       clipboardMode: localStorage.getItem('wickEditorClipboardMode') || (() => {
         const ua = navigator.userAgent;
-        const isIOS    = /iPad|iPhone|iPod/.test(ua);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-        return (isIOS || isSafari) ? 'wick' : 'device';
+        const isIOS     = /iPad|iPhone|iPod/.test(ua);
+        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
+        const isFirefox = /Firefox\/\d/.test(ua);
+        return (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
       })(),
     }
   }
