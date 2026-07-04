@@ -1976,13 +1976,16 @@ class EditorCore extends Component {
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
-            // Mark whatever image is currently in the system clipboard as stale,
-            // so the next paste prefers the wick clipboard over it.
-            this._getClipboardImageFingerprint().then(fp => {
-                // Only update the stale marker when we successfully read the clipboard
-                // If fp is null, clipboard.read() was either blocked or is empty -H.A.
-                if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-            });
+            // Mark whatever image is currently in the system clipboard as stale
+            // so the next paste prioritizes the wick clipboard over it
+            // skip entirely in wick-only mode obv -H.A.
+            if (localStorage.getItem('wickEditorClipboardMode') !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    // Only update the stale marker when we successfully read the clipboard
+                    // If fp is null, clipboard.read() was either blocked or is empty -H.A.
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -2005,10 +2008,12 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
-            // Same stale-image marking as copy
-            this._getClipboardImageFingerprint().then(fp => {
-                if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-            });
+            // Same stale-image marking as copy — skip in wick-only mode. -H.A.
+            if (localStorage.getItem('wickEditorClipboardMode') !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
@@ -2027,8 +2032,10 @@ class EditorCore extends Component {
      */
     pasteWickClipboard = async () => {
         // Button clicks are direct user gestures, so navigator.clipboard.read() is allowed
-        // even on iOS Safari. Try system clipboard image first before wick clipboard. -H.A.
-        if (await this._tryImportSystemClipboardImage()) return;
+        // even on iOS Safari. Try system clipboard image first before wick clipboard,
+        // unless the user has set wick-only mode in Editor Settings. -H.A.
+        if (localStorage.getItem('wickEditorClipboardMode') !== 'wick' &&
+            await this._tryImportSystemClipboardImage()) return;
 
         if (this.project.pasteClipboardContents())
             this.projectDidChange({ actionName: "Paste from Clipboard" });
@@ -2103,6 +2110,15 @@ class EditorCore extends Component {
      * Uses e.clipboardData which gives us real File objects with filenames and etc. -H.A.
      */
     _handlePasteEvent = async (e) => {
+        // Wick-only mode: skip device clipboard entirely -H.A.
+        if (localStorage.getItem('wickEditorClipboardMode') === 'wick') {
+            if (this.project.pasteClipboardContents())
+                this.projectDidChange({ actionName: "Paste from Clipboard" });
+            else
+                this.toast('There is nothing in the clipboard to paste.', 'warning');
+            return;
+        }
+
         const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
 
         // imageFile  — what gets imported (PNG JPEG etc. or TIFF→PNG converted)
