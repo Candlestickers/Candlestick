@@ -14,7 +14,8 @@ class WickGradient extends Component {
         this.props.onUnmount();
     }
     interpolateColor = (offset) => {
-        const sortedStops = this.controlStops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
+        const sortedStops = [...this.controlStops];
+        sortedStops.sort((objectA, objectB) => objectA.offset - objectB.offset);
         if (offset <= sortedStops[0].offset) return sortedStops[0].color || '#000000';
         if (offset >= sortedStops[sortedStops.length - 1].offset) return sortedStops[sortedStops.length - 1].color || '#000000';
         let next = sortedStops.findIndex(stop => (stop.offset > offset));
@@ -103,7 +104,8 @@ class WickGradient extends Component {
     }
     renderGradientBackground () {
         let linearGradient = 'linear-gradient(to right';
-        const sortedControlStops = this.controlStops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
+        const sortedControlStops = [...this.controlStops];
+        sortedControlStops.sort((objectA, objectB) => objectA.offset - objectB.offset);
         sortedControlStops.forEach(controlStopObject => {
             linearGradient += `, ${controlStopObject.color || '#000000'} ${controlStopObject.offset * 100}%`
         });

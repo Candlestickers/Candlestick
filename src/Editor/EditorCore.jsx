@@ -1954,6 +1954,21 @@ class EditorCore extends Component {
      * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
      * Used to detect when a clipboard image has become "stale" after an in-editor copy.
      */
+
+    //  Returns the effective clipboard mode, defaulting to 'wick' on iOS/Safari -H.A.
+    _getClipboardMode = () => {
+        const stored = localStorage.getItem('wickEditorClipboardMode');
+        if(stored) return stored;
+        const ua = navigator.userAgent;
+        // see device & browser
+        const isIOS     = /iPad|iPhone|iPod/.test(ua);
+        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
+        const isFirefox = /Firefox\/\d/.test(ua);
+        const defaultMode = (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
+        localStorage.setItem('wickEditorClipboardMode', defaultMode);
+        return defaultMode;
+    }
+
     _getClipboardImageFingerprint = async () => {
         if (!navigator.clipboard || !navigator.clipboard.read) return null;
         try {
@@ -1976,12 +1991,16 @@ class EditorCore extends Component {
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
-            // Mark whatever image is currently in the system clipboard as stale,
-            // so the next paste prefers the wick clipboard over it.
-            this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
-            });
+            // Mark whatever image is currently in the system clipboard as stale
+            // so the next paste prioritizes the wick clipboard over it
+            // skip entirely in wick-only mode obv -H.A.
+            if (this._getClipboardMode() !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    // Only update the stale marker when we successfully read the clipboard
+                    // If fp is null, clipboard.read() was either blocked or is empty -H.A.
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -2004,11 +2023,12 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
-            // Same stale-image marking as copy
-            this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
-            });
+            // Same stale-image marking as copy — skip in wick-only mode. -H.A.
+            if (this._getClipboardMode() !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
@@ -2018,7 +2038,86 @@ class EditorCore extends Component {
      * Called by the hotkey handler for Cmd+V
      */
     pasteFromClipboard = () => {
-        // No-op — handled by the paste event listener registered in Editor.componentDidMount
+        // handled by the 'paste' event listener (see Editor componentDidMount -H.A.)
+    }
+
+    /**
+     * Pastes from the wick-internal clipboard used by UI buttons (which do NOT
+     * fire a browser paste event, so _handlePasteEvent never runs for them)
+     */
+    pasteWickClipboard = async () => {
+        // Button clicks are direct user gestures, so navigator.clipboard.read() is allowed
+        // even on iOS Safari. Try system clipboard image first before wick clipboard,
+        // unless the user has set wick-only mode in Editor Settings. -H.A.
+        if (this._getClipboardMode() !== 'wick' &&
+            await this._tryImportSystemClipboardImage()) return;
+
+        if (this.project.pasteClipboardContents())
+            this.projectDidChange({ actionName: "Paste from Clipboard" });
+        else
+            this.toast('There is nothing in the clipboard to paste.', 'warning');
+    }
+
+    /**
+     * Reads an image from the system clipboard via navigator.clipboard.read()
+     * Returns true if paste successful, false to fall back to wick clipboard
+     * MUST BE CALLED from direct "user-gesture" (click) so iOS Safari grants 
+     * clipboard access -H.A.
+     */
+    _tryImportSystemClipboardImage = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return false;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (!imageType) continue;
+                const blob = await item.getType(imageType);
+                const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+                if (stale && fp === stale) return false; // stale — caller should use wick clipboard
+
+                const ext = (imageType.split('/')[1] || 'png');
+                const rawName = 'pasted-image.' + ext;
+                const assetNames = new Set(this.project.getAssets().map(a => a.filename));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = 'pasted-image-' + counter + '.' + ext; }
+                const finalFile = new File([blob], finalName, { type: imageType });
+
+                const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                this.importFileAsAsset(finalFile, (asset) => {
+                    if (!asset) {
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
+                    const paper = this.project.view.paper;
+                    const canvasPos = paper.project.view.element.getBoundingClientRect();
+                    const relX = loc.x - canvasPos.left;
+                    const relY = loc.y - canvasPos.top;
+                    const onCanvas = relX >= 0 && relX <= canvasPos.width && relY >= 0 && relY <= canvasPos.height;
+                    const dropPoint = paper.view.viewToProject(
+                        new window.paper.Point(
+                            onCanvas ? relX : canvasPos.width / 2,
+                            onCanvas ? relY : canvasPos.height / 2
+                        )
+                    );
+                    this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                        if (path) {
+                            this.clearSelection();
+                            this.selectObject(path);
+                            this.project.copySelectionToClipboard();
+                        }
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                    });
+                });
+                return true;
+            }
+        } catch (e) {}
+        return false;
     }
 
     /**
@@ -2026,6 +2125,15 @@ class EditorCore extends Component {
      * Uses e.clipboardData which gives us real File objects with filenames and etc. -H.A.
      */
     _handlePasteEvent = async (e) => {
+        // Wick-only mode: skip device clipboard entirely -H.A.
+        if (this._getClipboardMode() === 'wick') {
+            if (this.project.pasteClipboardContents())
+                this.projectDidChange({ actionName: "Paste from Clipboard" });
+            else
+                this.toast('There is nothing in the clipboard to paste.', 'warning');
+            return;
+        }
+
         const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
 
         // imageFile  — what gets imported (PNG JPEG etc. or TIFF→PNG converted)
@@ -2092,7 +2200,13 @@ class EditorCore extends Component {
 
                 const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
                 this.importFileAsAsset(finalFile, (asset) => {
-                    if (!asset) return;
+                    if (!asset) {
+                        // import failed — mark this image as stale so future pastes
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
                     const paper = this.project.view.paper;
                     const canvasPos = paper.project.view.element.getBoundingClientRect();
                     // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
@@ -2118,6 +2232,9 @@ class EditorCore extends Component {
                 return;
             }
         }
+
+        // iOS Safari doesn't populate clipboardData with images — try Clipboard API as fallback
+        if (!imageFile && await this._tryImportSystemClipboardImage()) return;
 
         // No image in paste event (or image was stale) — fall back to Wick clipboard
         if (this.project.pasteClipboardContents()) {
