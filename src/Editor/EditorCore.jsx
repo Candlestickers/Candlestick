@@ -1954,6 +1954,20 @@ class EditorCore extends Component {
      * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
      * Used to detect when a clipboard image has become "stale" after an in-editor copy.
      */
+
+    //  Returns the effective clipboard mode, defaulting to 'wick' on iOS/Safari -H.A.
+    _getClipboardMode = () => {
+        const stored = localStorage.getItem('wickEditorClipboardMode');
+        if(stored) return stored;
+        const ua = navigator.userAgent;
+        // see device & browser
+        const isIOS    = /iPad|iPhone|iPod/.test(ua);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        const defaultMode = (isIOS || isSafari) ? 'wick' : 'device';
+        localStorage.setItem('wickEditorClipboardMode', defaultMode);
+        return defaultMode;
+    }
+
     _getClipboardImageFingerprint = async () => {
         if (!navigator.clipboard || !navigator.clipboard.read) return null;
         try {
@@ -1979,7 +1993,7 @@ class EditorCore extends Component {
             // Mark whatever image is currently in the system clipboard as stale
             // so the next paste prioritizes the wick clipboard over it
             // skip entirely in wick-only mode obv -H.A.
-            if (localStorage.getItem('wickEditorClipboardMode') !== 'wick') {
+            if (this._getClipboardMode() !== 'wick') {
                 this._getClipboardImageFingerprint().then(fp => {
                     // Only update the stale marker when we successfully read the clipboard
                     // If fp is null, clipboard.read() was either blocked or is empty -H.A.
@@ -2009,7 +2023,7 @@ class EditorCore extends Component {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
             // Same stale-image marking as copy — skip in wick-only mode. -H.A.
-            if (localStorage.getItem('wickEditorClipboardMode') !== 'wick') {
+            if (this._getClipboardMode() !== 'wick') {
                 this._getClipboardImageFingerprint().then(fp => {
                     if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
                 });
@@ -2034,7 +2048,7 @@ class EditorCore extends Component {
         // Button clicks are direct user gestures, so navigator.clipboard.read() is allowed
         // even on iOS Safari. Try system clipboard image first before wick clipboard,
         // unless the user has set wick-only mode in Editor Settings. -H.A.
-        if (localStorage.getItem('wickEditorClipboardMode') !== 'wick' &&
+        if (this._getClipboardMode() !== 'wick' &&
             await this._tryImportSystemClipboardImage()) return;
 
         if (this.project.pasteClipboardContents())
@@ -2111,7 +2125,7 @@ class EditorCore extends Component {
      */
     _handlePasteEvent = async (e) => {
         // Wick-only mode: skip device clipboard entirely -H.A.
-        if (localStorage.getItem('wickEditorClipboardMode') === 'wick') {
+        if (this._getClipboardMode() === 'wick') {
             if (this.project.pasteClipboardContents())
                 this.projectDidChange({ actionName: "Paste from Clipboard" });
             else

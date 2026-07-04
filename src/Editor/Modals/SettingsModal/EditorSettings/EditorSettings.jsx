@@ -30,7 +30,12 @@ class EditorSettings extends Component {
     super();
 
     this.state = {
-      clipboardMode: localStorage.getItem('wickEditorClipboardMode') || 'device',
+      clipboardMode: localStorage.getItem('wickEditorClipboardMode') || (() => {
+        const ua = navigator.userAgent;
+        const isIOS    = /iPad|iPhone|iPod/.test(ua);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+        return (isIOS || isSafari) ? 'wick' : 'device';
+      })(),
     }
   }
 
