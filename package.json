@@ -9,7 +9,8 @@
     "url": "https://github.com/Candlestickers/Candlestick"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.7.0",
+    "@ffmpeg/ffmpeg": "^0.12.6",
+    "@ffmpeg/core": "^0.12.6",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-fs": "^2.4.4",
     "ace-builds": "^1.4.12",
@@ -62,10 +63,11 @@
     "build-macapp": "tauri build --verbose",
     "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
     "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/legacy/build/pdf.worker.min.js public/pdf.worker.min.js",
+    "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
     "eject": "react-scripts eject",
-    "start": "npm run copy-pdf-worker && react-scripts start",
-    "build": "npm run copy-pdf-worker && react-scripts build && echo 'candlestickers.app' > ./build/CNAME",
-    "build:nocname": "npm run copy-pdf-worker && react-scripts build",
+    "start": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts start",
+    "build": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build && echo 'candlestickers.app' > ./build/CNAME",
+    "build:nocname": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build",
     "build-engine": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
     "build-engine-windows": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
     "test": "react-scripts test",
@@ -99,7 +101,7 @@
     "gulp-header": "^2.0.9",
     "gulp-rename": "^2.0.0",
     "gulp-uglify": "^3.0.2",
-    "sass": "^1.83.4",
+    "sass": "1.64.2",
     "shx": "^0.4.0"
   },
   "overrides": {
