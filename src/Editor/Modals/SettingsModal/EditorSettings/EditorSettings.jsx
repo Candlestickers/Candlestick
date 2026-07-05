@@ -30,7 +30,7 @@ class EditorSettings extends Component {
     super();
 
     this.state = {
-      clipboardMode: localStorage.getItem('wickEditorClipboardMode') || (() => {
+      clipboardMode: localStorage.getItem('CandleClipboardMode') || (() => {
         const ua = navigator.userAgent;
         const isIOS     = /iPad|iPhone|iPod/.test(ua);
         const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
@@ -64,7 +64,7 @@ class EditorSettings extends Component {
               options={clipboardOptions}
               onChange={(val) => {
                 this.setState({ clipboardMode: val.value });
-                localStorage.setItem('wickEditorClipboardMode', val.value);
+                localStorage.setItem('CandleClipboardMode', val.value);
               }}
             />
         </div>
