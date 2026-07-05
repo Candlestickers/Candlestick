@@ -114,85 +114,53 @@ class VideoExport {
   static _generateVideo = async ({ images, audio, args }) => {
     let { project, onProgress, onFinish } = args
 
-    let onDone = (data) => {
-      if (!(data instanceof Uint8Array)) data = new Uint8Array(data)
-      let blob = new Blob([data])
-      window.saveFileFromWick(blob, project.name, '.mp4')
-      onProgress('Rendering Complete! Downloading...', 100)
-      onFinish()
-    }
-
-    let workerReady = false
-    let _worker = new Worker('corelibs/video/worker-asm.js')
-
-    _worker.onmessage = (e) => {
-      let msg = e.data
-
-      switch (msg.type) {
-        case 'ready':
-          ENABLE_LOGGING && console.log('Worker ready')
-          workerReady = true
-          break
-
-        case 'stdout':
-          VideoExport._parseProgressMessage(msg.data, args)
-          ENABLE_LOGGING && console.log('output:', msg.data)
-          break
-
-        case 'stderr':
-          ENABLE_LOGGING && console.error('Error:', msg)
-          break
-
-        case 'done':
-          ENABLE_LOGGING && console.log(msg)
-          onDone(msg.data[0].data)
-          break
-
-        case 'exit':
-          _worker.terminate()
-          break
-
-        case 'error':
-          console.error('Video Renderer had an error.')
-          console.error(msg)
-          break
-
-        default:
-          break
-      }
-    }
-
-    let runFFMPEGCommand = (ffmpegArgs, workerMemoryFiles) => {
-      ENABLE_LOGGING && console.log('Running ffmpeg', ffmpegArgs)
-      _worker.postMessage({
-        type: 'command',
-        arguments: ffmpegArgs,
-        files: workerMemoryFiles,
-        commandName: 'video_render',
+    // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
+    // The ESM build creates a { type: 'module' } worker which disables importScripts(),
+    // causing webpack to intercept the dynamic import(coreURL) and fail at runtime.
+    // The UMD build creates a classic worker that uses importScripts() correctly.
+    if (!window.FFmpegWASM) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = window.location.origin + '/corelibs/ffmpeg/ffmpeg.umd.js'
+        script.onload = resolve
+        script.onerror = () => reject(new Error('Failed to load ffmpeg.umd.js'))
+        document.head.appendChild(script)
       })
     }
+    const { FFmpeg } = window.FFmpegWASM
+    const ffmpeg = new FFmpeg()
 
-    let waitUntilReady = (callback) => {
-      let interval = setInterval(() => {
-        if (workerReady) {
-          clearInterval(interval)
-          callback()
-        }
-      }, 10)
-    }
+    // log info 
+    if(ENABLE_LOGGING) ffmpeg.on('log', ({ message }) => console.log('[ffmpeg]', message))
 
-    onProgress('Rendering Final Video', EXPORT_VIDEO_START)
+    ffmpeg.on('progress', ({ progress }) => {
+      let pct = EXPORT_VIDEO_START + Math.round(progress * 25)
+      onProgress && onProgress('Encoding: ' + Math.round(progress * 100) + '%', Math.min(pct, 95))
+    })
 
-    let allFiles = images
-    if (audio) allFiles = allFiles.concat([{ data: audio, name: 'audio.wav' }])
+    onProgress && onProgress('Loading video encoder...', EXPORT_VIDEO_START)
+
+    // Core files are copied to public/corelibs/ffmpeg/ by the copy-ffmpeg-core script
+    const baseURL = window.location.origin
+    await ffmpeg.load({
+      coreURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.js',
+      wasmURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.wasm',
+    })
+
+    onProgress && onProgress('Writing frames...', EXPORT_VIDEO_START + 3)
+
+    for (const frame of images) // add frames to video
+      await ffmpeg.writeFile(frame.name, frame.data)
+    if(audio) // attach audio
+      await ffmpeg.writeFile('audio.wav', new Uint8Array(audio))
 
     let inputs = ['-i', 'frame%12d.jpg']
     if (audio) inputs = inputs.concat(['-i', 'audio.wav'])
 
-    let filterv = 'showinfo'
-    if (project.framerate < 6) {
-      filterv = 'setpts=' + (6 / project.framerate) + '*PTS,' + filterv
-    }
+    // Only apply setps filter if framerate is below ffmpeg's minimum
+    let filterArgs = []
+    if (project.framerate < 6)
+      filterArgs = ['-filter:v', 'setpts=' + (6 / project.framerate) + '*PTS']
 
     let dimensions = VideoExport._ensureValidDimensions(
       args.width || project.width,
@@ -206,11 +174,18 @@ class VideoExport {
       '-pix_fmt', 'yuv420p',
       '-q:v', '10',
       '-strict', '-2',
-      '-filter:v', filterv,
+      ...filterArgs, // break the filter params here
       'out.mp4',
     ]
 
-    waitUntilReady(() => runFFMPEGCommand(command, allFiles))
+    onProgress && onProgress('Encoding video...', EXPORT_VIDEO_START + 5)
+    await ffmpeg.exec(command)
+
+    const data = await ffmpeg.readFile('out.mp4')
+    let blob = new Blob([data.buffer], { type: 'video/mp4' })
+    window.saveFileFromWick(blob, project.name, '.mp4')
+    onProgress && onProgress('Rendering Complete! Downloading...', 100)
+    onFinish && onFinish()
   }
 
   static _ensureValidDimensions(width, height) {
@@ -223,21 +198,19 @@ class VideoExport {
     return { width: newWidth, height: newHeight }
   }
 
-  static _parseProgressMessage(message, args) {
-    if (!message || typeof message !== 'string') return
-    if (!message.includes('pts_time:')) return
-
-    let time = message.split('pts_time')[1]
-    if (!time) return
-    time = time.split('pos')[0]
-    if (!time) return
-    time = time.replace(':', '')
-
-    let timeNumber = Number(time)
-    if (isNaN(timeNumber)) return
-
-    args.onProgress('Rendered: ' + timeNumber.toFixed(2) + ' seconds', 85)
-  }
+  // // may be unnecessary -H.A.
+  // static _parseProgressMessage(message, args) {
+  //   if (!message || typeof message !== 'string') return
+  //   if (!message.includes('pts_time:')) return
+  //   let time = message.split('pts_time')[1]
+  //   if (!time) return
+  //   time = time.split('pos')[0]
+  //   if (!time) return
+  //   time = time.replace(':', '')
+  //   let timeNumber = Number(time)
+  //   if (isNaN(timeNumber)) return
+  //   args.onProgress('Rendered: ' + timeNumber.toFixed(2) + ' seconds', 85)
+  // }
 }
 
 export default VideoExport
