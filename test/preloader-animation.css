@@ -1,0 +1,93 @@
+#preloader {
+  background-color: #343434;
+  background-image: linear-gradient(0deg, #FF0801, #FFD84B);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 1000000000;
+  top: 0px;
+  left: 0px;
+  transition: all 0.5s ease 0s;
+}
+
+.animated {
+    animation-iteration-count: infinite;
+}
+
+.wiz-hat-front{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -355px;
+    margin-top: -330px;
+    scale: 0.65;
+    animation: float .6s ease-out infinite alternate;
+    z-index: 1;
+}
+
+.wiz-hat-back{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -355px;
+    margin-top: -330px;
+    scale: 0.65;
+    animation: float .6s ease-out infinite alternate;
+    z-index: -1;
+}
+
+.wiz-staff{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -360px;
+    margin-top: -330px;
+    scale: 0.65;
+    animation: float .8s ease-in-out infinite alternate;
+    z-index: 2;
+}
+
+
+.question-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -524px;
+    margin-top: -140px;
+    width: 1px;
+    /* height: 220px; */
+    animation: float .6s ease-in-out infinite alternate;
+}
+
+/* removed the shaodw */
+.flashy-shadow {
+    position: absolute;
+    top: calc(50% + 70px); 
+    left: 50%;
+    margin-left: -65px;
+    margin-top: -10.5px;
+    width: 120px;
+    height: 20px;
+    animation: pulse .6s ease-in-out infinite alternate;
+    z-index: -5;
+}
+
+.text {
+    position: absolute;
+    top: calc(50% + 150px);
+    left: 49.9%;
+    margin-left: -130px;
+    width: 250px;
+    /* height: 130px; */
+    animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+    0% {top: 48%;}
+    100% {top:50%;}
+}
+
+@keyframes pulse {
+    0% {transform: scale3d(.9, .9, .9);}
+    100% { transform: scale3d(1, 1, 1); }
+}
