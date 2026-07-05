@@ -32,8 +32,7 @@
  */
 
 import { saveAs } from 'file-saver';
-import timeStamp from '../Editor/Util/DataFunctions/timestamp';
-
+// import timeStamp from '../Editor/Util/DataFunctions/timestamp';
 export default function initializeDefaultFileHandlers() {
 
   if (!window.saveFileFromWick) {
