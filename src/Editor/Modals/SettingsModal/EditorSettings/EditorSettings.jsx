@@ -30,13 +30,7 @@ class EditorSettings extends Component {
     super();
 
     this.state = {
-      clipboardMode: localStorage.getItem('CandleClipboardMode') || (() => {
-        const ua = navigator.userAgent;
-        const isIOS     = /iPad|iPhone|iPod/.test(ua);
-        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
-        const isFirefox = /Firefox\/\d/.test(ua);
-        return (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
-      })(),
+      clipboardMode: localStorage.getItem('CandleClipboardMode') || 'wick',
     }
   }
 
@@ -48,8 +42,8 @@ class EditorSettings extends Component {
     }
 
     const clipboardOptions = [
-      { label: 'Device & Wick Clipboard', value: 'device' },
       { label: 'Wick Clipboard Only',     value: 'wick'   },
+      { label: 'Device & Wick Clipboard', value: 'device' },
     ];
 
     return (
