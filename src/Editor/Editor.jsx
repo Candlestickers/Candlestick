@@ -32,7 +32,7 @@ import { throttle } from 'underscore';
 import localForage from 'localforage';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { SizeMe } from 'react-sizeme';
+import { useResizeDetector } from 'react-resize-detector';
 
 import HotKeyInterface from './hotKeyMap';
 import ActionMapInterface from './actionMap';
@@ -125,6 +125,12 @@ async function loadPathIntoEditor(editorThis, filePath) {
 const { version } = require('../../package.json');
 
 var classNames = require('classnames');
+
+// Watches for container resize and calls onResize, replacing react-sizeme
+function ResizeTrigger({ onResize, children }) {
+    const { ref } = useResizeDetector({ onResize });
+    return <div ref={ref} style={{ width: '100%', height: '100%' }}>{children}</div>;
+}
 
 class Editor extends EditorCore {
     constructor() {
@@ -1173,9 +1179,8 @@ class Editor extends EditorCore {
                                                     {/*Canvas*/}
                                                     <ReflexElement {...this.resizeProps}>
                                                         <DockedPanel>
-                                                            <SizeMe>{({ size }) => {
-                                                                this.project.view.render();
-                                                                return (<Canvas
+                                                            <ResizeTrigger onResize={() => this.project.view.render()}>
+                                                                <Canvas
                                                                     editor={this}
                                                                     project={this.project}
                                                                     projectDidChange={this.projectDidChange}
@@ -1189,9 +1194,8 @@ class Editor extends EditorCore {
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
                                                                     openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
-                                                                />);
-                                                            }}
-                                                            </SizeMe>
+                                                                />
+                                                            </ResizeTrigger>
 
                                                             <CanvasTransforms
                                                                 onionSkinEnabled={this.project.onionSkinEnabled}
