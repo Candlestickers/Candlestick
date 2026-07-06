@@ -36,7 +36,6 @@
     "react-dropdown": "^1.6.4",
     "react-dropzone": "^8.0.3",
     "react-hotkeys": "^2.0.0",
-    "react-measure": "^2.3.0",
     "react-modal": "^3.16.3",
     "react-numeric-input": "^2.2.3",
     "react-popover": "^0.5.10",
@@ -48,13 +47,11 @@
     "react-sizeme": "^2.6.12",
     "react-spinners": "^0.9.0",
     "react-tabs": "^3.0.0",
-    "react-tiny-popover": "^5.1.0",
     "react-toastify": "^4.5.2",
     "react-tooltip": "^4.2.7",
     "reactstrap": "^6.5.0",
     "tinycolor2": "^1.6.0",
-    "underscore": "^1.13.7",
-    "url-parse": "^1.5.10"
+    "underscore": "^1.13.7"
   },
   "scripts": {
     "tauri": "tauri",
@@ -93,7 +90,6 @@
   ],
   "devDependencies": {
     "@tauri-apps/cli": "^2.9.1",
-    "dotenv": "^8.2.0",
     "gh-pages": "^5.0.0",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
