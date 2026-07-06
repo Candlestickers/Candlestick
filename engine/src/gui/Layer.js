@@ -76,9 +76,44 @@ Wick.GUIElement.Layer = class extends Wick.GUIElement {
         if (this.model.hidden) {
             ctx.fillStyle = Wick.GUIElement.LAYER_LABEL_HIDDEN_FILL_COLOR;
         } else if (this.model.isActive) {
-            ctx.fillStyle = Wick.GUIElement.LAYER_LABEL_ACTIVE_FILL_COLOR;
+            ctx.fillStyle = this.model.layerColor;
         } else {
-            ctx.fillStyle = Wick.GUIElement.LAYER_LABEL_INACTIVE_FILL_COLOR;
+            let color = this.model.layerColor; //"#b7b7b7"
+            let red, green, blue;
+            if(color.includes("#")){
+                color = color.replace(/^#/, '');
+
+                // Parse original RGB values
+                red = parseInt(color.substring(0, 2), 16);
+                green = parseInt(color.substring(2, 4), 16);
+                blue = parseInt(color.substring(4, 6), 16);
+            }
+            else{
+                color = color.replace(/[^\d.,]/g, '').split(',').map(Number);
+                red = color[0]
+                green = color[1]
+                blue = color[2]
+                console.log("red: ", red, "green: ", green, "blue: ", blue)
+            }
+
+            // Overlay factor (0–1)
+            let customAlpha = 200 // edit this to tweak how light the inactive color is
+            let overlayAlpha = customAlpha / 255;
+
+            // Overlay color (183,183,183)
+            let overlay = 183;
+
+            // Blend each channel
+            red = Math.round(overlay * overlayAlpha + red * (1 - overlayAlpha));
+            green = Math.round(overlay * overlayAlpha + green * (1 - overlayAlpha));
+            blue = Math.round(overlay * overlayAlpha + blue * (1 - overlayAlpha));
+
+            // Convert back to hex string
+            function toHex(n) {
+                return n.toString(16).padStart(2, '0');
+            }
+
+            ctx.fillStyle = "#" + toHex(red) + toHex(green) + toHex(blue);
         }
 
         if(this.model.isSelected) {

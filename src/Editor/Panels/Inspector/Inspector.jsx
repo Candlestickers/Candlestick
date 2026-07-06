@@ -289,6 +289,38 @@ class Inspector extends Component {
   }
 
   /**
+   * Renders an inspector row allowing editing of a layer's colour.
+   */
+  renderLayerColor = () => {
+    return (
+      <div>
+        <InspectorColorNumericInput
+          tooltip1="Color"
+          tooltip2="Opacity"
+
+          val1={this.getSelectionAttribute('layerColor')}
+          onChange1={(col) => this.setSelectionAttribute('layerColor', col)}
+          onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('layerColor', col)}
+          enableGradient={false}
+          selectionProps={{
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.root.timeline.view.render(),
+          }}
+          id={"inspector-selection-layer-color"}
+
+          val2={this.getSelectionAttribute('layerColorOpacity')}
+          onChange2={(val) => this.setSelectionAttribute('layerColorOpacity', val)}
+          divider={false}
+          colorPickerType={this.props.colorPickerType}
+          changeColorPickerType={this.props.changeColorPickerType}
+          updateLastColors={this.props.updateLastColors}
+          lastColorsUsed={this.props.lastColorsUsed}
+        />
+      </div>
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selected object's font.
    */
   renderFontFamily = () => {
@@ -738,6 +770,7 @@ class Inspector extends Component {
       <div className="inspector-content">
         {this.renderName()}
         {this.renderOpacity()}
+        {this.renderLayerColor()}
       </div>
     )
   }
