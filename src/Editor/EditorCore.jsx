@@ -18,7 +18,7 @@
  */
 
 import { Component } from 'react';
-import { parse as queryStringParse } from 'query-string';
+import queryString from 'query-string';
 // import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
@@ -1688,7 +1688,7 @@ class EditorCore extends Component {
        * the example parameter takes precedence.
        */
     tryToParseProjectURL = () => {
-        var urlParams = queryStringParse(window.location.search);
+        var urlParams = queryString.parse(window.location.search);
 
 
         let loadProjectFromURL = (url) => {

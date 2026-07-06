@@ -54,7 +54,7 @@ export default function EditorWrapper(props) {
                 newestOnTop={false}
                 closeOnClick
                 rtl={false}
-                pauseOnVisibilityChange
+                pauseOnFocusLoss
                 draggable
                 pauseOnHover />
             <GlobalHotKeys
