@@ -30,3 +30,5 @@ yarn-error.log*
 engine/docs/*
 engine/dist/*
 src-tauri/binaries/*
+src-tauri/gen/*
+*.keystore
