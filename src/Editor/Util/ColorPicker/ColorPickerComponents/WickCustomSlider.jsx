@@ -11,6 +11,7 @@ class WickCustomSlider extends Component {
     }
     componentWillUnmount () {
         this.unbindEvents();
+        // eslint-disable-next-line react/no-direct-mutation-state
         this.state.hoverOffset = null;
     }
     calculateOffset = (e) => {
