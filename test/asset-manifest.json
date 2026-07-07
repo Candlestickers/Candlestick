@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/test/static/css/main.0f32b34a.css",
+    "main.css": "/test/static/css/main.043275fe.css",
     "main.js": "/test/static/js/main.386ae699.js",
     "static/media/cool_field3.png": "/test/static/media/cool_field3.17c4c0b571370d83875d.png",
     "static/media/search.svg": "/test/static/media/search.d413dfd79072d9395349300cb7fde8a7.svg",
@@ -179,7 +179,7 @@
     "static/media/empty_dropdown.svg": "/test/static/media/empty_dropdown.d22f2e7ff30a91d47ed5a4bb0b7ffe2b.svg"
   },
   "entrypoints": [
-    "static/css/main.0f32b34a.css",
+    "static/css/main.043275fe.css",
     "static/js/main.386ae699.js"
   ]
 }
