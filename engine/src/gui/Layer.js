@@ -81,19 +81,16 @@ Wick.GUIElement.Layer = class extends Wick.GUIElement {
             let color = this.model.layerColor; //"#b7b7b7"
             let red, green, blue;
             if(color.includes("#")){
-                color = color.replace(/^#/, '');
-
                 // Parse original RGB values
-                red = parseInt(color.substring(0, 2), 16);
-                green = parseInt(color.substring(2, 4), 16);
-                blue = parseInt(color.substring(4, 6), 16);
+                red = parseRGB(color)[0];
+                green = parseRGB(color)[1];
+                blue = parseRGB(color)[2]
             }
             else{
                 color = color.replace(/[^\d.,]/g, '').split(',').map(Number);
                 red = color[0]
                 green = color[1]
                 blue = color[2]
-                console.log("red: ", red, "green: ", green, "blue: ", blue)
             }
 
             // Overlay factor (0–1)
@@ -108,12 +105,31 @@ Wick.GUIElement.Layer = class extends Wick.GUIElement {
             green = Math.round(overlay * overlayAlpha + green * (1 - overlayAlpha));
             blue = Math.round(overlay * overlayAlpha + blue * (1 - overlayAlpha));
 
-            // Convert back to hex string
-            function toHex(n) {
-                return n.toString(16).padStart(2, '0');
-            }
-
             ctx.fillStyle = "#" + toHex(red) + toHex(green) + toHex(blue);
+        }
+
+        // Convert back to hex string
+        function toHex(n) {
+            return n.toString(16).padStart(2, '0');
+        }
+
+        function parseRGB(color) {
+            let red, green, blue, alpha;
+            if (color.includes('#')){
+                // condense color down to rgba values
+                color = color.replace(/^#/, '');
+
+                // Parse original RGB values
+                red = parseInt(color.substring(0, 2), 16);
+                green = parseInt(color.substring(2, 4), 16);
+                blue = parseInt(color.substring(4, 6), 16);
+                alpha = parseInt(color.substring(6, 8));
+                return [red, green, blue, alpha]
+            }
+            else {
+                color = color.match(/[\d.]+/g).map(Number);
+                return color;
+            }
         }
 
         if(this.model.isSelected) {
@@ -136,15 +152,32 @@ Wick.GUIElement.Layer = class extends Wick.GUIElement {
         ctx.restore();
 
         // Label text
+        let color = this.model.layerColor;
+        let warm = false;
+        let rgb = parseRGB(color);
+        if((rgb[0] - rgb[2]) > 0 && rgb[1] < 113) warm = true
         var maxWidth = Wick.GUIElement.LAYERS_CONTAINER_WIDTH - 10;
         ctx.save();
         ctx.beginPath();
         ctx.rect(0, 0, maxWidth, this.gridCellHeight);
         ctx.clip();
         ctx.font = "16px " + Wick.GUIElement.LAYER_LABEL_FONT_FAMILY;
-        ctx.fillStyle = this.model.isActive
-          ? Wick.GUIElement.LAYER_LABEL_ACTIVE_FONT_COLOR
-          : Wick.GUIElement.LAYER_LABEL_INACTIVE_FONT_COLOR;
+        if(this.model.isActive == true) {
+            if(warm == false){
+                ctx.fillStyle = Wick.GUIElement.LAYER_LABEL_ACTIVE_FONT_COLOR
+            }
+            else {
+                ctx.fillStyle = "#ffffff"
+            }
+        }
+        else{
+            if(warm == false){
+                ctx.fillStyle = Wick.GUIElement.LAYER_LABEL_INACTIVE_FONT_COLOR;
+            }
+            else{
+                ctx.fillStyle = "#c5c5c5"
+            }
+        }
         ctx.fillText(this.model.name, 57, this.gridCellHeight / 2 + 6);
         ctx.restore();
 
