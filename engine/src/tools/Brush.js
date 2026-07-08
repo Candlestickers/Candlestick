@@ -394,9 +394,10 @@ Wick.Tools.Brush = class extends Wick.Tool {
         }
 
         // Update croquis element canvas size
-        if(this.croquis.getCanvasWidth() !== this.paper.view._element.width * this.canvasScaleFactor ||
-           this.croquis.getCanvasHeight() !== this.paper.view._element.height * this.canvasScaleFactor) {
-            this.croquis.setCanvasSize(this.paper.view._element.width * this.canvasScaleFactor, this.paper.view._element.height * this.canvasScaleFactor);
+        let width = Math.round(this.paper.view._viewSize.width * this.canvasScaleFactor);
+        let height = Math.round(this.paper.view._viewSize.height * this.canvasScaleFactor);
+        if(this.croquis.getCanvasWidth() !== width || this.croquis.getCanvasHeight() !== height) {
+            this.croquis.setCanvasSize(width, height);
         }
         this.croquisDOMElement.style.width = '100%';
         this.croquisDOMElement.style.height = '100%';
