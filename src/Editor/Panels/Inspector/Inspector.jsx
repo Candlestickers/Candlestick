@@ -1045,6 +1045,26 @@ class Inspector extends Component {
   }
 
   render() {
+    if (this.props.project.selection.numObjects === 0 && this.props.project.activeTool.name === 'brush') {
+      return (
+        <div className="docked-pane inspector" aria-label="Inspector Panel">
+        <div className="inspector-title-container">
+          <InspectorTitle
+            type="brush"
+            title="Brush" />
+        </div>
+        <div className="inspector-body">
+          <InspectorNumericSlider
+            tooltip="Smoothness"
+            val={this.props.project.tools.brush.smoothness}
+            onChange={(val) => {this.props.project.tools.brush.smoothness = val; window.editor.projectDidChange(); }}
+            divider={false}
+            inputProps={{min: 0.01, max: 1, step: 0.01}}
+            id="inspector-brush-tool-smoothness"/>
+        </div>
+      </div>
+      );
+    }
     let selectionType = this.props.getSelectionType();
     return(
       <div className="docked-pane inspector" aria-label="Inspector Panel">
