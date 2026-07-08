@@ -100,6 +100,7 @@ class Inspector extends Component {
     this.inspectorTitles = {
       "frame": "Frame",
       "multiframe": "Multi-Frame",
+      "layer": "Layer",
       "tween": "Tween",
       "multitween": "Multi-Tween",
       "clip": "Clip",
