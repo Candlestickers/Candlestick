@@ -125,6 +125,18 @@ class ActionMapInterface extends Object {
         id: 'action-edit-timeline',
         color: 'active-green'
       },
+      addToAssetLibraryAsWickobj: {
+        tooltip: 'Add to Asset Library',
+        action: () => {
+          const selectedObject = this.editor.project?.selection?.getSelectedObject();
+          if (selectedObject === null) return;
+          if(!selectedObject.identifier) this.editor.toast("Object added to library without identifier, please do not repeat")
+          window.Wick.WickObjectFile.toWickObjectFile(selectedObject, 'blob', file => {
+            let FileObj = new File([file], selectedObject.identifier || "unnamed_object", { type: file.type });
+            this.editor.createAssets([FileObj], [])})
+        },
+        id: 'action-add-clip-as-asset',
+      },
       breakApart: {
         icon: 'breakApart-dark',
         tooltip: 'Break Apart',

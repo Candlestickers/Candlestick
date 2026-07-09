@@ -1054,7 +1054,7 @@ class EditorCore extends Component {
             if (asset === null) {
                 this.toast('Could not add files to project: ' + file.name, 'error');
             } else {
-                this.toast(`Imported ${file.name || "project"} successfully.`);
+                this.toast(`Imported ${file.name || "file"} successfully.`);
                 this.projectDidChange({ actionName: "Import File As Asset" });
             }
         });
