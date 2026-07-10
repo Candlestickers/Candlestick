@@ -122,7 +122,7 @@ Active contributors:
 - [StickmanRed](https://forum.wickeditor.com/u/stickmanred/summary)
 
 Additional, indirect contributors:
-- [pumpkinhead](https://forum.wickeditor.com/u/pumpkinhead/summary)
+- [pumpkinhead](https://forum.wickeditor.com/u/pumpkinhead/summary) also found at [pkhead](https://github.com/pkhead)
 - [SomeoneElse](https://forum.wickeditor.com/u/someoneelse/summary)
 
 ___
