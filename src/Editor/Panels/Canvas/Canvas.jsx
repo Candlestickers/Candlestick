@@ -45,19 +45,38 @@ class Canvas extends Component {
 
   attachProjectToComponent = (project) => {
     if(this.currentAttachedProject === project) return;
+
+    // Unsubscribe from the old project's view events before switching.
+    // Wick.View has no off(), so we filter _eventHandlers directly.
+    if(this.currentAttachedProject) {
+      const handlers = this.currentAttachedProject.view._eventHandlers;
+      if(handlers) {
+        ['canvasModified', 'eyedropperPickedColor'].forEach(event => {
+          if(handlers[event]) {
+            handlers[event] = handlers[event].filter(
+              fn => fn !== this._onCanvasModified && fn !== this._onEyedropperPickedColor
+            );
+          }
+        });
+      }
+    }
+
     this.currentAttachedProject = project;
 
     project.view.canvasBGColor = styles.editorCanvasBorder;
     project.view.canvasContainer = this.canvasContainer.current;
     project.view.resize();
 
-    project.view.on('canvasModified', (e, actionName) => {
-      this.props.projectDidChange({ actionName: `Canvas Modified ${actionName}` });
-    });
+    project.view.on('canvasModified', this._onCanvasModified);
+    project.view.on('eyedropperPickedColor', this._onEyedropperPickedColor);
+  }
 
-    project.view.on('eyedropperPickedColor', (e) => {
-      this.props.onEyedropperPickedColor(e);
-    });
+  _onCanvasModified = (e, actionName) => {
+    this.props.projectDidChange({ actionName: `Canvas Modified ${actionName}` });
+  }
+
+  _onEyedropperPickedColor = (e) => {
+    this.props.onEyedropperPickedColor(e);
   }
 
   updateCanvas = (project) => {
