@@ -22,7 +22,7 @@
     "file-saver": "^2.0.5",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
-    "pdfjs-dist": "4.2.67",
+    "pdfjs-dist": "^6.1.200",
     "query-string": "^6.9.0",
     "react": "^16.13.1",
     "react-ace": "^14.0.1",
