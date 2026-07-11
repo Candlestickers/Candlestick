@@ -223,7 +223,7 @@ export const OutlinerObject = ({clearSelection, selectObjects,
         <OutlinerWidget onClick={(e) => {toggle(e, [], 'locked')}} on={!data.locked} icon="outliner-lock" tooltip="Lock Layer"/>
       }
       {(data.classname === 'Button' || data.classname === 'Clip') &&
-        <OutlinerWidget key={Math.random()} onClick={() => {console.log("yangus"); setFocusObject(data)}} icon="edit-timeline" tooltip="Edit Timeline"/>
+        <OutlinerWidget key={Math.random()} onClick={() => {setFocusObject(data)}} icon="edit-timeline" tooltip="Edit Timeline"/>
       }
       {data.sound && 
         <img className="outliner-sound-icon" src={soundIcon} alt="sound"/>}

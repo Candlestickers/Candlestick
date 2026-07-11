@@ -19,6 +19,7 @@ async function extractAudioWavFromMp4(file) {
     audioBuf = await audioCtx.decodeAudioData(arrayBuf.slice(0)) // Safari needs a copy
   } catch (e) {
     // no audio, save us all precious time
+    audioCtx.close()
     return null
   }
 
@@ -72,6 +73,7 @@ async function extractAudioWavFromMp4(file) {
     }
   }
 
+  audioCtx.close()
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
