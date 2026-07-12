@@ -18,7 +18,6 @@
  */
 
 import { Component } from 'react';
-import queryString from 'query-string';
 // import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
@@ -1688,7 +1687,7 @@ class EditorCore extends Component {
        * the example parameter takes precedence.
        */
     tryToParseProjectURL = () => {
-        var urlParams = queryString.parse(window.location.search);
+        var urlParams = new URLSearchParams(window.location.search);
 
 
         let loadProjectFromURL = (url) => {
@@ -1708,14 +1707,14 @@ class EditorCore extends Component {
         }
 
 
-        if (urlParams.example) {
-            let url = window.location.origin + '/examples/' + urlParams.example;
+        if (urlParams.get('example')) {
+            let url = window.location.origin + '/examples/' + urlParams.get('example');
             console.log('attempting to load project', url);
             loadProjectFromURL(url);
             return;
         }
 
-        var projectLink = urlParams.project;
+        var projectLink = urlParams.get('project');
 
         // No URL param, skip the download
         if (!projectLink) {

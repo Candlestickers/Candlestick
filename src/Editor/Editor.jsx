@@ -28,7 +28,16 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
 import 'react-reflex/styles.css'
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
-import { throttle } from 'underscore';
+function throttle(fn, wait) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
 import localForage from 'localforage';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';

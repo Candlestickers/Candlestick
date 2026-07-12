@@ -23,7 +23,6 @@
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
     "pdfjs-dist": "^6.1.200",
-    "query-string": "^6.9.0",
     "react": "^16.13.1",
     "react-ace": "^14.0.1",
     "react-device-detect": "^2.2.3",
@@ -43,8 +42,7 @@
     "react-toastify": "^9.0.0",
     "react-tooltip": "^4.2.7",
     "reactstrap": "^6.5.0",
-    "tinycolor2": "^1.6.0",
-    "underscore": "^1.13.7"
+    "tinycolor2": "^1.6.0"
   },
   "scripts": {
     "tauri": "tauri",
