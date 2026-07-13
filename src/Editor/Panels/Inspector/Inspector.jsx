@@ -1061,6 +1061,20 @@ class Inspector extends Component {
             divider={false}
             inputProps={{min: 0.01, max: 1, step: 0.01}}
             id="inspector-brush-tool-smoothness"/>
+          <InspectorNumericSlider
+            tooltip="paper.js Tolerance"
+            val={this.props.project.tools.brush.testPaperTolerance}
+            onChange={(val) => {this.props.project.tools.brush.testPaperTolerance = val; window.editor.projectDidChange(); }}
+            divider={false}
+            inputProps={{min: 0, max: 10, step: 0.1}}
+            id="inspector-brush-tool-paper-js-tolerance"/>
+          <InspectorNumericSlider
+            tooltip="Exponent"
+            val={this.props.project.tools.brush.testSmoothnessExponent}
+            onChange={(val) => {this.props.project.tools.brush.testSmoothnessExponent = val; window.editor.projectDidChange(); }}
+            divider={false}
+            inputProps={{min: 1, max: 8, step: 0.1}}
+            id="inspector-brush-tool-smoothness-exponent"/>
         </div>
       </div>
       );
