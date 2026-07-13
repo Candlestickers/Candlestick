@@ -192,7 +192,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
         clearTimeout(this._croquisStartTimeout);
         this._isInProgress = true;
 
-        this.resolutionFactor = Math.min(this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * Math.pow(this.smoothness, this.testSmoothnessExponent), this.MAX_RESOLUTION_FACTOR);
+        this.resolutionFactor = Math.min(this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * Math.pow(1-(1-this.smoothness)*(1-Math.pow(0.05, 1/this.testSmoothnessExponent)), this.testSmoothnessExponent), this.MAX_RESOLUTION_FACTOR);
         this.canvasScaleFactor = (this.resolutionFactor > 1) ? this.resolutionFactor : 1;
         this.imageScaleFactor = (this.resolutionFactor < 1) ? this.resolutionFactor : 1;
         this._updateCanvasAttributes();

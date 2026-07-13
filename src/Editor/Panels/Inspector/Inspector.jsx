@@ -1059,7 +1059,7 @@ class Inspector extends Component {
             val={this.props.project.tools.brush.smoothness}
             onChange={(val) => {this.props.project.tools.brush.smoothness = val; window.editor.projectDidChange(); }}
             divider={false}
-            inputProps={{min: 0.01, max: 1, step: 0.01}}
+            inputProps={{min: 0, max: 1, step: 0.01}}
             id="inspector-brush-tool-smoothness"/>
           <InspectorNumericSlider
             tooltip="paper.js Tolerance"
