@@ -1045,40 +1045,6 @@ class Inspector extends Component {
   }
 
   render() {
-    if (this.props.project.selection.numObjects === 0 && this.props.project.activeTool.name === 'brush') {
-      return (
-        <div className="docked-pane inspector" aria-label="Inspector Panel">
-        <div className="inspector-title-container">
-          <InspectorTitle
-            type="brush"
-            title="Brush" />
-        </div>
-        <div className="inspector-body">
-          <InspectorNumericSlider
-            tooltip="Smoothness"
-            val={this.props.project.tools.brush.smoothness}
-            onChange={(val) => {this.props.project.tools.brush.smoothness = val; window.editor.projectDidChange(); }}
-            divider={false}
-            inputProps={{min: 0, max: 1, step: 0.01}}
-            id="inspector-brush-tool-smoothness"/>
-          <InspectorNumericSlider
-            tooltip="paper.js Tolerance"
-            val={this.props.project.tools.brush.testPaperTolerance}
-            onChange={(val) => {this.props.project.tools.brush.testPaperTolerance = val; window.editor.projectDidChange(); }}
-            divider={false}
-            inputProps={{min: 0, max: 10, step: 0.1}}
-            id="inspector-brush-tool-paper-js-tolerance"/>
-          <InspectorNumericSlider
-            tooltip="Exponent"
-            val={this.props.project.tools.brush.testSmoothnessExponent}
-            onChange={(val) => {this.props.project.tools.brush.testSmoothnessExponent = val; window.editor.projectDidChange(); }}
-            divider={false}
-            inputProps={{min: 1, max: 8, step: 0.1}}
-            id="inspector-brush-tool-smoothness-exponent"/>
-        </div>
-      </div>
-      );
-    }
     let selectionType = this.props.getSelectionType();
     return(
       <div className="docked-pane inspector" aria-label="Inspector Panel">

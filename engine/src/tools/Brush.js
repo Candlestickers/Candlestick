@@ -46,8 +46,6 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this.resolutionFactor = 1;
         this.canvasScaleFactor = 1; // Resolution: Greater or equal to 1
         this.imageScaleFactor = 1; // Resolution: Lesser or equal to 1
-        this.testPaperTolerance = 0;
-        this.testSmoothnessExponent = 2;
 
         this.croquis = null;
         this.croquisDOMElement = null;
@@ -192,7 +190,9 @@ Wick.Tools.Brush = class extends Wick.Tool {
         clearTimeout(this._croquisStartTimeout);
         this._isInProgress = true;
 
-        this.resolutionFactor = Math.min(this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * Math.pow(1-(1-this.smoothness)*(1-Math.pow(0.05, 1/this.testSmoothnessExponent)), this.testSmoothnessExponent), this.MAX_RESOLUTION_FACTOR);
+        var smoothnessFactor = Math.pow(1 - (1-this.getSetting('brushResolution'))*0.486095733599, 4.5); //1-Math.pow(0.05, 1/4.5), 0.486095733599
+        this.resolutionFactor = this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * smoothnessFactor;
+        this.resolutionFactor = Math.min(Math.max(this.resolutionFactor, smoothnessFactor), this.MAX_RESOLUTION_FACTOR);
         this.canvasScaleFactor = (this.resolutionFactor > 1) ? this.resolutionFactor : 1;
         this.imageScaleFactor = (this.resolutionFactor < 1) ? this.resolutionFactor : 1;
         this._updateCanvasAttributes();
@@ -503,7 +503,6 @@ Wick.Tools.Brush = class extends Wick.Tool {
             potracePath.children[0].closed = true;
             potracePath.children[0].applyMatrix = true;
             var result = potracePath.children[0];
-            if (this.testPaperTolerance > 0) result.simplify(this.testPaperTolerance);
 
             // Do special brush mode action
             var brushMode = this.getSetting('brushMode');

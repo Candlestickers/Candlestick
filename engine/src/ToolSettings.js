@@ -63,6 +63,13 @@ Wick.ToolSettings = class {
             max: 100,
             step: 1,
         }, {
+            type: "number",
+            name: 'brushResolution',
+            default: 1,
+            min: 0,
+            max: 1,
+            step: 0.01,
+        }, {
             type: "boolean",
             name: 'pressureEnabled',
             default: false,
