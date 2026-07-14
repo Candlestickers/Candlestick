@@ -42,7 +42,6 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this.TARGET_BRUSH_SIZE = 50;
         this.MAX_RESOLUTION_FACTOR = 2;
-        this.smoothness = 1;
         this.resolutionFactor = 1;
         this.canvasScaleFactor = 1; // Resolution: Greater or equal to 1
         this.imageScaleFactor = 1; // Resolution: Lesser or equal to 1
