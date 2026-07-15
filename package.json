@@ -107,5 +107,13 @@
     "eslint": {
       "ajv": "^6"
     }
+  },
+  "allowScripts": {
+    "core-js-pure@3.49.0": true,
+    "es5-ext@0.10.64": true,
+    "fsevents@2.3.3": true,
+    "fsevents@1.2.13": true,
+    "core-js@3.49.0": true,
+    "parcel/watcher@2.5.6": true
   }
 }

@@ -28,16 +28,6 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
 import 'react-reflex/styles.css'
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
-function throttle(fn, wait) {
-  let lastCall = 0;
-  return function(...args) {
-    const now = Date.now();
-    if (now - lastCall >= wait) {
-      lastCall = now;
-      return fn.apply(this, args);
-    }
-  };
-}
 import localForage from 'localforage';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
@@ -68,6 +58,17 @@ import EditorWrapper from './EditorWrapper';
 
 import { readFile } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core';
+
+function throttle(fn, wait) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
 
 // app wick, for handling directly opening files from finder/ file explorer
 async function loadPathIntoEditor(editorThis, filePath) {

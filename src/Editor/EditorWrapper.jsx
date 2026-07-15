@@ -56,7 +56,8 @@ export default function EditorWrapper(props) {
                 rtl={false}
                 pauseOnFocusLoss
                 draggable
-                pauseOnHover />
+                pauseOnHover
+                icon={false} />
             <GlobalHotKeys
                 allowChanges={true}
                 keyMap={props.editor.getKeyMap()}
