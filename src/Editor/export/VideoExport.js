@@ -157,24 +157,18 @@ class VideoExport {
     let inputs = ['-i', 'frame%12d.jpg']
     if (audio) inputs = inputs.concat(['-i', 'audio.wav'])
 
-    // Only apply setps filter if framerate is below ffmpeg's minimum
-    let filterArgs = []
-    if (project.framerate < 6)
-      filterArgs = ['-filter:v', 'setpts=' + (6 / project.framerate) + '*PTS']
-
     let dimensions = VideoExport._ensureValidDimensions(
       args.width || project.width,
       args.height || project.height
     )
 
     let command = [
-      '-r', '' + Math.max(6, project.framerate),
+      '-r', '' + project.framerate,
       '-s', dimensions.width + 'x' + dimensions.height,
       ...inputs,
       '-pix_fmt', 'yuv420p',
       '-q:v', '10',
       '-strict', '-2',
-      ...filterArgs, // break the filter params here
       'out.mp4',
     ]
 
