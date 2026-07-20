@@ -237,9 +237,9 @@ class Outliner extends Component {
   }
 
   render() {
-      var timelineHierarchy = [this.props.project.activeTimeline];
-      while (timelineHierarchy[0].parentTimeline !== null) {
-          timelineHierarchy.unshift(timelineHierarchy[0].parentTimeline);
+      var timelineHierarchy = [this.props.project?.activeTimeline || null];
+      while (timelineHierarchy[0]?.parentTimeline !== null) {
+          timelineHierarchy.unshift(timelineHierarchy[0]?.parentTimeline);
       }
 
       return (
@@ -259,14 +259,14 @@ class Outliner extends Component {
             </div>
 
             <div className="outliner-item">
-            {this.props.project.activeTimeline.getChildren().map((layer, i) => {
+            {this.props.project?.activeTimeline.getChildren().map((layer, i) => {
                 return (
                 <OutlinerObject
                 key={layer.uuid}
                 clearSelection={this.props.clearSelection}
                 selectObjects={this.props.selectObjects}
                 editScript={this.props.editScript}
-                playhead={this.props.project.activeTimeline.playheadPosition}
+                playhead={this.props.project?.activeTimeline.playheadPosition}
                 depth={1}
                 maxDepth={this.maxDepth}
                 display={this.state.display}
@@ -280,11 +280,11 @@ class Outliner extends Component {
                         this.toggleDropdown(e, indices);
                     }
                     else if (property === 'locked') {
-                        let layer = this.getObjectAtIndices(this.props.project.activeTimeline, indices, indices.length);
+                        let layer = this.getObjectAtIndices(this.props.project?.activeTimeline, indices, indices.length);
                         this.props.toggleLocked(layer);
                     }
                     else if (property === 'hidden') {
-                        let layer = this.getObjectAtIndices(this.props.project.activeTimeline, indices, indices.length);
+                        let layer = this.getObjectAtIndices(this.props.project?.activeTimeline, indices, indices.length);
                         this.props.toggleHidden(layer);
                     }
                 }}

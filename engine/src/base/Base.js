@@ -37,7 +37,7 @@ Wick.Base = class {
 
         if (!args) args = {};
 
-        this._uuid = args.uuid || uuidv4();
+        this._uuid = args.uuid || Wick.uuidv4();
         this._identifier = args.identifier || null;
         this._name = args.name || null;
 

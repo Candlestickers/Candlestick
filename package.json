@@ -8,9 +8,12 @@
     "type": "git",
     "url": "https://github.com/Candlestickers/Candlestick"
   },
+  "workspaces": [
+    "engine"
+  ],
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.6",
     "@ffmpeg/core": "^0.12.6",
+    "@ffmpeg/ffmpeg": "^0.12.6",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-fs": "^2.4.4",
     "ace-builds": "^1.4.12",
@@ -68,7 +71,7 @@
     "start": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts start",
     "build": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build && echo 'candlestickers.app' > ./build/CNAME",
     "build:nocname": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build",
-    "build-engine": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
+    "build-engine": "cd engine && npm run build-engine",
     "engine-quickrun": "npm run build-engine && npm start",
     "test": "react-scripts test",
     "engine-tests": "cd engine && npx http-server",
@@ -102,7 +105,9 @@
     "gulp-rename": "^2.0.0",
     "gulp-uglify": "^3.0.2",
     "sass": "1.64.2",
-    "shx": "^0.4.0"
+    "shx": "^0.4.0",
+    "webpack": "^5.108.4",
+    "webpack-cli": "^7.2.1"
   },
   "overrides": {
     "form-data": "^4.0.4",
