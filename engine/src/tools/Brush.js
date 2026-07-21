@@ -378,10 +378,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
         }
 
-        // Update croquis element canvas size
-        if(this.croquis.getCanvasWidth() !== this.paper.view._viewSize.width ||
-           this.croquis.getCanvasHeight() !== this.paper.view._viewSize.height) {
-            this.croquis.setCanvasSize(this.paper.view._viewSize.width, this.paper.view._viewSize.height);
+        // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
+        var targetW = Math.round(this.paper.view.viewSize.width);
+        var targetH = Math.round(this.paper.view.viewSize.height);
+        if(this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
+            this.croquis.setCanvasSize(targetW, targetH);
         }
 
         // Fake brush opacity in croquis by changing the opacity of the croquis canvas
