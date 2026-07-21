@@ -173,10 +173,12 @@ class VideoExport {
     ]
 
     onProgress && onProgress('Encoding video...', EXPORT_VIDEO_START + 5)
-    await ffmpeg.exec(command)
+    const exitCode = await ffmpeg.exec(command)
+    if (exitCode !== 0) throw new Error(`ffmpeg exited with code ${exitCode} — video encoding failed`)
 
     const data = await ffmpeg.readFile('out.mp4')
-    let blob = new Blob([data.buffer], { type: 'video/mp4' })
+    if (!data || data.byteLength === 0) throw new Error('ffmpeg produced an empty output file')
+    let blob = new Blob([data], { type: 'video/mp4' })
     window.saveFileFromWick(blob, project.name, '.mp4')
     onProgress && onProgress('Rendering Complete! Downloading...', 100)
     onFinish && onFinish()
