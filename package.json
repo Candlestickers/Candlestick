@@ -46,9 +46,9 @@
   },
   "scripts": {
     "tauri": "tauri",
-    "macapp": "tauri build --verbose",
+    "macapp": "tauri build --target universal-apple-darwin --verbose",
     "winapp": "tauri build --target x86_64-pc-windows-gnu",
-    "build-macapp": "tauri build --verbose",
+    "build-macapp": "tauri build --target universal-apple-darwin --verbose",
     "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
     "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs",
     "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",

@@ -1956,15 +1956,10 @@ class EditorCore extends Component {
 
     //  Returns the effective clipboard mode, defaulting to 'wick' on iOS/Safari -H.A.
     _getClipboardMode = () => {
-        const stored = localStorage.getItem('wickEditorClipboardMode');
+        const stored = localStorage.getItem('CandleClipboardMode');
         if(stored) return stored;
-        const ua = navigator.userAgent;
-        // see device & browser
-        const isIOS     = /iPad|iPhone|iPod/.test(ua);
-        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
-        const isFirefox = /Firefox\/\d/.test(ua);
-        const defaultMode = (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
-        localStorage.setItem('wickEditorClipboardMode', defaultMode);
+        const defaultMode = 'wick';
+        localStorage.setItem('CandleClipboardMode', 'wick');
         return defaultMode;
     }
 

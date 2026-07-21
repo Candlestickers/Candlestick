@@ -40,3 +40,15 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Android-only: inserrt content below the status bar and above the nav bar
+   The color is set to #303030 (--wick-primary) behind the
+   transparent status bar instead of default white, feel free to alter da color */
+html.android-app {
+  background-color: #303030;
+}
+
+html.android-app body {
+  top: env(safe-area-inset-top);
+  height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
