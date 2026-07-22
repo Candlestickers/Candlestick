@@ -24,6 +24,11 @@ import WickInput from 'Editor/Util/WickInput/WickInput';
 
 import iconBackwards from 'resources/timeline-icons/backwards.svg';
 import iconForwards from 'resources/timeline-icons/forwards.svg';
+import iconFramesSmall from 'resources/timeline-icons/framesSmall.png';
+import iconFramesNormal from 'resources/timeline-icons/framesNormal.png';
+import iconFramesLarge from 'resources/timeline-icons/framesLarge.png';
+import iconGapFillMenuBlankFrames from 'resources/timeline-icons/gapFillMenuBlankFrames.png';
+import iconGapFillMenuExtendFrames from 'resources/timeline-icons/gapFillMenuExtendFrames.png';
 
 class EditorSettings extends Component {
   constructor () {
@@ -31,6 +36,8 @@ class EditorSettings extends Component {
 
     this.state = {
       clipboardMode: localStorage.getItem('CandleClipboardMode') || 'wick',
+      frameSizeMode: localStorage.getItem('wickEditorFrameSizeMode') || 'normal',
+      fillGapsMethod: localStorage.getItem('wickEditorFillGapsMethod') || 'auto_extend',
     }
   }
 
@@ -113,6 +120,68 @@ class EditorSettings extends Component {
             </div>
           }
 
+        </div>
+
+        <div className="editor-settings-group">
+          <label className="editor-settings-group-title">Timeline</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <img alt="" src={
+              this.state.frameSizeMode === 'small' ? iconFramesSmall :
+              this.state.frameSizeMode === 'large' ? iconFramesLarge :
+              iconFramesNormal
+            } style={{ height: '18px' }}/>
+            Frame Size:
+          </div>
+          <WickInput
+            type="select"
+            value={this.state.frameSizeMode}
+            options={[
+              { label: 'Small',  value: 'small'  },
+              { label: 'Normal', value: 'normal' },
+              { label: 'Large',  value: 'large'  },
+            ]}
+            onChange={(val) => {
+              const mode = val.value;
+              this.setState({ frameSizeMode: mode });
+              localStorage.setItem('wickEditorFrameSizeMode', mode);
+              if (window.Wick && window.Wick.GUIElement) {
+                if (mode === 'small') {
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+                } else if (mode === 'large') {
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+                } else {
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
+                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+                }
+              }
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+            <img alt="" src={
+              this.state.fillGapsMethod === 'blank_frames'
+                ? iconGapFillMenuBlankFrames
+                : iconGapFillMenuExtendFrames
+            } style={{ height: '18px' }}/>
+            Gap Fill:
+          </div>
+          <WickInput
+            type="select"
+            value={this.state.fillGapsMethod}
+            options={[
+              { label: 'Extend Frames', value: 'auto_extend'  },
+              { label: 'Blank Frames',  value: 'blank_frames' },
+            ]}
+            onChange={(val) => {
+              const method = val.value;
+              this.setState({ fillGapsMethod: method });
+              localStorage.setItem('wickEditorFillGapsMethod', method);
+              if (this.props.project && this.props.project.activeTimeline) {
+                this.props.project.activeTimeline.fillGapsMethod = method;
+              }
+            }}
+          />
         </div>
       </div>
     )
