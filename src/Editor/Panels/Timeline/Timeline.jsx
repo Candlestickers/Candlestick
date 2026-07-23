@@ -17,9 +17,9 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { Component } from 'react';
+import React, { Component, useRef, useEffect } from 'react';
 
-import { DropTarget } from 'react-dnd';
+import { useDrop } from 'react-dnd';
 import DragDropTypes from 'Editor/DragDropTypes.js';
 
 import './_timeline.scss';
@@ -96,14 +96,14 @@ class Timeline extends Component {
   }
 
   render() {
-    const { connectDropTarget, isOver } = this.props;
+    const { dropRef, isOver } = this.props;
 
-    return connectDropTarget (
-      <div id="animation-timeline-container" aria-label="Timeline">
+    return (
+      <div id="animation-timeline-container" aria-label="Timeline" ref={dropRef}>
         { isOver && <div className="drag-drop-overlay" /> }
         <div id="animation-timeline" ref={this.canvasContainer} />
       </div>
-    )
+    );
   }
 
   onProjectModified = () => {
@@ -115,25 +115,26 @@ class Timeline extends Component {
   }
 }
 
-// react-dnd drag and drop target params
-const timelineTarget = {
-  drop(props, monitor) {
-    const dropLocation = monitor.getClientOffset();
-    let draggedItem = monitor.getItem();
-    props.dragSoundOntoTimeline(draggedItem.uuid, dropLocation.x, dropLocation.y, true);
-  },
-  hover(props, monitor, component) {
-    const dropLocation = monitor.getClientOffset();
-    let draggedItem = monitor.getItem();
-    props.dragSoundOntoTimeline(draggedItem.uuid, dropLocation.x, dropLocation.y, false);
-  }
+function TimelineDrop(props) {
+  const propsRef = useRef(props);
+  useEffect(() => { propsRef.current = props; });
+
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: DragDropTypes.TIMELINE,
+    drop(item, monitor) {
+      const p = propsRef.current;
+      const dropLocation = monitor.getClientOffset();
+      p.dragSoundOntoTimeline(item.uuid, dropLocation.x, dropLocation.y, true);
+    },
+    hover(item, monitor) {
+      const p = propsRef.current;
+      const dropLocation = monitor.getClientOffset();
+      p.dragSoundOntoTimeline(item.uuid, dropLocation.x, dropLocation.y, false);
+    },
+    collect: monitor => ({ isOver: monitor.isOver() }),
+  }));
+
+  return <Timeline {...props} isOver={isOver} dropRef={drop} />;
 }
 
-function collect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-  };
-}
-
-export default DropTarget(DragDropTypes.TIMELINE, timelineTarget, collect)(Timeline)
+export default TimelineDrop;

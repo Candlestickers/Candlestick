@@ -18,7 +18,6 @@
  */
 
 import { Component } from 'react';
-import queryString from 'query-string';
 // import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
@@ -1343,7 +1342,7 @@ class EditorCore extends Component {
                     }
                 }
 
-                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH);
+                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH, Math.round(pageW / 2), Math.round(pageH / 2));
 
                 const success = () => {
                     this.updateToast(toastID, { type: 'success', text: "Successfully saved .pdf file." });
@@ -1688,7 +1687,7 @@ class EditorCore extends Component {
        * the example parameter takes precedence.
        */
     tryToParseProjectURL = () => {
-        var urlParams = queryString.parse(window.location.search);
+        var urlParams = new URLSearchParams(window.location.search);
 
 
         let loadProjectFromURL = (url) => {
@@ -1708,14 +1707,14 @@ class EditorCore extends Component {
         }
 
 
-        if (urlParams.example) {
-            let url = window.location.origin + '/examples/' + urlParams.example;
+        if (urlParams.get('example')) {
+            let url = window.location.origin + '/examples/' + urlParams.get('example');
             console.log('attempting to load project', url);
             loadProjectFromURL(url);
             return;
         }
 
-        var projectLink = urlParams.project;
+        var projectLink = urlParams.get('project');
 
         // No URL param, skip the download
         if (!projectLink) {
@@ -1957,15 +1956,10 @@ class EditorCore extends Component {
 
     //  Returns the effective clipboard mode, defaulting to 'wick' on iOS/Safari -H.A.
     _getClipboardMode = () => {
-        const stored = localStorage.getItem('wickEditorClipboardMode');
+        const stored = localStorage.getItem('CandleClipboardMode');
         if(stored) return stored;
-        const ua = navigator.userAgent;
-        // see device & browser
-        const isIOS     = /iPad|iPhone|iPod/.test(ua);
-        const isSafari  = /^((?!chrome|android).)*safari/i.test(ua);
-        const isFirefox = /Firefox\/\d/.test(ua);
-        const defaultMode = (isIOS || isSafari || isFirefox) ? 'wick' : 'device';
-        localStorage.setItem('wickEditorClipboardMode', defaultMode);
+        const defaultMode = 'wick';
+        localStorage.setItem('CandleClipboardMode', 'wick');
         return defaultMode;
     }
 
@@ -2570,7 +2564,12 @@ function _pdf_concatU8(chunks) {
     return out
 }
 
-function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
+function _pdf_buildFromJpegDataUrls(jpegDataUrls, imgW, imgH, pdfW, pdfH) {
+    // imgW/imgH = pixel dimensions of the JPEG (image quality)
+    // pdfW/pdfH = PDF page dimensions in points (physical size, 72pt = 1 inch)
+    if (!pdfW) pdfW = imgW;
+    if (!pdfH) pdfH = imgH;
+
     const objects = [] // each entry is Uint8Array of object BODY (no "obj/endobj")
     //this warning for unexpected use of comma operator is kinda annoying therefore added the eslint
 // eslint-disable-next-line
@@ -2589,9 +2588,9 @@ function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
 
         const imgName = `/Im${i}`
 
-        // Image XObject
+        // Image XObject — use full pixel dimensions for crispness
         const imgDict =
-            `<< /Type /XObject /Subtype /Image /Width ${pageW} /Height ${pageH} ` +
+            `<< /Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} ` +
             `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`
         const imgBody = _pdf_concatU8([
             _pdf_strToU8(imgDict),
@@ -2600,14 +2599,14 @@ function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
         ])
         const imgId = addObj(imgBody)
 
-        // Contents stream (draw image full page)
-        const contents = `q ${pageW} 0 0 ${pageH} 0 0 cm ${imgName} Do Q\n`
+        // Contents stream — scale image to fill pdfW x pdfH points
+        const contents = `q ${pdfW} 0 0 ${pdfH} 0 0 cm ${imgName} Do Q\n`
         const contentsDict = `<< /Length ${contents.length} >>\nstream\n${contents}endstream\n`
         const contentsId = addObj(_pdf_strToU8(contentsDict))
 
-        // Page object
+        // Page object — physical page size in points
         const pageObj =
-            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pdfW} ${pdfH}] ` +
             `/Resources << /XObject << ${imgName} ${imgId} 0 R >> >> ` +
             `/Contents ${contentsId} 0 R >>\n`
         const pageId = addObj(_pdf_strToU8(pageObj))
