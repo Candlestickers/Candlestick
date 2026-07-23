@@ -27,14 +27,14 @@ import { Console } from 'console-feed'
 
 // Import Ace Editor and themes.
 import AceEditor from 'react-ace';
-import 'brace/mode/javascript';
-import 'brace/ext/searchbox';
+import 'ace-builds/src-noconflict/mode-javascript';
+import 'ace-builds/src-noconflict/ext-searchbox';
 
-import 'brace/theme/monokai';
-import 'brace/theme/cobalt';
-import 'brace/theme/dracula';
-import 'brace/theme/eclipse';
-import 'brace/theme/github';
+import 'ace-builds/src-noconflict/theme-monokai';
+import 'ace-builds/src-noconflict/theme-cobalt';
+import 'ace-builds/src-noconflict/theme-dracula';
+import 'ace-builds/src-noconflict/theme-eclipse';
+import 'ace-builds/src-noconflict/theme-github';
 
 import 'Editor/styles/PopOuts/_wickcodeeditor.css';
 
