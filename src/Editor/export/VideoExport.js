@@ -7,8 +7,12 @@ var EXPORT_IMAGE_START = 10
 var EXPORT_AUDIO_START = 40
 var EXPORT_VIDEO_START = 70
 
+const isAndroid = () => /Android/i.test(navigator.userAgent)
+
+// On Android, system ffmpeg is not available so we skip the native path and use
+// the web ffmpeg (WASM) path instead, which runs fine inside the Tauri WebView.
 const isTauri = () =>
-  !!(window.__TAURI__ && (window.__TAURI__.invoke || (window.__TAURI__.tauri && window.__TAURI__.tauri.invoke)))
+  !!(window.__TAURI__ && !isAndroid() && (window.__TAURI__.invoke || (window.__TAURI__.tauri && window.__TAURI__.tauri.invoke)))
 
 
 class VideoExport {
@@ -114,6 +118,9 @@ class VideoExport {
   static _generateVideo = async ({ images, audio, args }) => {
     let { project, onProgress, onFinish } = args
 
+    // Respects PUBLIC_URL so the /test deploy loads from /test/corelibs/ffmpeg/
+    const baseURL = window.location.origin + (process.env.PUBLIC_URL || '').replace(/\/?$/, '')
+
     // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
     // The ESM build creates a { type: 'module' } worker which disables importScripts(),
     // causing webpack to intercept the dynamic import(coreURL) and fail at runtime.
@@ -121,7 +128,7 @@ class VideoExport {
     if (!window.FFmpegWASM) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = window.location.origin + '/corelibs/ffmpeg/ffmpeg.umd.js'
+        script.src = baseURL + '/corelibs/ffmpeg/ffmpeg.umd.js'
         script.onload = resolve
         script.onerror = () => reject(new Error('Failed to load ffmpeg.umd.js'))
         document.head.appendChild(script)
@@ -130,7 +137,6 @@ class VideoExport {
     const { FFmpeg } = window.FFmpegWASM
     const ffmpeg = new FFmpeg()
 
-    // log info 
     if(ENABLE_LOGGING) ffmpeg.on('log', ({ message }) => console.log('[ffmpeg]', message))
 
     ffmpeg.on('progress', ({ progress }) => {
@@ -140,8 +146,6 @@ class VideoExport {
 
     onProgress && onProgress('Loading video encoder...', EXPORT_VIDEO_START)
 
-    // Core files are copied to public/corelibs/ffmpeg/ by the copy-ffmpeg-core script
-    const baseURL = window.location.origin
     await ffmpeg.load({
       coreURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.js',
       wasmURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.wasm',
@@ -157,33 +161,48 @@ class VideoExport {
     let inputs = ['-i', 'frame%12d.jpg']
     if (audio) inputs = inputs.concat(['-i', 'audio.wav'])
 
-    // Only apply setps filter if framerate is below ffmpeg's minimum
-    let filterArgs = []
-    if (project.framerate < 6)
-      filterArgs = ['-filter:v', 'setpts=' + (6 / project.framerate) + '*PTS']
-
     let dimensions = VideoExport._ensureValidDimensions(
       args.width || project.width,
       args.height || project.height
     )
 
     let command = [
-      '-r', '' + Math.max(6, project.framerate),
+      '-r', '' + project.framerate,
       '-s', dimensions.width + 'x' + dimensions.height,
       ...inputs,
       '-pix_fmt', 'yuv420p',
       '-q:v', '10',
       '-strict', '-2',
-      ...filterArgs, // break the filter params here
       'out.mp4',
     ]
 
     onProgress && onProgress('Encoding video...', EXPORT_VIDEO_START + 5)
-    await ffmpeg.exec(command)
+    const exitCode = await ffmpeg.exec(command)
+    if (exitCode !== 0) throw new Error(`ffmpeg exited with code ${exitCode} — video encoding failed`)
 
     const data = await ffmpeg.readFile('out.mp4')
-    let blob = new Blob([data.buffer], { type: 'video/mp4' })
-    window.saveFileFromWick(blob, project.name, '.mp4')
+    if (!data || data.byteLength === 0) throw new Error('ffmpeg produced an empty output file')
+    let blob = new Blob([data], { type: 'video/mp4' })
+
+    if (isAndroid() && window.__TAURI__) {
+      // On Android, save via the native SavePlugin so the video lands in the
+      // device gallery (MediaStore.Video) rather than the invisible Downloads folder.
+      const invoke = (window.__TAURI__.tauri && window.__TAURI__.tauri.invoke) || window.__TAURI__.invoke
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result.split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+      await invoke('plugin:save|saveToDownloads', {
+        filename: project.name + '.mp4',
+        mimeType: 'video/mp4',
+        data: base64,
+      })
+    } else {
+      window.saveFileFromWick(blob, project.name, '.mp4')
+    }
+
     onProgress && onProgress('Rendering Complete! Downloading...', 100)
     onFinish && onFinish()
   }
