@@ -14,6 +14,9 @@
 /public/corelibs/wick-engine/
 /engine/dist/
 
+# package-lock
+package-lock.json
+
 # misc
 .DS_Store
 .env.local
