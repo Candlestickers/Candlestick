@@ -101,7 +101,11 @@ export default function initializeDefaultFileHandlers() {
       input.type = 'file';
       input.style.display = 'none';
       let isIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i);
-      args.accept && !isIOS && (input.accept = args.accept);
+      let isAndroid = navigator.userAgent.match(/Android/i);
+      // iOS: skip accept entirely (broken for custom extensions)
+      // Android: use */* so .wick files are visible
+      if (args.accept && !isIOS)
+        input.accept = isAndroid ? '*/*' : args.accept;
       args.multiple && (input.multiple = "multiple");
       document.body.appendChild(input);
       input.addEventListener('change', onChange);
