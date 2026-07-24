@@ -419,6 +419,8 @@ class SelectionWidget {
 
         if (this.currentTransformation === 'move-pivot') {
             if (this._newPivot) this.pivot = this._newPivot;
+            if (this._itemsInSelection.length === 1 && this._itemsInSelection[0] instanceof paper.Group)
+                this._itemsInSelection[0].pivot = this._itemsInSelection[0].globalToLocal(this._newPivot);
         } else if (this.currentTransformation === 'translate') {
             this.translateSelection(this._ghost.data.offset);
         } else if (this.currentTransformation === 'rotate') {
