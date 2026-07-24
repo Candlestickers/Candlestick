@@ -205,7 +205,8 @@ class SelectionWidget {
     }
 
     set currentTransformation(currentTransformation) {
-        if(['translate', 'scale-edge', 'scale-corner', 'rotate', 'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
+        if(['translate', 'scale-edge', 'scale-corner', 'rotate', 'move-pivot',
+            'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
             console.error('Paper.SelectionWidget: Invalid transformation type: ' + currentTransformation);
             currentTransformation = null;
         } else {
@@ -265,7 +266,11 @@ class SelectionWidget {
         this._ghost = this._buildGhost();
         this._layer.addChild(this._ghost);
 
-        if (item.data.handleType === 'rotation') {
+        if (item.data.handleType === 'pivot') {
+            this.currentTransformation = 'move-pivot';
+            this._newPivot = this.pivot;
+            this._ghost.remove();
+        } else if (item.data.handleType === 'rotation') {
             this.currentTransformation = 'rotate';
         } else if (item.data.handleType === 'scale') {
             if (item.data.handleEdge.includes('Center')) {
@@ -294,9 +299,9 @@ class SelectionWidget {
         }
 
         var modifiers = {
-            skew: e.modifiers.command,    // Skew when Ctrl/Cmd pressed
-            center: !e.modifiers.alt,     // Always scale from center unless Alt pressed
-            freescale: !e.modifiers.shift // Never retain proportions unless Shift pressed
+            skew: e.modifiers.command,   // Skew when Ctrl/Cmd pressed
+            center: !e.modifiers.alt,    // Always scale from center unless Alt pressed
+            constrain: e.modifiers.shift // Never retain proportions unless Shift pressed
         };
         var topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
         var vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
@@ -327,22 +332,28 @@ class SelectionWidget {
         let unrotatedPivot = this._truePivot;
         this._truePivot = this._truePivot.rotate(this.boxRotation, this.pivot);
 
-
-        if (this.currentTransformation === 'translate') {
+        if (this.currentTransformation === 'move-pivot') {
+            item.matrix.reset();
+            var initialDelta = e.point.subtract(this._initialPoint);
+            if (modifiers.constrain) {
+                var direction = new paper.Point({ length: 1, angle: Math.round(initialDelta.angle / 45) * 45 });
+                initialDelta = initialDelta.project(direction);
+            }
+            item.translate(initialDelta);
+            this._newPivot = item.position;
+        } else if (this.currentTransformation === 'translate') {
             this._ghost.matrix.reset();
             var initialDelta = e.point.subtract(this._initialPoint);
-            if (!modifiers.freescale) {
-                var angle = initialDelta.angle;
-                angle = Math.round(angle / 45) * 45 * Math.PI / 180;
-                var angleVector = new paper.Point(Math.cos(angle), Math.sin(angle));
-                initialDelta = initialDelta.project(angleVector);
+            if (modifiers.constrain) {
+                var direction = new paper.Point({ length: 1, angle: Math.round(initialDelta.angle / 45) * 45 });
+                initialDelta = initialDelta.project(direction);
             }
             this._ghost.data.offset = initialDelta;
             this._ghost.translate(initialDelta);
         } else if (this.currentTransformation === 'rotate') {
             this._ghost.matrix.reset();
             var rotateDelta = e.point.subtract(this._truePivot).angle - this._initialPoint.subtract(this._truePivot).angle;
-            if (!modifiers.freescale) {
+            if (modifiers.constrain) {
                 rotateDelta = Math.round(rotateDelta / 45) * 45;
             }
             this._ghost.rotate(rotateDelta, this._truePivot);
@@ -350,7 +361,7 @@ class SelectionWidget {
             var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
             var initialPointRelative = this._initialPoint.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
             var scaleFactor = currentPointRelative.divide(initialPointRelative);
-            if (!modifiers.freescale) {
+            if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
                 } else {
@@ -406,7 +417,9 @@ class SelectionWidget {
 
         this._ghost.remove();
 
-        if (this.currentTransformation === 'translate') {
+        if (this.currentTransformation === 'move-pivot') {
+            if (this._newPivot) this.pivot = this._newPivot;
+        } else if (this.currentTransformation === 'translate') {
             this.translateSelection(this._ghost.data.offset);
         } else if (this.currentTransformation === 'rotate') {
             this.boxRotation += this._ghost.rotation;
@@ -557,7 +570,6 @@ class SelectionWidget {
             fillColor: SelectionWidget.PIVOT_FILL_COLOR,
             strokeColor: SelectionWidget.PIVOT_STROKE_COLOR,
         });
-        handle.locked = true;
         return handle;
     }
 
