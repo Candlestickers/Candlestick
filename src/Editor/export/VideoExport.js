@@ -1,6 +1,6 @@
 import AudioExport from './AudioExport'
 
-var b64toBuff = require('base64-arraybuffer')
+import * as b64toBuff from 'base64-arraybuffer'
 
 var ENABLE_LOGGING = false
 var EXPORT_IMAGE_START = 10
