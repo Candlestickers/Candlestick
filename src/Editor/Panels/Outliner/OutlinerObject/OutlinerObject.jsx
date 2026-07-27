@@ -33,7 +33,7 @@ let icons = {layer: layerIcon, frame: frameIcon, path: pathIcon, button: buttonI
 let images = {layer: layerImage, frame: frameImage, path: pathImage, button: buttonImage, 
   clip: clipImage, text: textImage, image: imageImage};
 
-var classNames = require("classnames");
+import classNames from 'classnames';
 
 export const OutlinerObject = ({clearSelection, selectObjects, 
   editScript, playhead, depth, maxDepth, display, highlighted, 
