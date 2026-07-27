@@ -560,6 +560,19 @@ class Inspector extends Component {
   }
 
   /**
+   * Renders an inspector row allowing viewing and editing of the selection's skew.
+   */
+  renderSkew = () => {
+    return (
+      <InspectorNumericInput
+        tooltip="Skew"
+        val={this.getSelectionAttribute('skew')}
+        onChange={(val) => this.setSelectionAttribute('skew', val)}
+        id="inspector-skew" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -586,6 +599,7 @@ class Inspector extends Component {
         {this.renderSize()}
         {this.renderScale()}
         {this.renderRotation()}
+        {this.renderSkew()}
         {this.renderOpacity()}
       </div>
     )

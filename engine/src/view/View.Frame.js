@@ -129,14 +129,15 @@ Wick.View.Frame = class extends Wick.View {
         }).forEach(child => {
             if (child instanceof paper.Group || child instanceof Wick.Clip) {
                 var wickClip = Wick.ObjectCache.getObjectByUUID(child.data.wickUUID);
+                var values = child.matrix.decompose();
                 wickClip.transformation = new Wick.Transformation({
-                    x: child.position.x,
-                    y: child.position.y,
-                    scaleX: child.scaling.x,
-                    scaleY: child.scaling.y,
-                    rotation: child.rotation,
+                    x: values.translation.x,
+                    y: values.translation.y,
+                    scaleX: values.scaling.x,
+                    scaleY: values.scaling.y,
+                    rotation: values.rotation,
+                    skew: Math.atan(Math.tan(values.skewing.x*Math.PI/180) * values.scaling.x/values.scaling.y) * 180/Math.PI,
                     opacity: child.opacity
-
                 });
                 wickClip.pivot = [child.pivot.x, child.pivot.y];
             }
