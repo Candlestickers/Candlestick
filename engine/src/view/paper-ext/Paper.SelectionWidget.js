@@ -252,6 +252,7 @@ class SelectionWidget {
                 this._buildGUI();
             }
             this.layer.addChild(this.item);
+            this._pivotPointHandle.bringToFront();
         }
     }
 
@@ -572,6 +573,8 @@ class SelectionWidget {
             fillColor: SelectionWidget.PIVOT_FILL_COLOR,
             strokeColor: SelectionWidget.PIVOT_STROKE_COLOR,
         });
+        // Lock handle if it interferes with dragging the selection
+        handle.locked = (this.boundingBox.width <= 4*handle.bounds.width) && (this.boundingBox.height <= 4*handle.bounds.height);
         return handle;
     }
 
