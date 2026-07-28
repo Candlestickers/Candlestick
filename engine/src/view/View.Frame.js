@@ -136,7 +136,7 @@ Wick.View.Frame = class extends Wick.View {
                     scaleX: values.scaling.x,
                     scaleY: values.scaling.y,
                     rotation: values.rotation,
-                    skew: Math.atan(Math.tan(values.skewing.x*Math.PI/180) * values.scaling.x/values.scaling.y) * 180/Math.PI,
+                    shear: Math.tan(values.skewing.x * Math.PI/180) * values.scaling.x/values.scaling.y,
                     opacity: child.opacity
                 });
                 wickClip.pivot = [child.pivot.x, child.pivot.y];

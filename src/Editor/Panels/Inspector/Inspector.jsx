@@ -560,15 +560,15 @@ class Inspector extends Component {
   }
 
   /**
-   * Renders an inspector row allowing viewing and editing of the selection's skew.
+   * Renders an inspector row allowing viewing and editing of the selection's shear.
    */
-  renderSkew = () => {
+  renderShear = () => {
     return (
       <InspectorNumericInput
-        tooltip="Skew"
-        val={this.getSelectionAttribute('skew')}
-        onChange={(val) => this.setSelectionAttribute('skew', val)}
-        id="inspector-skew" />
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
     )
   }
 
@@ -599,7 +599,7 @@ class Inspector extends Component {
         {this.renderSize()}
         {this.renderScale()}
         {this.renderRotation()}
-        {this.renderSkew()}
+        {this.renderShear()}
         {this.renderOpacity()}
       </div>
     )

@@ -36,12 +36,12 @@ Wick.Transformation = class {
         this.scaleX = args.scaleX === undefined ? 1 : args.scaleX;
         this.scaleY = args.scaleY === undefined ? 1 : args.scaleY;
         this.rotation = args.rotation === undefined ? 0 : args.rotation;
-        this.skew = args.skew === undefined ? 0 : args.skew;
+        this.shear = args.shear === undefined ? 0 : args.shear;
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
     }
 
     get scaledSkew () {
-        return Math.atan(Math.tan(this.skew * Math.PI/180) * this.scaleY / this.scaleX) * 180/Math.PI;
+        return Math.atan(this.shear * this.scaleY / this.scaleX) * 180/Math.PI;
     }
 
     /**
@@ -54,7 +54,7 @@ Wick.Transformation = class {
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             rotation: this.rotation,
-            skew: this.skew,
+            shear: this.shear,
             opacity: this.opacity,
         }
     }

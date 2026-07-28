@@ -34,7 +34,7 @@ Wick.Selection = class extends Wick.Base {
 
         this._selectedObjectsUUIDs = args.selectedObjects || [];
         this._widgetRotation = args.widgetRotation || 0;
-        this._widgetSkew = args.widgetSkew || 0;
+        this._widgetShear = args.widgetShear || 0;
         this._pivotPoint = { x: 0, y: 0 };
         this._originalWidth = 0;
         this._originalHeight = 0;
@@ -48,7 +48,7 @@ Wick.Selection = class extends Wick.Base {
         var data = super._serialize(args);
         data.selectedObjects = Array.from(this._selectedObjectsUUIDs);
         data.widgetRotation = this._widgetRotation;
-        data.widgetSkew = this._widgetSkew;
+        data.widgetShear = this._widgetShear;
         data.pivotPoint = {
             x: this._pivotPoint.x,
             y: this._pivotPoint.y,
@@ -62,7 +62,7 @@ Wick.Selection = class extends Wick.Base {
         super._deserialize(data);
         this._selectedObjectsUUIDs = data.selectedObjects || [];
         this._widgetRotation = data.widgetRotation;
-        this._widgetSkew = data.widgetSkew;
+        this._widgetShear = data.widgetShear;
         this._pivotPoint = {
             x: data.pivotPoint.x,
             y: data.pivotPoint.y
@@ -99,7 +99,7 @@ Wick.Selection = class extends Wick.Base {
             "width",
             "height",
             "rotation",
-            "skew",
+            "shear",
             "opacity",
             "sound",
             "soundVolume",
@@ -404,15 +404,15 @@ Wick.Selection = class extends Wick.Base {
     }
 
     /**
-     * The skew of the selection (used for canvas selections)
+     * The shear of the selection (used for canvas selections)
      * @type {number}
      */
-    get widgetSkew() {
-        return this._widgetSkew;
+    get widgetShear() {
+        return this._widgetShear;
     }
 
-    set widgetSkew(widgetSkew) {
-        this._widgetSkew = widgetSkew;
+    set widgetShear(widgetShear) {
+        this._widgetShear = widgetShear;
     }
 
     /**
@@ -578,16 +578,16 @@ Wick.Selection = class extends Wick.Base {
     }
 
     /**
-     * The horizontal skew of the selection.
+     * The horizontal shear of the selection.
      * @type {number}
      */
-    get skew() {
-        return this.view.skew;
+    get shear() {
+        return this.view.shear;
     }
 
-    set skew(skew) {
+    set shear(shear) {
         this.project.tryToAutoCreateTween();
-        this.view.skew = skew;
+        this.view.shear = shear;
     }
 
     /**
@@ -1009,7 +1009,7 @@ Wick.Selection = class extends Wick.Base {
         if (selectedObject instanceof Wick.Clip) {
             // Single clip selected: Use that Clip's transformation for the pivot point and rotation
             this._widgetRotation = selectedObject.transformation.rotation;
-            this._widgetSkew = selectedObject.transformation.skew;
+            this._widgetShear = selectedObject.transformation.shear;
             this._pivotPoint = {
                 x: selectedObject.transformation.x,
                 y: selectedObject.transformation.y,
@@ -1017,7 +1017,7 @@ Wick.Selection = class extends Wick.Base {
         } else {
             // Path selected or multiple objects selected: Reset rotation and use center for pivot point
             this._widgetRotation = 0;
-            this._widgetSkew = 0;
+            this._widgetShear = 0;
 
             var boundsCenter = this.view._getSelectedObjectsBounds().center;
             this._pivotPoint = {

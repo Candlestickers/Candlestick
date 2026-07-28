@@ -1335,15 +1335,15 @@ let avgIntersection = {
         this._onDirtyTransform();
       }
       /**
-     * The skew of the clip.
+     * The shear of the clip.
      * @type {number}
      */
-      get skew() {
-        return this.transformation.skew;
+      get shear() {
+        return this.transformation.shear;
       }
     
-      set skew(skew) {
-        this.transformation.skew = skew;
+      set shear(shear) {
+        this.transformation.shear = shear;
     
         this._onDirtyTransform();
       }
