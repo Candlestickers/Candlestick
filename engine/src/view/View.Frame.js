@@ -131,8 +131,8 @@ Wick.View.Frame = class extends Wick.View {
                 var wickClip = Wick.ObjectCache.getObjectByUUID(child.data.wickUUID);
                 var values = child.matrix.decompose();
                 wickClip.transformation = new Wick.Transformation({
-                    x: values.translation.x,
-                    y: values.translation.y,
+                    x: child.position.x,
+                    y: child.position.y,
                     scaleX: values.scaling.x,
                     scaleY: values.scaling.y,
                     rotation: values.rotation,

@@ -421,12 +421,13 @@ class SelectionWidget {
             }
             if (modifiers.skew) {
                 var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
-                if (vertical) shearFactor.y = 0;
-                else shearFactor.x = 0;
-                if (modifiers.center)
-                    shearFactor = shearFactor.multiply(2);
-                if (topLeft)
-                    shearFactor = shearFactor.multiply(-1);
+                if (vertical) {
+                    shearFactor.y = 0;
+                    shearFactor.x *= this._ghost.bounds.height / distEdge.y;
+                } else {
+                    shearFactor.x = 0;
+                    shearFactor.y *= this._ghost.bounds.width / distEdge.x;
+                }
 
                 this._ghost.data.transform.shear(shearFactor);
             }
@@ -643,36 +644,25 @@ class SelectionWidget {
         //    +------+
         //       |
 
-        // Compensate for the selection's horizontal skew
         var r = SelectionWidget.ROTATION_HOTSPOT_RADIUS / paper.view.zoom;
-        var theta = this.boxSkew * Math.PI/180;
-        if (cornerName === 'topLeft' || cornerName === 'bottomRight') theta *= -1;
-
-        var cost = Math.cos(theta),
-            sint = Math.sin(theta);
-        var corner = (theta >= 0)
-            ? [new paper.Point(r/cost, -r)]
-            : [new paper.Point(r/cost, -r*(cost+sint)),
-               new paper.Point(r*(sint/cost+1), -r)]
-        var hotspot = new paper.Path({
-            segments: [
-                new paper.Point(0, 0),
-                new paper.Point(0, r*cost),
-                new paper.Point(r/cost, r*(cost-sint)),
-                ...corner,
-                new paper.Point(r*(sint/cost-1), -r),
-                new paper.Point(-r, 0),
-            ],
-            pivot: [0, 0],
-            fillColor: SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR,
-            position: this.boundingBox[cornerName]
+        var angle = this.boxSkew * Math.PI/180;
+        if (cornerName === 'topLeft' || cornerName === 'bottomRight') angle *= -1;
+        var hotspot = new paper.Path.Arc({
+            from: [r * Math.sin(angle), r * Math.cos(angle)], through: [0,-r], to: [-r,0],
+            pivot: [0, 0]
         });
+        hotspot.firstSegment.handleIn = [0,0];
+        hotspot.lastSegment.handleOut = [0,0];
+        hotspot.add([0,0]);
+        hotspot.fillColor = SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR;
+        hotspot.position = this.boundingBox[cornerName];
 
         // Orient the rotation handles in the correct direction, even if the selection is flipped
         hotspot.scale(
             (cornerName === 'topLeft' || cornerName === 'bottomLeft') ? -1 : 1,
             (cornerName === 'bottomRight' || cornerName === 'bottomLeft') ? -1 : 1
         );
+        hotspot.skew(-this.boxSkew, 0);
 
         // Some metadata.
         hotspot.data.handleType = 'rotation';
