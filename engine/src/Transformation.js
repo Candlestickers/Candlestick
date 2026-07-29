@@ -69,13 +69,13 @@ Wick.Transformation = class {
             rotateRad = rotation / degrees,
             skewRad = this.scaledSkew / degrees;
         let a, b, c, d;
-        let r = scaleX,
+        let r = scaleX, r2 = r * r,
             det = scaleY * r,
-            at = Math.tan(skewRad) * r * r;
+            at = Math.tan(skewRad) * r2;
         a = Math.cos(rotateRad) * r;
-        b = Math.sqrt(r * r - a * a) * (rotateRad > 0 ? 1 : -1);
-        d = (b * at + a * det) / (a * a + b * b);
-        c = (at - b * d) / a;
+        b = Math.sqrt(r2 - a * a) * (rotateRad > 0 ? 1 : -1);
+        d = (b * at + a * det) / r2;
+        c = (a * at - b * det) / r2;
         return [a, b, c, d, x, y];
     }
 
