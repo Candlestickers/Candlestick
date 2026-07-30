@@ -32,6 +32,7 @@
 .settings-numeric-slider-container {
     background-color: var(--wick-primary);
     border-radius: var(--border-radius-secondary);
+    padding: 6px 10px;
 }
 
 .settings-numeric-slider-icon {

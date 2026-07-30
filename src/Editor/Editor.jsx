@@ -28,11 +28,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
 import 'react-reflex/styles.css'
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
-import { throttle } from 'underscore';
 import localForage from 'localforage';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { SizeMe } from 'react-sizeme';
+import { useResizeDetector } from 'react-resize-detector';
 
 import HotKeyInterface from './hotKeyMap';
 import ActionMapInterface from './actionMap';
@@ -59,6 +58,17 @@ import EditorWrapper from './EditorWrapper';
 
 import { readFile } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core';
+
+function throttle(fn, wait) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
 
 // app wick, for handling directly opening files from finder/ file explorer
 async function loadPathIntoEditor(editorThis, filePath) {
@@ -122,9 +132,15 @@ async function loadPathIntoEditor(editorThis, filePath) {
 }
 
 
-const { version } = require('../../package.json');
+import { version } from '../../package.json';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
+
+// Watches for container resize and calls onResize, replacing react-sizeme
+function ResizeTrigger({ onResize, children }) {
+    const { ref } = useResizeDetector({ onResize });
+    return <div ref={ref} style={{ width: '100%', height: '100%' }}>{children}</div>;
+}
 
 class Editor extends EditorCore {
     constructor() {
@@ -340,6 +356,9 @@ class Editor extends EditorCore {
         console.log("Project Mounted");
         this.hidePreloader();
         this.onWindowResize();
+        // onWindowResize() call above. second resize after a short delay to lets WebKit complete its paint before we recalculate panel sizes
+        // THIS IS IMPORTANT for safari & mac builts -H.A.
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
         if (!this.tryToParseProjectURL()) {
             this.showAutosavedProjects();
         }
@@ -1174,9 +1193,8 @@ class Editor extends EditorCore {
                                                     {/*Canvas*/}
                                                     <ReflexElement {...this.resizeProps}>
                                                         <DockedPanel>
-                                                            <SizeMe>{({ size }) => {
-                                                                this.project.view.render();
-                                                                return (<Canvas
+                                                            <ResizeTrigger onResize={() => this.project.view.render()}>
+                                                                <Canvas
                                                                     editor={this}
                                                                     project={this.project}
                                                                     projectDidChange={this.projectDidChange}
@@ -1190,9 +1208,8 @@ class Editor extends EditorCore {
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
                                                                     openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
-                                                                />);
-                                                            }}
-                                                            </SizeMe>
+                                                                />
+                                                            </ResizeTrigger>
 
                                                             <CanvasTransforms
                                                                 onionSkinEnabled={this.project?.onionSkinEnabled}

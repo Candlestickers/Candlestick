@@ -33,7 +33,7 @@ let icons = {layer: layerIcon, frame: frameIcon, path: pathIcon, button: buttonI
 let images = {layer: layerImage, frame: frameImage, path: pathImage, button: buttonImage, 
   clip: clipImage, text: textImage, image: imageImage};
 
-var classNames = require("classnames");
+import classNames from 'classnames';
 
 export const OutlinerObject = ({clearSelection, selectObjects, 
   editScript, playhead, depth, maxDepth, display, highlighted, 
@@ -43,27 +43,23 @@ export const OutlinerObject = ({clearSelection, selectObjects,
   const ref = useRef(null);
 
   const [, drag, preview] = useDrag({
-    item: {
-      type: DragDropTypes.GET_OUTLINER_SOURCE({data}),
-      uuid: data.uuid,
-    },
-    begin: () => {
+    type: DragDropTypes.GET_OUTLINER_SOURCE({data}),
+    item: () => {
       setDragging(true);
 
-      if (data.isSelected) {
-        return;
-      }
-      
-      clearSelection();
-      selectObjects([data]);
+      if (!data.isSelected) {
+        clearSelection();
+        selectObjects([data]);
 
-      if (data.classname === 'Layer') {
-        setActiveLayerIndex(data.index);
-      }
-      else {
-        setActiveLayerIndex(data.parentLayer.index);
+        if (data.classname === 'Layer') {
+          setActiveLayerIndex(data.index);
+        }
+        else {
+          setActiveLayerIndex(data.parentLayer.index);
+        }
       }
 
+      return { uuid: data.uuid };
     },
     end: () => {
       setDragging(false);
@@ -223,7 +219,7 @@ export const OutlinerObject = ({clearSelection, selectObjects,
         <OutlinerWidget onClick={(e) => {toggle(e, [], 'locked')}} on={!data.locked} icon="outliner-lock" tooltip="Lock Layer"/>
       }
       {(data.classname === 'Button' || data.classname === 'Clip') &&
-        <OutlinerWidget key={Math.random()} onClick={() => {console.log("yangus"); setFocusObject(data)}} icon="edit-timeline" tooltip="Edit Timeline"/>
+        <OutlinerWidget key="edit-timeline" onClick={() => {setFocusObject(data)}} icon="edit-timeline" tooltip="Edit Timeline"/>
       }
       {data.sound && 
         <img className="outliner-sound-icon" src={soundIcon} alt="sound"/>}
