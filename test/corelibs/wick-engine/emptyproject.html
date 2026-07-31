@@ -14,7 +14,7 @@
         <!-- The Wick Engine build is injected here during the engine build step (see gulpfile.js) -->
         <script>
             /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.7.7.10.24.47";
+var WICK_ENGINE_BUILD_VERSION = "2026.7.31.11.50.14";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -47032,18 +47032,9 @@ Wick.ToolSettings = class {
   loadSettingsFromLocalstorage() {
     Wick.ToolSettings.DEFAULT_SETTINGS.forEach(setting => {
       // Get stored tool setting if it exists.
-      localforage.getItem(this.getStorageKey(name)).then(value => {
-        if (value) {
-          this._settings[args.name] = {
-            type: args.type,
-            name: args.name,
-            value: type === 'color' ? new window.Wick.Color(value) : value,
-            default: args.default,
-            min: args.min,
-            max: args.max,
-            step: args.step,
-            options: args.options
-          };
+      localforage.getItem(this.getStorageKey(setting.name)).then(value => {
+        if (value !== null && value !== undefined) {
+          this._settings[setting.name].value = setting.type === 'color' ? new window.Wick.Color(value) : value;
         }
       });
     });
@@ -51536,8 +51527,9 @@ Wick.Project = class extends Wick.Base {
       x: 0,
       y: 0
     };
-
-    // renderCopy.tick();
+    renderCopy.view.render();
+    this.resetSoundsPlayed();
+    renderCopy.tick();
 
     // We need full control over when paper.js renders, if we leave autoUpdate on, it's possible to lose frames if paper.js doesnt automatically render as fast as we are generating the images.
     // (See paper.js docs for info about autoUpdate)
@@ -51571,7 +51563,6 @@ Wick.Project = class extends Wick.Base {
       renderCopy.view.paper.view.update();
       frameImage.src = renderCopy.view.canvas.toDataURL(args.imageType);
     };
-    this.resetSoundsPlayed();
     renderFrame();
   }
   resetSoundsPlayed() {
@@ -52752,7 +52743,7 @@ Wick.Timeline = class extends Wick.Base {
     this._playheadPosition = 1;
     this._activeLayerIndex = 0;
     this._playing = true;
-    this._fillGapsMethod = "auto_extend";
+    this._fillGapsMethod = localStorage.getItem('wickEditorFillGapsMethod') || "auto_extend";
     this._frameForced = false;
   }
   _serialize(args) {
@@ -58702,9 +58693,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
       this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
     }
 
-    // Update croquis element canvas size
-    if (this.croquis.getCanvasWidth() !== this.paper.view._element.width || this.croquis.getCanvasHeight() !== this.paper.view._element.height) {
-      this.croquis.setCanvasSize(this.paper.view._element.width, this.paper.view._element.height);
+    // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
+    var targetW = Math.round(this.paper.view.viewSize.width);
+    var targetH = Math.round(this.paper.view.viewSize.height);
+    if (this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
+      this.croquis.setCanvasSize(targetW, targetH);
     }
 
     // Fake brush opacity in croquis by changing the opacity of the croquis canvas
@@ -61332,6 +61325,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     var layerPathsRaster = layerGroup.rasterize(rasterResolution, {
       insert: false
     });
+    // Fixes issues with browser zoom
+    var zoomFactor = RASTER_BASE_RESOLUTION * layerPathsRaster.bounds.width / layerPathsRaster.width;
     var rasterCanvas = layerPathsRaster.canvas;
     var rasterCtx = rasterCanvas.getContext('2d');
     var layerPathsImageData = rasterCtx.getImageData(0, 0, layerPathsRaster.width, layerPathsRaster.height);
@@ -61347,8 +61342,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     rasterCtx.putImageData(layerPathsImageData, 0, 0);
     layerPathsImageData = rasterCtx.getImageData(0, 0, layerPathsRaster.width, layerPathsRaster.height);
     var rasterPosition = layerPathsRaster.bounds.topLeft;
-    var x = (floodFillX - rasterPosition.x) * RASTER_BASE_RESOLUTION;
-    var y = (floodFillY - rasterPosition.y) * RASTER_BASE_RESOLUTION;
+    var x = (floodFillX - rasterPosition.x) * RASTER_BASE_RESOLUTION / zoomFactor;
+    var y = (floodFillY - rasterPosition.y) * RASTER_BASE_RESOLUTION / zoomFactor;
     x = Math.round(x);
     y = Math.round(y);
     var floodFillCanvas = document.createElement('canvas');
@@ -61406,6 +61401,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
         }
       }
       expandHole(resultHolePath);
+      // Fixes issues with browser zoom
+      resultHolePath.scale(zoomFactor, layerPathsRaster.bounds.topLeft);
       callback(resultHolePath);
     };
     floodFillProcessedImage.src = floodFillCanvas.toDataURL();
@@ -62862,6 +62859,8 @@ paper.Path.inject({
     if (!args.done) throw new Error('Path.potrace: args.done is required.');
     var finalRasterResolution = paper.view.resolution * args.resolution / window.devicePixelRatio;
     var raster = this.rasterize(finalRasterResolution);
+    // Fixes issues with browser zoom
+    var zoomFactor = args.resolution * raster.bounds.width / raster.width;
     raster.remove();
     var rasterDataURL = raster.toDataURL();
     if (rasterDataURL === 'data:,') {
@@ -62878,6 +62877,7 @@ paper.Path.inject({
       potracePath.remove();
       potracePath.closed = true;
       potracePath.children[0].closed = true;
+      potracePath.children[0].scale(zoomFactor);
       args.done(potracePath.children[0]);
     };
     img.src = rasterDataURL;
@@ -64981,6 +64981,22 @@ if (isTablet) {
   Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
   Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
 }
+// Restore saved frame size preference (overrides tablet/desktop default)
+const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
+if (_savedFrameSize) switch (_savedFrameSize) {
+  case 'small':
+    Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
+    Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+    break;
+  case 'large':
+    Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+    Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+    break;
+  case 'normal':
+  default:
+    Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
+    Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+}
 Wick.GUIElement.GRID_MARGIN = 1;
 Wick.GUIElement.TIMELINE_BACKGROUND_COLOR = '#2A2E30';
 Wick.GUIElement.SELECTED_ITEM_BORDER_COLOR = '#00ADEF';
@@ -66902,6 +66918,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       icon: 'gap_fill_extend_frames',
       clickFn: () => {
         this.project.model.activeTimeline.fillGapsMethod = 'auto_extend';
+        localStorage.setItem('wickEditorFillGapsMethod', 'auto_extend');
         this.projectWasModified();
       }
     });
@@ -66910,6 +66927,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       icon: 'gap_fill_empty_frames',
       clickFn: () => {
         this.project.model.activeTimeline.fillGapsMethod = 'blank_frames';
+        localStorage.setItem('wickEditorFillGapsMethod', 'blank_frames');
         this.projectWasModified();
       }
     });
@@ -66919,6 +66937,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+        localStorage.setItem('wickEditorFrameSizeMode', 'small');
       }
     });
     this.normalFramesButton = new Wick.GUIElement.ActionButton(this.model, {
@@ -66927,6 +66946,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+        localStorage.setItem('wickEditorFrameSizeMode', 'normal');
       }
     });
     this.largeFramesButton = new Wick.GUIElement.ActionButton(this.model, {
@@ -66935,6 +66955,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+        localStorage.setItem('wickEditorFrameSizeMode', 'large');
       }
     });
   }
