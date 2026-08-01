@@ -20,6 +20,7 @@
 import React, { Component } from 'react';
 
 import InspectorInput from 'Editor/Panels/Inspector/InspectorRow/InspectorInput/InspectorInput';
+import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 
 import '../_inspectorrow.scss';
 
@@ -28,15 +29,20 @@ class InspectorNumericSlider extends Component {
     let idLabel = this.props.tooltip.replace(/\s+/g, '-').toLowerCase();
     return(
       <div className="inspector-row">
-        {/* Identifier */} 
-        <label htmlFor={idLabel + "-input"} className="inspector-row-identifier">
-          {this.props.tooltip}
+        {/* Identifier */}
+        <label
+          htmlFor={idLabel + "-input"}
+          className="inspector-row-identifier"
+          style={this.props.icon ? { justifyContent: 'center', alignItems: 'flex-end' } : undefined}>
+          {this.props.icon
+            ? <div style={{ height: '18px', width: '18px' }}><ToolIcon name={this.props.icon} /></div>
+            : this.props.tooltip}
         </label>
 
         {/* Input */}
         <div className="inspector-small-input-container">
           <InspectorInput
-            inputProps={{id: idLabel + "-input"}} 
+            inputProps={{id: idLabel + "-input"}}
             input={
               {type: "numeric",
               value: this.props.val,
