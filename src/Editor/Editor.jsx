@@ -287,11 +287,17 @@ class Editor extends EditorCore {
         this.builtinPreviews = {};
     }
 
-    UNSAFE_componentWillMount = async () => {
+    componentDidMount = async () => {
         document.title = `Candlestick ${this.editorVersion}`;
 
-        // Wait till engine loads
-        this.Wick = await window.Wick.loaded;
+        if (window.Wick && window.Wick.loaded) {
+            try {
+                await window.Wick.loaded;
+            } catch (err){}
+        }
+
+        // Read the global Wick namespace after the loader completes
+        this.Wick = window.Wick;
 
         // Initialize "live" engine state
         this.project = new this.Wick.Project();
@@ -329,8 +335,6 @@ class Editor extends EditorCore {
             }
         );
 
-
-
         // Setup the initial project state
         this.setState({
             ...this.state,
@@ -349,10 +353,7 @@ class Editor extends EditorCore {
             (event || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
         };
-    }
 
-
-    componentDidMount = () => {
         console.log("Project Mounted");
         this.hidePreloader();
         this.onWindowResize();
@@ -384,8 +385,6 @@ class Editor extends EditorCore {
         };
         document.addEventListener('paste', this._pasteHandler);
 
-
-
         // check to see if we're in the app
         if (window.__TAURI__) {
             // Force a window resize event shortly after app launches.
@@ -410,8 +409,6 @@ class Editor extends EditorCore {
                 }
             }, 200) // small delay
         }
-
-
     }
 
     // apparently need this for cleanup -H.A.
@@ -1115,6 +1112,9 @@ class Editor extends EditorCore {
     }
 
     render = () => {
+        if (!this.project || !this.project.view) {
+            return <div className="editor-loading">Loading editor…</div>;
+        }
         // Create some references to the project and editor to make debugging in the console easier:
         window.project = this.project;
         window.editor = this;

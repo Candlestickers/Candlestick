@@ -16,3 +16,5 @@ fs.writeFileSync(path.join(distDir, 'emptyproject.html'), blankHTML);
 fs.writeFileSync(path.join(distDir, 'index.html'), fs.readFileSync('src/export/zip/index.html', 'utf8'));
 fs.writeFileSync(path.join(distDir, 'preloadjs.min.js'), fs.readFileSync('src/export/zip/preloadjs.min.js', 'utf8'));
 fs.writeFileSync(path.join(distDir, 'project.html'), fs.readFileSync('src/export/html/project.html', 'utf8'));
+
+console.log('Engine built!')

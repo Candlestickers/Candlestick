@@ -26,7 +26,7 @@
     "uuid": "^14.0.1"
   },
   "scripts": {
-    "build-engine": "webpack --config ./webpack.config.cjs && node ./postbuild.mjs && shx cp -r ./dist/. ../public/corelibs/wick-engine/",
+    "build-engine": "rolldown -c && node ./postbuild.mjs && shx cp -r ./dist/. ../public/corelibs/wick-engine/",
     "generate-docs": "jsdoc -c jsdocs.json -r src/ -d docs/; cp -r docs/* ../../wick-editor-docs/; cd ../../wick-editor-docs;"
   },
   "repository": {
@@ -40,13 +40,8 @@
   },
   "homepage": "https://github.com/Wicklets/wick-engine#readme",
   "devDependencies": {
-    "@babel/core": "^7.1.2",
-    "gulp": "^5.0.1",
-    "gulp-babel": "^8.0.0-beta.2",
-    "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.5",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^3.0.1",
-    "jsdoc": "^4.0.5"
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "jsdoc": "^4.0.5",
+    "rolldown": "^1.2.1"
   }
 }

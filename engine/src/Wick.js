@@ -103,6 +103,21 @@ window.Wick.loaded = (async () => {
         import('../lib/croquis.js')
     ]);
 
+    await import('./base/Base.js'),
+    await import('./base/Project.js'),
+    await import('./base/Tickable.js')
+    await import('./base/Clip.js')
+    await import('./base/asset/Asset.js')
+    await import('./base/asset/FileAsset.js')
+    await import('./base/asset/ClipAsset.js')
+    await import('./view/View.js')
+    await import('./view/View.Clip.js')
+    await import('./gui/GUIElement.js')
+    await import('./gui/Ghost.js')
+    await import('./gui/Button.js')
+    await import('./export/wick/WickFile.js')
+    await import('./tools/Tool.js')
+
     const src = Promise.all([
         import('./Clipboard.js'),
         import('./Color.js'),
@@ -115,17 +130,8 @@ window.Wick.loaded = (async () => {
         import('./FileCache.js')
     ])
     const base = Promise.all([
-        // Other classes extend these
-        await import('./base/Base.js'),
-        await import('./base/Tickable.js'),
-        await import('./base/Clip.js'),
-        await import('./base/asset/Asset.js'),
-        await import('./base/asset/FileAsset.js'),
-        await import('./base/asset/ClipAsset.js'),
-
         // These extend Wick.Base
         import('./base/Layer.js'),
-        import('./base/Project.js'),
         import('./base/Selection.js'),
         import('./base/Timeline.js'),
         import('./base/Tween.js'),
@@ -149,11 +155,6 @@ window.Wick.loaded = (async () => {
     ]);
 
     const view = Promise.all([
-        // View.js must load first
-        await import('./view/View.js'),
-        // Must ensure this loads before button
-        await import('./view/View.Clip.js'),
-
         import('./view/View.Button.js'),
 
         import('./view/View.Project.js'),
@@ -176,11 +177,6 @@ window.Wick.loaded = (async () => {
     ]);
 
     const gui = Promise.all([
-        // The classes that other classes extend
-        await import('./gui/GUIElement.js'),
-        await import('./gui/Ghost.js'),
-        await import('./gui/Button.js'),
-
         // These directly extend GUIElement.js
         import('./gui/Icons.js'),
         import('./gui/FramesContainer.js'),
@@ -214,9 +210,6 @@ window.Wick.loaded = (async () => {
     ]);
 
     const exportThread = Promise.all([
-        // Wickfile.Alpha.js extends this
-        await import('./export/wick/WickFile.js'),
-
         import('./export/ExportUtils.js'),
         import('./export/audio/AudioTrack.js'),
         import('./export/autosave/AutoSave.js'),
@@ -231,9 +224,6 @@ window.Wick.loaded = (async () => {
     ]);
 
     const tools = Promise.all([
-        // Must load first
-        await import('./tools/Tool.js'),
-
         import('./tools/Zoom.js'),
         import('./tools/Brush.js'),
         import('./tools/Cursor.js'),
