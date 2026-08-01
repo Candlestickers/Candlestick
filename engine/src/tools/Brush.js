@@ -495,11 +495,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
               0, 0, croppedCanvas.width, croppedCanvas.height);
 
             // Run potrace and add the resulting path to the project
-            // brushPotraceDetail controls optTolerance (quality), NOT the toSVG scale.
-            // toSVG scale must always be 1/zoom to keep path coordinates correct.
-            var detail = this.getSetting('brushPotraceDetail');
-            var optTolerance = 0.2 / detail; // default 0.2 at detail=1.0; lower = more nodes
-            var svg = potrace.fromImage(croppedCanvas, { optTolerance: optTolerance }).toSVG(1/this.paper.view.zoom);
+            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.paper.view.zoom);
             var potracePath = this.paper.project.importSVG(svg);
 
             potracePath.fillColor = this.getSetting('fillColor').rgba;

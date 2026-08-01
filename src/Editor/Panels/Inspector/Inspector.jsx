@@ -38,7 +38,7 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 
 import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
-import ActionButton from 'Editor/Util/ActionButton/ActionButton';
+// import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
@@ -953,30 +953,29 @@ class Inspector extends Component {
           <InspectorNumericSlider
             tooltip="Smoothing"
             icon="brushsmoothness"
+            label="Lead"
             val={this.props.getToolSetting('brushStabilizerWeight')}
             onChange={(val) => this.props.setToolSetting('brushStabilizerWeight', val)}
             inputProps={this.props.getToolSettingRestrictions('brushStabilizerWeight')}
+            onReset={() => this.props.setToolSetting('brushStabilizerWeight', 20)}
           />
           <InspectorNumericSlider
             tooltip="Resolution"
             icon="brushresolution"
+            label="Reso"
             val={this.props.getToolSetting('brushResolution')}
             onChange={(val) => this.props.setToolSetting('brushResolution', val)}
             inputProps={this.props.getToolSettingRestrictions('brushResolution')}
-          />
-          <InspectorNumericSlider
-            tooltip="Path Detail"
-            icon="brushpotracedetail"
-            val={this.props.getToolSetting('brushPotraceDetail')}
-            onChange={(val) => this.props.setToolSetting('brushPotraceDetail', val)}
-            inputProps={this.props.getToolSettingRestrictions('brushPotraceDetail')}
+            onReset={() => this.props.setToolSetting('brushResolution', 0.25)}
           />
           <InspectorNumericSlider
             tooltip="Spacing"
             icon="brushspacing"
+            label="Link"
             val={this.props.getToolSetting('brushSpacing')}
             onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
             inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
+            onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
           />
         </div>
         {/* Icon buttons — same as toolbar */}
