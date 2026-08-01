@@ -23,21 +23,16 @@
 Wick.Base = class {
     /**
      * Creates a Base object.
-     * @parm {string} identifier - (Optional) The identifier of the object. Defaults to null.
-     * @parm {string} name - (Optional) The name of the object. Defaults to null.
+     * @param {string} identifier - (Optional) The identifier of the object. Defaults to null.
+     * @param {string} name - (Optional) The name of the object. Defaults to null.
      */
     constructor(args) {
-        /* One instance of each Wick.Base class is created so we can access
-         * a list of all possible properties of each class. This is used
-         * to clean up custom variables after projects are stopped. */
-        if (!Wick._originals[this.classname]) {
-            Wick._originals[this.classname] = {};
-            Wick._originals[this.classname] = new Wick[this.classname];
-        }
-
         if (!args) args = {};
 
-        this._uuid = args.uuid || Wick.uuidv4();
+        if (Wick.uuidv4){
+            this._uuid = args.uuid || Wick.uuidv4();
+        }
+        else this._uuid = args.uuid || 'default uuid' + this.classname;
         this._identifier = args.identifier || null;
         this._name = args.name || null;
 

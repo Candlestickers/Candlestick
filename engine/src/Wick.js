@@ -50,11 +50,17 @@ console.log('Wick Engine version "' + Wick.version + '" is available.');
 
 window.Wick.loaded = (async () => {
     // Packages
-    const [uuidModule, quadtreeModule, esprima, invert, { tween }, { hull }, { arrayBuffer }, floodfillModule, { Howl, Howler },
+
+    // these need to be loaded first
+    const uuidModule = await import('uuid');
+    const { v4: uuidv4 } = uuidModule;
+    Wick.uuidv4 = uuidv4;
+    const quadtreeModule = await import('quadtree-lib');
+    const Quadtree = quadtreeModule || quadtreeModule.Quadtree;
+
+    const [esprima, invert, { tween }, { hull }, { arrayBuffer }, floodfillModule, { Howl, Howler },
         jszipModule, lerpModule, localforageModule, pressureModule, paperModule] =
         await Promise.all([
-            await import('uuid'),
-            await import('quadtree-lib'),
             import('esprima'),
             import('invert-color'),
             import('@tweenjs/tween.js'),
@@ -69,14 +75,11 @@ window.Wick.loaded = (async () => {
             import('paper')
         ]);
 
-    const { v4: uuidv4 } = uuidModule;
-    Wick.uuidv4 = uuidv4;
     const floodfill = floodfillModule.default;
     const JSZip = jszipModule.default;
     const lerp = lerpModule.default;
     const localforage = localforageModule.default;
     const Pressure = pressureModule.default;
-    const Quadtree = quadtreeModule || quadtreeModule.Quadtree;
 
     // Paper needs a bit of setup
     const paper = paperModule.default || paperModule;
@@ -103,20 +106,20 @@ window.Wick.loaded = (async () => {
         import('../lib/croquis.js')
     ]);
 
-    await import('./base/Base.js'),
-    await import('./base/Project.js'),
-    await import('./base/Tickable.js')
-    await import('./base/Clip.js')
-    await import('./base/asset/Asset.js')
-    await import('./base/asset/FileAsset.js')
-    await import('./base/asset/ClipAsset.js')
-    await import('./view/View.js')
-    await import('./view/View.Clip.js')
-    await import('./gui/GUIElement.js')
-    await import('./gui/Ghost.js')
-    await import('./gui/Button.js')
-    await import('./export/wick/WickFile.js')
-    await import('./tools/Tool.js')
+    await import('./base/Base.js');
+    await import('./base/Tickable.js');
+    await import('./base/Clip.js');
+    await import('./base/Project.js');
+    await import('./base/asset/Asset.js');
+    await import('./base/asset/FileAsset.js');
+    await import('./base/asset/ClipAsset.js');
+    await import('./view/View.js');
+    await import('./view/View.Clip.js');
+    await import('./gui/GUIElement.js');
+    await import('./gui/Ghost.js');
+    await import('./gui/Button.js');
+    await import('./export/wick/WickFile.js');
+    await import('./tools/Tool.js');
 
     const src = Promise.all([
         import('./Clipboard.js'),
@@ -248,5 +251,18 @@ window.Wick.loaded = (async () => {
     await gui;
     await exportThread;
     await tools;
+
+    /* One instance of each Wick.Base class is created so we can access
+    * a list of all possible properties of each class. This is used
+    * to clean up custom variables after projects are stopped.
+    */
+    for (const [name, value] of Object.entries(Wick)) {
+        if (typeof value === 'function' && typeof Wick.Base === 'function') {
+            if (value.prototype instanceof Wick.Base && !Wick._originals[name]) {
+                Wick._originals[name] = new value();
+            }
+        }
+    }
+
     return Wick;
 })();
