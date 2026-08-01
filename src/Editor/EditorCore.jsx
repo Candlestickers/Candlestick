@@ -18,7 +18,6 @@
  */
 
 import { Component } from 'react';
-import queryString from 'query-string';
 // import { readFile } from '@tauri-apps/plugin-fs'; // 
 import VideoExport from './export/VideoExport';
 import GIFExport from './export/GIFExport';
@@ -1343,7 +1342,7 @@ class EditorCore extends Component {
                     }
                 }
 
-                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH);
+                const pdfBlob = _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH, Math.round(pageW / 2), Math.round(pageH / 2));
 
                 const success = () => {
                     this.updateToast(toastID, { type: 'success', text: "Successfully saved .pdf file." });
@@ -1688,7 +1687,7 @@ class EditorCore extends Component {
        * the example parameter takes precedence.
        */
     tryToParseProjectURL = () => {
-        var urlParams = queryString.parse(window.location.search);
+        var urlParams = new URLSearchParams(window.location.search);
 
 
         let loadProjectFromURL = (url) => {
@@ -1708,14 +1707,14 @@ class EditorCore extends Component {
         }
 
 
-        if (urlParams.example) {
-            let url = window.location.origin + '/examples/' + urlParams.example;
+        if (urlParams.get('example')) {
+            let url = window.location.origin + '/examples/' + urlParams.get('example');
             console.log('attempting to load project', url);
             loadProjectFromURL(url);
             return;
         }
 
-        var projectLink = urlParams.project;
+        var projectLink = urlParams.get('project');
 
         // No URL param, skip the download
         if (!projectLink) {
@@ -1954,6 +1953,16 @@ class EditorCore extends Component {
      * Returns a lightweight fingerprint of the current system clipboard image (size + first 64 bytes).
      * Used to detect when a clipboard image has become "stale" after an in-editor copy.
      */
+
+    //  Returns the effective clipboard mode, defaulting to 'wick' on iOS/Safari -H.A.
+    _getClipboardMode = () => {
+        const stored = localStorage.getItem('CandleClipboardMode');
+        if(stored) return stored;
+        const defaultMode = 'wick';
+        localStorage.setItem('CandleClipboardMode', 'wick');
+        return defaultMode;
+    }
+
     _getClipboardImageFingerprint = async () => {
         if (!navigator.clipboard || !navigator.clipboard.read) return null;
         try {
@@ -1976,12 +1985,16 @@ class EditorCore extends Component {
     copySelectionToClipboard = () => {
         if (this.project.copySelectionToClipboard()) {
             this.projectDidChange({ actionName: "Copy Selection" });
-            // Mark whatever image is currently in the system clipboard as stale,
-            // so the next paste prefers the wick clipboard over it.
-            this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
-            });
+            // Mark whatever image is currently in the system clipboard as stale
+            // so the next paste prioritizes the wick clipboard over it
+            // skip entirely in wick-only mode obv -H.A.
+            if (this._getClipboardMode() !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    // Only update the stale marker when we successfully read the clipboard
+                    // If fp is null, clipboard.read() was either blocked or is empty -H.A.
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to copy.', 'warning');
         }
@@ -2004,11 +2017,12 @@ class EditorCore extends Component {
     cutSelectionToClipboard = () => {
         if (this.project.cutSelectionToClipboard()) {
             this.projectDidChange({ actionName: "Cut Selection" });
-            // Same stale-image marking as copy
-            this._getClipboardImageFingerprint().then(fp => {
-                if (fp) localStorage.setItem('wickEditorStaleClipboardFP', fp);
-                else localStorage.removeItem('wickEditorStaleClipboardFP');
-            });
+            // Same stale-image marking as copy — skip in wick-only mode. -H.A.
+            if (this._getClipboardMode() !== 'wick') {
+                this._getClipboardImageFingerprint().then(fp => {
+                    if (fp !== null) localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                });
+            }
         } else {
             this.toast('There is nothing to duplicate.', 'warning');
         }
@@ -2018,7 +2032,86 @@ class EditorCore extends Component {
      * Called by the hotkey handler for Cmd+V
      */
     pasteFromClipboard = () => {
-        // No-op — handled by the paste event listener registered in Editor.componentDidMount
+        // handled by the 'paste' event listener (see Editor componentDidMount -H.A.)
+    }
+
+    /**
+     * Pastes from the wick-internal clipboard used by UI buttons (which do NOT
+     * fire a browser paste event, so _handlePasteEvent never runs for them)
+     */
+    pasteWickClipboard = async () => {
+        // Button clicks are direct user gestures, so navigator.clipboard.read() is allowed
+        // even on iOS Safari. Try system clipboard image first before wick clipboard,
+        // unless the user has set wick-only mode in Editor Settings. -H.A.
+        if (this._getClipboardMode() !== 'wick' &&
+            await this._tryImportSystemClipboardImage()) return;
+
+        if (this.project.pasteClipboardContents())
+            this.projectDidChange({ actionName: "Paste from Clipboard" });
+        else
+            this.toast('There is nothing in the clipboard to paste.', 'warning');
+    }
+
+    /**
+     * Reads an image from the system clipboard via navigator.clipboard.read()
+     * Returns true if paste successful, false to fall back to wick clipboard
+     * MUST BE CALLED from direct "user-gesture" (click) so iOS Safari grants 
+     * clipboard access -H.A.
+     */
+    _tryImportSystemClipboardImage = async () => {
+        if (!navigator.clipboard || !navigator.clipboard.read) return false;
+        try {
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const imageType = item.types.find(t => t.startsWith('image/'));
+                if (!imageType) continue;
+                const blob = await item.getType(imageType);
+                const bytes = new Uint8Array(await blob.slice(0, 64).arrayBuffer());
+                const fp = blob.size + ':' + btoa(String.fromCharCode(...bytes));
+                const stale = localStorage.getItem('wickEditorStaleClipboardFP');
+                if (stale && fp === stale) return false; // stale — caller should use wick clipboard
+
+                const ext = (imageType.split('/')[1] || 'png');
+                const rawName = 'pasted-image.' + ext;
+                const assetNames = new Set(this.project.getAssets().map(a => a.filename));
+                let finalName = rawName;
+                let counter = 0;
+                while (assetNames.has(finalName)) { counter++; finalName = 'pasted-image-' + counter + '.' + ext; }
+                const finalFile = new File([blob], finalName, { type: imageType });
+
+                const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
+                this.importFileAsAsset(finalFile, (asset) => {
+                    if (!asset) {
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
+                    const paper = this.project.view.paper;
+                    const canvasPos = paper.project.view.element.getBoundingClientRect();
+                    const relX = loc.x - canvasPos.left;
+                    const relY = loc.y - canvasPos.top;
+                    const onCanvas = relX >= 0 && relX <= canvasPos.width && relY >= 0 && relY <= canvasPos.height;
+                    const dropPoint = paper.view.viewToProject(
+                        new window.paper.Point(
+                            onCanvas ? relX : canvasPos.width / 2,
+                            onCanvas ? relY : canvasPos.height / 2
+                        )
+                    );
+                    this.project.createImagePathFromAsset(asset, dropPoint.x, dropPoint.y, (path) => {
+                        if (path) {
+                            this.clearSelection();
+                            this.selectObject(path);
+                            this.project.copySelectionToClipboard();
+                        }
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        this.projectDidChange({ actionName: "Paste Image from Clipboard" });
+                    });
+                });
+                return true;
+            }
+        } catch (e) {}
+        return false;
     }
 
     /**
@@ -2026,6 +2119,15 @@ class EditorCore extends Component {
      * Uses e.clipboardData which gives us real File objects with filenames and etc. -H.A.
      */
     _handlePasteEvent = async (e) => {
+        // Wick-only mode: skip device clipboard entirely -H.A.
+        if (this._getClipboardMode() === 'wick') {
+            if (this.project.pasteClipboardContents())
+                this.projectDidChange({ actionName: "Paste from Clipboard" });
+            else
+                this.toast('There is nothing in the clipboard to paste.', 'warning');
+            return;
+        }
+
         const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
 
         // imageFile  — what gets imported (PNG JPEG etc. or TIFF→PNG converted)
@@ -2092,7 +2194,13 @@ class EditorCore extends Component {
 
                 const loc = { x: this._lastMouseX || 0, y: this._lastMouseY || 0 };
                 this.importFileAsAsset(finalFile, (asset) => {
-                    if (!asset) return;
+                    if (!asset) {
+                        // import failed — mark this image as stale so future pastes
+                        localStorage.setItem('wickEditorStaleClipboardFP', fp);
+                        if (this.project.pasteClipboardContents())
+                            this.projectDidChange({ actionName: "Paste from Clipboard" });
+                        return;
+                    }
                     const paper = this.project.view.paper;
                     const canvasPos = paper.project.view.element.getBoundingClientRect();
                     // If the mouse is outside the canvas, paste at canvas centeer instead -H.A. :P
@@ -2118,6 +2226,9 @@ class EditorCore extends Component {
                 return;
             }
         }
+
+        // iOS Safari doesn't populate clipboardData with images — try Clipboard API as fallback
+        if (!imageFile && await this._tryImportSystemClipboardImage()) return;
 
         // No image in paste event (or image was stale) — fall back to Wick clipboard
         if (this.project.pasteClipboardContents()) {
@@ -2453,7 +2564,12 @@ function _pdf_concatU8(chunks) {
     return out
 }
 
-function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
+function _pdf_buildFromJpegDataUrls(jpegDataUrls, imgW, imgH, pdfW, pdfH) {
+    // imgW/imgH = pixel dimensions of the JPEG (image quality)
+    // pdfW/pdfH = PDF page dimensions in points (physical size, 72pt = 1 inch)
+    if (!pdfW) pdfW = imgW;
+    if (!pdfH) pdfH = imgH;
+
     const objects = [] // each entry is Uint8Array of object BODY (no "obj/endobj")
     //this warning for unexpected use of comma operator is kinda annoying therefore added the eslint
 // eslint-disable-next-line
@@ -2472,9 +2588,9 @@ function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
 
         const imgName = `/Im${i}`
 
-        // Image XObject
+        // Image XObject — use full pixel dimensions for crispness
         const imgDict =
-            `<< /Type /XObject /Subtype /Image /Width ${pageW} /Height ${pageH} ` +
+            `<< /Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} ` +
             `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`
         const imgBody = _pdf_concatU8([
             _pdf_strToU8(imgDict),
@@ -2483,14 +2599,14 @@ function _pdf_buildFromJpegDataUrls(jpegDataUrls, pageW, pageH) {
         ])
         const imgId = addObj(imgBody)
 
-        // Contents stream (draw image full page)
-        const contents = `q ${pageW} 0 0 ${pageH} 0 0 cm ${imgName} Do Q\n`
+        // Contents stream — scale image to fill pdfW x pdfH points
+        const contents = `q ${pdfW} 0 0 ${pdfH} 0 0 cm ${imgName} Do Q\n`
         const contentsDict = `<< /Length ${contents.length} >>\nstream\n${contents}endstream\n`
         const contentsId = addObj(_pdf_strToU8(contentsDict))
 
-        // Page object
+        // Page object — physical page size in points
         const pageObj =
-            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
+            `<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pdfW} ${pdfH}] ` +
             `/Resources << /XObject << ${imgName} ${imgId} 0 R >> >> ` +
             `/Contents ${contentsId} 0 R >>\n`
         const pageId = addObj(_pdf_strToU8(pageObj))

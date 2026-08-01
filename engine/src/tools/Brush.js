@@ -395,11 +395,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
         }
 
-        // Update croquis element canvas size
-        let width = Math.round(this.paper.view._viewSize.width * this.canvasScaleFactor);
-        let height = Math.round(this.paper.view._viewSize.height * this.canvasScaleFactor);
-        if(this.croquis.getCanvasWidth() !== width || this.croquis.getCanvasHeight() !== height) {
-            this.croquis.setCanvasSize(width, height);
+        // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
+        var targetW = Math.round(this.paper.view.viewSize.width);
+        var targetH = Math.round(this.paper.view.viewSize.height);
+        if(this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
+            this.croquis.setCanvasSize(targetW, targetH);
         }
         this.croquisDOMElement.style.width = '100%';
         this.croquisDOMElement.style.height = '100%';
