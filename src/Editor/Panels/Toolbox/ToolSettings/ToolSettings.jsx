@@ -70,11 +70,6 @@ class ToolSettings extends Component {
     return (
       <div className='settings-input-container'>
         {this.renderBrushSize()}
-        {this.renderBrushSmoothing()}
-        {this.renderBrushResolution()}
-        {this.renderEnablePressure()}
-        {this.renderEnableRelativeBrushSize()}
-        {this.renderBrushMode()}
       </div>
     );
   }

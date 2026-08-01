@@ -36,6 +36,10 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
+import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
+import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
+import ActionButton from 'Editor/Util/ActionButton/ActionButton';
+
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
 
@@ -46,7 +50,8 @@ class Inspector extends Component {
     super(props);
 
     this.state = {
-      logs: []
+      logs: [],
+      showBrushModes: false,
     };
 
     this.handleConsoleLog = (log) => {
@@ -930,6 +935,93 @@ class Inspector extends Component {
     )
   }
 
+  toggleBrushModes = (state) => {
+    if (state === undefined) state = !this.state.showBrushModes;
+    this.setState({ showBrushModes: state });
+  }
+
+  renderBrushSettings = () => {
+    let brushModeIcon = 'brushmodenone';
+    let brushMode = this.props.getToolSetting('brushMode');
+    if (brushMode === 'inside') brushModeIcon = 'brushmodeinside';
+    else if (brushMode === 'outside') brushModeIcon = 'brushmodeoutside';
+
+    return (
+      <div className='settings-input-container'>
+        <ToolSettingsInput
+          name='Brush Smoothing'
+          icon='brushsmoothness'
+          type='numeric'
+          value={this.props.getToolSetting('brushStabilizerWeight')}
+          onChange={(val) => this.props.setToolSetting('brushStabilizerWeight', val)}
+          inputRestrictions={this.props.getToolSettingRestrictions('brushStabilizerWeight')}
+        />
+        <ToolSettingsInput
+          name='Brush Resolution'
+          icon='brushresolution'
+          type='numeric'
+          value={this.props.getToolSetting('brushResolution')}
+          onChange={(val) => this.props.setToolSetting('brushResolution', val)}
+          inputRestrictions={this.props.getToolSettingRestrictions('brushResolution')}
+        />
+        <ToolSettingsInput
+          name='Enable Pressure'
+          icon='brushpressure'
+          type='checkbox'
+          value={this.props.getToolSetting('pressureEnabled')}
+          onChange={() => this.props.setToolSetting('pressureEnabled', !this.props.getToolSetting('pressureEnabled'))}
+        />
+        <ToolSettingsInput
+          name='Relative Brush Size'
+          icon='brushrelativesize'
+          type='checkbox'
+          value={this.props.getToolSetting('relativeBrushSize')}
+          onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
+        />
+        <div id="inspector-brush-modes-popover-button">
+          <ToolSettingsInput
+            name='Brush Modes'
+            icon={brushModeIcon}
+            type='checkbox'
+            value={this.state.showBrushModes}
+            onChange={this.toggleBrushModes}
+          />
+          <PopupMenu
+            isOpen={this.state.showBrushModes}
+            toggle={this.toggleBrushModes}
+            target="inspector-brush-modes-popover-button"
+            className="more-canvas-actions-popover">
+            <div className="brush-modes-widget">
+              <div className='actions-container'>
+                <ToolSettingsInput
+                  name='None'
+                  icon='brushmodenone'
+                  type='checkbox'
+                  value={this.props.getToolSetting('brushMode') === 'none'}
+                  onChange={() => this.props.setToolSetting('brushMode', 'none')}
+                />
+                <ToolSettingsInput
+                  name='Inside'
+                  icon='brushmodeinside'
+                  type='checkbox'
+                  value={this.props.getToolSetting('brushMode') === 'inside'}
+                  onChange={() => this.props.setToolSetting('brushMode', 'inside')}
+                />
+                <ToolSettingsInput
+                  name='Outside'
+                  icon='brushmodeoutside'
+                  type='checkbox'
+                  value={this.props.getToolSetting('brushMode') === 'outside'}
+                  onChange={() => this.props.setToolSetting('brushMode', 'outside')}
+                />
+              </div>
+            </div>
+          </PopupMenu>
+        </div>
+      </div>
+    );
+  }
+
   /**
    * Renders a default selection view with no properties.
    */
@@ -1046,6 +1138,20 @@ class Inspector extends Component {
 
   render() {
     let selectionType = this.props.getSelectionType();
+
+    if (this.props.activeTool === 'brush') {
+      return (
+        <div className="docked-pane inspector" aria-label="Inspector Panel">
+          <div className="inspector-title-container">
+            <InspectorTitle type="" title="Brush" />
+          </div>
+          <div className="inspector-body">
+            {this.renderBrushSettings()}
+          </div>
+        </div>
+      );
+    }
+
     return(
       <div className="docked-pane inspector" aria-label="Inspector Panel">
         {this.renderTitle(selectionType)}
