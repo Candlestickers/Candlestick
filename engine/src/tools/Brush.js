@@ -395,11 +395,18 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
         }
 
-        // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
-        var targetW = Math.round(this.paper.view.viewSize.width);
-        var targetH = Math.round(this.paper.view.viewSize.height);
+        // Scale the croquis canvas up by canvasScaleFactor so that brush coordinates map to
+        // the correct CSS position on screen
+        // the CSS display stays at 100:100% so the larger canvas is downsampled visually muhehe -H.A.
+        var targetW = Math.round(this.paper.view.viewSize.width * this.canvasScaleFactor);
+        var targetH = Math.round(this.paper.view.viewSize.height * this.canvasScaleFactor);
         if(this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
             this.croquis.setCanvasSize(targetW, targetH);
+            // setCanvasSize may recreate canvas elements — re-apply CSS so display stays at viewport size
+            this.croquisDOMElement.querySelectorAll('canvas').forEach(canvasElement => {
+                canvasElement.style.width = '100%';
+                canvasElement.style.height = '100%';
+            });
         }
         this.croquisDOMElement.style.width = '100%';
         this.croquisDOMElement.style.height = '100%';
