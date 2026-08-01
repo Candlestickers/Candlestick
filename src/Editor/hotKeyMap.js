@@ -40,6 +40,7 @@ class HotKeyInterface extends Object {
     // Initialize all hotkeys settings
     this.createDefaultKeyMap();
     this.createDefaultHandlers();
+    this.addCapsLockSupport(this.keyMap)
 
     // Initialize custom hotkeys;
     this.customHotKeys = {};
@@ -759,6 +760,60 @@ class HotKeyInterface extends Object {
     if (!option.sequences || !option.sequences[0]) return '';
 
     return option.sequences[0];
+  }
+
+  /**
+   * Adds capslock support to the keyMap sequences.
+   * @param {Object} keymap - Keymap object
+   */
+  async addCapsLockSupport(keyMap) {
+    Object.values(keyMap).forEach(hotkey => {
+    let sequences = hotkey.sequences;
+
+    // Normalize to array
+    if (!Array.isArray(sequences)) {
+      sequences = [sequences];
+    }
+
+    const newSequences = [];
+
+    sequences.forEach(seq => {
+      // Handle object form {sequence, action}
+      if (typeof seq === 'object' && seq.sequence) {
+        const s = seq.sequence;
+        if (this.isNonAlphabetKey(s)) {
+          newSequences.push(seq);
+        } else {
+          newSequences.push(seq);
+          newSequences.push({ ...seq, sequence: s.toUpperCase() });
+        }
+      }
+
+      // Handle plain string form
+      else if (typeof seq === 'string') {
+        if (this.isNonAlphabetKey(seq)) {
+          newSequences.push(seq);
+        } else {
+          newSequences.push(seq);
+          newSequences.push(seq.toUpperCase());
+        }
+      }
+    });
+
+    // Mutate the original hotkey.sequences
+    hotkey.sequences = newSequences;
+  });
+  }
+
+  /**
+   * Helper to check if a sequence is a modifier/control key
+   */
+  isNonAlphabetKey(seq) {
+    const keys = [
+      'meta', 'backspace', 'del', 'alt', 'shift',
+      'up', 'down', 'left', 'right'
+    ];
+    return keys.some(m => seq.includes(m));
   }
 }
 
