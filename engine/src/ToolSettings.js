@@ -70,6 +70,20 @@ Wick.ToolSettings = class {
             max: 1,
             step: 0.01,
         }, {
+            type: "number",
+            name: 'brushPotraceDetail',
+            default: 1.0,
+            min: 0.1,
+            max: 3.0,
+            step: 0.1,
+        }, {
+            type: "number",
+            name: 'brushSpacing',
+            default: 0.2,
+            min: 0.05,
+            max: 1.0,
+            step: 0.05,
+        }, {
             type: "boolean",
             name: 'pressureEnabled',
             default: false,

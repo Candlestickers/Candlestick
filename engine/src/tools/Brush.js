@@ -34,9 +34,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this.name = 'brush';
 
-        this.BRUSH_POINT_SPACING = 0.2;
         this.BRUSH_STABILIZER_LEVEL = 3;
-        this.POTRACE_RESOLUTION = 1.0;
+        this.POTRACE_RESOLUTION = 1.0; // kept for reference; runtime value comes from getSetting('brushPotraceDetail')
 
         this.MIN_PRESSURE = 0.14;
 
@@ -200,7 +199,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
         // Update croquis params
         this.croquisBrush.setSize(this._getRealBrushSize() * this.canvasScaleFactor);
         this.croquisBrush.setColor(this.getSetting('fillColor').hex);
-        this.croquisBrush.setSpacing(this.BRUSH_POINT_SPACING);
+        this.croquisBrush.setSpacing(this.getSetting('brushSpacing'));
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
@@ -496,7 +495,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
               0, 0, croppedCanvas.width, croppedCanvas.height);
 
             // Run potrace and add the resulting path to the project
-            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.POTRACE_RESOLUTION/this.paper.view.zoom);
+            // brushPotraceDetail controls optTolerance (quality), NOT the toSVG scale.
+            // toSVG scale must always be 1/zoom to keep path coordinates correct.
+            var detail = this.getSetting('brushPotraceDetail');
+            var optTolerance = 0.2 / detail; // default 0.2 at detail=1.0; lower = more nodes
+            var svg = potrace.fromImage(croppedCanvas, { optTolerance: optTolerance }).toSVG(1/this.paper.view.zoom);
             var potracePath = this.paper.project.importSVG(svg);
 
             potracePath.fillColor = this.getSetting('fillColor').rgba;

@@ -964,6 +964,20 @@ class Inspector extends Component {
             onChange={(val) => this.props.setToolSetting('brushResolution', val)}
             inputProps={this.props.getToolSettingRestrictions('brushResolution')}
           />
+          <InspectorNumericSlider
+            tooltip="Path Detail"
+            icon="brushpotracedetail"
+            val={this.props.getToolSetting('brushPotraceDetail')}
+            onChange={(val) => this.props.setToolSetting('brushPotraceDetail', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushPotraceDetail')}
+          />
+          <InspectorNumericSlider
+            tooltip="Spacing"
+            icon="brushspacing"
+            val={this.props.getToolSetting('brushSpacing')}
+            onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
+          />
         </div>
         {/* Icon buttons — same as toolbar */}
         <div className='settings-input-container' style={{ marginTop: '8px' }}>

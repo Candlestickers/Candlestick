@@ -118,6 +118,8 @@ import iconGapFillAmount from "resources/inspector-icons/property-icons/gapfilla
 import iconFillSmoothing from "resources/inspector-icons/property-icons/fillsmoothing.png";
 import iconBrushSmoothness from "resources/inspector-icons/property-icons/brushsmoothness.svg";
 import iconBrushResolution from "resources/inspector-icons/property-icons/brushresolution.svg";
+import iconBrushPotraceDetail from "resources/inspector-icons/property-icons/brushpotracedetail.svg";
+import iconBrushSpacing from "resources/inspector-icons/property-icons/brushspacing.svg";
 import iconCornerRadius from "resources/inspector-icons/property-icons/cornerradius.svg";
 import iconEase from "resources/inspector-icons/property-icons/ease.svg";
 import iconFillColor from "resources/inspector-icons/property-icons/fillcolor.svg";
@@ -230,6 +232,8 @@ const icons = {
   "breakApart-dark": iconBreakApartDark,
   "brushsmoothness": iconBrushSmoothness,
   "brushresolution": iconBrushResolution,
+  "brushpotracedetail": iconBrushPotraceDetail,
+  "brushspacing": iconBrushSpacing,
   "brushpressure": iconBrushPressure,
   "brushrelativesize": iconRelativeBrushSize,
   "cornerradius": iconCornerRadius,
