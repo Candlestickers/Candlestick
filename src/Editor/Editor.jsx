@@ -290,17 +290,11 @@ class Editor extends EditorCore {
     componentDidMount = async () => {
         document.title = `Candlestick ${this.editorVersion}`;
 
-        if (window.Wick && window.Wick.loaded) {
-            try {
-                await window.Wick.loaded;
-            } catch (err){}
-        }
-
         // Read the global Wick namespace after the loader completes
         this.Wick = window.Wick;
 
         // Initialize "live" engine state
-        this.project = new this.Wick.Project();
+        this.project = new window.Wick.Project();
         this.attachErrorHandlers();
         this.paper = window.paper;
 
@@ -819,7 +813,7 @@ class Editor extends EditorCore {
 
         if (errors.length > 0) {
             let uuid = errors[0].uuid;
-            let obj = this.Wick.ObjectCache.getObjectByUUID(uuid);
+            let obj = window.Wick.ObjectCache.getObjectByUUID(uuid);
             this.setFocusObject(obj.parentClip);
             this.selectObject(obj)
             this.projectDidChange({ actionName: "Show Code Errors" });
@@ -858,7 +852,7 @@ class Editor extends EditorCore {
 
         // Save state to history if needed
         if (!options.skipHistory) {
-            this.project.history.pushState(this.Wick.History.StateType.ONLY_VISIBLE_OBJECTS, options.actionName);
+            this.project.history.pushState(window.Wick.History.StateType.ONLY_VISIBLE_OBJECTS, options.actionName);
         }
 
         // Render engine

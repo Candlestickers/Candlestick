@@ -17,6 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// uuid
+const { v4: uuidv4 } = require('uuid');
+// is-var-name
+const isVarName = require('is-var-name').default;
+const reserved = require('../../lib/reserved-words.js');
+
 /**
  * The base class for all objects within the Wick Engine.
  */
@@ -29,10 +35,7 @@ Wick.Base = class {
     constructor(args) {
         if (!args) args = {};
 
-        if (Wick.uuidv4){
-            this._uuid = args.uuid || Wick.uuidv4();
-        }
-        else this._uuid = args.uuid || 'default uuid' + this.classname;
+        this._uuid = args.uuid || uuidv4();
         this._identifier = args.identifier || null;
         this._name = args.name || null;
 

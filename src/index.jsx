@@ -32,7 +32,21 @@ initAndroidPlatform();
 // Creates file handlers in the window.
 initializeDefaultFileHandlers();
 
-await window.Wick?.loaded;
+let waitForWickAttempts = 0;
+function waitForWick() {
+  waitForWickAttempts++;
+  setTimeout(() => {}, 1000);
+  if(window.Wick) return;
+  else if(waitForWickAttempts < 10) waitForWick();
+  else console.error('Engine failed to load, please report this at forum.wickeditor.com')
+}
+
+if(!window.Wick){
+  setTimeout(() => {
+    console.log('Engine not loaded, retrying...')
+    waitForWick();
+  }, 1000);
+}
 
 ReactDOM.render(<Editor />, document.getElementById('root'));
 

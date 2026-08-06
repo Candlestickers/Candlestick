@@ -1808,7 +1808,7 @@ class EditorCore extends Component {
         if (this.state.previewPlaying) return;
         if (this.state.activeModalName !== null) return;
 
-        this.Wick.AutoSave.save(this.project, () => {
+        window.Wick.AutoSave.save(this.project, () => {
             callback();
         });
     }
@@ -1838,7 +1838,7 @@ class EditorCore extends Component {
      * True if an autosave exists.
      */
     doesAutoSavedProjectExist = (callback) => {
-        this.Wick?.AutoSave?.getAutosavesList(autosaveList => {
+        window.Wick.AutoSave.getAutosavesList(autosaveList => {
             callback(autosaveList.length > 0);
         });
     }
@@ -1847,7 +1847,7 @@ class EditorCore extends Component {
      * Clears any autosaved project from local storage.
      */
     clearAutoSavedProject = (callback) => {
-        this.Wick?.AutoSave?.delete(this.project.uuid, () => {
+        window.Wick.AutoSave.delete(this.project.uuid, () => {
             callback();
         });
     }
