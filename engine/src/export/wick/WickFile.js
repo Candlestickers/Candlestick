@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const platform = require('../../../lib/platform.js')
+const platform = require('platform')
 /**
  * Utility class for creating and parsing wick files.
  */

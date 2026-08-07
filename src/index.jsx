@@ -32,6 +32,8 @@ initAndroidPlatform();
 // Creates file handlers in the window.
 initializeDefaultFileHandlers();
 
+window.CandlestickVersion = '1.0.3';
+
 let waitForWickAttempts = 0;
 function waitForWick() {
   waitForWickAttempts++;

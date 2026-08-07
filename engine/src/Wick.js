@@ -33,27 +33,13 @@ globalThis.Wick.loaded = new Promise(resolve => { _resolveLoaded = resolve; });
 // expose resolver so we can resolve later when bootstrap completes
 globalThis.Wick._resolveLoaded = _resolveLoaded;
 
-// Ensure that the Wick namespace is accessible in environments where globals are finicky (react, webpack, etc)
+// Ensure that the Wick namespace is accessible in environments where globals are finicky (react, vite, etc)
 const Wick = globalThis.Wick;
 window.Wick = Wick;
 
 /* Import modules */
 
 // Packages
-
-// Paper needs a bit of setup
-/*import paper from 'paper';
-window.paper = paper;
-const paperReady = new Promise(resolve => {
-    document.addEventListener('DOMContentLoaded', () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        document.body.appendChild(canvas);
-        paper.setup(canvas);
-        resolve();
-    });
-});*/
 import Quadtree from 'quadtree-lib';
 import { Howl, Howler } from 'howler';
 import JSZip from 'jszip';
@@ -66,20 +52,6 @@ import 'floodfill';
 import 'base64-arraybuffer';
 import 'esprima';
 import 'invert-color';
-// jQuery needs some setup
-/*import jQuery from 'jquery';
-export const $ = jQuery;
-export { jQuery };
-window.$ = jQuery;
-import 'pressure/dist/jquery.pressure.min.js';*/
-
-/*const origGetBounds = paper.View.prototype.getBounds;
-    paper.View.prototype.getBounds = function (...args) {
-        if (!this._matrix || !this._viewSize) {
-            return new paper.Rectangle(new paper.Point(0, 0), new paper.Size(0, 0));
-        }
-        return origGetBounds.apply(this, args);
-    };*/
 
 // Non-npm libraries
 import Timestamp from '../lib/timestamp.js';
