@@ -34,22 +34,6 @@ initializeDefaultFileHandlers();
 
 window.CandlestickVersion = '1.0.3';
 
-let waitForWickAttempts = 0;
-function waitForWick() {
-  waitForWickAttempts++;
-  setTimeout(() => {}, 1000);
-  if(window.Wick) return;
-  else if(waitForWickAttempts < 10) waitForWick();
-  else console.error('Engine failed to load, please report this at forum.wickeditor.com')
-}
-
-if(!window.Wick){
-  setTimeout(() => {
-    console.log('Engine not loaded, retrying...')
-    waitForWick();
-  }, 1000);
-}
-
 ReactDOM.render(<Editor />, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change

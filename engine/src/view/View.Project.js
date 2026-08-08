@@ -269,7 +269,6 @@ Wick.View.Project = class extends Wick.View {
      */
     scrollToZoom (event) {
         if (!this.model.isPublished) {
-            console.log('scrollToZoom: ', event);
             const factor = event.deltaFactor || 1;
             const d = (event.deltaY || 0) * factor * 0.001;
 
