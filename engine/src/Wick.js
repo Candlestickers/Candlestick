@@ -17,26 +17,6 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * This object creates a Wick namespace for wick-engine functionality and utilities.
- */
-
-globalThis.Wick = {
-    version: window.CandlestickVersion || "dev",
-    resourcepath: '../dist/',
-    _originals: {},
-    gesture: { active: false, type: null }
-};
-
-let _resolveLoaded;
-globalThis.Wick.loaded = new Promise(resolve => { _resolveLoaded = resolve; });
-// expose resolver so we can resolve later when bootstrap completes
-globalThis.Wick._resolveLoaded = _resolveLoaded;
-
-// Ensure that the Wick namespace is accessible in environments where globals are finicky (react, vite, etc)
-const Wick = globalThis.Wick;
-window.Wick = Wick;
-
 /* Import modules */
 
 // Packages
@@ -49,7 +29,7 @@ import hull from 'hull';
 import localforage from 'localforage';
 import platform from 'platform';
 import 'floodfill';
-import 'base64-arraybuffer';
+import * as Base64ArrayBuffer from 'base64-arraybuffer';
 import 'esprima';
 import 'invert-color';
 
@@ -120,6 +100,8 @@ import './view/paper-ext/Paper.OrderingUtils.js';
 import './view/paper-ext/Paper.SelectionWidget.js';
 import './view/paper-ext/Paper.SelectionBox.js';
 import './view/paper-ext/Path.potrace.js';
+import './view/paper-ext/OffsetUtils.js';
+import './view/paper-ext/Path.flatten.js';
 import './view/paper-ext/TextItem.edit.js';
 import './view/paper-ext/View.pressure.js';
 import './view/paper-ext/View.gestures.js';
@@ -185,25 +167,3 @@ import './tools/Pan.js';
 import './tools/PathCursor.js';
 import './tools/Pencil.js';
 import './tools/Text.js';
-
-/* One instance of each Wick.Base class is created so we can access
-* a list of all possible properties of each class. This is used
-* to clean up custom variables after projects are stopped.
-*/
-for (const [name, value] of Object.entries(Wick)) {
-    if (typeof value === 'function' && typeof Wick.Base === 'function') {
-        if (value.prototype instanceof Wick.Base && !Wick._originals[name]) {
-            Wick._originals[name] = new value();
-        }
-    }
-}
-
-if (globalThis.Wick && globalThis.Wick._resolveLoaded) {
-  try { globalThis.Wick._resolveLoaded(globalThis.Wick); } catch (e) {}
-  delete globalThis.Wick._resolveLoaded;
-} else {
-  globalThis.Wick.loaded = Promise.resolve(globalThis.Wick);
-}
-
-export { Wick };
-export default Wick;

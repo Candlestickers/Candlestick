@@ -26,7 +26,13 @@ Wick.View = class {
             this._paperScope = new paper.PaperScope();
 
             // Create dummy paper.js instance so we can access paper classes
+            // The canvas must be attached to the document, otherwise paper.js
+            // cannot read its layout info (e.g. clientLeft) to compute bounds.
+            // Attach to <html> (documentElement) rather than <body> since this
+            // can run before the document body has been parsed.
             var canvas = window.document.createElement('canvas');
+            canvas.style.display = 'none';
+            window.document.documentElement.appendChild(canvas);
             this._paperScope.setup(canvas);
         }
 

@@ -16,46 +16,61 @@ export default defineConfig({
   output: {
     dir: path.resolve(root, 'dist'),
     format: 'iife',
-    name: 'Wick',
-    intro: "globalThis.Wick = globalThis.Wick || {}; var exports = globalThis.Wick;",
-    outro: `(function mergeModuleIntoRuntime() {
-    // The IIFE result is assigned to the global var named 'Wick' (because name:'Wick').
-    var mod = typeof Wick !== 'undefined' ? Wick : null;
-    if (!mod && typeof exports !== 'undefined') mod = exports;
-    if (!mod) return;
+    name: 'WickModule',
+    intro: `globalThis.Wick = {
+      version: window.CandlestickVersion || "dev",
+      resourcepath: '../dist/',
+      _originals: {},
+      gesture: { active: false, type: null }};
+    /**
+     * This object creates a Wick namespace for wick-engine functionality and utilities.
+     */
+    let _resolveLoaded;
+    globalThis.Wick.loaded = new Promise(resolve => { _resolveLoaded = resolve; });
+    // expose resolver so we can resolve later when bootstrap completes
+    globalThis.Wick._resolveLoaded = _resolveLoaded;
 
-    // If the module used a default wrapper, prefer the inner default object if it looks like the real export container
-    if (mod && mod.default && typeof mod.default === 'object' && Object.getOwnPropertyNames(mod.default).length > 0) {
-      // If default only contains __esModule, ignore it; otherwise use it as source
-      var defKeys = Object.getOwnPropertyNames(mod.default).filter(k => k !== '__esModule');
-      if (defKeys.length > 0) mod = mod.default;
-    }
-
-    // If some CJS wrappers put the real exports on module.exports, try to find it
-    if (mod && mod.module && mod.module.exports && typeof mod.module.exports === 'object') {
-      var candidate = mod.module.exports;
-      if (Object.getOwnPropertyNames(candidate).length > 0) mod = candidate;
-    }
-
-    // Copy all own property descriptors (names + symbols) preserving getters/setters and attributes
-    var src = mod;
-    var dst = globalThis.Wick = globalThis.Wick || {};
-    var names = Object.getOwnPropertyNames(src);
-    var syms = Object.getOwnPropertySymbols ? Object.getOwnPropertySymbols(src) : [];
-    var keys = names.concat(syms);
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i];
-      if (k === '__esModule') continue;
-      try {
-        Object.defineProperty(dst, k, Object.getOwnPropertyDescriptor(src, k));
-      } catch (e) {
-        try { dst[k] = src[k]; } catch (e2) {}
+    // Ensure that the Wick namespace is accessible in environments where globals are finicky (react, vite, etc)
+    const Wick = globalThis.Wick;
+    window.Wick = Wick;`,
+    outro: `if (Wick.Wick && typeof Wick.Wick === 'object') {
+      Object.assign(Wick, Wick.Wick);
+    };
+    /* One instance of each Wick.Base class is created so we can access
+    * a list of all possible properties of each class. This is used
+    * to clean up custom variables after projects are stopped.
+    *
+    * Instantiating these classes creates paper.js views, which need a
+    * real document.body to compute canvas bounds against. This script
+    * runs synchronously while the document is still being parsed (often
+    * before <body> exists), so this step is deferred until the DOM is
+    * actually ready instead of running immediately.
+    */
+    function _collectWickOriginals() {
+      for (const [name, value] of Object.entries(Wick)) {
+        if (typeof value === 'function' && Wick.Base) {
+          const proto = value.prototype;
+          if (proto && proto instanceof Wick.Base) {
+            Wick._originals[name] = new value();
+          }
+        }
       }
+
+      if (globalThis.Wick && globalThis.Wick._resolveLoaded) {
+        try { globalThis.Wick._resolveLoaded(globalThis.Wick); } catch (e) {}
+        delete globalThis.Wick._resolveLoaded;
+      } else globalThis.Wick.loaded = Promise.resolve(globalThis.Wick);
     }
-    })();`,
+
+    if (document.body) {
+      _collectWickOriginals();
+    } else {
+      document.addEventListener('DOMContentLoaded', _collectWickOriginals, { once: true });
+    }`,
     entryFileNames: 'wickengine.js',
     sourcemap: true,
-    exports: 'named',
+    exports: 'auto',
+    esModule: false,
     codeSplitting: false,
   }
 });
