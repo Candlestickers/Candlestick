@@ -15,7 +15,7 @@
 /engine/dist/
 
 # package-lock
-package-lock.json
+package-lock.json*
 
 # misc
 .DS_Store
