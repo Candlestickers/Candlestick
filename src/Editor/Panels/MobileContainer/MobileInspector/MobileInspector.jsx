@@ -234,22 +234,8 @@ class MobileInspector extends Component {
             onChangeIntermediate={(col) => this.setSelectionAttributeIntermediate('strokeColor', col)}
             enableGradient={true}
             selectionProps={{
-              setGradientActive: () => {
-                this.props.project.selection.useGradientGUI = 'fill';
-                this.props.project.selection.selectedStopIndex = 0;
-                this.props.project.view.render();
-              },
-              setGradientInactive: () => {
-                this.props.project.selection.useGradientGUI = false;
-                this.props.project.selection.selectedStopIndex = 0;
-                this.props.project.view.render();
-              },
-              getSelectedStopIndex: () => this.props.project.selection.selectedStopIndex,
-              setSelectedStopIndex: (index) => {
-                this.props.project.selection.selectedStopIndex = index;
-              },
-              selectedObjects: this.props.project.selection._selectedObjectsUUIDs.toSorted(),
-              selectedObjectsBounds: this.props.project.selection.view._getSelectedObjectsBounds(),
+              getSelection: () => this.props.project.selection,
+              renderSelection: () => this.props.project.view.render(),
               targetCanvas: this.props.project.view._svgCanvas
             }}
             id={"mobile-inspector-selection-stroke-color"}
@@ -268,22 +254,8 @@ class MobileInspector extends Component {
             onChangeIntermediate={(col) => this.setSelectionAttributeIntermediate('fillColor', col)}
             enableGradient={true}
             selectionProps={{
-              setGradientActive: () => {
-                this.props.project.selection.useGradientGUI = 'fill';
-                this.props.project.selection.selectedStopIndex = 0;
-                this.props.project.view.render();
-              },
-              setGradientInactive: () => {
-                this.props.project.selection.useGradientGUI = false;
-                this.props.project.selection.selectedStopIndex = 0;
-                this.props.project.view.render();
-              },
-              getSelectedStopIndex: () => this.props.project.selection.selectedStopIndex,
-              setSelectedStopIndex: (index) => {
-                this.props.project.selection.selectedStopIndex = index;
-              },
-              selectedObjects: this.props.project.selection._selectedObjectsUUIDs.toSorted(),
-              selectedObjectsBounds: this.props.project.selection.view._getSelectedObjectsBounds(),
+              getSelection: () => this.props.project.selection,
+              renderSelection: () => this.props.project.view.render(),
               targetCanvas: this.props.project.view._svgCanvas
             }}
             id={"mobile-inspector-selection-fill-color"}

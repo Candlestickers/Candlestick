@@ -1,4 +1,4 @@
-export default {
+const sounds = {
   "name": "Sounds",
   "assets": [
     {
@@ -219,3 +219,4 @@ export default {
     }
   ]
 }
+export default sounds
