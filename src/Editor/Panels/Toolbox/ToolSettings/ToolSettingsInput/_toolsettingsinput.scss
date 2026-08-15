@@ -17,8 +17,8 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@import 'Editor/_wickbrand.scss';
-@import '../toolsettings.scss'; 
+@use 'Editor/_wickbrand.scss' as *;
+@use '../toolsettings.scss' as *; 
 
 $settings-input-size: 40px;
 
