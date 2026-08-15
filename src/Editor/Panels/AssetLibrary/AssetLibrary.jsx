@@ -21,6 +21,7 @@ import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Asset from './Asset/Asset';
+import Folder from './Asset/Folder';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import WickInput from 'Editor/Util/WickInput/WickInput';
 import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
@@ -33,7 +34,28 @@ class AssetLibrary extends Component {
 
     this.state = {
       filterText: '',
+      folders: [], // [{ id, name, parentFolderId }]
+      assetFolders: {}, // { [assetUuid]: folderId }
+      currentFolderId: null, // null = library root
+      selectedFolderId: null,
     }
+  }
+
+  componentDidUpdate(prevProps) {
+    // If new assets appeared while a folder was open (via upload, builtin
+    // library add, GIF import, etc.), file them into that folder instead of
+    // leaving them at the root.
+    if (this.state.currentFolderId === null) return;
+
+    let prevUuids = new Set(prevProps.assets.map(asset => asset.uuid));
+    let newAssets = this.props.assets.filter(asset => !prevUuids.has(asset.uuid));
+    if (newAssets.length === 0) return;
+
+    this.setState(prevState => {
+      let assetFolders = { ...prevState.assetFolders };
+      newAssets.forEach(asset => { assetFolders[asset.uuid] = prevState.currentFolderId; });
+      return { assetFolders };
+    });
   }
 
   openFileDialog = (uuid) => {
@@ -64,6 +86,7 @@ class AssetLibrary extends Component {
        asset={assetObject}
        isSelected={this.props.isObjectSelected(assetObject)}
        onClick={() => {
+         this.setState({ selectedFolderId: null });
          this.props.clearSelection();
          this.props.selectObjects([assetObject]);
       }}
@@ -77,6 +100,139 @@ class AssetLibrary extends Component {
         addSoundToActiveFrame={this.props.addSoundToActiveFrame}
       />
     )
+  }
+
+  makeFolderNode = (folder) => {
+    return (
+      <Folder
+       key={folder.id}
+       folder={folder}
+       isSelected={this.state.selectedFolderId === folder.id}
+       onClick={() => this.selectFolder(folder.id)}
+       onOpen={() => this.openFolder(folder.id)}
+       onDelete={() => this.deleteFolder(folder.id)}
+       onDropAsset={(assetUuid) => this.assignAssetToFolder(assetUuid, folder.id)}
+       onDropFolder={(draggedFolderId) => this.moveFolderToFolder(draggedFolderId, folder.id)}
+      />
+    )
+  }
+
+  /**
+   * Creates a new folder inside the folder currently being viewed, with a
+   * default name that's unique among its siblings.
+   */
+  createFolder = () => {
+    let baseName = 'New Folder';
+    let parentFolderId = this.state.currentFolderId;
+    let siblingNames = new Set(
+      this.state.folders.filter(folder => folder.parentFolderId === parentFolderId).map(folder => folder.name)
+    );
+    let name = baseName;
+    let counter = 2;
+    while (siblingNames.has(name)) {
+      name = baseName + ' ' + counter;
+      counter++;
+    }
+
+    let newFolder = { id: 'folder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), name, parentFolderId };
+    this.setState(prevState => ({ folders: [...prevState.folders, newFolder] }));
+  }
+
+  /**
+   * Deletes a folder along with all of its subfolders. Assets that were
+   * inside any of the deleted folders are moved back to the library root.
+   * @param {string} folderId
+   */
+  deleteFolder = (folderId) => {
+    this.setState(prevState => {
+      // Collect the folder and all of its descendant folders.
+      let toDelete = new Set([folderId]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        prevState.folders.forEach(folder => {
+          if (toDelete.has(folder.parentFolderId) && !toDelete.has(folder.id)) {
+            toDelete.add(folder.id);
+            changed = true;
+          }
+        });
+      }
+
+      let assetFolders = { ...prevState.assetFolders };
+      Object.keys(assetFolders).forEach(assetUuid => {
+        if (toDelete.has(assetFolders[assetUuid])) delete assetFolders[assetUuid];
+      });
+
+      let deletedFolder = prevState.folders.find(folder => folder.id === folderId);
+      let fallbackFolderId = deletedFolder ? deletedFolder.parentFolderId : null;
+
+      return {
+        folders: prevState.folders.filter(folder => !toDelete.has(folder.id)),
+        assetFolders,
+        currentFolderId: toDelete.has(prevState.currentFolderId) ? fallbackFolderId : prevState.currentFolderId,
+        selectedFolderId: toDelete.has(prevState.selectedFolderId) ? null : prevState.selectedFolderId,
+      };
+    });
+  }
+
+  /**
+   * Navigates into a folder. Pass null to navigate to the library root.
+   * @param {string} folderId
+   */
+  openFolder = (folderId) => {
+    this.setState({ currentFolderId: folderId, selectedFolderId: null });
+  }
+
+  /**
+   * Moves a folder to be a child of another folder (or to the root if
+   * targetFolderId is null). No-ops if the move would create a cycle
+   * (e.g. dropping a folder into its own descendant).
+   * @param {string} folderId
+   * @param {string} targetFolderId
+   */
+  moveFolderToFolder = (folderId, targetFolderId) => {
+    if (folderId === targetFolderId) return;
+
+    this.setState(prevState => {
+      let isDescendantOf = (candidateId, ancestorId) => {
+        let current = prevState.folders.find(folder => folder.id === candidateId);
+        while (current) {
+          if (current.parentFolderId === ancestorId) return true;
+          current = prevState.folders.find(folder => folder.id === current.parentFolderId);
+        }
+        return false;
+      };
+
+      if (targetFolderId !== null && isDescendantOf(targetFolderId, folderId)) {
+        return null;
+      }
+
+      return {
+        folders: prevState.folders.map(folder =>
+          folder.id === folderId ? { ...folder, parentFolderId: targetFolderId } : folder
+        ),
+      };
+    });
+  }
+
+  /**
+   * Selects a folder (mirrors asset selection so its buttons appear).
+   * @param {string} folderId
+   */
+  selectFolder = (folderId) => {
+    this.props.clearSelection();
+    this.setState({ selectedFolderId: folderId });
+  }
+
+  /**
+   * Assigns an asset to a folder (or back to root if folderId is null).
+   * @param {string} assetUuid
+   * @param {string} folderId
+   */
+  assignAssetToFolder = (assetUuid, folderId) => {
+    this.setState(prevState => ({
+      assetFolders: { ...prevState.assetFolders, [assetUuid]: folderId }
+    }));
   }
 
   /**
@@ -97,6 +253,14 @@ class AssetLibrary extends Component {
       <div className="asset-library-title-container">
         <div className="asset-library-title-text">
           Asset Library
+        </div>
+        <div className="btn-asset-newfolder">
+          <ActionButton
+            color="upload"
+            action={this.createFolder}
+            id="button-asset-newfolder"
+            icon="add"
+            tooltip="Make New Folder" />
         </div>
         <div className="btn-asset-upload">
           <ActionButton
@@ -122,6 +286,15 @@ class AssetLibrary extends Component {
   render() {
     let filteredAssets = this.filterArray(this.props.assets);
     let sortedFilteredAssets = this.sortAssets(filteredAssets);
+
+    let { currentFolderId, folders, assetFolders } = this.state;
+
+    let visibleFolders = folders.filter(folder => folder.parentFolderId === currentFolderId);
+    let visibleAssets = sortedFilteredAssets.filter(asset => {
+      return (assetFolders[asset.uuid] || null) === currentFolderId;
+    });
+    let currentFolder = folders.find(folder => folder.id === currentFolderId);
+
     return(
       <div className="docked-pane asset-library" aria-label="Asset Library">
         {this.renderTitle()}
@@ -138,8 +311,19 @@ class AssetLibrary extends Component {
               onChange={this.updateFilter}
               value={this.state.filterText}/>
           </div>
+          {currentFolderId !== null &&
+            <div className="asset-library-folder-header">
+              <button
+                className="asset-library-back-button"
+                onClick={() => this.openFolder(currentFolder ? currentFolder.parentFolderId : null)}>
+                <ToolIcon className="asset-library-back-icon" name="codeBack" />
+              </button>
+              <span className="asset-library-folder-header-title">{currentFolder ? currentFolder.name : ''}</span>
+            </div>
+          }
           <div className="asset-library-asset-container">
-            {sortedFilteredAssets.map(this.makeNode)}
+            {visibleFolders.map(this.makeFolderNode)}
+            {visibleAssets.map(this.makeNode)}
           </div>
         </div>
       </div>

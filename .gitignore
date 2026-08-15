@@ -26,6 +26,7 @@ package-lock.json*
 .env
 CLAUDE.md
 AGENTS.md
+/.claude
 
 npm-debug.log*
 yarn-debug.log*

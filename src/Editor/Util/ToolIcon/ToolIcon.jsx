@@ -102,6 +102,7 @@ import iconGearWhite from 'resources/tool-icons/settings-white.png';
 import iconGroup from 'resources/tool-icons/group.svg';
 import iconSearch from 'resources/tool-icons/search.svg';
 import iconClip from 'resources/asset-library-icons/clip.svg';
+import iconFolder from 'resources/asset-library-icons/folder.svg';
 
 // Objects
 import iconPathObject from 'resources/object-icons/path.svg';
@@ -222,6 +223,7 @@ const icons = {
   "image": iconImage,
   "imageAsset": iconImage,
   "clip": iconClip,
+  "folder": iconFolder,
   "leaveUp": iconLeaveUp,
   "upload": iconUpload,
   "action": iconAction,
