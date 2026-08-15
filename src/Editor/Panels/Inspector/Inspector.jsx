@@ -297,25 +297,17 @@ class Inspector extends Component {
       <div>
         <InspectorColorNumericInput
           tooltip1="Color"
-          tooltip2="Opacity"
-
           val1={this.getSelectionAttribute('layerColor')}
           onChange1={(col) => this.setSelectionAttribute('layerColor', col)}
-          onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('layerColor', col)}
+          onChangeIntermediate1={(col) => {console.log('intermediiate'); this.setSelectionAttributeIntermediate('layerColor', col)}}
+          colorPickerType={this.props.colorPickerType}
+          changeColorPickerType={this.props.changeColorPickerType}
           enableGradient={false}
           selectionProps={{
             getSelection: () => this.props.project.selection,
             renderSelection: () => this.props.project.root.timeline.view.render(),
           }}
           id={"inspector-selection-layer-color"}
-
-          val2={this.getSelectionAttribute('layerColorOpacity')}
-          onChange2={(val) => this.setSelectionAttribute('layerColorOpacity', val)}
-          divider={false}
-          colorPickerType={this.props.colorPickerType}
-          changeColorPickerType={this.props.changeColorPickerType}
-          updateLastColors={this.props.updateLastColors}
-          lastColorsUsed={this.props.lastColorsUsed}
         />
       </div>
     )

@@ -317,12 +317,12 @@ class Editor extends EditorCore {
         // Set color picker state.
         localForage.getItem(this.colorPickerTypeKey).then(
             (colorPickerType) => {
-                if (!colorPickerType) colorPickerType = "swatches";
+                if (!colorPickerType) {console.log('no type');colorPickerType = "swatches";}
                 this.setState({
                     colorPickerType: colorPickerType,
                 });
             }
-        );
+        )
 
 
 
