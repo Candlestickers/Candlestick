@@ -122,6 +122,11 @@ Wick.ToolSettings = class {
             name: 'brushMode',
             default: 'none',
             options: ['none', 'behind', 'inside']
+        }, {
+            type: "choice",
+            name: 'brushShape',
+            default: 'circle',
+            options: ['circle','square','rect','chisel','diamond','triangle','star','sparkle','leaf','rough','scatter','cross','crescent','hexagon','softcircle'],
         }];
     }
 

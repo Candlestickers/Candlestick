@@ -200,6 +200,9 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this.croquisBrush.setSize(this._getRealBrushSize() * this.canvasScaleFactor);
         this.croquisBrush.setColor(this.getSetting('fillColor').hex);
         this.croquisBrush.setSpacing(this.getSetting('brushSpacing'));
+        var brushShape = this.getSetting('brushShape');
+        this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
+        this.croquisBrush.setRotateToDirection(brushShape === 'chisel' || brushShape === 'leaf' || brushShape === 'rect');
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
@@ -574,5 +577,164 @@ Wick.Tools.Brush = class extends Wick.Tool {
         result = result[booleanOpName](mask);
         result.remove();
         return result;
+    }
+
+    /**
+     * Build a canvas stamp for a given brush shape name.
+     * Returns null for 'circle' so Croquis uses its built-in drawCircle.
+     */
+    _buildBrushTipCanvas (shape) {
+        if (!shape || shape === 'circle') return null;
+
+        var S = 64;
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas.height = S;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        var cx = S / 2, cy = S / 2, r = S / 2 - 1;
+        var PI2 = Math.PI * 2;
+
+        switch (shape) {
+            case 'softcircle': {
+                var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                g.addColorStop(0,   'rgba(255,255,255,1.0)');
+                g.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+                g.addColorStop(0.75,'rgba(255,255,255,0.35)');
+                g.addColorStop(1,   'rgba(255,255,255,0.0)');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, S, S);
+                break;
+            }
+            case 'square':
+                ctx.fillRect(0, 0, S, S);
+                break;
+            case 'rect':
+                ctx.fillRect(0, Math.round(S * 0.3), S, Math.round(S * 0.4));
+                break;
+            case 'chisel': {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(Math.PI / 4);
+                ctx.scale(1, 0.15);
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, PI2);
+                ctx.fill();
+                ctx.restore();
+                break;
+            }
+            case 'diamond': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(S, cy);
+                ctx.lineTo(cx, S);
+                ctx.lineTo(0, cy);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'triangle': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(S, S);
+                ctx.lineTo(0, S);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'star': {
+                var outerR = r, innerR = r * 0.4;
+                ctx.beginPath();
+                for (var i = 0; i < 10; i++) {
+                    var a = (i * Math.PI / 5) - Math.PI / 2;
+                    var rad = i % 2 === 0 ? outerR : innerR;
+                    var px = cx + Math.cos(a) * rad;
+                    var py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'sparkle': {
+                var outerR2 = r, innerR2 = r * 0.12;
+                ctx.beginPath();
+                for (var i2 = 0; i2 < 8; i2++) {
+                    var a2 = (i2 * Math.PI / 4) - Math.PI / 2;
+                    var rad2 = i2 % 2 === 0 ? outerR2 : innerR2;
+                    var px2 = cx + Math.cos(a2) * rad2;
+                    var py2 = cy + Math.sin(a2) * rad2;
+                    i2 === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'leaf': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.quadraticCurveTo(S, cy, cx, S);
+                ctx.quadraticCurveTo(0, cy, cx, 0);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'rough': {
+                var pts = [
+                    [0.50,0.02],[0.71,0.06],[0.89,0.20],[0.97,0.43],
+                    [0.95,0.65],[0.80,0.84],[0.60,0.97],[0.38,0.95],
+                    [0.17,0.83],[0.04,0.61],[0.06,0.36],[0.20,0.16]
+                ];
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0]*S, pts[0][1]*S);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0]*S, pts[j][1]*S);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'scatter': {
+                var dots = [
+                    [0.50,0.50,0.16],[0.25,0.28,0.12],[0.74,0.24,0.10],
+                    [0.22,0.72,0.12],[0.74,0.73,0.10],[0.76,0.50,0.08]
+                ];
+                dots.forEach(function(d) {
+                    ctx.beginPath();
+                    ctx.arc(d[0]*S, d[1]*S, d[2]*S, 0, PI2);
+                    ctx.fill();
+                });
+                break;
+            }
+            case 'cross': {
+                var t = S * 0.28;
+                ctx.fillRect(cx - t / 2, 0, t, S);
+                ctx.fillRect(0, cy - t / 2, S, t);
+                break;
+            }
+            case 'crescent': {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, PI2);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+                ctx.fill();
+                break;
+            }
+            case 'hexagon': {
+                ctx.beginPath();
+                for (var k = 0; k < 6; k++) {
+                    var ha = (k / 6) * PI2 - Math.PI / 2;
+                    var hx = cx + Math.cos(ha) * r;
+                    var hy = cy + Math.sin(ha) * r;
+                    k === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            default:
+                return null;
+        }
+
+        return canvas;
     }
 }
