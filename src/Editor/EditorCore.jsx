@@ -1168,7 +1168,7 @@ class EditorCore extends Component {
      * @param {Function} onProgress - Progress callback (msg, percent).
      * @returns {Promise<{ gifAsset, audioBlob, fps, projectName, width, height }>}
      */
-    importMP4AsAsset = ({ file, fps = 12, onProgress = () => {} }) => {
+    importMP4AsAsset = ({ file, fps = 12, onProgress = () => {}, bakeAudio = true }) => {
         return new Promise(async (resolve, reject) => {
             try {
                 const projectName = file.name.replace(/\.[^.]+$/, '');
@@ -1190,8 +1190,48 @@ class EditorCore extends Component {
                     gifAsset.name = projectName;
                     gifAsset.filename = projectName;
                     this.project.addAsset(gifAsset);
-                    this.projectDidChange({ actionName: 'Imported MP4 as Asset' });
-                    resolve({ gifAsset, audioBlob, fps: extractedFps, projectName, width, height });
+
+                    if (!audioBlob || !bakeAudio) {
+                        // Project flow: return audioBlob to caller so it can set up root-timeline audio
+                        this.projectDidChange({ actionName: 'Imported MP4 as Asset' });
+                        resolve({ gifAsset, audioBlob: audioBlob || null, fps: extractedFps, projectName, width, height });
+                        return;
+                    }
+
+                    // Asset flow: import SoundAsset and bake it into the clip's second layer
+                    const audioFile = new File([audioBlob], projectName + '.wav', { type: 'audio/wav' });
+                    this.importFileAsAsset(audioFile, (soundAsset) => {
+                        if (!soundAsset) {
+                            this.projectDidChange({ actionName: 'Imported MP4 as Asset' });
+                            resolve({ gifAsset, audioBlob: null, fps: extractedFps, projectName, width, height });
+                            return;
+                        }
+
+                        // Instantiate the clip, add audio layer, re-serialize back into gifAsset.src
+                        gifAsset.createInstance((clip) => {
+                            const audioLayer = new window.Wick.Layer();
+                            audioLayer.name = 'audio';
+                            clip.timeline.addLayer(audioLayer);
+
+                            const frameEnd = clip.timeline.layers[0].length;
+                            const audioFrame = new window.Wick.Frame({ start: 1, end: frameEnd });
+                            audioLayer.addFrame(audioFrame);
+                            audioFrame.sound = soundAsset;
+
+                            // Temporarily attach clip to project so it can be serialized
+                            this.project.addObject(clip);
+                            window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', (blobFile) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    gifAsset.src = e.target.result;
+                                    clip.remove();
+                                    this.projectDidChange({ actionName: 'Imported MP4 as Asset' });
+                                    resolve({ gifAsset, audioBlob: null, fps: extractedFps, projectName, width, height });
+                                };
+                                reader.readAsDataURL(blobFile);
+                            });
+                        }, this.project);
+                    });
                 });
             } catch (err) {
                 reject(err);
@@ -2476,10 +2516,12 @@ class EditorCore extends Component {
             this.showWaitOverlay();
 
             // Extract frames + build GIF asset → adds everything to this.project
+            // bakeAudio: false so we handle audio on the root timeline instead
             const { gifAsset, audioBlob, fps: extractedFps, projectName, width, height } =
                 await this.importMP4AsAsset({
                     file,
                     fps,
+                    bakeAudio: false,
                     onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p || 0)}%)` }),
                 });
 
@@ -2502,17 +2544,26 @@ class EditorCore extends Component {
                 const tl = this.project.activeTimeline;
                 tl.layers[0].name = "video";
 
+                // Add an empty drawing layer and move it to the top
+                const drawingLayer = new window.Wick.Layer();
+                drawingLayer.name = 'Layer';
+                tl.addLayer(drawingLayer);
+                drawingLayer.addFrame(new window.Wick.Frame({ start: 1, end: 1 }));
+                tl.moveLayer(drawingLayer, 0);
+                // Layer order: drawing(0), video(1), then audio below
+
                 // Add the audio track if the video had audio
                 if (audioBlob) {
                     tl.addLayer(new window.Wick.Layer());
-                    tl.layers[1].name = "audio";
-                    tl.layers[1].addFrame(new window.Wick.Frame());
-                    tl.layers[1].frames[0].end = tl.layers[0].frames[0].end;
+                    // Layer order: drawing(0), video(1), audio(2)
+                    tl.layers[2].name = "audio";
+                    tl.layers[2].addFrame(new window.Wick.Frame());
+                    tl.layers[2].frames[0].end = tl.layers[1].frames[0].end;
 
                     const audioFile = new File([audioBlob], projectName + ".wav", { type: 'audio/wav' });
                     this.importFileAsAsset(audioFile, () => {
                         this.project.loadAssets(() => {
-                            this.setActiveLayerIndex(1);
+                            this.setActiveLayerIndex(2);
                             this.addSoundToActiveFrame(this.project.assets[this.project.assets.length - 1]);
                             this.setActiveLayerIndex(0);
                         });
