@@ -26,6 +26,7 @@ import "./_asset.scss";
 
 const DROPPABLE_ASSET_TYPES = ["ImageAsset", "SoundAsset", "ClipAsset", "ButtonAsset", "SVGAsset", "FontAsset", "GIFAsset"];
 const FOLDER_TYPE = "Folder";
+const ACCEPT_TYPES = [...DROPPABLE_ASSET_TYPES, FOLDER_TYPE];
 
 function Folder(props) {
   let icon = "folder";
@@ -37,7 +38,7 @@ function Folder(props) {
   }), [props.folder.id]);
 
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: [...DROPPABLE_ASSET_TYPES, FOLDER_TYPE],
+    accept: ACCEPT_TYPES,
     drop: (item, monitor) => {
       if (monitor.getItemType() === FOLDER_TYPE) {
         props.onDropFolder(item.folderId);

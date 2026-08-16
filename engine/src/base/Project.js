@@ -498,6 +498,7 @@ Wick.Project = class extends Wick.Base {
     }
 
     set assetFolders(assetFolders) {
+        if (!Array.isArray(assetFolders)) return;
         this._assetFolders = assetFolders;
     }
 
@@ -510,6 +511,7 @@ Wick.Project = class extends Wick.Base {
     }
 
     set assetFolderAssignments(assetFolderAssignments) {
+        if (typeof assetFolderAssignments !== 'object' || assetFolderAssignments === null || Array.isArray(assetFolderAssignments)) return;
         this._assetFolderAssignments = assetFolderAssignments;
     }
 

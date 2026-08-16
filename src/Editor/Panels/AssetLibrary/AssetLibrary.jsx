@@ -161,15 +161,27 @@ class AssetLibrary extends Component {
 
     let folders = this.props.project.assetFolders;
 
-    // Collect the folder and all of its descendant folders.
+    // Collect the folder and all of its descendant folders. Build a
+    // parentId -> children[] map once (O(n)), then walk it, instead of
+    // repeatedly re-scanning the whole folders array per tree level.
+    let childrenByParentId = new Map();
+    folders.forEach(folder => {
+      let siblings = childrenByParentId.get(folder.parentFolderId);
+      if (!siblings) {
+        siblings = [];
+        childrenByParentId.set(folder.parentFolderId, siblings);
+      }
+      siblings.push(folder);
+    });
+
     let toDelete = new Set([folderId]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      folders.forEach(folder => {
-        if (toDelete.has(folder.parentFolderId) && !toDelete.has(folder.id)) {
-          toDelete.add(folder.id);
-          changed = true;
+    let queue = [folderId];
+    while (queue.length > 0) {
+      let children = childrenByParentId.get(queue.pop()) || [];
+      children.forEach(child => {
+        if (!toDelete.has(child.id)) {
+          toDelete.add(child.id);
+          queue.push(child.id);
         }
       });
     }
@@ -212,12 +224,13 @@ class AssetLibrary extends Component {
     if (folderId === targetFolderId) return;
 
     let folders = this.props.project.assetFolders;
+    let folderById = new Map(folders.map(folder => [folder.id, folder]));
 
     let isDescendantOf = (candidateId, ancestorId) => {
-      let current = folders.find(folder => folder.id === candidateId);
+      let current = folderById.get(candidateId);
       while (current) {
         if (current.parentFolderId === ancestorId) return true;
-        current = folders.find(folder => folder.id === current.parentFolderId);
+        current = folderById.get(current.parentFolderId);
       }
       return false;
     };
@@ -239,15 +252,18 @@ class AssetLibrary extends Component {
    * is renamed or moved — the folder's id (its actual identity) never
    * changes.
    * @param {string} folderId
+   * @param {Map} [folderById] - Optional pre-built id->folder map, so
+   *   callers that already have one (e.g. render()) don't pay to build it
+   *   twice.
    * @return {string}
    */
-  getFolderPath = (folderId) => {
-    let folders = this.props.project.assetFolders;
+  getFolderPath = (folderId, folderById) => {
+    folderById = folderById || new Map(this.props.project.assetFolders.map(folder => [folder.id, folder]));
     let names = [];
-    let current = folders.find(folder => folder.id === folderId);
+    let current = folderById.get(folderId);
     while (current) {
       names.unshift(current.name);
-      current = folders.find(folder => folder.id === current.parentFolderId);
+      current = folderById.get(current.parentFolderId);
     }
     return names.join(' / ');
   }
@@ -332,7 +348,10 @@ class AssetLibrary extends Component {
     let visibleAssets = sortedFilteredAssets.filter(asset => {
       return (assetFolderAssignments[asset.uuid] || null) === currentFolderId;
     });
-    let currentFolder = folders.find(folder => folder.id === currentFolderId);
+    // Built once and reused for both the currentFolder lookup and the
+    // header tooltip's path, instead of scanning `folders` for each.
+    let folderById = new Map(folders.map(folder => [folder.id, folder]));
+    let currentFolder = folderById.get(currentFolderId);
 
     return(
       <div className="docked-pane asset-library" aria-label="Asset Library">
@@ -357,7 +376,7 @@ class AssetLibrary extends Component {
                 onClick={() => this.openFolder(currentFolder ? currentFolder.parentFolderId : null)}>
                 <ToolIcon className="asset-library-back-icon" name="codeBack" />
               </button>
-              <span className="asset-library-folder-header-title" title={this.getFolderPath(currentFolderId)}>{currentFolder ? currentFolder.name : ''}</span>
+              <span className="asset-library-folder-header-title" title={this.getFolderPath(currentFolderId, folderById)}>{currentFolder ? currentFolder.name : ''}</span>
             </div>
           }
           <div className="asset-library-asset-container">
