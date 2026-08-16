@@ -1134,7 +1134,7 @@ class EditorCore extends Component {
                 });
             } else if (acceptedFiles[i].type === 'video/mp4') {
                 const mp4File = acceptedFiles[i];
-                const fps = Math.max(1, Math.min(60, Number(prompt('Enter FPS for ' + mp4File.name, '12') || 12)));
+                const fps = Math.max(1, Math.min(60, Number(prompt('Enter FPS for ' + mp4File.name, String(this.project.framerate)) || this.project.framerate)));
                 const mp4ToastID = this.toast(`Importing ${mp4File.name}…`, 'info', { autoClose: false });
                 this.showWaitOverlay();
                 this.importMP4AsAsset({
@@ -2466,7 +2466,7 @@ class EditorCore extends Component {
 
         // if an mp4 file then translate it before opening it
         try {
-            const fps = Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12") || 6)));
+            const fps = Math.max(1, Math.min(60, Number(prompt("Enter FPS", String(this.project.framerate)) || this.project.framerate)));
             const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
 
             // NOTE: must set up the new project BEFORE importing so assets have
