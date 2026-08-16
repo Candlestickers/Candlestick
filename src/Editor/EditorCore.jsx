@@ -1132,7 +1132,7 @@ class EditorCore extends Component {
                         if (options.create) this.createImageFromAsset(gifAsset.uuid, options.location.x || 0, options.location.y || 0);
                     }
                 });
-            } else if (acceptedFiles[i].type === 'video/mp4') {
+            } else if (acceptedFiles[i].type.startsWith('video/')) {
                 const mp4File = acceptedFiles[i];
                 const fps = Math.max(1, Math.min(60, Number(prompt('Enter FPS for ' + mp4File.name, String(this.project.framerate)) || this.project.framerate)));
                 const mp4ToastID = this.toast(`Importing ${mp4File.name}…`, 'info', { autoClose: false });
@@ -1171,7 +1171,7 @@ class EditorCore extends Component {
     importMP4AsAsset = ({ file, fps = 12, onProgress = () => {} }) => {
         return new Promise(async (resolve, reject) => {
             try {
-                const projectName = file.name.replace(/\.mp4$/i, '');
+                const projectName = file.name.replace(/\.[^.]+$/, '');
 
                 const { imageAssets, audioBlob, fps: extractedFps, width, height } =
                     await MP4ImportPure.importMP4AsSequence({
@@ -2458,8 +2458,8 @@ class EditorCore extends Component {
         }
 
 
-        // if not an mp4 file just load it then
-        if (file.type !== 'video/mp4') {
+        // if not a video file just load it then
+        if (!file.type.startsWith('video/')) {
             this.importProjectAsWickFile(file);
             return;
         }
