@@ -1410,6 +1410,8 @@ class Editor extends EditorCore {
                                                     onStopResize={this.resizeProps.onStopAssetLibraryResize}>
                                                     <DockedPanel showOverlay={this.state.previewPlaying}>
                                                         <AssetLibrary
+                                                            project={this.project}
+                                                            projectDidChange={this.projectDidChange}
                                                             projectData={this.state.project}
                                                             assets={this.project.getAssets()}
                                                             openModal={this.openModal}

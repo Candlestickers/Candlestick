@@ -119,6 +119,12 @@ Wick.Project = class extends Wick.Base {
         this._scriptSchedule = [];
         this._error = null;
 
+        // Asset Library folders. These are plain data (not Wick.Base
+        // objects/children) since they're purely an organizational feature
+        // of the Asset Library UI, not part of the Timeline/Canvas model.
+        this._assetFolders = args.assetFolders || []; // [{id, name, parentFolderId}]
+        this._assetFolderAssignments = args.assetFolderAssignments || {}; // { [assetUuid]: folderId }
+
         this.history.project = this;
         this.history.pushState(Wick.History.StateType.ONLY_VISIBLE_OBJECTS);
         this.orderedLayers = [];
@@ -239,6 +245,9 @@ Wick.Project = class extends Wick.Base {
         // reset rotation, but not pan/zoom.
         // not resetting pan/zoom is convenient when preview playing.
         this.rotation = 0;
+
+        this._assetFolders = data.assetFolders || [];
+        this._assetFolderAssignments = data.assetFolderAssignments || {};
     }
 
     _serialize(args) {
@@ -258,6 +267,9 @@ Wick.Project = class extends Wick.Base {
 
         // Save some metadata which will eventually end up in the wick file
         data.metadata = Wick.WickFile.generateMetaData();
+
+        data.assetFolders = this._assetFolders;
+        data.assetFolderAssignments = this._assetFolderAssignments;
 
         return data;
     }
@@ -475,6 +487,30 @@ Wick.Project = class extends Wick.Base {
      */
     get assets() {
         return this.getChildren(['ImageAsset', 'SoundAsset', 'ClipAsset', 'FontAsset', 'SVGAsset']);
+    }
+
+    /**
+     * The folders in the Asset Library.
+     * @type {object[]}
+     */
+    get assetFolders() {
+        return this._assetFolders;
+    }
+
+    set assetFolders(assetFolders) {
+        this._assetFolders = assetFolders;
+    }
+
+    /**
+     * A map of asset UUID to the id of the Asset Library folder it belongs to.
+     * @type {object}
+     */
+    get assetFolderAssignments() {
+        return this._assetFolderAssignments;
+    }
+
+    set assetFolderAssignments(assetFolderAssignments) {
+        this._assetFolderAssignments = assetFolderAssignments;
     }
 
     /**

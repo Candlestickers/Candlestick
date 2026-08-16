@@ -34,14 +34,23 @@ class AssetLibrary extends Component {
 
     this.state = {
       filterText: '',
-      folders: [], // [{ id, name, parentFolderId }]
-      assetFolders: {}, // { [assetUuid]: folderId }
+      // Folder data itself now lives on the project (project.assetFolders /
+      // project.assetFolderAssignments) so it's saved/autosaved with the
+      // project. Only transient navigation/selection state lives here.
       currentFolderId: null, // null = library root
       selectedFolderId: null,
     }
   }
 
   componentDidUpdate(prevProps) {
+    // The project was swapped out (new project, file load, autosave load)
+    // — reset navigation/selection so we don't keep pointing at folders
+    // that belonged to the old project.
+    if (prevProps.project !== this.props.project) {
+      this.setState({ currentFolderId: null, selectedFolderId: null });
+      return;
+    }
+
     // If new assets appeared while a folder was open (via upload, builtin
     // library add, GIF import, etc.), file them into that folder instead of
     // leaving them at the root.
@@ -51,11 +60,10 @@ class AssetLibrary extends Component {
     let newAssets = this.props.assets.filter(asset => !prevUuids.has(asset.uuid));
     if (newAssets.length === 0) return;
 
-    this.setState(prevState => {
-      let assetFolders = { ...prevState.assetFolders };
-      newAssets.forEach(asset => { assetFolders[asset.uuid] = prevState.currentFolderId; });
-      return { assetFolders };
-    });
+    let assetFolderAssignments = { ...this.props.project.assetFolderAssignments };
+    newAssets.forEach(asset => { assetFolderAssignments[asset.uuid] = this.state.currentFolderId; });
+    this.props.project.assetFolderAssignments = assetFolderAssignments;
+    this.props.projectDidChange({ actionName: "File Asset Into Folder", skipHistory: true });
   }
 
   openFileDialog = (uuid) => {
@@ -124,8 +132,9 @@ class AssetLibrary extends Component {
   createFolder = () => {
     let baseName = 'New Folder';
     let parentFolderId = this.state.currentFolderId;
+    let folders = this.props.project.assetFolders;
     let siblingNames = new Set(
-      this.state.folders.filter(folder => folder.parentFolderId === parentFolderId).map(folder => folder.name)
+      folders.filter(folder => folder.parentFolderId === parentFolderId).map(folder => folder.name)
     );
     let name = baseName;
     let counter = 2;
@@ -135,7 +144,8 @@ class AssetLibrary extends Component {
     }
 
     let newFolder = { id: 'folder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), name, parentFolderId };
-    this.setState(prevState => ({ folders: [...prevState.folders, newFolder] }));
+    this.props.project.assetFolders = [...folders, newFolder];
+    this.props.projectDidChange({ actionName: "Create Folder" });
   }
 
   /**
@@ -149,35 +159,37 @@ class AssetLibrary extends Component {
     // doesn't keep reporting 'folder' for something that no longer exists.
     this.props.clearSelection();
 
-    this.setState(prevState => {
-      // Collect the folder and all of its descendant folders.
-      let toDelete = new Set([folderId]);
-      let changed = true;
-      while (changed) {
-        changed = false;
-        prevState.folders.forEach(folder => {
-          if (toDelete.has(folder.parentFolderId) && !toDelete.has(folder.id)) {
-            toDelete.add(folder.id);
-            changed = true;
-          }
-        });
-      }
+    let folders = this.props.project.assetFolders;
 
-      let assetFolders = { ...prevState.assetFolders };
-      Object.keys(assetFolders).forEach(assetUuid => {
-        if (toDelete.has(assetFolders[assetUuid])) delete assetFolders[assetUuid];
+    // Collect the folder and all of its descendant folders.
+    let toDelete = new Set([folderId]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      folders.forEach(folder => {
+        if (toDelete.has(folder.parentFolderId) && !toDelete.has(folder.id)) {
+          toDelete.add(folder.id);
+          changed = true;
+        }
       });
+    }
 
-      let deletedFolder = prevState.folders.find(folder => folder.id === folderId);
-      let fallbackFolderId = deletedFolder ? deletedFolder.parentFolderId : null;
-
-      return {
-        folders: prevState.folders.filter(folder => !toDelete.has(folder.id)),
-        assetFolders,
-        currentFolderId: toDelete.has(prevState.currentFolderId) ? fallbackFolderId : prevState.currentFolderId,
-        selectedFolderId: toDelete.has(prevState.selectedFolderId) ? null : prevState.selectedFolderId,
-      };
+    let assetFolderAssignments = { ...this.props.project.assetFolderAssignments };
+    Object.keys(assetFolderAssignments).forEach(assetUuid => {
+      if (toDelete.has(assetFolderAssignments[assetUuid])) delete assetFolderAssignments[assetUuid];
     });
+
+    let deletedFolder = folders.find(folder => folder.id === folderId);
+    let fallbackFolderId = deletedFolder ? deletedFolder.parentFolderId : null;
+
+    this.props.project.assetFolders = folders.filter(folder => !toDelete.has(folder.id));
+    this.props.project.assetFolderAssignments = assetFolderAssignments;
+    this.props.projectDidChange({ actionName: "Delete Folder" });
+
+    this.setState(prevState => ({
+      currentFolderId: toDelete.has(prevState.currentFolderId) ? fallbackFolderId : prevState.currentFolderId,
+      selectedFolderId: toDelete.has(prevState.selectedFolderId) ? null : prevState.selectedFolderId,
+    }));
   }
 
   /**
@@ -199,26 +211,25 @@ class AssetLibrary extends Component {
   moveFolderToFolder = (folderId, targetFolderId) => {
     if (folderId === targetFolderId) return;
 
-    this.setState(prevState => {
-      let isDescendantOf = (candidateId, ancestorId) => {
-        let current = prevState.folders.find(folder => folder.id === candidateId);
-        while (current) {
-          if (current.parentFolderId === ancestorId) return true;
-          current = prevState.folders.find(folder => folder.id === current.parentFolderId);
-        }
-        return false;
-      };
+    let folders = this.props.project.assetFolders;
 
-      if (targetFolderId !== null && isDescendantOf(targetFolderId, folderId)) {
-        return null;
+    let isDescendantOf = (candidateId, ancestorId) => {
+      let current = folders.find(folder => folder.id === candidateId);
+      while (current) {
+        if (current.parentFolderId === ancestorId) return true;
+        current = folders.find(folder => folder.id === current.parentFolderId);
       }
+      return false;
+    };
 
-      return {
-        folders: prevState.folders.map(folder =>
-          folder.id === folderId ? { ...folder, parentFolderId: targetFolderId } : folder
-        ),
-      };
-    });
+    if (targetFolderId !== null && isDescendantOf(targetFolderId, folderId)) {
+      return;
+    }
+
+    this.props.project.assetFolders = folders.map(folder =>
+      folder.id === folderId ? { ...folder, parentFolderId: targetFolderId } : folder
+    );
+    this.props.projectDidChange({ actionName: "Move Folder" });
   }
 
   /**
@@ -231,11 +242,12 @@ class AssetLibrary extends Component {
    * @return {string}
    */
   getFolderPath = (folderId) => {
+    let folders = this.props.project.assetFolders;
     let names = [];
-    let current = this.state.folders.find(folder => folder.id === folderId);
+    let current = folders.find(folder => folder.id === folderId);
     while (current) {
       names.unshift(current.name);
-      current = this.state.folders.find(folder => folder.id === current.parentFolderId);
+      current = folders.find(folder => folder.id === current.parentFolderId);
     }
     return names.join(' / ');
   }
@@ -256,9 +268,8 @@ class AssetLibrary extends Component {
    * @param {string} folderId
    */
   assignAssetToFolder = (assetUuid, folderId) => {
-    this.setState(prevState => ({
-      assetFolders: { ...prevState.assetFolders, [assetUuid]: folderId }
-    }));
+    this.props.project.assetFolderAssignments = { ...this.props.project.assetFolderAssignments, [assetUuid]: folderId };
+    this.props.projectDidChange({ actionName: "Assign Asset To Folder" });
   }
 
   /**
@@ -313,11 +324,13 @@ class AssetLibrary extends Component {
     let filteredAssets = this.filterArray(this.props.assets);
     let sortedFilteredAssets = this.sortAssets(filteredAssets);
 
-    let { currentFolderId, folders, assetFolders } = this.state;
+    let { currentFolderId } = this.state;
+    let folders = this.props.project.assetFolders;
+    let assetFolderAssignments = this.props.project.assetFolderAssignments;
 
     let visibleFolders = folders.filter(folder => folder.parentFolderId === currentFolderId);
     let visibleAssets = sortedFilteredAssets.filter(asset => {
-      return (assetFolders[asset.uuid] || null) === currentFolderId;
+      return (assetFolderAssignments[asset.uuid] || null) === currentFolderId;
     });
     let currentFolder = folders.find(folder => folder.id === currentFolderId);
 
