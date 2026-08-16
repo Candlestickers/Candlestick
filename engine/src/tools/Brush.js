@@ -203,6 +203,10 @@ Wick.Tools.Brush = class extends Wick.Tool {
         var brushShape = this.getSetting('brushShape');
         this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
         this.croquisBrush.setRotateToDirection(brushShape === 'chisel' || brushShape === 'leaf' || brushShape === 'rect');
+        var scatterAmount = this.getSetting('brushScatterEnabled') ? this.getSetting('brushScatterAmount') * 2.8 : 0;
+        this.croquisBrush.setNormalSpread(scatterAmount);
+        this.croquisBrush.setTangentSpread(scatterAmount);
+        this.croquisBrush.setRandomAngle(this.getSetting('brushRandomRotation'));
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
@@ -368,12 +372,168 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this._potraceCroquisCanvas(this._lastMousePoint);
     }
 
-    /* Generate a new circle cursor based on the brush size. */
+    /* Generate a cursor that matches the active brush shape. */
     _regenCursor () {
-        var size = (this._getRealBrushSize());
+        var size = this._getRealBrushSize();
         var color = this.getSetting('fillColor').hex;
-        this.cachedCursor = this.createDynamicCursor(color, size, this.getSetting('pressureEnabled'));
+        var transparent = this.getSetting('pressureEnabled');
+        var shape = this.getSetting('brushShape') || 'circle';
+        this.cachedCursor = this._createShapedCursor(color, size, transparent, shape);
         this.setCursor(this.cachedCursor);
+    }
+
+    _createShapedCursor (color, size, transparent, shape) {
+        // Use same coordinate system as _buildBrushTipCanvas (S = canvas dim)
+        var S = Math.max(Math.round(size) + 4, 10);
+        var canvas = document.createElement('canvas');
+        canvas.width = S;
+        canvas.height = S;
+        var ctx = canvas.getContext('2d');
+        var cx = S / 2, cy = S / 2, r = S / 2 - 2;
+        var PI2 = Math.PI * 2;
+        var i, a, rad, px, py;
+        var fillColor = color + '88';
+        var strokeColor = invert(color);
+
+        // Crescent needs compositing — handle separately
+        if (shape === 'crescent') {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, PI2);
+            if (!transparent) { ctx.fillStyle = fillColor; ctx.fill(); }
+            ctx.strokeStyle = transparent ? '#000000' : strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.beginPath();
+            ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+            ctx.strokeStyle = transparent ? '#ffffff' : strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            if (transparent) {
+                // second pass: white inner outline
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 0.75;
+                ctx.stroke();
+            }
+            var hs0 = Math.round(S / 2);
+            return 'url(' + canvas.toDataURL() + ') ' + hs0 + ' ' + hs0 + ', default';
+        }
+
+        // All other shapes: build a single path then fill + stroke
+        ctx.beginPath();
+
+        switch (shape) {
+            case 'square':
+                ctx.rect(2, 2, S - 4, S - 4);
+                break;
+            case 'rect':
+                ctx.rect(2, Math.round(S * 0.3), S - 4, Math.round(S * 0.4));
+                break;
+            case 'chisel':
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(Math.PI / 4);
+                ctx.scale(1, 0.15);
+                ctx.arc(0, 0, r, 0, PI2);
+                ctx.restore();
+                break;
+            case 'diamond':
+                ctx.moveTo(cx, 2); ctx.lineTo(S-2, cy);
+                ctx.lineTo(cx, S-2); ctx.lineTo(2, cy);
+                ctx.closePath();
+                break;
+            case 'triangle':
+                ctx.moveTo(cx, 2); ctx.lineTo(S-2, S-2); ctx.lineTo(2, S-2);
+                ctx.closePath();
+                break;
+            case 'star':
+                for (i = 0; i < 10; i++) {
+                    a = (i * Math.PI / 5) - Math.PI / 2;
+                    rad = i % 2 === 0 ? r : r * 0.4;
+                    px = cx + Math.cos(a) * rad; py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            case 'sparkle':
+                for (i = 0; i < 8; i++) {
+                    a = (i * Math.PI / 4) - Math.PI / 2;
+                    rad = i % 2 === 0 ? r : r * 0.12;
+                    px = cx + Math.cos(a) * rad; py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            case 'leaf':
+                ctx.moveTo(cx, 2);
+                ctx.quadraticCurveTo(S-2, cy, cx, S-2);
+                ctx.quadraticCurveTo(2, cy, cx, 2);
+                ctx.closePath();
+                break;
+            case 'rough': {
+                var pts = [
+                    [0.50,0.02],[0.71,0.06],[0.89,0.20],[0.97,0.43],
+                    [0.95,0.65],[0.80,0.84],[0.60,0.97],[0.38,0.95],
+                    [0.17,0.83],[0.04,0.61],[0.06,0.36],[0.20,0.16]
+                ];
+                ctx.moveTo(pts[0][0]*S, pts[0][1]*S);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0]*S, pts[j][1]*S);
+                ctx.closePath();
+                break;
+            }
+            case 'scatter': {
+                // exact same dot layout as _buildBrushTipCanvas
+                var dots = [
+                    [0.50,0.50,0.16],[0.25,0.28,0.12],[0.74,0.24,0.10],
+                    [0.22,0.72,0.12],[0.74,0.73,0.10],[0.76,0.50,0.08]
+                ];
+                dots.forEach(function(d) {
+                    ctx.moveTo((d[0] + d[2]) * S, d[1] * S);
+                    ctx.arc(d[0]*S, d[1]*S, d[2]*S, 0, PI2);
+                });
+                break;
+            }
+            case 'cross': {
+                var t = S * 0.28;
+                ctx.rect(cx - t/2, 2, t, S-4);
+                ctx.rect(2, cy - t/2, S-4, t);
+                break;
+            }
+            case 'hexagon':
+                for (i = 0; i < 6; i++) {
+                    a = (i / 6) * PI2 - Math.PI / 2;
+                    px = cx + Math.cos(a) * r; py = cy + Math.sin(a) * r;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            default: // circle, softcircle
+                ctx.arc(cx, cy, r, 0, PI2);
+                break;
+        }
+
+        if (transparent) {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.75;
+            ctx.stroke();
+        } else {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        var hotspot = Math.round(S / 2);
+        return 'url(' + canvas.toDataURL() + ') ' + hotspot + ' ' + hotspot + ', default';
     }
 
     /* Get the actual pixel size of the brush to send to Croquis. */
@@ -442,8 +602,16 @@ Wick.Tools.Brush = class extends Wick.Tool {
     _calculateStrokeBounds (point) {
         // Forward mouse event to croquis canvas
         this._updateStrokeBounds(point);
-        // This prevents cropping out edges of the brush stroke
-        this.strokeBounds = this.strokeBounds.expand(this._getRealBrushSize());
+        // This prevents cropping out edges of the brush stroke.
+        // When scatter is enabled, stamps are displaced by up to
+        // scatterAmount * 1.4 * brushSize * canvasScaleFactor pixels beyond
+        // the raw mouse path, so we expand by that extra amount too.
+        var expand = this._getRealBrushSize();
+        if (this.getSetting('brushScatterEnabled')) {
+            var scatterAmount = this.getSetting('brushScatterAmount');
+            expand += scatterAmount * 1.4 * this._getRealBrushSize() * this.canvasScaleFactor;
+        }
+        this.strokeBounds = this.strokeBounds.expand(expand);
     }
 
     /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */

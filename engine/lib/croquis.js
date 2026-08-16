@@ -1293,6 +1293,7 @@ Croquis.Brush = function () {
         clone.setSpacing(this.getSpacing());
         clone.setAngle(this.getAngle());
         clone.setRotateToDirection(this.getRotateToDirection());
+        clone.setRandomAngle(this.getRandomAngle());
         clone.setNormalSpread(this.getNormalSpread());
         clone.setTangentSpread(this.getTangentSpread());
         clone.setImage(this.getImage());
@@ -1350,6 +1351,13 @@ Croquis.Brush = function () {
     };
     this.setRotateToDirection = function (value) {
         rotateToDirection = value;
+    };
+    var randomAngle = false;
+    this.getRandomAngle = function () {
+        return randomAngle;
+    };
+    this.setRandomAngle = function (value) {
+        randomAngle = value;
     };
     var normalSpread = 0;
     this.getNormalSpread = function () {
@@ -1458,6 +1466,7 @@ Croquis.Brush = function () {
         var nr = normalSpread * scaledSize * spreadRandom();
         var tr = tangentSpread * scaledSize * spreadRandom();
         var ra = rotateToDirection ? angle + dir : angle;
+        if (randomAngle) ra += random() * ONE;
         var width = scaledSize;
         var height = width * imageRatio;
         var boundWidth = abs(height * sin(ra)) + abs(width * cos(ra));

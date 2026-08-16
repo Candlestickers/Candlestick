@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 270° clockwise arc, top to left -->
+  <path d="M 256 76 A 180 180 0 1 1 76 256"
+        stroke="white" stroke-width="58" fill="none" stroke-linecap="round"/>
+  <!-- Arrowhead at arc end (76,256) pointing downward -->
+  <polygon points="76,358 12,224 140,224" fill="white"/>
+</svg>
