@@ -1132,6 +1132,24 @@ class EditorCore extends Component {
                         if (options.create) this.createImageFromAsset(gifAsset.uuid, options.location.x || 0, options.location.y || 0);
                     }
                 });
+            } else if (acceptedFiles[i].type === 'video/mp4') {
+                const mp4File = acceptedFiles[i];
+                const fps = Math.max(1, Math.min(60, Number(prompt('Enter FPS for ' + mp4File.name, '12') || 12)));
+                const mp4ToastID = this.toast(`Importing ${mp4File.name}…`, 'info', { autoClose: false });
+                this.showWaitOverlay();
+                this.importMP4AsAsset({
+                    file: mp4File,
+                    fps,
+                    onProgress: (msg, p) => this.updateToast(mp4ToastID, { text: `${msg} (${Math.round(p || 0)}%)` }),
+                }).then(({ gifAsset }) => {
+                    this.updateToast(mp4ToastID, { text: `:) Imported ${mp4File.name}`, type: 'success', autoClose: 7000 });
+                    this.hideWaitOverlay();
+                    if (options.create) this.createImageFromAsset(gifAsset.uuid, options.location.x || 0, options.location.y || 0);
+                }).catch(err => {
+                    console.error(err);
+                    this.updateToast(mp4ToastID, { text: `Failed to import ${mp4File.name}`, type: 'error', autoClose: 5000 });
+                    this.hideWaitOverlay();
+                });
             } else {
                 var file = acceptedFiles[i];
 

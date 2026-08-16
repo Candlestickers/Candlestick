@@ -254,7 +254,7 @@ class Editor extends EditorCore {
 
         // Wick file input
         this.openAssetFileFromClient = window.createFileInput({
-            accept: window.Wick.FileAsset.getValidExtensions().join(', '),
+            accept: window.Wick.FileAsset.getValidExtensions().join(', ') + ', .mp4',
             onChange: this.handleAssetFileImport,
             multiple: true,
         });
