@@ -11,6 +11,64 @@ function blobToDataURL(blob) {
   })
 }
 
+// WAV encoder worker
+// run in a parallel worker thread and trasnfer the results back
+const _WAV_WORKER_SRC = `
+self.onmessage = function (e) {
+  var channels     = e.data.channels;
+  var sampleRate   = e.data.sampleRate;
+  var numSamples   = e.data.numSamples;
+  var numChannels  = e.data.numChannels;
+
+  var bytesPerSample    = 2;
+  var blockAlign        = numChannels * bytesPerSample;
+  var byteRate          = sampleRate * blockAlign;
+  var wavDataByteLength = numSamples * blockAlign;
+  var buffer            = new ArrayBuffer(44 + wavDataByteLength);
+  var view              = new DataView(buffer);
+
+  var offset = 0;
+  function writeStr(s) { for (var i = 0; i < s.length; i++) view.setUint8(offset++, s.charCodeAt(i)); }
+  function write16(v)  { view.setUint16(offset, v, true); offset += 2; }
+  function write32(v)  { view.setUint32(offset, v, true); offset += 4; }
+
+  // RIFF / WAVE header
+  writeStr('RIFF'); write32(36 + wavDataByteLength); writeStr('WAVE');
+  // fmt chunk
+  writeStr('fmt '); write32(16); write16(1); write16(numChannels);
+  write32(sampleRate); write32(byteRate); write16(blockAlign); write16(16);
+  // data chunk
+  writeStr('data'); write32(wavDataByteLength);
+
+  // Interleave channels — the hot loop
+  for (var i = 0; i < numSamples; i++) {
+    for (var ch = 0; ch < numChannels; ch++) {
+      var s = channels[ch][i];
+      if (s >  1) s =  1;
+      if (s < -1) s = -1;
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+
+  // Transfer the finished ArrayBuffer back (zero-copy)
+  self.postMessage({ buffer: buffer }, [buffer]);
+};
+`;
+
+function _encodeWavInWorker({ channels, sampleRate, numSamples, numChannels }) {
+  return new Promise((resolve, reject) => {
+    const blob   = new Blob([_WAV_WORKER_SRC], { type: 'application/javascript' });
+    const url    = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    URL.revokeObjectURL(url); // worker holds its own internal reference; safe to revoke
+    worker.onmessage = (e) => { resolve(e.data.buffer); worker.terminate(); };
+    worker.onerror   = (e) => { reject(new Error('WAV worker: ' + e.message)); worker.terminate(); };
+    // Transfer the Float32Arrays into the worker — zero-copy, no serialisation overhead
+    worker.postMessage({ channels, sampleRate, numSamples, numChannels }, channels.map(ch => ch.buffer));
+  });
+}
+
 async function extractAudioWavFromMp4(file) {
   const arrayBuf = await file.arrayBuffer()
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
@@ -18,63 +76,28 @@ async function extractAudioWavFromMp4(file) {
   try {
     audioBuf = await audioCtx.decodeAudioData(arrayBuf.slice(0)) // Safari needs a copy
   } catch (e) {
-    // no audio, save us all precious time
+    // no audio track — bail out early
     audioCtx.close()
     return null
   }
 
-  const numChannels = audioBuf.numberOfChannels;
-  const sampleRate = audioBuf.sampleRate;
-  const numSamples = audioBuf.length;
+  const numChannels = audioBuf.numberOfChannels
+  const sampleRate  = audioBuf.sampleRate
+  const numSamples  = audioBuf.length
 
-  // Interleave PCM (16-bit)
-  const bytesPerSample = 2;
-  const blockAlign = numChannels * bytesPerSample;
-  const byteRate = sampleRate * blockAlign;
-
-  const wavDataByteLength = numSamples * blockAlign;
-  const totalLen = 44 + wavDataByteLength;
-  const buffer = new ArrayBuffer(totalLen);
-  const view = new DataView(buffer);
-
-  // RIFF header
-  let offset = 0;
-  const writeStr = (s) => { for (let i=0; i<s.length; i++) view.setUint8(offset++, s.charCodeAt(i)) }
-  const write16 = (v) => { view.setUint16(offset, v, true); offset += 2 }
-  const write32 = (v) => { view.setUint32(offset, v, true); offset += 4 }
-
-  writeStr('RIFF');
-  write32(36 + wavDataByteLength);
-  writeStr('WAVE');
-
-  // fmt chunk
-  writeStr('fmt ')
-  write32(16)
-  write16(1)
-  write16(numChannels)
-  write32(sampleRate)
-  write32(byteRate)
-  write16(blockAlign)
-  write16(16)
-
-  // data chunk
-  writeStr('data')
-  write32(wavDataByteLength)
-
-  // Interleave channels
+  // Copy channel data into fresh transferable Float32Arrays before closing the context
   const channels = []
-  for (let ch = 0; ch < numChannels; ch++) channels.push(audioBuf.getChannelData(ch))
-
-  for (let i = 0; i < numSamples; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      let s = Math.max(-1, Math.min(1, channels[ch][i]))
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
-      offset += 2
-    }
+  for (let ch = 0; ch < numChannels; ch++) {
+    const src  = audioBuf.getChannelData(ch)
+    const copy = new Float32Array(src.length)
+    copy.set(src)
+    channels.push(copy)
   }
-
   audioCtx.close()
-  return new Blob([buffer], { type: 'audio/wav' });
+
+  // Hand off the heavy PCM interleave to the worker thread
+  const wavBuffer = await _encodeWavInWorker({ channels, sampleRate, numSamples, numChannels })
+  return new Blob([wavBuffer], { type: 'audio/wav' })
 }
 
 async function extractFramesFromMp4(file, { fps = DEFAULT_FPS, maxFrames = Infinity, onProgress = () => {} } = {}) {
@@ -139,11 +162,15 @@ async function extractFramesFromMp4(file, { fps = DEFAULT_FPS, maxFrames = Infin
 }
 
 async function mp4ToWickFileBlob({ mp4File, fps = DEFAULT_FPS, projectName = 'Imported Video', onProgress = () => {} }) {
-    onProgress('Decoding audio…', 5)
-    const audioBlob = await extractAudioWavFromMp4(mp4File).catch(() => null)
+    onProgress('Extracting…', 5)
 
-    onProgress('Extracting frames…', 10)
-    const { frames, width, height } = await extractFramesFromMp4(mp4File, { fps, onProgress })
+    // Run audio decoding and frame extraction in parallel.
+    // decodeAudioData is async (browser audio subsystem) and won't block the seek loop.
+    // The WAV encoding itself runs in a dedicated worker thread (see _encodeWavInWorker).
+    const audioPromise  = extractAudioWavFromMp4(mp4File).catch(() => null)
+    const framesPromise = extractFramesFromMp4(mp4File, { fps, onProgress })
+
+    const [audioBlob, { frames, width, height }] = await Promise.all([audioPromise, framesPromise])
 
     if (!frames.length) throw new Error('No frames extracted')
 
