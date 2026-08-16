@@ -101,62 +101,105 @@ async function extractAudioWavFromMp4(file) {
 }
 
 async function extractFramesFromMp4(file, { fps = DEFAULT_FPS, maxFrames = Infinity, onProgress = () => {} } = {}) {
+  const WORKER_COUNT = 4
   const url = URL.createObjectURL(file)
-  const video = document.createElement('video')
-  video.src = url
+
+  // --- load metadata from a throwaway video element ---
   // NOTE: do NOT set crossOrigin on blob URLs — blob URLs are same-origin by definition
   // else WebKitGTK (Linux/Tauri) treats the blob as a CORS fetch, which breaks seeking
-  video.muted = true
-  video.playsInline = true
-
-  // Load da metadata stuff
+  const metaVideo = document.createElement('video')
+  metaVideo.src = url
+  metaVideo.muted = true
+  metaVideo.playsInline = true
   await new Promise((res, rej) => {
     const timer = setTimeout(() => rej(new Error('Video metadata load timed out — the file may use an unsupported codec')), 15000)
-    video.addEventListener('loadedmetadata', () => { clearTimeout(timer); res() }, { once: true })
-    video.addEventListener('error', () => { clearTimeout(timer); rej(new Error('Video metadata load failed')) }, { once: true })
+    metaVideo.addEventListener('loadedmetadata', () => { clearTimeout(timer); res() }, { once: true })
+    metaVideo.addEventListener('error',           () => { clearTimeout(timer); rej(new Error('Video metadata load failed')) }, { once: true })
   })
+  const duration = metaVideo.duration
+  const w = metaVideo.videoWidth
+  const h = metaVideo.videoHeight
+  metaVideo.src = '' // release the metadata decoder slot
 
-  const duration = video.duration
-  const w = video.videoWidth
-  const h = video.videoHeight
-
-  // create hidden canvas to record frames from it
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-
-  const step = 1 / fps // <-- skip video to recorded frames
-  const frames = []
-  let t = 0
-  let frameIndex = 0
-  while (t <= duration && frameIndex < maxFrames) {
-    video.currentTime = t
-    // Wait for seek — timeout guards against WebKitGTK/GStreamer silently dropping seeked events -H.A.
-    await new Promise((res, rej) => {
-      const timer = setTimeout(() => { cleanup(); rej(new Error('Seek timed out — the video may use an unsupported codec on this platform')) }, 10000)
-      const onSeeked = () => { clearTimeout(timer); res(); cleanup() }
-      const onError = () => { clearTimeout(timer); rej(new Error('Seek failed')); cleanup() }
-      const cleanup = () => {
-        video.removeEventListener('seeked', onSeeked)
-        video.removeEventListener('error', onError)
-      }
-      video.addEventListener('seeked', onSeeked, { once: true })
-      video.addEventListener('error', onError, { once: true })
-    })
-
-    // Some browsers need a render tick
-    await sleep(0)
-
-    ctx.drawImage(video, 0, 0, w, h)
-    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9))
-    frames.push(blob)
-    frameIndex++
-    t += step
-    onProgress(`Extracting frames…`, Math.min(80, Math.round((t / duration) * 80)))
+  // --- build the full list of frame timestamps upfront ---
+  const step = 1 / fps
+  const allTimestamps = []
+  for (let t = 0; t <= duration && allTimestamps.length < maxFrames; t += step) {
+    allTimestamps.push(t)
+  }
+  if (!allTimestamps.length) {
+    URL.revokeObjectURL(url)
+    throw new Error('No frames could be extracted — the video may use an unsupported codec on this platform')
   }
 
+  // --- split timestamps into WORKER_COUNT contiguous chunks ---
+  // Contiguous chunks = each worker seeks forward through its section,
+  // which is faster than random-access seeking across the whole timeline.
+  const numWorkers = Math.min(WORKER_COUNT, allTimestamps.length)
+  const chunkSize  = Math.ceil(allTimestamps.length / numWorkers)
+  const chunks     = []
+  for (let i = 0; i < allTimestamps.length; i += chunkSize) {
+    chunks.push(
+      allTimestamps.slice(i, i + chunkSize).map((ts, j) => ({ ts, globalIndex: i + j }))
+    )
+  }
+
+  // results[globalIndex] = blob — keeps frames in the correct order regardless of
+  // which worker finishes first.
+  const results = new Array(allTimestamps.length).fill(null)
+  let framesCompleted = 0
+
+  // Each chunk runs on its own video + canvas pair, seeking forward through its timestamps.
+  const extractChunk = async (chunk) => {
+    const video = document.createElement('video')
+    video.src = url
+    video.muted = true
+    video.playsInline = true
+    const canvas = document.createElement('canvas')
+    canvas.width  = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+
+    // Wait for this worker's video to be ready before seeking
+    await new Promise((res, rej) => {
+      const timer = setTimeout(() => rej(new Error('Video metadata load timed out — the file may use an unsupported codec')), 15000)
+      video.addEventListener('loadedmetadata', () => { clearTimeout(timer); res() }, { once: true })
+      video.addEventListener('error',           () => { clearTimeout(timer); rej(new Error('Video load failed')) }, { once: true })
+    })
+
+    for (const { ts, globalIndex } of chunk) {
+      video.currentTime = ts
+      // Wait for seek — timeout guards against WebKitGTK/GStreamer silently dropping seeked events -H.A.
+      await new Promise((res, rej) => {
+        const timer = setTimeout(() => { cleanup(); rej(new Error('Seek timed out — the video may use an unsupported codec on this platform')) }, 10000)
+        const onSeeked = () => { clearTimeout(timer); res(); cleanup() }
+        const onError  = () => { clearTimeout(timer); rej(new Error('Seek failed')); cleanup() }
+        const cleanup  = () => {
+          video.removeEventListener('seeked', onSeeked)
+          video.removeEventListener('error',  onError)
+        }
+        video.addEventListener('seeked', onSeeked, { once: true })
+        video.addEventListener('error',  onError,  { once: true })
+      })
+
+      // Some browsers need a render tick before drawImage reflects the new frame
+      await sleep(0)
+
+      ctx.drawImage(video, 0, 0, w, h)
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9))
+      results[globalIndex] = blob
+      framesCompleted++
+      onProgress('Extracting frames…', Math.min(80, Math.round((framesCompleted / allTimestamps.length) * 80)))
+    }
+
+    video.src = '' // release this worker's decoder slot
+  }
+
+  // Run all chunks concurrently — 4 seeks in flight at once
+  await Promise.all(chunks.map(extractChunk))
   URL.revokeObjectURL(url)
+
+  const frames = results.filter(Boolean)
   if (!frames.length) throw new Error('No frames could be extracted — the video may use an unsupported codec on this platform')
   return { frames, width: w, height: h, duration, fps }
 }
