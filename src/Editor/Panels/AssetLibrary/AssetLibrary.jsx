@@ -216,6 +216,25 @@ class AssetLibrary extends Component {
   }
 
   /**
+   * Builds a human-readable path for a folder from its ancestor names
+   * (e.g. "New Folder / Subfolder"). This is derived on demand from the
+   * current folder tree, not stored, so it can't go stale when a folder
+   * is renamed or moved — the folder's id (its actual identity) never
+   * changes.
+   * @param {string} folderId
+   * @return {string}
+   */
+  getFolderPath = (folderId) => {
+    let names = [];
+    let current = this.state.folders.find(folder => folder.id === folderId);
+    while (current) {
+      names.unshift(current.name);
+      current = this.state.folders.find(folder => folder.id === current.parentFolderId);
+    }
+    return names.join(' / ');
+  }
+
+  /**
    * Selects a folder (mirrors asset selection so its buttons appear).
    * @param {string} folderId
    */
@@ -318,7 +337,7 @@ class AssetLibrary extends Component {
                 onClick={() => this.openFolder(currentFolder ? currentFolder.parentFolderId : null)}>
                 <ToolIcon className="asset-library-back-icon" name="codeBack" />
               </button>
-              <span className="asset-library-folder-header-title">{currentFolder ? currentFolder.name : ''}</span>
+              <span className="asset-library-folder-header-title" title={this.getFolderPath(currentFolderId)}>{currentFolder ? currentFolder.name : ''}</span>
             </div>
           }
           <div className="asset-library-asset-container">
