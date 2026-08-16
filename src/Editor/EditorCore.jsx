@@ -1141,6 +1141,47 @@ class EditorCore extends Component {
     }
 
     /**
+     * Extracts frames from an MP4 file, builds a GIFAsset from them, and adds
+     * it (plus all intermediate image assets) to the current project's asset
+     * library. -H.A.
+     *
+     * @param {File}     file       - The MP4 file to import.
+     * @param {number}   fps        - Frame rate to extract at.
+     * @param {Function} onProgress - Progress callback (msg, percent).
+     * @returns {Promise<{ gifAsset, audioBlob, fps, projectName, width, height }>}
+     */
+    importMP4AsAsset = ({ file, fps = 12, onProgress = () => {} }) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const projectName = file.name.replace(/\.mp4$/i, '');
+
+                const { imageAssets, audioBlob, fps: extractedFps, width, height } =
+                    await MP4ImportPure.importMP4AsSequence({
+                        mp4File: file,
+                        fps,
+                        projectName,
+                        onProgress,
+                    });
+
+                // Add individual frame images to the project first
+                imageAssets.forEach(asset => this.project.addAsset(asset));
+                await new Promise(res => this.project.loadAssets(res));
+
+                // Stitch the frame images into a single animated GIF asset
+                window.Wick.GIFAsset.fromImages(imageAssets, this.project, (gifAsset) => {
+                    gifAsset.name = projectName;
+                    gifAsset.filename = projectName;
+                    this.project.addAsset(gifAsset);
+                    this.projectDidChange({ actionName: 'Imported MP4 as Asset' });
+                    resolve({ gifAsset, audioBlob, fps: extractedFps, projectName, width, height });
+                });
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
      * Begin interactive object creation process.
      */
     beginMakeInteractiveProcess = () => {
@@ -2407,92 +2448,68 @@ class EditorCore extends Component {
 
         // if an mp4 file then translate it before opening it
         try {
-            const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false })
+            const fps = Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12") || 6)));
+            const toastID = this.toast(`Loading ${file.name}…`, 'info', { autoClose: false });
 
-            // NOTE need to setup new project BEFORE loading mp4 (otherwise will still work but console will be loaded with error messages)
+            // NOTE: must set up the new project BEFORE importing so assets have
+            // somewhere to live (avoids stale-project console errors).
             this.setupNewProject();
             this.projectDidChange({ actionName: 'Reset project' });
+            this.showWaitOverlay();
 
-            this.showWaitOverlay() // disable clicking anywhere
+            // Extract frames + build GIF asset → adds everything to this.project
+            const { gifAsset, audioBlob, fps: extractedFps, projectName, width, height } =
+                await this.importMP4AsAsset({
+                    file,
+                    fps,
+                    onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p || 0)}%)` }),
+                });
 
-            // GET ALL FRAMES FROM MP4 (run through MP4 import function)
-            const { imageAssets, audioBlob, fps, projectName, width, height } =
-                await MP4ImportPure.importMP4AsSequence({
-                    mp4File: file,
-                    fps: Math.max(1, Math.min(60, Number(prompt("Enter FPS", "12") || 6))), // give user the option of FPS
-                    projectName: file.name.replace(".mp4", ''),
-                    onProgress: (msg, p) => this.updateToast(toastID, { text: `${msg} (${Math.round(p || 0)}%)` })
-                })
-
-            // set up new project
+            // Fit project to the video
             this.project.width = width;
             this.project.height = height;
-            this.project.framerate = fps;
+            this.project.framerate = extractedFps;
             this.project.name = projectName;
             this.projectDidChange({ actionName: 'Adjusted settings based on MP4' });
 
-            // add image assets to the current project
-            imageAssets.forEach(asset => this.project.addAsset(asset));
+            // Extend the root frame and place the clip on the canvas
+            this.project._children[1].activeFrame.end = this.project._children.length - 3;
 
-            // turn the sequence into an asset using the same system used by the GIF import ;-;
-            await new Promise(res => this.project.loadAssets(res))
-            await new Promise((resolve) => {
-                window.Wick.GIFAsset.fromImages(imageAssets, this.project, (gifAsset) => {
-                    gifAsset.name = projectName;
-                    gifAsset.filename = projectName;
-                    this.project.addAsset(gifAsset);
-                    // extend frame
-                    this.project._children[1].activeFrame.end = this.project._children.length - 3;
+            this.project.createClipInstanceFromAsset(gifAsset, this.project.width / 2, this.project.height / 2, (clip) => {
+                this.selectObject(clip);
+                this.setSelectionAttribute('animationType', 'playOnce');
+                this.setSelectionAttribute('isSynced', true);
+                this.clearSelection();
 
+                const tl = this.project.activeTimeline;
+                tl.layers[0].name = "video";
 
-                    // add the video asset into the project
-                    this.project.createClipInstanceFromAsset(gifAsset, this.project.width / 2, this.project.height / 2, (clip) => {
-                        this.selectObject(clip) // <-- select the object so we can adjust its settings
+                // Add the audio track if the video had audio
+                if (audioBlob) {
+                    tl.addLayer(new window.Wick.Layer());
+                    tl.layers[1].name = "audio";
+                    tl.layers[1].addFrame(new window.Wick.Frame());
+                    tl.layers[1].frames[0].end = tl.layers[0].frames[0].end;
 
-                        // set to synce and enable play once
-                        this.setSelectionAttribute('animationType', 'playOnce')
-                        this.setSelectionAttribute('isSynced', true)
+                    const audioFile = new File([audioBlob], projectName + ".wav", { type: 'audio/wav' });
+                    this.importFileAsAsset(audioFile, () => {
+                        this.project.loadAssets(() => {
+                            this.setActiveLayerIndex(1);
+                            this.addSoundToActiveFrame(this.project.assets[this.project.assets.length - 1]);
+                            this.setActiveLayerIndex(0);
+                        });
+                    });
+                }
 
-                        // unselect the mp4 clip guy
-                        this.clearSelection();
-
-                        const tl = this.project.activeTimeline;
-                        tl.layers[0].name = "video";
-
-                        // add in the audio file as well (if video has audio)
-                        if (audioBlob) {
-                            tl.addLayer(new window.Wick.Layer());
-                            tl.layers[1].name = "audio";
-                            tl.layers[1].addFrame(new window.Wick.Frame());
-                            tl.layers[1].frames[0].end = tl.layers[0].frames[0].end;
-                            // const soundObj = new window.Wick.Sound({ asset: this.project.assets[1]});
-
-                            const audioFile = new File([audioBlob], projectName + ".wav", { type: 'audio/wav' })
-                            this.importFileAsAsset(audioFile, () => {
-                                this.project.loadAssets(() => {
-                                    // wait for new audio asset to load in
-                                    this.setActiveLayerIndex(1);
-                                    this.addSoundToActiveFrame(this.project.assets[this.project.assets.length - 1])
-                                    this.setActiveLayerIndex(0);
-                                })
-                            })  // reuses existing audio import path
-                        }
-
-                        this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' })
-                        this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 })
-                        this.hideWaitOverlay()
-                        resolve()
-                    })
-
-                    // this.project._children[1].activeFrame._children[0]._isSynced = true;
-
-                })
-            })
+                this.projectDidChange({ actionName: 'Opened MP4 as GIF sequence' });
+                this.updateToast(toastID, { text: `:) Imported ${file.name}`, type: 'success', autoClose: 7000 });
+                this.hideWaitOverlay();
+            });
 
         } catch (err) {
-            console.error(err)
-            this.toast('Failed to import MP4.', 'error')
-            this.hideWaitOverlay()
+            console.error(err);
+            this.toast('Failed to import MP4.', 'error');
+            this.hideWaitOverlay();
         }
 
     }
