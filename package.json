@@ -22,7 +22,6 @@
     "file-saver": "^2.0.5",
     "gifuct-js": "^2.1.2",
     "localforage": "^1.10.0",
-    "mp4box": "^2.4.1",
     "pdfjs-dist": "^6.1.200",
     "react": "^16.13.1",
     "react-ace": "^14.0.1",
