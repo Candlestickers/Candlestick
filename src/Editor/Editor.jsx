@@ -284,6 +284,8 @@ class Editor extends EditorCore {
         this.lastUsedTool = 'cursor';
 
         this.builtinPreviews = {};
+
+        window.editor = this;
     }
 
     UNSAFE_componentWillMount = () => {
@@ -1413,6 +1415,7 @@ class Editor extends EditorCore {
                                                             openModal={this.openModal}
                                                             openImportAssetFileDialog={this.openImportAssetFileDialog}
                                                             selectObjects={this.selectObjects}
+                                                            selectFolder={this.selectFolder}
                                                             clearSelection={this.clearSelection}
                                                             isObjectSelected={this.isObjectSelected}
                                                             createAssets={this.createAssets}

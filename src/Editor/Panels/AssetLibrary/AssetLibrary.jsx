@@ -108,7 +108,7 @@ class AssetLibrary extends Component {
        key={folder.id}
        folder={folder}
        isSelected={this.state.selectedFolderId === folder.id}
-       onClick={() => this.selectFolder(folder.id)}
+       onClick={() => this.selectFolder(folder)}
        onOpen={() => this.openFolder(folder.id)}
        onDelete={() => this.deleteFolder(folder.id)}
        onDropAsset={(assetUuid) => this.assignAssetToFolder(assetUuid, folder.id)}
@@ -144,6 +144,11 @@ class AssetLibrary extends Component {
    * @param {string} folderId
    */
   deleteFolder = (folderId) => {
+    // The delete button only shows on a selected folder, so this folder is
+    // always the current engine selection — clear it so selectionType
+    // doesn't keep reporting 'folder' for something that no longer exists.
+    this.props.clearSelection();
+
     this.setState(prevState => {
       // Collect the folder and all of its descendant folders.
       let toDelete = new Set([folderId]);
@@ -180,6 +185,7 @@ class AssetLibrary extends Component {
    * @param {string} folderId
    */
   openFolder = (folderId) => {
+    this.props.clearSelection();
     this.setState({ currentFolderId: folderId, selectedFolderId: null });
   }
 
@@ -235,12 +241,13 @@ class AssetLibrary extends Component {
   }
 
   /**
-   * Selects a folder (mirrors asset selection so its buttons appear).
-   * @param {string} folderId
+   * Selects a folder (mirrors asset selection so its buttons appear, and
+   * lets the engine's selection.selectionType know a folder is selected).
+   * @param {object} folder
    */
-  selectFolder = (folderId) => {
-    this.props.clearSelection();
-    this.setState({ selectedFolderId: folderId });
+  selectFolder = (folder) => {
+    this.props.selectFolder(folder);
+    this.setState({ selectedFolderId: folder.id });
   }
 
   /**
