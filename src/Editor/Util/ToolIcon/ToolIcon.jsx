@@ -25,6 +25,7 @@ import iconBrush from 'resources/toolbar-icons/brush.svg';
 import iconCursor from 'resources/toolbar-icons/cursor.svg';
 import iconEllipse from 'resources/toolbar-icons/ellipse.svg';
 import iconRectangle from 'resources/toolbar-icons/rectangle.svg';
+import iconShape from 'resources/toolbar-icons/shape.svg';
 import iconLine from 'resources/toolbar-icons/line.svg';
 import iconPencil from 'resources/toolbar-icons/pencil.svg';
 import iconEyeDropper from 'resources/toolbar-icons/eyedropper.svg';
@@ -205,6 +206,7 @@ const icons = {
   "brush":iconBrush,
   "cursor":iconCursor,
   "ellipse":iconEllipse,
+  "shape":iconShape,
   "rectangle":iconRectangle,
   "line":iconLine,
   "pencil":iconPencil,

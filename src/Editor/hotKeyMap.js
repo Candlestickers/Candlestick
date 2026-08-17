@@ -81,6 +81,10 @@ class HotKeyInterface extends Object {
         name: "Activate Ellipse",
         sequences: ['o'],
       },
+      'activate-shape': {
+        name: "Activate shape",
+        sequences: ['h'],
+      },
       'activate-line': {
         name: "Activate Line",
         sequences: ['l'],
@@ -362,6 +366,7 @@ class HotKeyInterface extends Object {
         "activate-eraser",
         "activate-rectangle",
         "activate-ellipse",
+        "activate-shape",
         "activate-line",
         "activate-path-cursor", 
         "activate-text",
@@ -483,6 +488,7 @@ class HotKeyInterface extends Object {
       'activate-eraser': (() => this.editor.setActiveTool("eraser")),
       'activate-rectangle': (() => this.editor.setActiveTool("rectangle")),
       'activate-ellipse': (() => this.editor.setActiveTool("ellipse")),
+      'activate-shape': (() => this.editor.setActiveTool("shape")),
       'activate-line': (() => this.editor.setActiveTool("line")),
       'activate-text': (() => this.editor.setActiveTool("text")),
       'activate-fillbucket': (() => this.editor.setActiveTool("fillbucket")),

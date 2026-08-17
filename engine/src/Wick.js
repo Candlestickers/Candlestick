@@ -166,4 +166,5 @@ import './tools/None.js';
 import './tools/Pan.js';
 import './tools/PathCursor.js';
 import './tools/Pencil.js';
+import './tools/Shape.js';
 import './tools/Text.js';

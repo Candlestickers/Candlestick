@@ -53,7 +53,7 @@ class Toolbox extends Component {
       cursors: {active: 'cursor', options: ['cursor', 'pathcursor']},
       brushes: {active: 'brush', options: ['brush', 'pencil']},
       eraser: 'eraser',
-      shapes: {active: 'rectangle', options: ['rectangle', 'ellipse', 'line', 'text']},
+      shapes: {active: 'rectangle', options: ['rectangle', 'ellipse', 'line', 'text', 'shape']},
       tools: {active: 'fillbucket', options: ['fillbucket', 'eyedropper']}
     }
   }
@@ -96,6 +96,7 @@ class Toolbox extends Component {
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='eraser' tooltip="Eraser" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='rectangle' tooltip="Rectangle" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='ellipse' tooltip="Ellipse" />
+        <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='shape' tooltip="Shape" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='line' tooltip="Line" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='pathcursor' tooltip="Path Cursor" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='text' tooltip="Text" />
