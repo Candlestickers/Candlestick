@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 WICKLETS LLC
+ * Copyright 2026 Candlestickers
  *
  * This file is part of Wick Engine.
  *
@@ -37,10 +37,10 @@ import 'invert-color';
 import Timestamp from '../lib/timestamp.js';
 import convertRange from '../lib/convert-range.js';
 import Croquis from '../lib/croquis.js';
+import potrace from '../lib/potrace.cjs';
 import '../lib/soundcloud-waveform.js';
 import '../lib/roundRect.js';
 import '../lib/currentTransform.js';
-import '../lib/potrace.js';
 
 // Engine
 
@@ -54,44 +54,6 @@ import './ObjectCache.js';
 import './History.js';
 import './GlobalAPI.js';
 import './FileCache.js';
-
-// Base
-import './base/Base.js';
-import './base/Tickable.js';
-import './base/Clip.js';
-import './base/Project.js';
-import './base/Layer.js';
-import './base/Selection.js';
-import './base/Timeline.js';
-import './base/Tween.js';
-import './base/Path.js';
-import './base/Frame.js';
-import './base/Button.js';
-import './base/WickSound.js';
-
-// Base/asset
-import './base/asset/Asset.js';
-import './base/asset/FileAsset.js';
-import './base/asset/ClipAsset.js';
-import './base/asset/FontAsset.js';
-import './base/asset/ImageAsset.js';
-import './base/asset/SoundAsset.js';
-import './base/asset/SVGAsset.js';
-import './base/asset/GIFAsset.js';
-
-// Builtin assets
-import './builtinassets/BuiltinAssets.js';
-
-// View
-import './view/View.js';
-import './view/View.Clip.js';
-import './view/View.Button.js';
-import './view/View.Project.js';
-import './view/View.Selection.js';
-import './view/View.Timeline.js';
-import './view/View.Layer.js';
-import './view/View.Frame.js';
-import './view/View.Path.js';
 
 // paper-ext
 import './view/paper-ext/Layer.erase.js';
@@ -136,6 +98,44 @@ import './gui/FrameEdgeGhost.js';
 import './gui/FrameGhost.js';
 import './gui/SelectionBox.js';
 import './gui/TweenGhost.js';
+
+// Base
+import './base/Base.js';
+import './base/Tickable.js';
+import './base/Clip.js';
+import './base/Project.js';
+import './base/Layer.js';
+import './base/Selection.js';
+import './base/Timeline.js';
+import './base/Tween.js';
+import './base/Path.js';
+import './base/Frame.js';
+import './base/Button.js';
+import './base/WickSound.js';
+
+// Base/asset
+import './base/asset/Asset.js';
+import './base/asset/FileAsset.js';
+import './base/asset/ClipAsset.js';
+import './base/asset/FontAsset.js';
+import './base/asset/ImageAsset.js';
+import './base/asset/SoundAsset.js';
+import './base/asset/SVGAsset.js';
+import './base/asset/GIFAsset.js';
+
+// Builtin assets
+import './builtinassets/BuiltinAssets.js';
+
+// View
+import './view/View.js';
+import './view/View.Clip.js';
+import './view/View.Button.js';
+import './view/View.Project.js';
+import './view/View.Selection.js';
+import './view/View.Timeline.js';
+import './view/View.Layer.js';
+import './view/View.Frame.js';
+import './view/View.Path.js';
 
 // The 'export' folder
 import './export/ExportUtils.js';

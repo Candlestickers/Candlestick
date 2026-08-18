@@ -19,6 +19,7 @@
 
 const convertRange = require('../../lib/convert-range.js');
 const Croquis = require('../../lib/croquis.js');
+const potrace = require('../../lib/potrace.cjs')
 Wick.Tools.Brush = class extends Wick.Tool {
     static get CROQUIS_WAIT_AMT_MS () {
         return 30;
