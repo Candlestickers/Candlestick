@@ -23,17 +23,7 @@
 Wick.WickPM = class {
     constructor(){
         this.pkgs = [];
-        this.imports = [];
-    }
-
-    /**
-     * Initialise WickPM. This optimises the editor if WickPM is unused.
-     */
-    init(){
-        this.loader = document.createElement('script');
-        this.loader.type = 'module';
-        this.loader.id = "pkg-loader";
-        document.appendChild(this.loader)
+        this.imports = {};
     }
 
     /**
@@ -43,9 +33,20 @@ Wick.WickPM = class {
      * @param {string} version - (OPTIONAL) The version of the package. Defaults to latest.
      */
     install(pkg, imports, version = 'latest'){
-        version.replaceAll('.x', '')
-        let pkgStr = 'esm.sh/' + pkg + '@' + version;
-        this.loader.innerHTML += '\n import ' + imports + 'from ' + pkgStr + ';'
+        pkg.toLowerCase();
+        if (this.pkgs.some(pkg => pkg.pkg == pkg)) {console.log('Package already exists, exitings installer'); return;}
+        version.replaceAll('.x', '');
+        let pkgStr = 'https://' + 'esm.sh/' + pkg + '@' + version;
+        let mainStr = '\n import ' + imports + ' from "' + pkgStr + '";';
+        let importLoader = '\n window.editor.project.WickPM.imports.' + pkg + ' = ' + imports + ';';
+        let txt = this.loader.textContent;
+        if(this.loader) this.loader.remove();
+        this.loader = document.createElement('script');
+        this.loader.type = 'module';
+        this.loader.id = "pkg-loader";
+        document.head.appendChild(this.loader);
+        this.loader.textContent = txt + mainStr + importLoader;
+        this.pkgs.push({pkg: pkg, imports: imports, version: version});
     }
 
     /**

@@ -35,6 +35,7 @@ GlobalAPI = class {
             'onEvent',
             'hideCursor','showCursor',
             'hitTestOptions',
+            'imports',
         ];
     }
 
@@ -316,12 +317,17 @@ GlobalAPI = class {
         if(!this.scriptOwner.project) return null;
         this.scriptOwner.project.hideCursor = false;
     }
+
+    /**
+     * Returns WickPM's imports array.
+     */
+    get imports(){
+        return this.scriptOwner.project.WickPM.imports;
+    }
 }
 
 GlobalAPI.Random = class {
-    constructor () {
-
-    }
+    constructor () {}
 
     /**
      * Returns a random integer (whole number) between two given numbers, 0 and a given number, or 0 and 1. The random number is inclusive of the maximum range.
