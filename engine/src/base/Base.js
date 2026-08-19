@@ -659,4 +659,13 @@ Wick.Base = class {
             return false;
         }
     }
+
+    /**
+     * Add a custom API function to the class instance.
+     * @param {string} name - How to access the function.
+     * @param {function} fn - The function.
+     */
+    addAPIFunction(name, fn){
+        this[name] = fn;
+    }
 }
