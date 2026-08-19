@@ -170,7 +170,7 @@ Wick.Base = class {
      * Use this to copy entire Wick.Base objects between projects, and to export individual Clips as files.
      * @returns {object} The exported data.
      */
-    export () {
+    export() {
         var copy = this.copy();
         copy._project = this.project;
 
@@ -203,7 +203,7 @@ Wick.Base = class {
      * @param {object} exportData - an object created from Wick.Base.export().
      */
     static
-    import (exportData, project) {
+        import(exportData, project) {
         if (!exportData) console.error('Wick.Base.import(): exportData is required');
         if (!exportData.object) console.error('Wick.Base.import(): exportData is missing data');
         if (!exportData.children) console.error('Wick.Base.import(): exportData is missing data');
@@ -253,12 +253,12 @@ Wick.Base = class {
      * This is a temprary variable.
      * @type {boolean}
      */
-    get removed () {
+    get removed() {
         return typeof this._removed === 'undefined' ? false : this._removed;
     }
 
-    set removed (bool) {
-        this._removed = bool; 
+    set removed(bool) {
+        this._removed = bool;
     }
 
 
@@ -317,7 +317,7 @@ Wick.Base = class {
         if (this._identiferNameIsPartOfWickAPI(identifier)) return;
 
         // Make sure the identifier is a valid js variable name
-        if(!isVarName(identifier)) {
+        if (!isVarName(identifier)) {
             this.project && this.project.errorOccured('Identifier must be a valid variable name.');
             return;
         }
@@ -441,7 +441,7 @@ Wick.Base = class {
      * The top-level clip of this object.
      * @type {Wick.Clip}
      */
-    get topLevelClip () {
+    get topLevelClip() {
         let topLevelClip = this.parentClip;
 
         while (
@@ -541,7 +541,7 @@ Wick.Base = class {
             let result = 0;
             let old_index = this._children.indexOf(child);
             if (old_index < index) {
-                index --;
+                index--;
                 result = 1;
             }
             this._children.splice(index, 0, this._children.splice(old_index, 1)[0]);
@@ -584,7 +584,7 @@ Wick.Base = class {
      * Assets attached to this object.
      * @returns {Wick.Base[]}
      */
-    getLinkedAssets () {
+    getLinkedAssets() {
         // Implemented by Wick.Frame and Wick.Clip
         return [];
     }
@@ -662,10 +662,12 @@ Wick.Base = class {
 
     /**
      * Add a custom API function to the class instance.
-     * @param {string} name - How to access the function.
-     * @param {function} fn - The function.
+     * @param {string[]} names - How to access the function.
+     * @param {function[]} fn - The function.
      */
-    addAPIFunction(name, fn){
-        this[name] = fn;
+    addAPIFunction(names, fn) {
+        for (let f = 0; f < fn.length; f++) {
+            this[names[f]] = fn[f];
+        };
     }
 }
