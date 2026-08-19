@@ -28,10 +28,10 @@ import TWEEN from '@tweenjs/tween.js'
 import hull from 'hull';
 import localforage from 'localforage';
 import platform from 'platform';
-import 'floodfill';
+import invert from 'invert-color';
+import esprima from 'esprima';
 import * as Base64ArrayBuffer from 'base64-arraybuffer';
-import 'esprima';
-import 'invert-color';
+import 'floodfill';
 
 // Non-npm libraries
 import Timestamp from '../lib/timestamp.js';
@@ -54,6 +54,7 @@ import './ObjectCache.js';
 import './History.js';
 import './GlobalAPI.js';
 import './FileCache.js';
+import './WickPM.js';
 
 // paper-ext
 import './view/paper-ext/Layer.erase.js';

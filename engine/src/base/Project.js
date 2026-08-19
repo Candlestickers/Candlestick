@@ -99,6 +99,8 @@ Wick.Project = class extends Wick.Base {
 
         this._quadtree = new Wick.Quadtree(this.width, this.height);
 
+        this.WickPM = new Wick.WickPM();
+
         for (var toolName in this._tools) {
             this._tools[toolName].project = this;
         }
