@@ -17,7 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { Component } from 'react';
+import { Component } from 'react';
 import capitalize from 'Editor/Util/DataFunctions/capitalize';
 
 import classNames from 'classnames';

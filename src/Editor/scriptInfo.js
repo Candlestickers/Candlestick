@@ -303,6 +303,12 @@ class ScriptInfoInterface extends Object {
                     snippet: 'this.moveToLayer(n)',
                     description: 'Moves this object to another layer at the current playhead position.',
                     param: [{ name: 'n', type: 'number' }]
+                  },
+                  {
+                    name: 'addAPIFunction',
+                    snippet: 'this.addAPIFunction(["functionName"], [() => {}])',
+                    description: 'Adds custom functions to any instance of a class derived from Wick.Base.',
+                    param: [{ name: '["functionName"]', type: 'array' }, { name: '[() => {}]', type: 'array'}]
                   }
             ]
         );

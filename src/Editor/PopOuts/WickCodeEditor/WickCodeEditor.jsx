@@ -17,7 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
 import WickInput from 'Editor/Util/WickInput/WickInput';
 import { Rnd } from 'react-rnd';
