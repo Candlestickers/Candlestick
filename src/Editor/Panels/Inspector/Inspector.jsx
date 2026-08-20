@@ -36,17 +36,55 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
+import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
+import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
+// import ActionButton from 'Editor/Util/ActionButton/ActionButton';
+
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
+
+const BRUSH_SHAPES = [
+  { id: 'circle',     name: 'Circle',
+    svg: <circle cx="14" cy="14" r="12"/> },
+  { id: 'square',     name: 'Square',
+    svg: <rect x="2" y="2" width="24" height="24"/> },
+  { id: 'rect',       name: 'Flat',
+    svg: <rect x="2" y="9" width="24" height="10"/> },
+  { id: 'chisel',     name: 'Chisel',
+    svg: <ellipse cx="14" cy="14" rx="12" ry="3" transform="rotate(45 14 14)"/> },
+  { id: 'diamond',    name: 'Diamond',
+    svg: <polygon points="14,2 26,14 14,26 2,14"/> },
+  { id: 'triangle',   name: 'Triangle',
+    svg: <polygon points="14,2 26,26 2,26"/> },
+  { id: 'star',       name: 'Star',
+    svg: <polygon points="14,2 16.9,10 25.4,10.3 18.8,15.5 21.1,23.7 14,19 6.9,23.7 9.2,15.5 2.6,10.3 11.1,10"/> },
+  { id: 'sparkle',    name: 'Sparkle',
+    svg: <polygon points="14,1 15.4,12.6 27,14 15.4,15.4 14,27 12.6,15.4 1,14 12.6,12.6"/> },
+  { id: 'leaf',       name: 'Leaf',
+    svg: <path d="M14,2 Q26,14 14,26 Q2,14 14,2 Z"/> },
+  { id: 'rough',      name: 'Rough',
+    svg: <path d="M14,2 Q18,0 23,5 Q28,9 26,15 Q28,20 23,24 Q18,29 12,26 Q6,28 3,22 Q-1,17 3,11 Q5,5 10,2 Q12,1 14,2 Z"/> },
+  { id: 'scatter',    name: 'Scatter',
+    svg: <><circle cx="14" cy="14" r="4"/><circle cx="7" cy="8" r="3"/><circle cx="21" cy="8" r="2.5"/><circle cx="7" cy="20" r="3"/><circle cx="21" cy="20" r="2.5"/></> },
+  { id: 'cross',      name: 'Cross',
+    svg: <><rect x="12" y="2" width="4" height="24"/><rect x="2" y="12" width="24" height="4"/></> },
+  { id: 'crescent',   name: 'Crescent',
+    svg: <path d="M14,2 C6,5 2,10 2,14 C2,18 6,23 14,26 C12,22 10,18 10,14 C10,10 12,6 14,2 Z"/> },
+  { id: 'hexagon',    name: 'Hexagon',
+    svg: <polygon points="14,2 24.4,8 24.4,20 14,26 3.6,20 3.6,8"/> },
+  { id: 'softcircle', name: 'Soft',
+    svg: <><circle cx="14" cy="14" r="12" fillOpacity="0.2"/><circle cx="14" cy="14" r="8" fillOpacity="0.45"/><circle cx="14" cy="14" r="4"/></> },
+];
 
 class Inspector extends Component {
   constructor (props) {
     super(props);
 
     this.state = {
-      logs: []
+      logs: [],
+      showBrushModes: false,
     };
 
     this.handleConsoleLog = (log) => {
@@ -134,6 +172,7 @@ class Inspector extends Component {
     if(window.project.playing && this.consoleEndRef.current) {
       this.consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+
   }
 
 
@@ -930,6 +969,174 @@ class Inspector extends Component {
     )
   }
 
+  toggleBrushModes = () => {
+    this.setState({ showBrushModes: !this.state.showBrushModes });
+  }
+
+  closeBrushModes = () => {
+    this.setState({ showBrushModes: false });
+  }
+
+  renderBrushShapePicker = () => {
+    const currentShape = this.props.getToolSetting('brushShape');
+    return (
+      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
+        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
+            {BRUSH_SHAPES.map(shape => {
+              const active = currentShape === shape.id;
+              return (
+                <div
+                  key={shape.id}
+                  onClick={() => this.props.setToolSetting('brushShape', shape.id)}
+                  title={shape.name}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: '6px 2px',
+                    borderRadius: '5px',
+                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
+                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
+                  }}>
+                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
+                    <g fill="white">{shape.svg}</g>
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderBrushSettings = () => {
+    let brushModeIcon = 'brushmodenone';
+    let brushMode = this.props.getToolSetting('brushMode');
+    if (brushMode === 'inside') brushModeIcon = 'brushmodeinside';
+    else if (brushMode === 'outside') brushModeIcon = 'brushmodeoutside';
+
+    return (
+      <div>
+        {this.renderBrushShapePicker()}
+        {/* Sliders — same inspector-item wrapper as opacity/transform rows */}
+        <div className="inspector-item">
+          <InspectorNumericSlider
+            tooltip="Smoothing"
+            icon="brushsmoothness"
+            label="Lead"
+            val={this.props.getToolSetting('brushStabilizerWeight')}
+            onChange={(val) => this.props.setToolSetting('brushStabilizerWeight', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushStabilizerWeight')}
+            onReset={() => this.props.setToolSetting('brushStabilizerWeight', 20)}
+          />
+          <InspectorNumericSlider
+            tooltip="Resolution"
+            icon="brushresolution"
+            label="Reso"
+            val={this.props.getToolSetting('brushResolution')}
+            onChange={(val) => this.props.setToolSetting('brushResolution', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushResolution')}
+            onReset={() => this.props.setToolSetting('brushResolution', 0.25)}
+          />
+          <InspectorNumericSlider
+            tooltip="Spacing"
+            icon="brushspacing"
+            label="Link"
+            val={this.props.getToolSetting('brushSpacing')}
+            onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
+            onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
+          />
+          {this.props.getToolSetting('brushScatterEnabled') && (
+            <InspectorNumericSlider
+              tooltip="Scatter Amount"
+              icon="brushscatter"
+              label="Spread"
+              val={this.props.getToolSetting('brushScatterAmount')}
+              onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
+              inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
+              onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
+            />
+          )}
+        </div>
+        {/* Icon buttons — same as toolbar */}
+        <div className='settings-input-container' style={{ marginTop: '8px' }}>
+          <ToolSettingsInput
+            name='Enable Pressure'
+            icon='brushpressure'
+            type='checkbox'
+            value={this.props.getToolSetting('pressureEnabled')}
+            onChange={() => this.props.setToolSetting('pressureEnabled', !this.props.getToolSetting('pressureEnabled'))}
+          />
+          <ToolSettingsInput
+            name='Relative Brush Size'
+            icon='brushrelativesize'
+            type='checkbox'
+            value={this.props.getToolSetting('relativeBrushSize')}
+            onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
+          />
+          <ToolSettingsInput
+            name='Random Scatter'
+            icon='brushscatter'
+            type='checkbox'
+            value={this.props.getToolSetting('brushScatterEnabled')}
+            onChange={() => this.props.setToolSetting('brushScatterEnabled', !this.props.getToolSetting('brushScatterEnabled'))}
+          />
+          <ToolSettingsInput
+            name='Random Rotation'
+            icon='brushrandomrotation'
+            type='checkbox'
+            value={this.props.getToolSetting('brushRandomRotation')}
+            onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
+          />
+          <div id="inspector-brush-modes-popover-button">
+            <ToolSettingsInput
+              name='Brush Modes'
+              icon={brushModeIcon}
+              type='checkbox'
+              value={brushMode !== 'none'}
+              onChange={this.toggleBrushModes}
+            />
+            <PopupMenu
+              isOpen={this.state.showBrushModes}
+              toggle={this.closeBrushModes}
+              target="inspector-brush-modes-popover-button"
+              className="more-canvas-actions-popover">
+              <div className="brush-modes-widget">
+                <div className='actions-container'>
+                  <ToolSettingsInput
+                    name='None'
+                    icon='brushmodenone'
+                    type='checkbox'
+                    value={brushMode === 'none'}
+                    onChange={() => { this.props.setToolSetting('brushMode', 'none'); this.closeBrushModes(); }}
+                  />
+                  <ToolSettingsInput
+                    name='Inside'
+                    icon='brushmodeinside'
+                    type='checkbox'
+                    value={brushMode === 'inside'}
+                    onChange={() => { this.props.setToolSetting('brushMode', 'inside'); this.closeBrushModes(); }}
+                  />
+                  <ToolSettingsInput
+                    name='Outside'
+                    icon='brushmodeoutside'
+                    type='checkbox'
+                    value={brushMode === 'outside'}
+                    onChange={() => { this.props.setToolSetting('brushMode', 'outside'); this.closeBrushModes(); }}
+                  />
+                </div>
+              </div>
+            </PopupMenu>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /**
    * Renders a default selection view with no properties.
    */
@@ -1046,6 +1253,20 @@ class Inspector extends Component {
 
   render() {
     let selectionType = this.props.getSelectionType();
+
+    if (this.props.activeTool === 'brush') {
+      return (
+        <div className="docked-pane inspector" aria-label="Inspector Panel">
+          <div className="inspector-title-container">
+            <InspectorTitle type="" title="Brush Tools" />
+          </div>
+          <div className="inspector-body">
+            {this.renderBrushSettings()}
+          </div>
+        </div>
+      );
+    }
+
     return(
       <div className="docked-pane inspector" aria-label="Inspector Panel">
         {this.renderTitle(selectionType)}

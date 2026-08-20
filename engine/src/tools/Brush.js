@@ -34,11 +34,16 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this.name = 'brush';
 
-        this.BRUSH_POINT_SPACING = 0.2;
         this.BRUSH_STABILIZER_LEVEL = 3;
-        this.POTRACE_RESOLUTION = 1.0;
+        this.POTRACE_RESOLUTION = 1.0; // kept for reference; runtime value comes from getSetting('brushPotraceDetail')
 
         this.MIN_PRESSURE = 0.14;
+
+        this.TARGET_BRUSH_SIZE = 50;
+        this.MAX_RESOLUTION_FACTOR = 2;
+        this.resolutionFactor = 1;
+        this.canvasScaleFactor = 1; // Resolution: Greater or equal to 1
+        this.imageScaleFactor = 1; // Resolution: Lesser or equal to 1
 
         this.croquis = null;
         this.croquisDOMElement = null;
@@ -119,6 +124,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.croquisDOMElement.style.height = '100%';
             this.croquisDOMElement.style.display = 'block';
             this.croquisDOMElement.style.pointerEvents = 'none';
+
+            this.croquisDOMElement.querySelectorAll('canvas').forEach(canvasElement => {
+                canvasElement.style.width = '100%';
+                canvasElement.style.height = '100%';
+            });
         }
 
         this._isInProgress = false;
@@ -178,12 +188,25 @@ Wick.Tools.Brush = class extends Wick.Tool {
         clearTimeout(this._croquisStartTimeout);
         this._isInProgress = true;
 
+        var t = this.getSetting('brushResolution');
+        var smoothnessFactor = 0.05 + (Math.pow(t, 5) + 0.1*t*(1-t)) * 0.95;
+        this.resolutionFactor = this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * smoothnessFactor;
+        this.resolutionFactor = Math.min(Math.max(this.resolutionFactor, smoothnessFactor), this.MAX_RESOLUTION_FACTOR);
+        this.canvasScaleFactor = (this.resolutionFactor > 1) ? this.resolutionFactor : 1;
+        this.imageScaleFactor = (this.resolutionFactor < 1) ? this.resolutionFactor : 1;
         this._updateCanvasAttributes();
 
         // Update croquis params
-        this.croquisBrush.setSize(this._getRealBrushSize());
+        this.croquisBrush.setSize(this._getRealBrushSize() * this.canvasScaleFactor);
         this.croquisBrush.setColor(this.getSetting('fillColor').hex);
-        this.croquisBrush.setSpacing(this.BRUSH_POINT_SPACING);
+        this.croquisBrush.setSpacing(this.getSetting('brushSpacing'));
+        var brushShape = this.getSetting('brushShape');
+        this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
+        this.croquisBrush.setRotateToDirection(brushShape === 'chisel' || brushShape === 'leaf' || brushShape === 'rect');
+        var scatterAmount = this.getSetting('brushScatterEnabled') ? this.getSetting('brushScatterAmount') * 2.8 : 0;
+        this.croquisBrush.setNormalSpread(scatterAmount);
+        this.croquisBrush.setTangentSpread(scatterAmount);
+        this.croquisBrush.setRandomAngle(this.getSetting('brushRandomRotation'));
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
@@ -349,12 +372,168 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this._potraceCroquisCanvas(this._lastMousePoint);
     }
 
-    /* Generate a new circle cursor based on the brush size. */
+    /* Generate a cursor that matches the active brush shape. */
     _regenCursor () {
-        var size = (this._getRealBrushSize());
+        var size = this._getRealBrushSize();
         var color = this.getSetting('fillColor').hex;
-        this.cachedCursor = this.createDynamicCursor(color, size, this.getSetting('pressureEnabled'));
+        var transparent = this.getSetting('pressureEnabled');
+        var shape = this.getSetting('brushShape') || 'circle';
+        this.cachedCursor = this._createShapedCursor(color, size, transparent, shape);
         this.setCursor(this.cachedCursor);
+    }
+
+    _createShapedCursor (color, size, transparent, shape) {
+        // Use same coordinate system as _buildBrushTipCanvas (S = canvas dim)
+        var S = Math.max(Math.round(size) + 4, 10);
+        var canvas = document.createElement('canvas');
+        canvas.width = S;
+        canvas.height = S;
+        var ctx = canvas.getContext('2d');
+        var cx = S / 2, cy = S / 2, r = S / 2 - 2;
+        var PI2 = Math.PI * 2;
+        var i, a, rad, px, py;
+        var fillColor = color + '88';
+        var strokeColor = invert(color);
+
+        // Crescent needs compositing — handle separately
+        if (shape === 'crescent') {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, PI2);
+            if (!transparent) { ctx.fillStyle = fillColor; ctx.fill(); }
+            ctx.strokeStyle = transparent ? '#000000' : strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+            ctx.fillStyle = 'rgba(0,0,0,1)';
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.beginPath();
+            ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+            ctx.strokeStyle = transparent ? '#ffffff' : strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            if (transparent) {
+                // second pass: white inner outline
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 0.75;
+                ctx.stroke();
+            }
+            var hs0 = Math.round(S / 2);
+            return 'url(' + canvas.toDataURL() + ') ' + hs0 + ' ' + hs0 + ', default';
+        }
+
+        // All other shapes: build a single path then fill + stroke
+        ctx.beginPath();
+
+        switch (shape) {
+            case 'square':
+                ctx.rect(2, 2, S - 4, S - 4);
+                break;
+            case 'rect':
+                ctx.rect(2, Math.round(S * 0.3), S - 4, Math.round(S * 0.4));
+                break;
+            case 'chisel':
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(Math.PI / 4);
+                ctx.scale(1, 0.15);
+                ctx.arc(0, 0, r, 0, PI2);
+                ctx.restore();
+                break;
+            case 'diamond':
+                ctx.moveTo(cx, 2); ctx.lineTo(S-2, cy);
+                ctx.lineTo(cx, S-2); ctx.lineTo(2, cy);
+                ctx.closePath();
+                break;
+            case 'triangle':
+                ctx.moveTo(cx, 2); ctx.lineTo(S-2, S-2); ctx.lineTo(2, S-2);
+                ctx.closePath();
+                break;
+            case 'star':
+                for (i = 0; i < 10; i++) {
+                    a = (i * Math.PI / 5) - Math.PI / 2;
+                    rad = i % 2 === 0 ? r : r * 0.4;
+                    px = cx + Math.cos(a) * rad; py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            case 'sparkle':
+                for (i = 0; i < 8; i++) {
+                    a = (i * Math.PI / 4) - Math.PI / 2;
+                    rad = i % 2 === 0 ? r : r * 0.12;
+                    px = cx + Math.cos(a) * rad; py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            case 'leaf':
+                ctx.moveTo(cx, 2);
+                ctx.quadraticCurveTo(S-2, cy, cx, S-2);
+                ctx.quadraticCurveTo(2, cy, cx, 2);
+                ctx.closePath();
+                break;
+            case 'rough': {
+                var pts = [
+                    [0.50,0.02],[0.71,0.06],[0.89,0.20],[0.97,0.43],
+                    [0.95,0.65],[0.80,0.84],[0.60,0.97],[0.38,0.95],
+                    [0.17,0.83],[0.04,0.61],[0.06,0.36],[0.20,0.16]
+                ];
+                ctx.moveTo(pts[0][0]*S, pts[0][1]*S);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0]*S, pts[j][1]*S);
+                ctx.closePath();
+                break;
+            }
+            case 'scatter': {
+                // exact same dot layout as _buildBrushTipCanvas
+                var dots = [
+                    [0.50,0.50,0.16],[0.25,0.28,0.12],[0.74,0.24,0.10],
+                    [0.22,0.72,0.12],[0.74,0.73,0.10],[0.76,0.50,0.08]
+                ];
+                dots.forEach(function(d) {
+                    ctx.moveTo((d[0] + d[2]) * S, d[1] * S);
+                    ctx.arc(d[0]*S, d[1]*S, d[2]*S, 0, PI2);
+                });
+                break;
+            }
+            case 'cross': {
+                var t = S * 0.28;
+                ctx.rect(cx - t/2, 2, t, S-4);
+                ctx.rect(2, cy - t/2, S-4, t);
+                break;
+            }
+            case 'hexagon':
+                for (i = 0; i < 6; i++) {
+                    a = (i / 6) * PI2 - Math.PI / 2;
+                    px = cx + Math.cos(a) * r; py = cy + Math.sin(a) * r;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            default: // circle, softcircle
+                ctx.arc(cx, cy, r, 0, PI2);
+                break;
+        }
+
+        if (transparent) {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 0.75;
+            ctx.stroke();
+        } else {
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        var hotspot = Math.round(S / 2);
+        return 'url(' + canvas.toDataURL() + ') ' + hotspot + ' ' + hotspot + ', default';
     }
 
     /* Get the actual pixel size of the brush to send to Croquis. */
@@ -378,12 +557,21 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
         }
 
-        // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
-        var targetW = Math.round(this.paper.view.viewSize.width);
-        var targetH = Math.round(this.paper.view.viewSize.height);
+        // Scale the croquis canvas up by canvasScaleFactor so that brush coordinates map to
+        // the correct CSS position on screen
+        // the CSS display stays at 100:100% so the larger canvas is downsampled visually muhehe -H.A.
+        var targetW = Math.round(this.paper.view.viewSize.width * this.canvasScaleFactor);
+        var targetH = Math.round(this.paper.view.viewSize.height * this.canvasScaleFactor);
         if(this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
             this.croquis.setCanvasSize(targetW, targetH);
+            // setCanvasSize may recreate canvas elements — re-apply CSS so display stays at viewport size
+            this.croquisDOMElement.querySelectorAll('canvas').forEach(canvasElement => {
+                canvasElement.style.width = '100%';
+                canvasElement.style.height = '100%';
+            });
         }
+        this.croquisDOMElement.style.width = '100%';
+        this.croquisDOMElement.style.height = '100%';
 
         // Fake brush opacity in croquis by changing the opacity of the croquis canvas
         this.croquisDOMElement.style.opacity = this.getSetting('fillColor').a;
@@ -392,7 +580,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
     /* Convert a point in Croquis' canvas space to paper.js's canvas space. */
     _croquisToPaperPoint (croquisPoint) {
         var paperPoint = this.paper.view.projectToView(croquisPoint.x, croquisPoint.y);
-        return paperPoint;
+        return paperPoint.multiply(this.canvasScaleFactor);
     }
 
     /* Used for calculating the crop amount for potrace. */
@@ -414,8 +602,16 @@ Wick.Tools.Brush = class extends Wick.Tool {
     _calculateStrokeBounds (point) {
         // Forward mouse event to croquis canvas
         this._updateStrokeBounds(point);
-        // This prevents cropping out edges of the brush stroke
-        this.strokeBounds = this.strokeBounds.expand(this._getRealBrushSize());
+        // This prevents cropping out edges of the brush stroke.
+        // When scatter is enabled, stamps are displaced by up to
+        // scatterAmount * 1.4 * brushSize * canvasScaleFactor pixels beyond
+        // the raw mouse path, so we expand by that extra amount too.
+        var expand = this._getRealBrushSize();
+        if (this.getSetting('brushScatterEnabled')) {
+            var scatterAmount = this.getSetting('brushScatterAmount');
+            expand += scatterAmount * 1.4 * this._getRealBrushSize() * this.canvasScaleFactor;
+        }
+        this.strokeBounds = this.strokeBounds.expand(expand);
     }
 
     /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */
@@ -459,8 +655,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
             // (and crop out empty space using strokeBounds - this massively speeds up potrace)
             var croppedCanvas = document.createElement("canvas");
             var croppedCanvasCtx = croppedCanvas.getContext("2d");
-            croppedCanvas.width = strokeBounds.width;
-            croppedCanvas.height = strokeBounds.height;
+            croppedCanvas.width = strokeBounds.width * this.imageScaleFactor;
+            croppedCanvas.height = strokeBounds.height * this.imageScaleFactor;
             if(strokeBounds.x < 0) strokeBounds.x = 0;
             if(strokeBounds.y < 0) strokeBounds.y = 0;
             croppedCanvasCtx.drawImage(
@@ -470,7 +666,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
               0, 0, croppedCanvas.width, croppedCanvas.height);
 
             // Run potrace and add the resulting path to the project
-            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.POTRACE_RESOLUTION/this.paper.view.zoom);
+            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.paper.view.zoom);
             var potracePath = this.paper.project.importSVG(svg);
 
             potracePath.fillColor = this.getSetting('fillColor').rgba;
@@ -478,6 +674,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
             potracePath.position.y += this.paper.view.bounds.y;
             potracePath.position.x += strokeBounds.x / this.paper.view.zoom;
             potracePath.position.y += strokeBounds.y / this.paper.view.zoom;
+            potracePath.scale(1 / this.resolutionFactor, this.paper.view.bounds.topLeft);
             potracePath.remove();
             potracePath.closed = true;
             potracePath.children[0].closed = true;
@@ -548,5 +745,164 @@ Wick.Tools.Brush = class extends Wick.Tool {
         result = result[booleanOpName](mask);
         result.remove();
         return result;
+    }
+
+    /**
+     * Build a canvas stamp for a given brush shape name.
+     * Returns null for 'circle' so Croquis uses its built-in drawCircle.
+     */
+    _buildBrushTipCanvas (shape) {
+        if (!shape || shape === 'circle') return null;
+
+        var S = 64;
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas.height = S;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        var cx = S / 2, cy = S / 2, r = S / 2 - 1;
+        var PI2 = Math.PI * 2;
+
+        switch (shape) {
+            case 'softcircle': {
+                var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                g.addColorStop(0,   'rgba(255,255,255,1.0)');
+                g.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+                g.addColorStop(0.75,'rgba(255,255,255,0.35)');
+                g.addColorStop(1,   'rgba(255,255,255,0.0)');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, S, S);
+                break;
+            }
+            case 'square':
+                ctx.fillRect(0, 0, S, S);
+                break;
+            case 'rect':
+                ctx.fillRect(0, Math.round(S * 0.3), S, Math.round(S * 0.4));
+                break;
+            case 'chisel': {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(Math.PI / 4);
+                ctx.scale(1, 0.15);
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, PI2);
+                ctx.fill();
+                ctx.restore();
+                break;
+            }
+            case 'diamond': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(S, cy);
+                ctx.lineTo(cx, S);
+                ctx.lineTo(0, cy);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'triangle': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(S, S);
+                ctx.lineTo(0, S);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'star': {
+                var outerR = r, innerR = r * 0.4;
+                ctx.beginPath();
+                for (var i = 0; i < 10; i++) {
+                    var a = (i * Math.PI / 5) - Math.PI / 2;
+                    var rad = i % 2 === 0 ? outerR : innerR;
+                    var px = cx + Math.cos(a) * rad;
+                    var py = cy + Math.sin(a) * rad;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'sparkle': {
+                var outerR2 = r, innerR2 = r * 0.12;
+                ctx.beginPath();
+                for (var i2 = 0; i2 < 8; i2++) {
+                    var a2 = (i2 * Math.PI / 4) - Math.PI / 2;
+                    var rad2 = i2 % 2 === 0 ? outerR2 : innerR2;
+                    var px2 = cx + Math.cos(a2) * rad2;
+                    var py2 = cy + Math.sin(a2) * rad2;
+                    i2 === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'leaf': {
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.quadraticCurveTo(S, cy, cx, S);
+                ctx.quadraticCurveTo(0, cy, cx, 0);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'rough': {
+                var pts = [
+                    [0.50,0.02],[0.71,0.06],[0.89,0.20],[0.97,0.43],
+                    [0.95,0.65],[0.80,0.84],[0.60,0.97],[0.38,0.95],
+                    [0.17,0.83],[0.04,0.61],[0.06,0.36],[0.20,0.16]
+                ];
+                ctx.beginPath();
+                ctx.moveTo(pts[0][0]*S, pts[0][1]*S);
+                for (var j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0]*S, pts[j][1]*S);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            case 'scatter': {
+                var dots = [
+                    [0.50,0.50,0.16],[0.25,0.28,0.12],[0.74,0.24,0.10],
+                    [0.22,0.72,0.12],[0.74,0.73,0.10],[0.76,0.50,0.08]
+                ];
+                dots.forEach(function(d) {
+                    ctx.beginPath();
+                    ctx.arc(d[0]*S, d[1]*S, d[2]*S, 0, PI2);
+                    ctx.fill();
+                });
+                break;
+            }
+            case 'cross': {
+                var t = S * 0.28;
+                ctx.fillRect(cx - t / 2, 0, t, S);
+                ctx.fillRect(0, cy - t / 2, S, t);
+                break;
+            }
+            case 'crescent': {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, PI2);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(cx + r * 0.35, cy, r * 0.78, 0, PI2);
+                ctx.fill();
+                break;
+            }
+            case 'hexagon': {
+                ctx.beginPath();
+                for (var k = 0; k < 6; k++) {
+                    var ha = (k / 6) * PI2 - Math.PI / 2;
+                    var hx = cx + Math.cos(ha) * r;
+                    var hy = cy + Math.sin(ha) * r;
+                    k === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+                }
+                ctx.closePath();
+                ctx.fill();
+                break;
+            }
+            default:
+                return null;
+        }
+
+        return canvas;
     }
 }

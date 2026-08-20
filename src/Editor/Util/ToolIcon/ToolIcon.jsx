@@ -56,6 +56,8 @@ import iconRelativeBrushSize from 'resources/tool-icons/relativebrush.png';
 import iconBrushModeNone from 'resources/tool-icons/brush-mode-none.png';
 import iconBrushModeInside from 'resources/tool-icons/brush-mode-inside.png';
 import iconBrushModeOutside from 'resources/tool-icons/brush-mode-outside.png';
+import iconBrushScatter from 'resources/tool-icons/brushscatter.svg';
+import iconBrushRandomRotation from 'resources/tool-icons/brushrandomrotation.svg';
 
 // Actions
 import iconAction from 'resources/tool-icons/action.svg';
@@ -117,6 +119,9 @@ import iconBrushSize from "resources/inspector-icons/property-icons/brushsize.sv
 import iconGapFillAmount from "resources/inspector-icons/property-icons/gapfillamount.png";
 import iconFillSmoothing from "resources/inspector-icons/property-icons/fillsmoothing.png";
 import iconBrushSmoothness from "resources/inspector-icons/property-icons/brushsmoothness.svg";
+import iconBrushResolution from "resources/inspector-icons/property-icons/brushresolution.svg";
+import iconBrushPotraceDetail from "resources/inspector-icons/property-icons/brushpotracedetail.svg";
+import iconBrushSpacing from "resources/inspector-icons/property-icons/brushspacing.svg";
 import iconCornerRadius from "resources/inspector-icons/property-icons/cornerradius.svg";
 import iconEase from "resources/inspector-icons/property-icons/ease.svg";
 import iconFillColor from "resources/inspector-icons/property-icons/fillcolor.svg";
@@ -228,8 +233,13 @@ const icons = {
   "breakApart": iconBreakApart,
   "breakApart-dark": iconBreakApartDark,
   "brushsmoothness": iconBrushSmoothness,
+  "brushresolution": iconBrushResolution,
+  "brushpotracedetail": iconBrushPotraceDetail,
+  "brushspacing": iconBrushSpacing,
   "brushpressure": iconBrushPressure,
   "brushrelativesize": iconRelativeBrushSize,
+  "brushscatter": iconBrushScatter,
+  "brushrandomrotation": iconBrushRandomRotation,
   "cornerradius": iconCornerRadius,
   "close": iconClose,
   "delete": iconDelete,
