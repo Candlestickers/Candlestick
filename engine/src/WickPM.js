@@ -34,12 +34,27 @@ Wick.WickPM = class {
      */
     install(pkg, imports, version = 'latest'){
         pkg.toLowerCase();
-        if (this.pkgs.some(pkg => pkg.pkg == pkg)) {console.log('Package already exists, exitings installer'); return;}
+        console.log(pkg, this.pkgs)
+        if (this.pkgs.some(pkgy => pkgy.pkg == pkg)) {console.log('Package already exists, exiting installer'); return;}
         version.replaceAll('.x', '');
         let pkgStr = 'https://' + 'esm.sh/' + pkg + '@' + version;
         let mainStr = '\n import ' + imports + ' from "' + pkgStr + '";';
-        let importLoader = '\n window.editor.project.WickPM.imports.' + pkg + ' = ' + imports + ';';
-        let txt = this.loader.textContent;
+        let importLoader = '', importAccessor = 'window.editor.project.WickPM.imports.';
+        if (!imports.includes('{')) importLoader = '\n' + importAccessor + imports + ' = ' + imports + ';';
+        else {
+            // remove whitespace and braces
+            imports.replaceAll(' ', '');
+            imports.replaceAll('    ', '');
+            imports.replaceAll('{', '');
+            imports.replaceAll('}', '');
+            const importArr = imports.split(',');
+            importArr.forEach((Import) => {
+                console.log(importArr, Import, imports)
+                importLoader += '\n' + importAccessor + pkg + ' = ' + '{...' + importAccessor + pkg + ',' + Import + ':' + Import + '}' + ';';
+            })
+            importLoader = '\n' + importAccessor + pkg + ' = ' + imports + ';';
+        }
+        let txt = this.loader && this.loader.textContent || '';
         if(this.loader) this.loader.remove();
         this.loader = document.createElement('script');
         this.loader.type = 'module';
