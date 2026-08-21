@@ -77,17 +77,28 @@ async function loadPathIntoEditor(editorThis, filePath) {
         const name = filePath.split('/').pop();
 
         // .WICK/ PROJECT FILE
+        const VIDEO_MIME = {
+            '.mp4': 'video/mp4', '.m4v': 'video/x-m4v',
+            '.mov': 'video/quicktime',
+            '.webm': 'video/webm',
+            '.ogv': 'video/ogg', '.ogg': 'video/ogg',
+            '.avi': 'video/x-msvideo',
+            '.mkv': 'video/x-matroska',
+            '.3gp': 'video/3gpp',
+            '.wmv': 'video/x-ms-wmv',
+        }
+        const videoExt = Object.keys(VIDEO_MIME).find(ext => name.endsWith(ext))
+
         if (
             name.endsWith('.wick') ||
-            name.endsWith('.mov') ||
-            name.endsWith('.mp4')
+            videoExt
         ) {
 
 
             const bytes = await readFile(filePath, { encoding: null })
             const blob = new Blob([bytes])
             const file = new File([blob], name, {
-                type: (name.endsWith('.wick') && 'application/zip') || (name.endsWith('.pdf') && 'application/pdf') || 'video/mp4'
+                type: (name.endsWith('.wick') && 'application/zip') || (videoExt && VIDEO_MIME[videoExt]) || 'video/mp4'
             });
 
 
@@ -249,7 +260,7 @@ class Editor extends EditorCore {
 
         // Wick Project File Input
         this.openProjectFileFromClient = window.createFileInput({
-            accept: '.zip, .wick, .mp4, .pdf',
+            accept: '.zip, .wick, video/*, .pdf',
             onChange: this.handleWickFileLoad,
         });
 
