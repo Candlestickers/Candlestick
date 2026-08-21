@@ -290,9 +290,6 @@ class Editor extends EditorCore {
     componentDidMount = async () => {
         document.title = `Candlestick ${this.editorVersion}`;
 
-        // Read the global Wick namespace after the loader completes
-        this.Wick = window.Wick;
-
         // Initialize "live" engine state
         this.project = new window.Wick.Project();
         this.attachErrorHandlers();
@@ -349,6 +346,7 @@ class Editor extends EditorCore {
         };
 
         console.log("Project Mounted");
+        this.project.WickPM.install();
         this.hidePreloader();
         this.onWindowResize();
         // onWindowResize() call above. second resize after a short delay to lets WebKit complete its paint before we recalculate panel sizes

@@ -35,8 +35,9 @@ Wick.WickPM = class {
     install(pkg, imports, version = 'latest') {
 
         if (pkg == undefined) { // no specific package is being installed, install them all
+            let prevTxt = ''
             this.pkgs.forEach((pkgy) => {
-                this._runInstaller(pkgy.loader.mainStr + pkgy.loader.importLoader);
+                this._runInstaller(prevTxt + pkgy.loader.mainStr + pkgy.loader.importLoader);
             });
             return;
         }
@@ -46,7 +47,6 @@ Wick.WickPM = class {
         version = version.replaceAll('.x', '');
         imports = imports.replaceAll(' ', '');
         imports = imports.replaceAll('    ', '');
-        console.log("pkg and pkgs:", pkg, this.pkgs)
 
         // check if package is installed
         if (this.pkgs.some(pkgy => pkgy.pkg == pkg)) {
