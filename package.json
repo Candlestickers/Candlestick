@@ -12,7 +12,7 @@
     "engine"
   ],
   "dependencies": {
-    "@ffmpeg/core": "^0.12.6",
+    "@ffmpeg/core": "0.12.9",
     "@ffmpeg/ffmpeg": "^0.12.6",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-fs": "^2.4.4",
@@ -55,7 +55,7 @@
     "copy-scripts": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && npm run copy-vendor-libs && npm run copy-ace-workers",
     "copy-ace-workers": "shx mkdir -p public/ace-workers && shx cp node_modules/ace-builds/src-noconflict/worker-javascript.js public/ace-workers/worker-javascript.js",
     "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs",
-    "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
+    "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
     "copy-vendor-libs": "shx mkdir -p public/vendor && shx cp node_modules/paper/dist/paper-core.min.js public/vendor/paper-core.min.js && shx cp node_modules/jquery/dist/jquery.min.js public/vendor/jquery.min.js && shx cp node_modules/jquery-mousewheel/jquery.mousewheel.min.js public/vendor/jquery.mousewheel.min.js && shx cp node_modules/pressure/dist/jquery.pressure.min.js public/vendor/jquery.pressure.min.js",
     "start": "npm run copy-scripts && vite dev",
     "build": "npm run copy-scripts && vite build && echo 'candlestickers.app' > ./build/CNAME",
