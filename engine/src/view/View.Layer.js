@@ -54,7 +54,8 @@ Wick.View.Layer = class extends Wick.View {
                 layer.locked = this.model.locked;
             }
 
-            if (this.mask != null && this.model.project.playing) {layer.clipped = this.masked; console.log('nonNull, playing')}
+            if (this.mask != null && this.model.project.playing) {layer.clipped = this.masked; this.mask.view.item.clipMask = true;}
+            else {layer.clipped = false; if (this.mask != null) {this.mask.view.item.clipMask = false;}};
         });
 
         // Add onion skinning, if necessary.
@@ -114,11 +115,11 @@ Wick.View.Layer = class extends Wick.View {
         mask.view.item.opacity = 0.2;
         if (this.model.project.playing) bool = true;
         this._masked = bool;
+        this._mask = mask;
         frames.forEach(frame => {
             frame.view.objectsLayer.clipped = bool;
             frame.view.objectsLayer.insertChild(0, mask.view.item);
-        })
-        this._mask = mask;
+        });
     }
 
     /**
