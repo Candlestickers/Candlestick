@@ -9,7 +9,7 @@
     "url": "https://github.com/Candlestickers/Candlestick"
   },
   "dependencies": {
-    "@ffmpeg/core": "^0.12.6",
+    "@ffmpeg/core": "0.12.9",
     "@ffmpeg/ffmpeg": "^0.12.6",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-fs": "^2.4.4",
@@ -49,8 +49,8 @@
     "winapp": "tauri build --target x86_64-pc-windows-gnu",
     "build-macapp": "tauri build --target universal-apple-darwin --verbose",
     "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
+    "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
     "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs",
-    "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
     "start": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && vite dev",
     "build": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && vite build && echo 'candlestickers.app' > ./build/CNAME",
     "build:nocname": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && vite build",
