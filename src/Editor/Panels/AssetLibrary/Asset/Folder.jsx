@@ -24,9 +24,9 @@ import ToolIcon from "Editor/Util/ToolIcon/ToolIcon";
 import ActionButton from "Editor/Util/ActionButton/ActionButton";
 import "./_asset.scss";
 
-const DROPPABLE_ASSET_TYPES = ["ImageAsset", "SoundAsset", "ClipAsset", "ButtonAsset", "SVGAsset", "FontAsset", "GIFAsset"];
-const FOLDER_TYPE = "Folder";
-const ACCEPT_TYPES = [...DROPPABLE_ASSET_TYPES, FOLDER_TYPE];
+export const DROPPABLE_ASSET_TYPES = ["ImageAsset", "SoundAsset", "ClipAsset", "ButtonAsset", "SVGAsset", "FontAsset", "GIFAsset"];
+export const FOLDER_TYPE = "Folder";
+export const ACCEPT_TYPES = [...DROPPABLE_ASSET_TYPES, FOLDER_TYPE];
 
 function Folder(props) {
   let icon = "folder";

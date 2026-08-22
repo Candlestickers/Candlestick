@@ -105,6 +105,11 @@ $filter-height: 40px;
   align-items: center;
 }
 
+.asset-library-folder-header-drop-target {
+  background-color: $editor-primary;
+  border: 2px solid $editor-green-highlight;
+}
+
 .asset-library-back-button {
   height: calc(#{$filter-height} * .5);
   width: calc(#{$filter-height} * .5);

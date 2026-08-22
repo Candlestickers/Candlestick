@@ -19,14 +19,45 @@
 
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import classNames from 'classnames';
+import { useDrop } from 'react-dnd';
 
 import Asset from './Asset/Asset';
-import Folder from './Asset/Folder';
+import Folder, { ACCEPT_TYPES, FOLDER_TYPE } from './Asset/Folder';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import WickInput from 'Editor/Util/WickInput/WickInput';
 import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 
 import './_assetlibrary.scss';
+
+/**
+ * The header shown above the asset grid while inside a folder. Doubles as
+ * a drop target: dropping an asset or folder here moves it out to the
+ * parent level, since there's otherwise no way to drag something out of
+ * the folder you're currently viewing.
+ */
+function FolderHeader(props) {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ACCEPT_TYPES,
+    drop: (item, monitor) => {
+      if (monitor.getItemType() === FOLDER_TYPE) {
+        props.onDropFolder(item.folderId);
+      } else {
+        props.onDropAsset(item.uuid);
+      }
+    },
+    collect: (monitor) => ({ isOver: monitor.isOver() }),
+  }), [props.onDropAsset, props.onDropFolder]);
+
+  return (
+    <div ref={drop} className={classNames("asset-library-folder-header", { "asset-library-folder-header-drop-target": isOver })}>
+      <button className="asset-library-back-button" onClick={props.onBack}>
+        <ToolIcon className="asset-library-back-icon" name="codeBack" />
+      </button>
+      <span className="asset-library-folder-header-title" title={props.folderPath}>{props.folderName}</span>
+    </div>
+  );
+}
 
 class AssetLibrary extends Component {
   constructor(props) {
@@ -274,14 +305,13 @@ class AssetLibrary extends Component {
               value={this.state.filterText}/>
           </div>
           {currentFolderId !== null &&
-            <div className="asset-library-folder-header">
-              <button
-                className="asset-library-back-button"
-                onClick={() => this.openFolder(currentFolder ? currentFolder.parentFolderId : null)}>
-                <ToolIcon className="asset-library-back-icon" name="codeBack" />
-              </button>
-              <span className="asset-library-folder-header-title" title={this.props.project.getAssetFolderPath(currentFolderId)}>{currentFolder ? currentFolder.name : ''}</span>
-            </div>
+            <FolderHeader
+              folderName={currentFolder ? currentFolder.name : ''}
+              folderPath={this.props.project.getAssetFolderPath(currentFolderId)}
+              onBack={() => this.openFolder(currentFolder ? currentFolder.parentFolderId : null)}
+              onDropAsset={(assetUuid) => this.assignAssetToFolder(assetUuid, currentFolder ? currentFolder.parentFolderId : null)}
+              onDropFolder={(draggedFolderId) => this.moveFolderToFolder(draggedFolderId, currentFolder ? currentFolder.parentFolderId : null)}
+            />
           }
           <div className="asset-library-asset-container">
             {visibleFolders.map(this.makeFolderNode)}
