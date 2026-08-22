@@ -118,7 +118,7 @@ Wick.ToolSettings = class {
     /**
      * Create a new ToolSettings object.
      */
-    constructor () {
+    constructor (project) {
         this._settings = {};
         this._onSettingsChangedCallback = () => {};
 
