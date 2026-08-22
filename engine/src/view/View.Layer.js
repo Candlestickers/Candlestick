@@ -53,6 +53,8 @@ Wick.View.Layer = class extends Wick.View {
             } else {
                 layer.locked = this.model.locked;
             }
+
+            if (this.mask != null && this.model.project.playing) {layer.clipped = this.masked; console.log('nonNull, playing')}
         });
 
         // Add onion skinning, if necessary.
@@ -61,13 +63,13 @@ Wick.View.Layer = class extends Wick.View {
         if (this.model.project &&
             this.model.project.onionSkinEnabled &&
             !this.model.project.playing &&
-            this.model.parentClip.isFocus){
-                this.addOnionSkin();
+            this.model.parentClip.isFocus) {
+            this.addOnionSkin();
         }
 
     }
 
-    addOnionSkin () {
+    addOnionSkin() {
         this.model.frames.filter(frame => {
             return frame.onionSkinned;
         }).forEach(frame => {
@@ -75,7 +77,7 @@ Wick.View.Layer = class extends Wick.View {
         });
     }
 
-    onionSkinFrame (frame) {
+    onionSkinFrame(frame) {
         var onionSkinSeekBackwards = this.model.project.onionSkinSeekBackwards;
         var onionSkinSeekForwards = this.model.project.onionSkinSeekForwards;
         var playheadPosition = this.model.project.focus.timeline.playheadPosition;
@@ -85,9 +87,9 @@ Wick.View.Layer = class extends Wick.View {
         this.onionSkinnedFramesLayers.push(frame.view.objectsLayer);
 
         var seek = 1;
-        if(frame.midpoint < playheadPosition) {
+        if (frame.midpoint < playheadPosition) {
             seek = onionSkinSeekBackwards;
-        } else if(frame.midpoint > playheadPosition) {
+        } else if (frame.midpoint > playheadPosition) {
             seek = onionSkinSeekForwards;
         }
 
@@ -98,5 +100,48 @@ Wick.View.Layer = class extends Wick.View {
 
         frame.view.objectsLayer.locked = true;
         frame.view.objectsLayer.opacity = opacity * this.model._opacity;
+    }
+
+    /**
+     * Makes a path the masking path on all frames.
+     * @param {Wick.Path} mask 
+     */
+    addMask(mask) {
+        if (!mask) return;
+        let frames = this.model.frames;
+        let bool = false;
+        mask.view.item.fillColor = new paper.Color('#bbffe5');
+        mask.view.item.opacity = 0.2;
+        if (this.model.project.playing) bool = true;
+        this._masked = bool;
+        frames.forEach(frame => {
+            frame.view.objectsLayer.clipped = bool;
+            frame.view.objectsLayer.insertChild(0, mask.view.item);
+        })
+        this._mask = mask;
+    }
+
+    /**
+     * The mask on this layer.
+     * @type {Wick.Path}
+     */
+    get mask(){
+        return this._mask || null;
+    }
+
+    set mask(mask){
+        this.addMask(mask);
+    }
+
+    /**
+     * Whether or not this layer has a mask.
+     * @type {boolean}
+     */
+    get masked(){
+        return this._masked || false;
+    }
+
+    set masked(bool){
+        this._masked = bool || false;
     }
 }
