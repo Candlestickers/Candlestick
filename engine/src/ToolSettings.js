@@ -122,7 +122,7 @@ Wick.ToolSettings = class {
         this._settings = {};
         this._onSettingsChangedCallback = () => {};
 
-        this.project = null
+        this.project = project || null;
 
         this.resetAllSettings();
         this.loadSettingsFromLocalstorage();
