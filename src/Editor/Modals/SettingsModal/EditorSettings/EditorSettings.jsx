@@ -36,7 +36,13 @@ class EditorSettings extends Component {
 
     this.state = {
       clipboardMode: localStorage.getItem('CandleClipboardMode') || 'wick',
-      frameSizeMode: localStorage.getItem('wickEditorFrameSizeMode') || 'normal',
+      frameSizeValue: (() => {
+        const stored = localStorage.getItem('wickEditorFrameSizeValue');
+        if (stored !== null) return parseInt(stored);
+        // migrate old string value
+        const legacy = localStorage.getItem('wickEditorFrameSizeMode');
+        return legacy === 'small' ? 0 : legacy === 'large' ? 100 : 50;
+      })(),
       fillGapsMethod: localStorage.getItem('wickEditorFillGapsMethod') || 'auto_extend',
     }
   }
@@ -126,8 +132,8 @@ class EditorSettings extends Component {
           <label className="editor-settings-group-title">Timeline</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img alt="" src={
-              this.state.frameSizeMode === 'small' ? iconFramesSmall :
-              this.state.frameSizeMode === 'large' ? iconFramesLarge :
+              this.state.frameSizeValue <= 25 ? iconFramesSmall :
+              this.state.frameSizeValue >= 75 ? iconFramesLarge :
               iconFramesNormal
             } style={{ height: '18px' }}/>
             Frame Size:
@@ -136,25 +142,28 @@ class EditorSettings extends Component {
             <input
               type="range"
               min="0"
-              max="2"
+              max="100"
               step="1"
-              value={{ small: 0, normal: 1, large: 2 }[this.state.frameSizeMode] ?? 1}
+              value={this.state.frameSizeValue}
               style={{ width: '100%', cursor: 'pointer' }}
               onChange={(e) => {
-                const mode = ['small', 'normal', 'large'][parseInt(e.target.value)];
-                this.setState({ frameSizeMode: mode });
-                localStorage.setItem('wickEditorFrameSizeMode', mode);
+                const v = parseInt(e.target.value);
+                this.setState({ frameSizeValue: v });
+                localStorage.setItem('wickEditorFrameSizeValue', v);
                 if (window.Wick && window.Wick.GUIElement) {
-                  if (mode === 'small') {
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
-                  } else if (mode === 'large') {
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+                  const G = window.Wick.GUIElement;
+                  let w, h;
+                  if (v <= 50) {
+                    const t = v / 50;
+                    w = Math.round(G.GRID_SMALL_CELL_WIDTH  + t * (G.GRID_NORMAL_CELL_WIDTH  - G.GRID_SMALL_CELL_WIDTH));
+                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
                   } else {
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+                    const t = (v - 50) / 50;
+                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH  + t * (G.GRID_LARGE_CELL_WIDTH  - G.GRID_NORMAL_CELL_WIDTH));
+                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
                   }
+                  G.GRID_DEFAULT_CELL_WIDTH  = w;
+                  G.GRID_DEFAULT_CELL_HEIGHT = h;
                 }
               }}
             />
