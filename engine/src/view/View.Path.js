@@ -50,7 +50,7 @@ Wick.View.Path = class extends Wick.View {
         this.importJSON(this.model.json);
 
         if(this.model.pathType == 'image') {
-            this.item.smoothing = this.model.project.toolSettings.getSetting('imageSmoothing')
+            this.item.smoothing = this.model.project.toolSettings.getSetting('imageSmoothing');
         };
 
         // Apply onion skin style if Needed
