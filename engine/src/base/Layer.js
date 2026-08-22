@@ -35,7 +35,7 @@ Wick.Layer = class extends Wick.Base {
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
         this.name = args.name || null;
 
-        this.clipped = null;
+        this.clipped = false;
     }
 
     _serialize (args) {
@@ -72,9 +72,14 @@ Wick.Layer = class extends Wick.Base {
      * The masking path on this layer.
      * @type {Wick.Path}
      */
+    get mask(){
+        return this.view.mask;
+    }
+
     set mask(mask){
         if (this.clipped == false) return;
         this.view.addMask(mask);
+        this.clipped = true;
     }
 
     /**
