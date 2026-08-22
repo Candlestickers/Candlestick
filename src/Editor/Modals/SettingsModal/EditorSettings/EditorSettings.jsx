@@ -132,32 +132,38 @@ class EditorSettings extends Component {
             } style={{ height: '18px' }}/>
             Frame Size:
           </div>
-          <WickInput
-            type="select"
-            value={this.state.frameSizeMode}
-            options={[
-              { label: 'Small',  value: 'small'  },
-              { label: 'Normal', value: 'normal' },
-              { label: 'Large',  value: 'large'  },
-            ]}
-            onChange={(val) => {
-              const mode = val.value;
-              this.setState({ frameSizeMode: mode });
-              localStorage.setItem('wickEditorFrameSizeMode', mode);
-              if (window.Wick && window.Wick.GUIElement) {
-                if (mode === 'small') {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
-                } else if (mode === 'large') {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
-                } else {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+          <div style={{ padding: '4px 2px 0' }}>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="1"
+              value={{ small: 0, normal: 1, large: 2 }[this.state.frameSizeMode] ?? 1}
+              style={{ width: '100%', cursor: 'pointer' }}
+              onChange={(e) => {
+                const mode = ['small', 'normal', 'large'][parseInt(e.target.value)];
+                this.setState({ frameSizeMode: mode });
+                localStorage.setItem('wickEditorFrameSizeMode', mode);
+                if (window.Wick && window.Wick.GUIElement) {
+                  if (mode === 'small') {
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+                  } else if (mode === 'large') {
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+                  } else {
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
+                    window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
+              <span>Small</span>
+              <span>Normal</span>
+              <span>Large</span>
+            </div>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
             <img alt="" src={
               this.state.fillGapsMethod === 'blank_frames'
