@@ -158,10 +158,10 @@ class EditorSettings extends Component {
                 }
               }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
-              <span>Small</span>
-              <span>Normal</span>
-              <span>Large</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+              <img alt="Small"  src={iconFramesSmall}  style={{ height: '16px', opacity: 0.6 }} />
+              <img alt="Normal" src={iconFramesNormal} style={{ height: '16px', opacity: 0.6 }} />
+              <img alt="Large"  src={iconFramesLarge}  style={{ height: '16px', opacity: 0.6 }} />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
