@@ -131,6 +131,12 @@ class ActionMapInterface extends Object {
         action: this.editor.breakApartSelection,
         id: 'action-break-apart',
       },
+      exportSelectionAsWickobj: {
+        //icon: 'export-dark',
+        tooltip: 'Export as .wickobj file',
+        action: this.editor.exportSelectedClip,
+        id: 'action-export-selection-as-wickobj',
+      },
       addTweenToSelection: {
         icon: 'addTween',
         tooltip: 'Add Tween to Frame(NYI)',
