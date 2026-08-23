@@ -173,7 +173,7 @@ class EditorSettings extends Component {
                   G.GRID_DEFAULT_CELL_WIDTH  = w;
                   G.GRID_DEFAULT_CELL_HEIGHT = h;
                   // below value 15, hide the content dots
-                  G.HIDE_CONTENT_DOTS = v < 30;
+                  G.HIDE_CONTENT_DOTS = v < 15;
                 }
               }}
             />
