@@ -43,14 +43,6 @@ Wick.Path = class extends Wick.Base {
             this.json = new paper.Path({ insert: false }).exportJSON({ asString: false });
         }
 
-        if (this.view.item instanceof paper.TextItem) {
-            this._pathType = 'text'
-        } else if (this.view.item instanceof paper.Raster) {
-            this._pathType = 'image';
-        } else {
-            this._pathType = 'path';
-        }
-
         this.needReimport = true;
     }
 
@@ -141,7 +133,13 @@ Wick.Path = class extends Wick.Base {
      * @returns {string}
      */
     get pathType() {
-        return this._pathType;
+        if (this.view.item instanceof paper.TextItem) {
+            return 'text';
+        } else if (this.view.item instanceof paper.Raster) {
+            return 'image';
+        } else {
+            return 'path';
+        }
     }
 
     /**

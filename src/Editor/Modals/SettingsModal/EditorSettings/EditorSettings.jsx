@@ -55,13 +55,6 @@ class EditorSettings extends Component {
     return (
       <div className="editor-settings-modal-body">
         <div className="editor-settings-group">
-          <label htmlFor="image-smoothing" className="editor-settings-group-title">Image Smoothing</label>
-            <WickInput
-              type="checkbox"
-              id="image-smoothing"
-              checked={this.props.getToolSetting('imageSmoothing')}
-              onChange={(bool) => {this.props.setToolSetting('imageSmoothing', bool.target.checked)}}
-            />
           <label htmlFor="clipboard-mode" className="editor-settings-group-title">Clipboard</label>
             Mode:
             <WickInput

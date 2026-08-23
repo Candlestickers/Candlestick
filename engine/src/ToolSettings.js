@@ -104,10 +104,6 @@ Wick.ToolSettings = class {
             name: 'forwardOnionSkinTint',
             default: new Wick.Color('rgba(0, 0, 255, .5)'),
         }, {
-            type: "boolean",
-            name: "imageSmoothing",
-            default: true
-        }, {
             type: "choice",
             name: 'brushMode',
             default: 'none',
@@ -118,11 +114,9 @@ Wick.ToolSettings = class {
     /**
      * Create a new ToolSettings object.
      */
-    constructor (project) {
+    constructor () {
         this._settings = {};
         this._onSettingsChangedCallback = () => {};
-
-        this.project = project || null;
 
         this.resetAllSettings();
         this.loadSettingsFromLocalstorage();

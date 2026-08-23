@@ -28,6 +28,7 @@ Wick.Project = class extends Wick.Base {
      * @param {number} height - Project height in pixels. Default 480.
      * @param {number} framerate - Project framerate in frames-per-second. Default 12.
      * @param {Color} backgroundColor - Project background color in hex. Default #ffffff.
+     * @param {boolean} imageSmoothing - Whether to apply smoothing to project's images.
      */
     constructor(args) {
         if (!args) args = {};
@@ -38,6 +39,7 @@ Wick.Project = class extends Wick.Base {
         this._height = args.height || 480;
         this._framerate = args.framerate || 12;
         this._backgroundColor = args.backgroundColor || new Wick.Color('#ffffff');
+        this._imageSmoothing = (typeof args.imageSmoothing === 'boolean') ? args.imageSmoothing : true;
         this._hitTestOptions = this.getDefaultHitTestOptions();
 
         this.pan = { x: 0, y: 0 };
@@ -105,7 +107,7 @@ Wick.Project = class extends Wick.Base {
 
         this.activeTool = 'cursor';
 
-        this._toolSettings = new Wick.ToolSettings(this);
+        this._toolSettings = new Wick.ToolSettings();
         this._toolSettings.onSettingsChanged((name, value) => {
             if (name === 'fillColor') {
                 this.selection.fillColor = value.rgba;
@@ -227,6 +229,7 @@ Wick.Project = class extends Wick.Base {
         this.height = data.height;
         this.framerate = data.framerate;
         this.backgroundColor = new Wick.Color(data.backgroundColor);
+        this.imageSmoothing = data.imageSmoothing;
 
         this._focus = data.focus;
 
@@ -248,6 +251,7 @@ Wick.Project = class extends Wick.Base {
         data.width = this.width;
         data.height = this.height;
         data.backgroundColor = this.backgroundColor.rgba;
+        data.imageSmoothing = this.imageSmoothing;
         data.framerate = this.framerate;
 
         data.onionSkinEnabled = this.onionSkinEnabled
@@ -345,6 +349,19 @@ Wick.Project = class extends Wick.Base {
 
     set backgroundColor(backgroundColor) {
         this._backgroundColor = backgroundColor;
+    }
+
+    /**
+     * Whether to apply image smoothing to project's images.
+     * @type {boolean}
+     */
+    get imageSmoothing() {
+        return this._imageSmoothing;
+    }
+
+    set imageSmoothing(imageSmoothing) {
+        // Apply image smoothing for old projects
+        this._imageSmoothing = (typeof imageSmoothing === 'boolean') ? imageSmoothing : true;
     }
 
     get hitTestOptions() {
