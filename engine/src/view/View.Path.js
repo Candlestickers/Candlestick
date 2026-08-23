@@ -49,7 +49,7 @@ Wick.View.Path = class extends Wick.View {
 
         this.importJSON(this.model.json);
 
-        if(this.model.pathType == 'image') {
+        if(this.item instanceof this.paper.Raster) {
             this.item.smoothing = this.model.project.imageSmoothing;
         };
 
