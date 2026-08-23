@@ -109,7 +109,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             ctx.restore();
         }
 
-        if(this.model.tweens.length === 0 && !this.model.sound) {
+        if(this.model.tweens.length === 0 && !this.model.sound && !Wick.GUIElement.HIDE_CONTENT_DOTS) {
             // Frame contentful dot
 
             ctx.fillStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
