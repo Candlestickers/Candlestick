@@ -34,8 +34,6 @@ Wick.Layer = class extends Wick.Base {
         this.hidden = args.hidden === undefined ? false : args.hidden;
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
         this.name = args.name || null;
-
-        this.clipped = false;
     }
 
     _serialize (args) {
@@ -44,7 +42,7 @@ Wick.Layer = class extends Wick.Base {
         data.locked = this.locked;
         data.hidden = this.hidden;
         data.opacity = this.opacity;
-        data.clipped = this.clipped;
+        data._maskUUID = this.view._maskUUID || null;
 
         return data;
     }
@@ -55,7 +53,7 @@ Wick.Layer = class extends Wick.Base {
         this.locked = data.locked;
         this.hidden = data.hidden;
         this.opacity = data.opacity;
-        this.clipped = data.clipped;
+        this.view._maskUUID = data._maskUUID || null;
     }
 
     get classname () {
@@ -79,7 +77,6 @@ Wick.Layer = class extends Wick.Base {
     }
 
     set mask(mask){
-        this.clipped = !!mask;
         this.view.addMask(mask);
     }
 
