@@ -7,8 +7,29 @@
     "lib": "lib",
     "test": "tests"
   },
+  "dependencies": {
+    "@tweenjs/tween.js": "^17.4.0",
+    "base64-arraybuffer": "^0.2.0",
+    "esprima": "^4.0.1",
+    "floodfill": "^2.1.1",
+    "howler": "^2.1.1",
+    "hull": "AndriiHeonia/hull",
+    "invert-color": "^2.0.0",
+    "is-var-name": "^2.0.0",
+    "jquery": "^3.3.1",
+    "jquery-mousewheel": "^3.1.13",
+    "jszip": "^3.1.5",
+    "lerp": "^1.0.3",
+    "localforage": "1.7.3",
+    "paper": "^0.12.4",
+    "platform": "^1.3.5",
+    "pressure": "^2.1.2",
+    "quadtree-lib": "^1.0.9",
+    "uuid": "^14.0.1"
+  },
   "scripts": {
-    "generate-docs": "jsdoc -c jsdocs.json -r src/ -d docs/; cp -r docs/* ../../wick-editor-docs/; cd ../../wick-editor-docs; git add .; git commit -m 'update docs'; git push --force;"
+    "build-engine": "rolldown -c && node ./postbuild.mjs && shx cp -r ./dist/. ../public/corelibs/wick-engine/",
+    "generate-docs": "jsdoc -c jsdocs.json -r src/ -d docs/; cp -r docs/* ../../wick-editor-docs/; cd ../../wick-editor-docs;"
   },
   "repository": {
     "type": "git",
@@ -21,13 +42,7 @@
   },
   "homepage": "https://github.com/Wicklets/wick-engine#readme",
   "devDependencies": {
-    "@babel/core": "^7.1.2",
-    "gulp": "^4.0.0",
-    "gulp-babel": "^8.0.0-beta.2",
-    "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.5",
-    "gulp-rename": "^1.4.0",
-    "gulp-uglify": "^3.0.1",
-    "jsdoc": "^3.6.4"
+    "jsdoc": "^4.0.5",
+    "rolldown": "^1.2.1"
   }
 }

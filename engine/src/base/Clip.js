@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+const hull = require('hull');
 /**
  * A class representing a Wick Clip.
  */
@@ -389,6 +389,8 @@ Wick.Clip = class extends Wick.Tickable {
      * Remove this clip from its parent frame.
      */
     remove() {
+        if (this.parentLayer && this.parentLayer.mask === this) this.parentLayer.view.clearMask();
+
         // Don't attempt to remove if the object has already been removed.
         // (This is caused by calling remove() multiple times on one object inside a script.)
         if (!this.parent || this._willBeRemoved) return;

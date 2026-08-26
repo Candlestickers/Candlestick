@@ -53,6 +53,10 @@ Wick.View.Layer = class extends Wick.View {
             } else {
                 layer.locked = this.model.locked;
             }
+
+            if (this.mask != null) {
+                this._updateMask(this.mask, false);
+            }
         });
 
         // Add onion skinning, if necessary.
@@ -61,13 +65,13 @@ Wick.View.Layer = class extends Wick.View {
         if (this.model.project &&
             this.model.project.onionSkinEnabled &&
             !this.model.project.playing &&
-            this.model.parentClip.isFocus){
-                this.addOnionSkin();
+            this.model.parentClip.isFocus) {
+            this.addOnionSkin();
         }
 
     }
 
-    addOnionSkin () {
+    addOnionSkin() {
         this.model.frames.filter(frame => {
             return frame.onionSkinned;
         }).forEach(frame => {
@@ -75,7 +79,7 @@ Wick.View.Layer = class extends Wick.View {
         });
     }
 
-    onionSkinFrame (frame) {
+    onionSkinFrame(frame) {
         var onionSkinSeekBackwards = this.model.project.onionSkinSeekBackwards;
         var onionSkinSeekForwards = this.model.project.onionSkinSeekForwards;
         var playheadPosition = this.model.project.focus.timeline.playheadPosition;
@@ -85,9 +89,9 @@ Wick.View.Layer = class extends Wick.View {
         this.onionSkinnedFramesLayers.push(frame.view.objectsLayer);
 
         var seek = 1;
-        if(frame.midpoint < playheadPosition) {
+        if (frame.midpoint < playheadPosition) {
             seek = onionSkinSeekBackwards;
-        } else if(frame.midpoint > playheadPosition) {
+        } else if (frame.midpoint > playheadPosition) {
             seek = onionSkinSeekForwards;
         }
 
@@ -98,5 +102,111 @@ Wick.View.Layer = class extends Wick.View {
 
         frame.view.objectsLayer.locked = true;
         frame.view.objectsLayer.opacity = opacity * this.model._opacity;
+    }
+
+    /**
+     * Makes a path or clip the masking object on all frames.
+     * @param {Wick.Path|Wick.Clip} mask
+     */
+    addMask(mask) {
+        if (!mask) {
+            this.clearMask();
+            return;
+        }
+        this._maskUUID = mask.uuid;
+        this._updateMask(mask, true);
+    }
+
+    /**
+     * Removes the mask from this layer.
+     */
+    clearMask() {
+        this._maskUUID = null;
+        this.model.frames.forEach(frame => {
+            if (frame.view._mask) {
+                frame.view._mask.remove();
+                frame.view._mask = null;
+            }
+            frame.view.objectsLayer.clipped = false;
+        });
+    }
+
+    /**
+     * Updates the mask in all frames in the layer.
+     * @param {Wick.Path|Wick.Clip} mask - The masking object.
+     * @param {boolean} full - If true, reclone every frame's mask item.
+     * Else, sync the transforms of each frame's existing mask, and
+     * clone new ones for frames that don't have one yet
+     */
+    _updateMask(mask, full) {
+        const maskItem = mask.view.item || mask.view.group;
+        const bool = this.model.project.playing;
+        const isPath = maskItem.className === 'Path' || maskItem.className === 'CompoundPath';
+        const homeFrame = mask.parentFrame;
+
+        if (!homeFrame || this.model.frames.indexOf(homeFrame) === -1) {
+            this.clearMask();
+            return;
+        }
+
+        this.model.frames.forEach(frame => {
+            let item;
+
+            if (frame === homeFrame) {
+                item = maskItem;
+                frame.view._mask = null;
+            } else {
+                item = frame.view._mask;
+
+                if (full || !item) {
+                    item = maskItem.clone();
+                    // Excluded from Frame.view's model reconciliation, so this clone never gets captured as a brand-new path.
+                    item.data.wickType = 'gui';
+                    frame.view._mask = item;
+                } else {
+                    if (isPath) item.pathData = maskItem.pathData;
+                    item.matrix.set(maskItem.matrix);
+                }
+            }
+
+            if (!bool) {
+                if (isPath) item.fillColor = new paper.Color('#bbffe5');
+                item.opacity = 0.4;
+            }
+            this._setClipMask(item, bool);
+
+            var objectsLayer = frame.view.objectsLayer;
+            if (objectsLayer.children[0] !== item) objectsLayer.insertChild(0, item);
+            if (objectsLayer.clipped !== bool) objectsLayer.clipped = bool;
+        });
+    }
+
+    /**
+     * Sets an item's clipMask flag without triggering paper.js's nulling fillColor/strokeColor on enable.
+     * @param {paper.Item} item
+     * @param {boolean} value
+     */
+    _setClipMask(item, value) {
+        if (item.className === 'Group') {
+            if (item._clipMask !== value) {
+                item._clipMask = value;
+                item._changed(257);
+                if (item._parent) item._parent._changed(2048);
+            }
+        } else {
+            item.clipMask = value;
+        }
+    }
+
+    /**
+     * The mask on this layer.
+     * @type {Wick.Path|Wick.Clip}
+     */
+    get mask() {
+        return this._maskUUID ? Wick.ObjectCache.getObjectByUUID(this._maskUUID) : null;
+    }
+
+    set mask(mask) {
+        this.addMask(mask);
     }
 }
