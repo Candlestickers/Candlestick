@@ -79,7 +79,7 @@ Wick.Layer = class extends Wick.Base {
     }
 
     set mask(mask){
-        this.clipped = true;
+        this.clipped = !!mask;
         this.view.addMask(mask);
     }
 
