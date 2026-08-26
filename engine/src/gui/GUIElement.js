@@ -243,7 +243,7 @@ if (_savedFrameSizeValue !== null) {
         _h = Math.round(_G.GRID_NORMAL_CELL_HEIGHT + _t * (_G.GRID_LARGE_CELL_HEIGHT - _G.GRID_NORMAL_CELL_HEIGHT));
     }
     _G.GRID_DEFAULT_CELL_WIDTH = _w;
-    _G.GRID_DEFAULT_CELL_HEIGHT = _h;
+    _G.GRID_DEFAULT_CELL_HEIGHT = Math.max(_h, 30);
     _G.HIDE_CONTENT_DOTS = _v < 15;
 } else {
     const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');

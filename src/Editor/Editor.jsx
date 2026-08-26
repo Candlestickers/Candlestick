@@ -543,7 +543,7 @@ class Editor extends EditorCore {
                     h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
                 }
                 G.GRID_DEFAULT_CELL_WIDTH = w;
-                G.GRID_DEFAULT_CELL_HEIGHT = h;
+                G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
                 G.HIDE_CONTENT_DOTS = v < 15;
             }
         }
