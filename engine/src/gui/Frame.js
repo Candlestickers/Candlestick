@@ -109,7 +109,9 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             ctx.restore();
         }
 
-        if(this.model.tweens.length === 0 && !this.model.sound && !Wick.GUIElement.HIDE_CONTENT_DOTS) {
+        var _hideDot = this.model.identifier // avoid overlapping name label
+                   || (Wick.GUIElement.HIDE_CONTENT_DOTS && !this.model.contentful); // at xsmall, only hide empty-frame dots
+        if(this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
             // Frame contentful dot
 
             ctx.fillStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
