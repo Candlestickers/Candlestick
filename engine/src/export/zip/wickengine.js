@@ -59307,6 +59307,8 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
 
   _mouseOverFrameEdge() {
     var widthPx = this.model.length * this.gridCellWidth;
+    var _hcw = this.gridCellWidth;
+    if (_hcw <= 16 && !this.model.isSelected) return null;
     var handlePx = Wick.GUIElement.FRAME_HANDLE_WIDTH;
     if (this.project.frameSizeMode === 'small') handlePx *= 0.5;
 

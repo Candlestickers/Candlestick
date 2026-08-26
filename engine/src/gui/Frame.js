@@ -237,6 +237,8 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         // Scale handle hit-area proportionally to cell width (capped at 0.5× below small)
         var _hcw = this.gridCellWidth;
         var _hG = Wick.GUIElement;
+        // At very small cell widths, disable edge resize for unselected frames
+        if (_hcw <= 16 && !this.model.isSelected) return null;
         var _hScale = Math.min(1, _hcw / _hG.GRID_NORMAL_CELL_WIDTH);
         var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
 
