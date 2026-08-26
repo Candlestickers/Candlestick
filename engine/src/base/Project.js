@@ -1247,6 +1247,19 @@ orderDynamicFrames() {
             return;
         }
 
+        // If any selected object is currently acting as its layer's mask,
+        // unmask it first so it wraps as a normal, unclipped object (avoids
+        // wrapping stale clip-mask state into the new clip), then re-apply
+        // the mask to the newly-created clip afterward.
+        var maskedLayers = [];
+        this.selection.getSelectedObjects('Canvas').forEach(object => {
+            var layer = object.parentLayer;
+            if (layer && layer.mask === object) {
+                maskedLayers.push(layer);
+                layer.mask = null;
+            }
+        });
+
         let clip;
 
         if (args.type === 'Button') {
@@ -1273,6 +1286,11 @@ orderDynamicFrames() {
 
         // Add the clip to the frame prior to adding objects.
         this.activeFrame.addClip(clip);
+
+        // The new clip takes over as the mask for any layer we unmasked above.
+        maskedLayers.forEach(layer => {
+            layer.mask = clip;
+        });
 
         // TODO add to asset library
         this.selection.clear();

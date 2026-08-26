@@ -109,10 +109,29 @@ Wick.View.Layer = class extends Wick.View {
      * @param {Wick.Path|Wick.Clip} mask
      */
     addMask(mask) {
-        if (!mask) return;
+        if (!mask) {
+            this.clearMask();
+            return;
+        }
         this._masked = !!this.model.project.playing;
         this._maskUUID = mask.uuid;
         this._updateMask(this._maskViewItem(this.mask), true);
+    }
+
+    /**
+     * Removes the mask from this layer, restoring every frame's clip item
+     * (real or clone) to a normal, unclipped state.
+     */
+    clearMask() {
+        this._maskUUID = null;
+        this._masked = false;
+        this.model.frames.forEach(frame => {
+            if (frame.view._mask) {
+                frame.view._mask.remove();
+                frame.view._mask = null;
+            }
+            frame.view.objectsLayer.clipped = false;
+        });
     }
 
     /**
@@ -136,6 +155,17 @@ Wick.View.Layer = class extends Wick.View {
         const bool = this.model.project.playing;
         const isPath = maskItem.className === 'Path' || maskItem.className === 'CompoundPath';
         const homeFrame = this.mask.parentFrame;
+
+        if (!homeFrame || this.model.frames.indexOf(homeFrame) === -1) {
+            // The masking object isn't actually a drawable on this layer
+            // anymore (e.g. it got wrapped into a new parent Clip via
+            // "convert to symbol"), so there's no valid frame to derive
+            // clones' geometry/position from. Clear the mask instead of
+            // rendering stale, mismatched-coordinate clones.
+            this.clearMask();
+            return;
+        }
+
         this.model.frames.forEach(frame => {
             let item;
 
