@@ -39,7 +39,7 @@ Wick.Project = class extends Wick.Base {
         this._height = args.height || 480;
         this._framerate = args.framerate || 12;
         this._backgroundColor = args.backgroundColor || new Wick.Color('#ffffff');
-        this._imageSmoothing = (typeof args.imageSmoothing === 'boolean') ? args.imageSmoothing : true;
+this._imageSmoothing = !!args.imageSmoothing;
         this._hitTestOptions = this.getDefaultHitTestOptions();
 
         this.pan = { x: 0, y: 0 };
