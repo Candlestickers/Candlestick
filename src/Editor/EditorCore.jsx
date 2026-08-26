@@ -944,6 +944,14 @@ class EditorCore extends Component {
     }
 
     /**
+     * Sets the project focus to the timeline of the currently selected clip.
+     */
+    makeMask = () => {
+        this.project.makeSelectionAMask();
+        this.projectDidChange({ actionName: "Make Selection A Mask" });
+    }
+
+    /**
      * Creates an image from an asset's uuid and places it on the canvas.
      * @param {string} uuid - The UUID of the desired asset.
      * @param {number} x - The x location of the image after creation in relation to the window.

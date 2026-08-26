@@ -1320,6 +1320,14 @@ orderDynamicFrames() {
     }
 
     /**
+     * Makes the selected object the layer mask.
+     */
+    makeSelectionAMask() {
+        let obj = this.selection.getSelectedObject();
+        obj.parentLayer.mask = obj;
+    }
+
+    /**
      * Plays the sound in the asset library with the given name.
      * @param {string} assetName - Name of the sound asset to play
      * @param {Object} options - options for the sound. See Wick.SoundAsset.play
@@ -1687,6 +1695,9 @@ orderDynamicFrames() {
         }
 
         this.resetCache();
+
+        // refresh views
+        this.view.render();
 
         delete window._scriptOnErrorCallback;
     }
