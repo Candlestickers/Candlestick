@@ -26,7 +26,7 @@ import TabbedInterface from 'Editor/Util/TabbedInterface/TabbedInterface';
 
 import './_exportoptions.scss';
 
-let classNames = require("classnames");
+import classNames from "classnames";
 
 class ExportOptions extends Component {
   constructor(props) {
@@ -407,7 +407,7 @@ class ExportOptions extends Component {
                   icon: "cancel",
                 },
                 {
-                  text: "Not ineractive",
+                  text: "Not interactive",
                   icon: "cancel"
                 },
               ]} />

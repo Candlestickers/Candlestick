@@ -35,6 +35,7 @@ class ToolSettings extends Component {
       "eraser": this.renderEraserSettings,
       "rectangle": this.renderRectangleSettings,
       "ellipse": this.renderEllipseSettings,
+      "shape": this.renderShapeSettings,
       "line": this.renderLineSettings,
       "text": this.renderTextSettings,
       "fillbucket": this.renderFillbucketSettings,
@@ -104,6 +105,14 @@ class ToolSettings extends Component {
   }
 
   renderEllipseSettings = () => {
+    return (
+      <div className='settings-input-container'>
+        {this.renderStrokeWidth()}
+      </div>
+    );
+  }
+
+  renderShapeSettings = () => {
     return (
       <div className='settings-input-container'>
         {this.renderStrokeWidth()}

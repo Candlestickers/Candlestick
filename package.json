@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/Candlestickers/Candlestick"
   },
+  "workspaces": [
+    "engine"
+  ],
   "dependencies": {
     "@ffmpeg/core": "0.12.9",
     "@ffmpeg/ffmpeg": "^0.12.6",
@@ -34,9 +37,8 @@
     "react-modal": "^3.16.3",
     "react-numeric-input": "^2.2.3",
     "react-reflex": "^3.0.6",
-    "react-resize-detector": "^12.3.0",
+    "react-resize-detector": "^9.0.0",
     "react-rnd": "^10.5.2",
-    "react-scripts": "^5.0.1",
     "react-select": "^5.9.0",
     "react-spinners": "^0.17.0",
     "react-toastify": "^9.0.0",
@@ -50,15 +52,17 @@
     "winapp": "tauri build --target x86_64-pc-windows-gnu",
     "build-macapp": "tauri build --target universal-apple-darwin --verbose",
     "build-winapp": "tauri build --target x86_64-pc-windows-gnu",
+    "copy-scripts": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && npm run copy-vendor-libs && npm run copy-ace-workers",
+    "copy-ace-workers": "shx mkdir -p public/ace-workers && shx cp node_modules/ace-builds/src-noconflict/worker-javascript.js public/ace-workers/worker-javascript.js",
     "copy-pdf-worker": "shx cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs",
     "copy-ffmpeg-core": "shx mkdir -p public/corelibs/ffmpeg && shx cp node_modules/@ffmpeg/core/dist/umd/ffmpeg-core.js public/corelibs/ffmpeg/ffmpeg-core.js && shx cp node_modules/@ffmpeg/core/dist/esm/ffmpeg-core.wasm public/corelibs/ffmpeg/ffmpeg-core.wasm && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/ffmpeg.js public/corelibs/ffmpeg/ffmpeg.umd.js && shx cp node_modules/@ffmpeg/ffmpeg/dist/umd/814.ffmpeg.js public/corelibs/ffmpeg/814.ffmpeg.js",
-    "eject": "react-scripts eject",
-    "start": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts start",
-    "build": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build && echo 'candlestickers.app' > ./build/CNAME",
-    "build:nocname": "npm run copy-pdf-worker && npm run copy-ffmpeg-core && react-scripts build",
-    "build-engine": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
-    "build-engine-windows": "cd engine && shx mkdir -p dist && gulp && shx cp -r dist/. ../public/corelibs/wick-engine/",
-    "test": "react-scripts test",
+    "copy-vendor-libs": "shx mkdir -p public/vendor && shx cp node_modules/paper/dist/paper-core.min.js public/vendor/paper-core.min.js && shx cp node_modules/jquery/dist/jquery.min.js public/vendor/jquery.min.js && shx cp node_modules/jquery-mousewheel/jquery.mousewheel.min.js public/vendor/jquery.mousewheel.min.js && shx cp node_modules/pressure/dist/jquery.pressure.min.js public/vendor/jquery.pressure.min.js",
+    "start": "npm run copy-scripts && vite dev",
+    "build": "npm run copy-scripts && vite build && echo 'candlestickers.app' > ./build/CNAME",
+    "build:nocname": "npm run copy-scripts && vite build",
+    "build-engine": "cd engine && npm run build-engine",
+    "engine-quickrun": "npm run build-engine && npm start",
+    "test": "vitest",
     "engine-tests": "cd engine && npx http-server",
     "predeploy": "npm run build",
     "prerelease-deploy": "npm run build && shx cp -r build/* ../wick-editor-prerelease/ && cd ../wick-editor-prerelease && shx rm CNAME && echo 'test.candlestickers.app/' > CNAME && git add . && git commit -m 'update prerelease build' && git push --force",
@@ -70,9 +74,6 @@
     "phonegap-deploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app && git add . && git commit -m 'update phonegap build' && git push --force",
     "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app"
   },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
   "browserslist": [
     ">0.2%",
     "not dead",
@@ -81,39 +82,15 @@
   ],
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
+    "@vitejs/plugin-react": "^6.0.4",
     "gh-pages": "^6.3.0",
-    "gulp": "^4.0.2",
-    "gulp-babel": "^8.0.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.9",
-    "gulp-rename": "^2.0.0",
-    "gulp-uglify": "^3.0.2",
     "sass": "^1.101.0",
-    "shx": "^0.4.0"
-  },
-  "overrides": {
-    "form-data": "^4.0.4",
-    "ajv": "^8",
-    "fork-ts-checker-webpack-plugin": {
-      "ajv-keywords": "^5",
-      "schema-utils": "^4"
-    },
-    "babel-loader": {
-      "ajv": "^6"
-    },
-    "file-loader": {
-      "ajv": "^6"
-    },
-    "eslint": {
-      "ajv": "^6"
-    }
+    "shx": "^0.4.0",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   },
   "allowScripts": {
-    "core-js-pure@3.49.0": true,
     "es5-ext@0.10.64": true,
-    "fsevents@2.3.3": true,
-    "fsevents@1.2.13": true,
-    "core-js@3.49.0": true,
     "parcel/watcher@2.5.6": true
   }
 }
