@@ -113,7 +113,6 @@ Wick.View.Layer = class extends Wick.View {
             this.clearMask();
             return;
         }
-        this._masked = !!this.model.project.playing;
         this._maskUUID = mask.uuid;
         this._updateMask(mask, true);
     }
@@ -123,7 +122,6 @@ Wick.View.Layer = class extends Wick.View {
      */
     clearMask() {
         this._maskUUID = null;
-        this._masked = false;
         this.model.frames.forEach(frame => {
             if (frame.view._mask) {
                 frame.view._mask.remove();
@@ -210,17 +208,5 @@ Wick.View.Layer = class extends Wick.View {
 
     set mask(mask) {
         this.addMask(mask);
-    }
-
-    /**
-     * Whether or not this layer has a mask.
-     * @type {boolean}
-     */
-    get masked() {
-        return this._masked || false;
-    }
-
-    set masked(bool) {
-        this._masked = bool || false;
     }
 }
