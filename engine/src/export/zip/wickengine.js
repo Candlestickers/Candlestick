@@ -59171,17 +59171,27 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       ctx.restore();
     } else {
       this.cursor = 'grab';
-    } // Frame scripts dot
+    } // Dot scale shared by script indicator and content dot
+    var _dcw = this.gridCellWidth;
+    var _dG = Wick.GUIElement;
+    var _dotScale;
+    if (_dcw <= _dG.GRID_SMALL_CELL_WIDTH) {
+      _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);
+    } else if (_dcw <= _dG.GRID_NORMAL_CELL_WIDTH) {
+      _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));
+    } else {
+      _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
+    }
 
-
+    // Frame scripts dot
     if (this.model.hasContentfulScripts) {
       ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
       ctx.beginPath();
-      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * 1.3, 0, Math.PI);
+      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
       ctx.fill();
-    } // Frame identifier
+    }
 
-
+    // Frame identifier
     if (this.model.identifier) {
       ctx.save();
       ctx.beginPath();
@@ -59206,13 +59216,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       }
 
       ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
-      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS;
-
-      if (this.project.frameSizeMode === 'small') {
-        r *= 0.75;
-      } else if (this.project.frameSizeMode === 'large') {
-        r *= 1.25;
-      }
+      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
 
       ctx.beginPath();
       ctx.arc(this.gridCellWidth / 2, this.gridCellHeight / 2, r, 0, 2 * Math.PI);

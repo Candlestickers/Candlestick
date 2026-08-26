@@ -89,11 +89,23 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             this.cursor = 'grab';
         }
 
+        // Dot scale shared by script indicator and content dot
+        var _dcw = this.gridCellWidth;
+        var _dG = Wick.GUIElement;
+        var _dotScale;
+        if(_dcw <= _dG.GRID_SMALL_CELL_WIDTH)
+            _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);
+        else if(_dcw <= _dG.GRID_NORMAL_CELL_WIDTH)
+            _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));
+        else
+            _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
+        
+
         // Frame scripts dot
         if(this.model.hasContentfulScripts) {
             ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
             ctx.beginPath();
-            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS*1.3, 0, Math.PI);
+            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
             ctx.fill();
         }
 
@@ -122,17 +134,6 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             }
             ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
 
-            // dot radius: 22 >> .75; 38 >> 1; 62 >> 1.25
-            var _dcw = this.gridCellWidth;
-            var _dG = Wick.GUIElement;
-            var _dotScale;
-            if (_dcw <= _dG.GRID_SMALL_CELL_WIDTH) {
-                _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);
-            } else if (_dcw <= _dG.GRID_NORMAL_CELL_WIDTH) {
-                _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));
-            } else {
-                _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
-            }
             var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
 
             ctx.beginPath();
