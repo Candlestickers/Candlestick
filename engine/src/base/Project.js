@@ -1343,6 +1343,13 @@ orderDynamicFrames() {
     }
 
     /**
+     * Makes the selected object the layer mask.
+     */
+    clearSelectionMask() {
+        this.selection.getSelectedObject().view.clearMask();
+    }
+
+    /**
      * Plays the sound in the asset library with the given name.
      * @param {string} assetName - Name of the sound asset to play
      * @param {Object} options - options for the sound. See Wick.SoundAsset.play

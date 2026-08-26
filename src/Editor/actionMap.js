@@ -111,6 +111,12 @@ class ActionMapInterface extends Object {
         tooltip: 'Make Selection A Mask',
         action: this.editor.makeMask,
         id: 'action-make-mask',
+      },
+      clearMask: {
+        //icon: 'alignBottom',
+        tooltip: 'Clear Mask From Layer',
+        action: this.editor.clearMask,
+        id: 'action-clear-mask',
       },      
       createGroupFromSelection: {
         icon: 'createGroup',
