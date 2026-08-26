@@ -944,11 +944,19 @@ class EditorCore extends Component {
     }
 
     /**
-     * Sets the project focus to the timeline of the currently selected clip.
+     * Makes the selected path/clip the mask for its parent layer.
      */
     makeMask = () => {
         this.project.makeSelectionAMask();
         this.projectDidChange({ actionName: "Make Selection A Mask" });
+    }
+
+    /**
+     * Clears the mask from the selected layer.
+     */
+    clearMask = () => {
+        this.project.clearSelectionMask();
+        this.projectDidChange({ actionName: "Clear Selected Layer Mask" });
     }
 
     /**
