@@ -54,8 +54,9 @@ Wick.View.Layer = class extends Wick.View {
                 layer.locked = this.model.locked;
             }
 
-            if (this.mask != null && this.model.project.playing) {layer.clipped = this.masked; this.mask.view.item.clipMask = true;}
-            else {layer.clipped = false; if (this.mask != null) {this.mask.view.item.clipMask = false;}};
+            if (this.mask != null) {
+                this._updateMask(this._maskViewItem(this.mask), false);
+            }
         });
 
         // Add onion skinning, if necessary.
@@ -104,33 +105,97 @@ Wick.View.Layer = class extends Wick.View {
     }
 
     /**
-     * Makes a path the masking path on all frames.
-     * @param {Wick.Path} mask 
+     * Makes a path or clip the masking object on all frames.
+     * @param {Wick.Path|Wick.Clip} mask
      */
     addMask(mask) {
         if (!mask) return;
-        let frames = this.model.frames;
-        let bool = false;
-        mask.view.item.fillColor = new paper.Color('#bbffe5');
-        mask.view.item.opacity = 0.2;
-        if (this.model.project.playing) bool = true;
-        this._masked = bool;
-        this._mask = mask;
-        frames.forEach(frame => {
+        this._masked = !!this.model.project.playing;
+        this._maskUUID = mask.uuid;
+        this._updateMask(this._maskViewItem(this.mask), true);
+    }
+
+    /**
+     * A Wick.Path's paper item is at view.item; a Wick.Clip's is the
+     * paper.Group at view.group. Masks can be either kind of object.
+     * @param {Wick.Path|Wick.Clip} mask
+     * @returns {paper.Item}
+     */
+    _maskViewItem(mask) {
+        return mask.view.item || mask.view.group;
+    }
+
+    /**
+     * Updates the mask in all frames in the layer.
+     * @param {paper.Item} maskItem - The mask's real paper item (a Path or a Clip's Group).
+     * @param {boolean} full - If true, reclone every frame's mask item.
+     * Else, sync the transforms of each frame's existing mask, and
+     * clone new ones for frames that don't have one yet
+     */
+    _updateMask(maskItem, full) {
+        const bool = this.model.project.playing;
+        const isPath = maskItem.className === 'Path' || maskItem.className === 'CompoundPath';
+        const homeFrame = this.mask.parentFrame;
+        this.model.frames.forEach(frame => {
+            let item;
+
+            if (frame === homeFrame) {
+                item = maskItem;
+                frame.view._mask = null;
+            } else {
+                item = frame.view._mask;
+
+                if (full || !item) {
+                    item = maskItem.clone();
+                    // Excluded from Frame.view's model reconciliation, so this clone never gets captured as a brand-new path.
+                    item.data.wickType = 'gui';
+                    frame.view._mask = item;
+                } else {
+                    if (isPath) item.pathData = maskItem.pathData;
+                    item.matrix = maskItem.matrix.clone();
+                }
+            }
+
+            if (!bool) {
+                // Clips don't carry their own fill; opacity alone
+                // is enough to show they're in "editing" mode.
+                if (isPath) item.fillColor = new paper.Color('#bbffe5');
+                item.opacity = 0.4;
+            }
+            this._setClipMask(item, bool);
+
+            frame.view.objectsLayer.insertChild(0, item);
             frame.view.objectsLayer.clipped = bool;
-            frame.view.objectsLayer.insertChild(0, mask.view.item);
         });
     }
 
     /**
-     * The mask on this layer.
-     * @type {Wick.Path}
+     * Sets an item's clipMask flag without triggering paper.js's built-in
+     * side effect of nulling fillColor/strokeColor on enable.
+     * @param {paper.Item} item
+     * @param {boolean} value
      */
-    get mask(){
-        return this._mask || null;
+    _setClipMask(item, value) {
+        if (item.className === 'Group') {
+            if (item._clipMask !== value) {
+                item._clipMask = value;
+                item._changed(257);
+                if (item._parent) item._parent._changed(2048);
+            }
+        } else {
+            item.clipMask = value;
+        }
     }
 
-    set mask(mask){
+    /**
+     * The mask on this layer.
+     * @type {Wick.Path|Wick.Clip}
+     */
+    get mask() {
+        return this._maskUUID ? Wick.ObjectCache.getObjectByUUID(this._maskUUID) : null;
+    }
+
+    set mask(mask) {
         this.addMask(mask);
     }
 
@@ -138,11 +203,11 @@ Wick.View.Layer = class extends Wick.View {
      * Whether or not this layer has a mask.
      * @type {boolean}
      */
-    get masked(){
+    get masked() {
         return this._masked || false;
     }
 
-    set masked(bool){
+    set masked(bool) {
         this._masked = bool || false;
     }
 }

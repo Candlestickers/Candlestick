@@ -380,6 +380,7 @@ Wick.Path = class extends Wick.Base {
      * Removes this path from its parent frame.
      */
     remove() {
+        if (this.parentLayer && this.parentLayer.mask === this) return;
         this.parentFrame.removePath(this);
     }
 
