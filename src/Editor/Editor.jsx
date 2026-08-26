@@ -52,6 +52,7 @@ import AssetLibrary from './Panels/AssetLibrary/AssetLibrary';
 import Outliner from './Panels/Outliner/Outliner';
 import OutlinerExpandButton from './Panels/OutlinerExpandButton/OutlinerExpandButton';
 import WickCodeEditor from './PopOuts/WickCodeEditor/WickCodeEditor';
+import ModifiersPanel from './PopOuts/ModifiersPanel/ModifiersPanel';
 
 import EditorWrapper from './EditorWrapper';
 
@@ -171,6 +172,7 @@ class Editor extends EditorCore {
             activeModalName: window.localStorage.skipWelcomeMessage ? null : "WelcomeMessage",
             activeModalQueue: [],
             codeEditorOpen: false,
+            modifiersPanelOpen: false,
             scriptToEdit: "default",
             showCanvasActions: false,
             showBooleanCanvasActions: false,
@@ -284,6 +286,7 @@ class Editor extends EditorCore {
             onStopAssetLibraryResize: throttle(this.onStopAssetLibraryResize, this.resizeThrottleAmount),
             onStopTimelineResize: throttle(this.onStopTimelineResize, this.resizeThrottleAmount),
             onStopCodeEditorResize: throttle(this.onStopCodeEditorResize, this.resizeThrottleAmount),
+            onStopModifiersPanelResize: throttle(this.onStopModifiersPanelResize, this.resizeThrottleAmount),
             onResize: throttle(this.onResize, this.resizeThrottleAmount),
             onWindowResize: throttle(this.onWindowResize, this.windowResizeThrottleAmount),
         };
@@ -342,6 +345,7 @@ class Editor extends EditorCore {
             ...this.state,
             project: this.project.serialize(),
             codeEditorWindowProperties: this.getDefaultCodeEditorProperties(),
+            modifiersPanelWindowProperties: this.getDefaultModifiersPanelProperties(),
         });
 
         // Leave Page warning.
@@ -541,6 +545,7 @@ class Editor extends EditorCore {
         // reset the code window if we resize the window.
         this.setState({
             codeEditorWindowProperties: this.getDefaultCodeEditorProperties(),
+            modifiersPanelWindowProperties: this.getDefaultModifiersPanelProperties(),
         });
 
         // re-render project to avoid incorrect pan
@@ -561,6 +566,20 @@ class Editor extends EditorCore {
                 consoleOpen: true,
                 fontSize: 16,
                 theme: 'monokai'
+            }
+        );
+    }
+
+    getDefaultModifiersPanelProperties = () => {
+        return (
+            {
+                width: window.innerWidth - 510, // magic number: outliner/inspector width
+                height: window.innerHeight - 260, // magic number: toolbar/timeline height
+                x: 0,
+                y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
+                minWidth: 400,
+                minHeight: 250,
+                fontSize: 16,
             }
         );
     }
@@ -627,6 +646,21 @@ class Editor extends EditorCore {
 
         this.setState({
             codeEditorWindowProperties: finalProperties,
+        });
+    }
+
+    /**
+     * Updates the modifiers panel properties in the state.
+     * @param  {object} newProperties object with new modifiers panel properties. Can include width, height, x, y.
+     */
+    updateModifiersPanelWindowProperties = (newProperties) => {
+        let finalProperties = this.state.modifiersPanelWindowProperties;
+        Object.keys(newProperties).forEach(key => {
+            finalProperties[key] = newProperties[key];
+        });
+
+        this.setState({
+            modifiersPanelWindowProperties: finalProperties,
         });
     }
 
@@ -748,6 +782,20 @@ class Editor extends EditorCore {
 
         this.setState({
             codeEditorOpen: state,
+        });
+    }
+
+    /**
+     * Opens and closes the modifiers panel depending on the state of the panel.
+     * @param {boolean} state - Optional. True will open the modifiers panel, false will close.
+     */
+    toggleModifiersPanel = (state) => {
+        if (state === undefined || (typeof state !== "boolean")) {
+            state = !this.state.modifiersPanelOpen;
+        }
+
+        this.setState({
+            modifiersPanelOpen: state,
         });
     }
 
@@ -1457,6 +1505,13 @@ class Editor extends EditorCore {
                                 clearCodeEditorError={this.clearCodeEditorError}
                                 consoleLogs={this.state.consoleLogs}
                                 setConsoleLogs={this.setConsoleLogs}
+                                renderSize={renderSize}
+                            />}
+                        {this.state.modifiersPanelOpen &&
+                            <ModifiersPanel
+                                modifiersPanelWindowProperties={this.state.modifiersPanelWindowProperties}
+                                updateModifiersPanelWindowProperties={this.updateModifiersPanelWindowProperties}
+                                toggleModifiersPanel={this.toggleModifiersPanel}
                                 renderSize={renderSize}
                             />}
                     </div>

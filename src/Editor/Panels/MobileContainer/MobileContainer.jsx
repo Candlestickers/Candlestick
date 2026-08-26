@@ -139,6 +139,7 @@ class MobileContainer extends Component {
                                    tabs={[{label: "timeline", icon: timelineIcon, iconActive: timelineIconActive, iconAlt: "timeline icon"},
                                           {label: "inspector", icon: inspectorIcon, iconActive: inspectorIconActive, iconAlt: "inspector icon"},
                                           {label: "code", icon: codeIcon, iconActive: codeIconActive, iconAlt: "code editor icon"},
+                                          {label: "modifiers", icon: modifiersIcon, iconActive: modifiersIconActive, iconAlt: "modifiers panel icon"},
                                           {label: "asset", icon: assetIcon, iconActive: assetIconActive, iconAlt: "asset library icon"}
                                         ]}>
                 {this.renderTimeline(this.props)}
