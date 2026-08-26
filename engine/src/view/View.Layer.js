@@ -55,7 +55,7 @@ Wick.View.Layer = class extends Wick.View {
             }
 
             if (this.mask != null) {
-                this._updateMask(this._maskViewItem(this.mask), false);
+                this._updateMask(this.mask, false);
             }
         });
 
@@ -115,12 +115,11 @@ Wick.View.Layer = class extends Wick.View {
         }
         this._masked = !!this.model.project.playing;
         this._maskUUID = mask.uuid;
-        this._updateMask(this._maskViewItem(this.mask), true);
+        this._updateMask(mask, true);
     }
 
     /**
-     * Removes the mask from this layer, restoring every frame's clip item
-     * (real or clone) to a normal, unclipped state.
+     * Removes the mask from this layer.
      */
     clearMask() {
         this._maskUUID = null;
@@ -135,33 +134,19 @@ Wick.View.Layer = class extends Wick.View {
     }
 
     /**
-     * A Wick.Path's paper item is at view.item; a Wick.Clip's is the
-     * paper.Group at view.group. Masks can be either kind of object.
-     * @param {Wick.Path|Wick.Clip} mask
-     * @returns {paper.Item}
-     */
-    _maskViewItem(mask) {
-        return mask.view.item || mask.view.group;
-    }
-
-    /**
      * Updates the mask in all frames in the layer.
-     * @param {paper.Item} maskItem - The mask's real paper item (a Path or a Clip's Group).
+     * @param {Wick.Path|Wick.Clip} mask - The masking object.
      * @param {boolean} full - If true, reclone every frame's mask item.
      * Else, sync the transforms of each frame's existing mask, and
      * clone new ones for frames that don't have one yet
      */
-    _updateMask(maskItem, full) {
+    _updateMask(mask, full) {
+        const maskItem = mask.view.item || mask.view.group;
         const bool = this.model.project.playing;
         const isPath = maskItem.className === 'Path' || maskItem.className === 'CompoundPath';
-        const homeFrame = this.mask.parentFrame;
+        const homeFrame = mask.parentFrame;
 
         if (!homeFrame || this.model.frames.indexOf(homeFrame) === -1) {
-            // The masking object isn't actually a drawable on this layer
-            // anymore (e.g. it got wrapped into a new parent Clip via
-            // "convert to symbol"), so there's no valid frame to derive
-            // clones' geometry/position from. Clear the mask instead of
-            // rendering stale, mismatched-coordinate clones.
             this.clearMask();
             return;
         }
@@ -182,26 +167,24 @@ Wick.View.Layer = class extends Wick.View {
                     frame.view._mask = item;
                 } else {
                     if (isPath) item.pathData = maskItem.pathData;
-                    item.matrix = maskItem.matrix.clone();
+                    item.matrix.set(maskItem.matrix);
                 }
             }
 
             if (!bool) {
-                // Clips don't carry their own fill; opacity alone
-                // is enough to show they're in "editing" mode.
                 if (isPath) item.fillColor = new paper.Color('#bbffe5');
                 item.opacity = 0.4;
             }
             this._setClipMask(item, bool);
 
-            frame.view.objectsLayer.insertChild(0, item);
-            frame.view.objectsLayer.clipped = bool;
+            var objectsLayer = frame.view.objectsLayer;
+            if (objectsLayer.children[0] !== item) objectsLayer.insertChild(0, item);
+            if (objectsLayer.clipped !== bool) objectsLayer.clipped = bool;
         });
     }
 
     /**
-     * Sets an item's clipMask flag without triggering paper.js's built-in
-     * side effect of nulling fillColor/strokeColor on enable.
+     * Sets an item's clipMask flag without triggering paper.js's nulling fillColor/strokeColor on enable.
      * @param {paper.Item} item
      * @param {boolean} value
      */

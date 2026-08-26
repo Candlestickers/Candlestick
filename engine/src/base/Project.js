@@ -1247,10 +1247,7 @@ orderDynamicFrames() {
             return;
         }
 
-        // If any selected object is currently acting as its layer's mask,
-        // unmask it first so it wraps as a normal, unclipped object (avoids
-        // wrapping stale clip-mask state into the new clip), then re-apply
-        // the mask to the newly-created clip afterward.
+        // Unmask any mask object before wrapping it, then reassign
         var maskedLayers = [];
         this.selection.getSelectedObjects('Canvas').forEach(object => {
             var layer = object.parentLayer;
