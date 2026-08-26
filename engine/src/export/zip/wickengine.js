@@ -60284,7 +60284,10 @@ Wick.GUIElement.OnionSkinRange = class extends Wick.GUIElement {
 
     var seek = this.direction === 'right' ? this.model.project.onionSkinSeekForwards : this.model.project.onionSkinSeekBackwards;
     var width = seek * this.gridCellWidth;
-    var edgeWidth = this.gridCellWidth - Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    var margin = Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    if (this.gridCellWidth < Wick.GUIElement.GRID_SMALL_CELL_WIDTH)
+      margin *= (this.gridCellWidth - 8) / (Wick.GUIElement.GRID_SMALL_CELL_WIDTH - 8);
+    var edgeWidth = this.gridCellWidth - margin;
     var height = Wick.GUIElement.NUMBER_LINE_HEIGHT * 0.9; // Draw handle
 
     var grd = ctx.createLinearGradient(0, 0, width + edgeWidth, 0);
