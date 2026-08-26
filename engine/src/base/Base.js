@@ -17,9 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// uuid
 const { v4: uuidv4 } = require('uuid');
-// is-var-name
 const isVarName = require('is-var-name').default;
 const reserved = require('../../lib/reserved-words.js');
 

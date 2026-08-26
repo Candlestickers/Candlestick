@@ -301,9 +301,6 @@ class Editor extends EditorCore {
     componentDidMount = async () => {
         document.title = `Candlestick ${this.editorVersion}`;
 
-        // Read the global Wick namespace after the loader completes
-        this.Wick = window.Wick;
-
         // Initialize "live" engine state
         this.project = new window.Wick.Project();
         this.attachErrorHandlers();

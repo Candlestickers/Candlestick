@@ -16,7 +16,7 @@
 /engine/dist/
 
 # package-lock
-package-lock.json
+package-lock.json*
 
 # misc
 .DS_Store
@@ -27,7 +27,7 @@ package-lock.json
 .env
 CLAUDE.md
 AGENTS.md
-/.claude
+/.claude/
 
 npm-debug.log*
 yarn-debug.log*

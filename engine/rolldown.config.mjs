@@ -4,7 +4,7 @@ import path from 'path';
 const root = process.cwd();
 
 export default defineConfig({
-  input: 'src/Wick.js',
+  input: 'src/Wick.mjs',
   external: ['paper', '$', 'jquery'],
   resolve: {
     alias: {},
