@@ -361,7 +361,7 @@ Wick.Project = class extends Wick.Base {
 
     set imageSmoothing(imageSmoothing) {
         // Apply image smoothing for old projects
-        this._imageSmoothing = (typeof imageSmoothing === 'boolean') ? imageSmoothing : true;
+this._imageSmoothing = !!imageSmoothing;
     }
 
     get hitTestOptions() {
