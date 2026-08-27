@@ -1,6 +1,6 @@
 import AudioExport from './AudioExport'
 
-var b64toBuff = require('base64-arraybuffer')
+import * as b64toBuff from 'base64-arraybuffer'
 
 var ENABLE_LOGGING = false
 var EXPORT_IMAGE_START = 10
@@ -119,7 +119,7 @@ class VideoExport {
     let { project, onProgress, onFinish } = args
 
     // Respects PUBLIC_URL so the /test deploy loads from /test/corelibs/ffmpeg/
-    const baseURL = window.location.origin + (process.env.PUBLIC_URL || '').replace(/\/?$/, '')
+    const baseURL = window.location.origin + (import.meta.env.VITE_PUBLIC_URL || '').replace(/\/?$/, '')
 
     // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
     // The ESM build creates a { type: 'module' } worker which disables importScripts(),

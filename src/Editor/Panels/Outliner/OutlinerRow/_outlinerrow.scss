@@ -17,8 +17,8 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- @import 'Editor/_wickbrand.scss';
- @import '../_outliner.scss';
+ @use 'Editor/_wickbrand.scss' as *;
+ @use '../_outliner.scss' as *;
  
  $outliner-element-padding: 1%;
  $row-identifier-width: 30%;

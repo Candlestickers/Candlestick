@@ -17,6 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const invert = require('invert-color');
 Wick.Tool = class {
     static get DOUBLE_CLICK_TIME () {
         return 300;
