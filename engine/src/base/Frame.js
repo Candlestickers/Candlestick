@@ -514,7 +514,7 @@ Wick.Frame = class extends Wick.Tickable {
     /**
      * Get the tween at the given playhead position. Returns null if there is no tween.
      * @param {number} playheadPosition - the playhead position to look for tweens at.
-     * @returns {Wick.Tween || null} the tween at the given playhead position.
+     * @returns {Wick.Tween | null} the tween at the given playhead position.
      */
     getTweenAtPosition(playheadPosition) {
         return this.tweens.find(tween => {
@@ -524,7 +524,7 @@ Wick.Frame = class extends Wick.Tickable {
 
     /**
      * Returns the tween at the current playhead position, if one exists on the frame. Null otherwise.
-     * @returns {Wick.Tween || null}
+     * @returns {Wick.Tween | null}
      */
     getTweenAtCurrentPlayheadPosition() {
         let playheadPosition = this.getRelativePlayheadPosition();
@@ -533,7 +533,7 @@ Wick.Frame = class extends Wick.Tickable {
 
     /**
      * The tween being used to transform the objects on the frame.
-     * @returns {Wick.Tween || null} tween - the active tween. Null if there is no active tween.
+     * @returns {Wick.Tween | null} tween - the active tween. Null if there is no active tween.
      */
     getActiveTween() {
         if (!this.parentTimeline) return null;
