@@ -17,11 +17,19 @@
  * along with Candlestick.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ReflexContainer, ReflexElement } from 'react-reflex'
 import { Rnd } from 'react-rnd';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import 'Editor/styles/PopOuts/_wickcodeeditor.css';
+
+// TODO: make it testable
+/*
+What we must do to intercept mouseclicks etc:
+1 - Intercept.
+2 - Stop propagation.
+3 - do: e = new MouseEvent('mouseup', {...e, ctrlKey: this.ctrl, shiftKey: this.shift, altKey: this.alt, metaKey: this.meta});
+4 - Let it continue to the editor.
+*/
 
 export default function ModifiersPanel(props) {
 
@@ -43,7 +51,6 @@ export default function ModifiersPanel(props) {
             width: ref.style.width,
             height: ref.style.height,
         });
-        updateEditorLines();
     }
 
     if (props.renderSize === 'small') {
@@ -68,10 +75,6 @@ export default function ModifiersPanel(props) {
                             icon="cancel-white"
                             action={props.toggleModifiersPanel} />
                     </div>
-
-                    <div className="cs-modifiers-panel-body-small">
-                        {renderModifiersPanel()}
-                    </div>
                 </div>
             </Rnd>)
     }
@@ -94,16 +97,6 @@ export default function ModifiersPanel(props) {
                     color="tool"
                     icon="cancel-white"
                     action={props.toggleModifiersPanel} />
-            </div>
-
-            <div className="cs-modifiers-panel-body">
-                <div className="cs-modifiers-panel-content">
-                    <ReflexContainer>
-                        <ReflexElement>
-                            {renderModifiersPanel()}
-                        </ReflexElement>
-                    </ReflexContainer>
-                </div>
             </div>
         </Rnd>
     )
