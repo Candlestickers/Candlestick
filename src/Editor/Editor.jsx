@@ -800,8 +800,7 @@ class Editor extends EditorCore {
         });
     }
 
-    // Maps our modifier key names to the DOM/KeyboardEvent.key values Paper.js's
-    // Key module listens for (see engine's paper.js Key.modifiers tracking).
+    // Maps our modifier key names to the values paper.js' listens for.
     static MODIFIER_KEY_DOM_NAMES = { ctrl: 'Control', alt: 'Alt', shift: 'Shift' };
 
     /**
