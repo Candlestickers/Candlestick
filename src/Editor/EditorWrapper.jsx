@@ -54,10 +54,6 @@ export default function EditorWrapper(props) {
             e.stopPropagation();
             e.preventDefault();
 
-            // NOTE: MouseEvent's constructor silently ignores unrecognized keys in its init
-            // dict -- it does NOT set them as properties on the resulting event. The marker
-            // must be assigned onto the created event object afterward, or it never sticks
-            // and this handler will re-process (and re-dispatch) its own event forever.
             let redispatchedEvent = new MouseEvent(e.type, {
                 bubbles: true,
                 cancelable: true,
