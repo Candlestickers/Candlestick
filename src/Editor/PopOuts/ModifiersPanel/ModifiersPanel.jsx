@@ -24,14 +24,6 @@ import classNames from 'classnames';
 
 import 'Editor/styles/PopOuts/_modifierspanel.scss';
 
-/*
-What we must do to intercept mouseclicks etc:
-1 - Intercept.
-2 - Stop propagation.
-3 - do: e = new MouseEvent('mouseup', {...e, ctrlKey: this.ctrl, shiftKey: this.shift, altKey: this.alt});
-4 - Let it continue to the editor.
-*/
-
 const MODIFIER_KEYS = ['ctrl', 'alt', 'shift'];
 
 export default function ModifiersPanel(props) {
