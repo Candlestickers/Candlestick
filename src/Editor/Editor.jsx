@@ -574,12 +574,12 @@ class Editor extends EditorCore {
     getDefaultModifiersPanelProperties = () => {
         return (
             {
-                width: window.innerWidth - 510, // magic number: outliner/inspector width
-                height: window.innerHeight - 260, // magic number: toolbar/timeline height
+                width: 260,
+                height: 160,
                 x: 0,
-                y: 40, // magic number: toolbar height (not including the menubar, since for some reason y=0 is at the bottom of the menubar?)
-                minWidth: 400,
-                minHeight: 250,
+                y: 40,
+                minWidth: 200,
+                minHeight: 125,
                 fontSize: 16,
             }
         );
