@@ -20,18 +20,35 @@
 import { Rnd } from 'react-rnd';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
-import 'Editor/styles/PopOuts/_wickcodeeditor.css';
+import classNames from 'classnames';
 
-// TODO: make it testable
+import 'Editor/styles/PopOuts/_modifierspanel.scss';
+
 /*
 What we must do to intercept mouseclicks etc:
 1 - Intercept.
 2 - Stop propagation.
-3 - do: e = new MouseEvent('mouseup', {...e, ctrlKey: this.ctrl, shiftKey: this.shift, altKey: this.alt, metaKey: this.meta});
+3 - do: e = new MouseEvent('mouseup', {...e, ctrlKey: this.ctrl, shiftKey: this.shift, altKey: this.alt});
 4 - Let it continue to the editor.
 */
 
+const MODIFIER_KEYS = ['ctrl', 'alt', 'shift'];
+
 export default function ModifiersPanel(props) {
+
+    /**
+     * Renders the ctrl/alt/shift toggle buttons.
+     */
+    function renderModifierKeyButtons() {
+        return MODIFIER_KEYS.map((key) => (
+            <button
+                key={key}
+                className={classNames("cs-modifier-key-button", { active: props.keys[key + 'Key'] })}
+                onClick={() => props.toggleModifierKey(key)}>
+                {key}
+            </button>
+        ));
+    }
 
     /**
      * To be called when the modifiers popout is repositioned.
@@ -65,15 +82,18 @@ export default function ModifiersPanel(props) {
                 default={props.modifiersPanelWindowProperties}
             >
                 <div className="cs-modifiers-panel-small">
-                    <div className="cs-modifiers-drag-handle small">
+                    <div className="cs-modifiers-panel-drag-handle small">
                         <div className="cs-modifiers-panel-title small">
                             Modifier Keys
                         </div>
                         <ActionButton
-                            className="we-modifiers-close-button"
+                            className="cs-modifiers-close-button"
                             color="tool"
                             icon="cancel-white"
                             action={props.toggleModifiersPanel} />
+                    </div>
+                    <div className="cs-modifiers-panel-content small">
+                        {renderModifierKeyButtons()}
                     </div>
                 </div>
             </Rnd>)
@@ -90,13 +110,15 @@ export default function ModifiersPanel(props) {
             default={props.modifiersPanelWindowProperties}>
 
             <div className="cs-modifiers-panel-drag-handle">
-                <div className="cs-modifiers-panel-icon">{"</>"}</div>
-                <div className="cs-modifiers-panel-title">Modifiers Panel</div>
+                <div className="cs-modifiers-panel-title">Modifiers</div>
                 <ActionButton
                     className="cs-modifiers-close-button"
                     color="tool"
                     icon="cancel-white"
                     action={props.toggleModifiersPanel} />
+            </div>
+            <div className="cs-modifiers-panel-content small">
+                {renderModifierKeyButtons()}
             </div>
         </Rnd>
     )

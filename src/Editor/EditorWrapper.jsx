@@ -40,11 +40,51 @@ export default function EditorWrapper(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    useEffect(() => {
+        let editorElem = document.getElementById('editor');
+
+        let onMouseDownCapture = (e) => {
+            if (e._modifierKeysApplied) {
+                return;
+            }
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+                return;
+            }
+
+            e.stopPropagation();
+            e.preventDefault();
+
+            // NOTE: MouseEvent's constructor silently ignores unrecognized keys in its init
+            // dict -- it does NOT set them as properties on the resulting event. The marker
+            // must be assigned onto the created event object afterward, or it never sticks
+            // and this handler will re-process (and re-dispatch) its own event forever.
+            let redispatchedEvent = new MouseEvent(e.type, {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                detail: e.detail,
+                screenX: e.screenX,
+                screenY: e.screenY,
+                clientX: e.clientX,
+                clientY: e.clientY,
+                button: e.button,
+                buttons: e.buttons,
+                relatedTarget: e.relatedTarget,
+                ...props.editor.modifierKeys,
+            });
+            redispatchedEvent._modifierKeysApplied = true;
+            e.target.dispatchEvent(redispatchedEvent);
+        };
+
+        editorElem.addEventListener('mousedown', onMouseDownCapture, true);
+        return () => editorElem.removeEventListener('mousedown', onMouseDownCapture, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <ErrorBoundary
             fallback={ErrorPage}
-            processError={(error, errorInfo) => { props.editor.autoSaveProject(() => { "Project Autosaved" }) }}
+            processError={(_error, _errorInfo) => { props.editor.autoSaveProject(() => { "Project Autosaved" }) }}
         >
             <ToastContainer
                 transition={Slide}

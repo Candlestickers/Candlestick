@@ -164,6 +164,7 @@ class Editor extends EditorCore {
         this.project = null;
         this.paper = null;
         this.editorVersion = version + '';
+        this.modifierKeys = { ctrlKey: false, altKey: false, shiftKey: false };
 
         // GUI state
         this.state = {
@@ -799,6 +800,32 @@ class Editor extends EditorCore {
         });
     }
 
+    // Maps our modifier key names to the DOM/KeyboardEvent.key values Paper.js's
+    // Key module listens for (see engine's paper.js Key.modifiers tracking).
+    static MODIFIER_KEY_DOM_NAMES = { ctrl: 'Control', alt: 'Alt', shift: 'Shift' };
+
+    /**
+     * Toggles a modifier key on or off. Toggled-on keys are applied to every mouse event
+     * dispatched through the editor (see EditorWrapper's onMouseDown), and are also reflected
+     * as real keydown/keyup events so Paper.js tools (which track modifiers via their own
+     * Key module, not the mouse event) pick up the change too.
+     * @param {string} key - The key to toggle. Should be one of 'ctrl', 'alt', or 'shift'.
+     */
+    toggleModifierKey = (key) => {
+        let propName = key.toLowerCase() + 'Key';
+        let isDown = this.modifierKeys[propName] = !this.modifierKeys[propName];
+
+        let domKey = Editor.MODIFIER_KEY_DOM_NAMES[key.toLowerCase()];
+        document.dispatchEvent(new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
+            key: domKey,
+            bubbles: true,
+            cancelable: true,
+            [propName]: isDown,
+        }));
+
+        this.forceUpdate();
+    }
+
     /**
      * Opens and closes the canvas actions popover.
      * @param {boolean} state - Optional. True will open the canvas actions menu, false will close.
@@ -1199,6 +1226,7 @@ class Editor extends EditorCore {
                                 toast={this.toast}
                                 openExportMedia={() => { this.openModal('ExportMedia') }}
                                 openExportOptions={() => { this.openModal('ExportOptions') }}
+                                toggleModifiersPanel={this.toggleModifiersPanel}
                             />
                         </DockedPanel>
                     </div>
@@ -1512,7 +1540,9 @@ class Editor extends EditorCore {
                                 modifiersPanelWindowProperties={this.state.modifiersPanelWindowProperties}
                                 updateModifiersPanelWindowProperties={this.updateModifiersPanelWindowProperties}
                                 toggleModifiersPanel={this.toggleModifiersPanel}
+                                toggleModifierKey={this.toggleModifierKey}
                                 renderSize={renderSize}
+                                keys={this.modifierKeys}
                             />}
                     </div>
                 </EditorWrapper>
