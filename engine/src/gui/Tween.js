@@ -94,24 +94,27 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
             var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
             var arrowSize = 5;
 
-            // Line
-            ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-            ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
-            ctx.beginPath();
-            ctx.moveTo(linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding, 0);
-            ctx.stroke();
+            // Only draw if there's enough room
+            if (nextTweenPosition > linePadding * 2 + arrowSize) {
+                // Line
+                ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+                ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+                ctx.beginPath();
+                ctx.moveTo(linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding, 0);
+                ctx.stroke();
 
-            // Arrow head
-            ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-            ctx.beginPath();
-            ctx.moveTo(nextTweenPosition - linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(nextTweenPosition - linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
-            ctx.stroke();
+                // Arrow head
+                ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+                ctx.beginPath();
+                ctx.moveTo(nextTweenPosition - linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(nextTweenPosition - linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
+                ctx.stroke();
+            }
         } else if (this.model.playheadPosition !== this.model.parentFrame.length) {
             // There is no tween in front of this tween, so draw a dotted line to the end of the frame
 

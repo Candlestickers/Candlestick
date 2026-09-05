@@ -61589,24 +61589,27 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
       // Draw an arrow pointing towards the next tween
       var nextTweenGridPosition = nextTween.playheadPosition - this.model.playheadPosition;
       var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
-      var arrowSize = 5; // Line
+      var arrowSize = 5; // Only draw if there's enough room — otherwise the arrow flips or collapses
 
-      ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
-      ctx.beginPath();
-      ctx.moveTo(linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding, 0);
-      ctx.stroke(); // Arrow head
+      if (nextTweenPosition > linePadding * 2 + arrowSize) {
+		// Line
+		ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+		ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+		ctx.beginPath();
+		ctx.moveTo(linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding, 0);
+		ctx.stroke(); // Arrow head
 
-      ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
-      ctx.stroke();
+		ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+		ctx.beginPath();
+		ctx.moveTo(nextTweenPosition - linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(nextTweenPosition - linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
+		ctx.stroke();
+      }
     } else if (this.model.playheadPosition !== this.model.parentFrame.length) {
       // There is no tween in front of this tween, so draw a dotted line to the end of the frame
       var tweenPos = this.model.playheadPosition * this.gridCellWidth;
