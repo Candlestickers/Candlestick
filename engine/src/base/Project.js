@@ -119,6 +119,12 @@ Wick.Project = class extends Wick.Base {
         this._scriptSchedule = [];
         this._error = null;
 
+        // Asset Library folders. These are plain data (not Wick.Base
+        // objects/children) since they're purely an organizational feature
+        // of the Asset Library UI, not part of the Timeline/Canvas model.
+        this._assetFolders = args.assetFolders || []; // [{id, name, parentFolderId}]
+        this._assetFolderAssignments = args.assetFolderAssignments || {}; // { [assetUuid]: folderId }
+
         this.history.project = this;
         this.history.pushState(Wick.History.StateType.ONLY_VISIBLE_OBJECTS);
         this.orderedLayers = [];
@@ -239,6 +245,9 @@ Wick.Project = class extends Wick.Base {
         // reset rotation, but not pan/zoom.
         // not resetting pan/zoom is convenient when preview playing.
         this.rotation = 0;
+
+        this._assetFolders = data.assetFolders || [];
+        this._assetFolderAssignments = data.assetFolderAssignments || {};
     }
 
     _serialize(args) {
@@ -258,6 +267,9 @@ Wick.Project = class extends Wick.Base {
 
         // Save some metadata which will eventually end up in the wick file
         data.metadata = Wick.WickFile.generateMetaData();
+
+        data.assetFolders = this._assetFolders;
+        data.assetFolderAssignments = this._assetFolderAssignments;
 
         return data;
     }
@@ -475,6 +487,146 @@ Wick.Project = class extends Wick.Base {
      */
     get assets() {
         return this.getChildren(['ImageAsset', 'SoundAsset', 'ClipAsset', 'FontAsset', 'SVGAsset']);
+    }
+
+    /**
+     * The folders in the Asset Library.
+     * @type {object[]}
+     */
+    get assetFolders() {
+        return this._assetFolders;
+    }
+
+    set assetFolders(assetFolders) {
+        this._assetFolders = assetFolders;
+    }
+
+    /**
+     * A map of asset UUID to the id of the Asset Library folder it belongs to.
+     * @type {object}
+     */
+    get assetFolderAssignments() {
+        return this._assetFolderAssignments;
+    }
+
+    set assetFolderAssignments(assetFolderAssignments) {
+        this._assetFolderAssignments = assetFolderAssignments;
+    }
+
+    /**
+     * Creates a new Asset Library folder inside another folder (or at the
+     * root if parentFolderId is null/omitted), with a name that's unique
+     * among its siblings.
+     * @param {string} [name] - Desired name. Defaults to "New Folder"
+     *   (or "New Folder 2", etc. if that name is already taken by a sibling).
+     * @param {string} [parentFolderId] - The folder to nest the new folder
+     *   inside. Defaults to null (the Asset Library root).
+     * @return {object} The newly created folder.
+     */
+    createAssetFolder(name, parentFolderId) {
+        if (parentFolderId === undefined) parentFolderId = null;
+        let baseName = name || 'New Folder';
+        let siblingNames = new Set(
+            this._assetFolders.filter(folder => folder.parentFolderId === parentFolderId).map(folder => folder.name)
+        );
+        let finalName = baseName;
+        let counter = 2;
+        while (siblingNames.has(finalName)) {
+            finalName = baseName + ' ' + counter;
+            counter++;
+        }
+
+        let newFolder = {
+            id: 'folder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+            name: finalName,
+            parentFolderId: parentFolderId,
+        };
+        this._assetFolders = [...this._assetFolders, newFolder];
+        return newFolder;
+    }
+
+    /**
+     * Deletes a single Asset Library folder. Its direct contents (both
+     * subfolders and assets) are promoted up to the deleted folder's own
+     * parent, rather than being deleted or bumped all the way to the root.
+     * @param {string} folderId
+     * @return {string} fallbackFolderId - The deleted folder's former
+     *   parent (or null for root), which is now the new home of its
+     *   former contents. Callers can use this to navigate out of the
+     *   deleted folder.
+     */
+    deleteAssetFolder(folderId) {
+        let deletedFolder = this._assetFolders.find(folder => folder.id === folderId);
+        let fallbackFolderId = deletedFolder ? deletedFolder.parentFolderId : null;
+
+        this._assetFolders = this._assetFolders
+            .filter(folder => folder.id !== folderId)
+            .map(folder => folder.parentFolderId === folderId ? { ...folder, parentFolderId: fallbackFolderId } : folder);
+
+        let assetFolderAssignments = { ...this._assetFolderAssignments };
+        Object.keys(assetFolderAssignments).forEach(assetUuid => {
+            if (assetFolderAssignments[assetUuid] === folderId) assetFolderAssignments[assetUuid] = fallbackFolderId;
+        });
+        this._assetFolderAssignments = assetFolderAssignments;
+
+        return fallbackFolderId;
+    }
+
+    /**
+     * Moves an Asset Library folder to be a child of another folder (or to
+     * the root if targetFolderId is null). No-ops if the move would create
+     * a cycle (e.g. moving a folder into its own descendant).
+     * @param {string} folderId
+     * @param {string} targetFolderId
+     */
+    moveAssetFolder(folderId, targetFolderId) {
+        if (folderId === targetFolderId) return;
+
+        let folderById = new Map(this._assetFolders.map(folder => [folder.id, folder]));
+
+        let isDescendantOf = (candidateId, ancestorId) => {
+            let current = folderById.get(candidateId);
+            while (current) {
+                if (current.parentFolderId === ancestorId) return true;
+                current = folderById.get(current.parentFolderId);
+            }
+            return false;
+        };
+
+        if (targetFolderId !== null && isDescendantOf(targetFolderId, folderId)) {
+            return;
+        }
+
+        this._assetFolders = this._assetFolders.map(folder =>
+            folder.id === folderId ? { ...folder, parentFolderId: targetFolderId } : folder
+        );
+    }
+
+    /**
+     * Builds a human-readable path for an Asset Library folder from its
+     * ancestor names (e.g. "New Folder / Subfolder").
+     * @param {string} folderId
+     * @return {string}
+     */
+    getAssetFolderPath(folderId) {
+        let folderById = new Map(this._assetFolders.map(folder => [folder.id, folder]));
+        let names = [];
+        let current = folderById.get(folderId);
+        while (current) {
+            names.unshift(current.name);
+            current = folderById.get(current.parentFolderId);
+        }
+        return names.join(' / ');
+    }
+
+    /**
+     * Assigns an asset to an Asset Library folder (or back to the root if
+     * folderId is null).
+     * @param {string} assetUuid
+     * @param {string} folderId
+     */
+    assignAssetToFolder(assetUuid, folderId) {
+        this._assetFolderAssignments = { ...this._assetFolderAssignments, [assetUuid]: folderId };
     }
 
     /**

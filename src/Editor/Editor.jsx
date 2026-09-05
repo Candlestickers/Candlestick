@@ -143,9 +143,9 @@ async function loadPathIntoEditor(editorThis, filePath) {
 }
 
 
-const { version } = require('../../package.json');
+import { version } from '../../package.json';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 // Watches for container resize and calls onResize, replacing react-sizeme
 function ResizeTrigger({ onResize, children }) {
@@ -295,6 +295,8 @@ class Editor extends EditorCore {
         this.lastUsedTool = 'cursor';
 
         this.builtinPreviews = {};
+
+        window.editor = this;
     }
 
     UNSAFE_componentWillMount = () => {
@@ -1445,11 +1447,14 @@ class Editor extends EditorCore {
                                                     onStopResize={this.resizeProps.onStopAssetLibraryResize}>
                                                     <DockedPanel showOverlay={this.state.previewPlaying}>
                                                         <AssetLibrary
+                                                            project={this.project}
+                                                            projectDidChange={this.projectDidChange}
                                                             projectData={this.state.project}
                                                             assets={this.project.getAssets()}
                                                             openModal={this.openModal}
                                                             openImportAssetFileDialog={this.openImportAssetFileDialog}
                                                             selectObjects={this.selectObjects}
+                                                            selectFolder={this.selectFolder}
                                                             clearSelection={this.clearSelection}
                                                             isObjectSelected={this.isObjectSelected}
                                                             createAssets={this.createAssets}

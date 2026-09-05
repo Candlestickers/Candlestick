@@ -80,6 +80,7 @@ class Inspector extends Component {
       "multiassetmixed": this.renderAsset,
       "multisoundasset": this.renderAsset,
       "multiimageasset": this.renderAsset,
+      "folder": this.renderFolder,
     }
 
     /**
@@ -118,6 +119,7 @@ class Inspector extends Component {
       "multiassetmixed": "Multi-Asset",
       "multisoundasset": "Multi-Asset Sound",
       "multiimageasset": "Multi-Asset Image",
+      "folder": "Folder",
       "unknown": "", // <-- note to self, this is the state when nothing is selected
     }
   }
@@ -926,6 +928,17 @@ class Inspector extends Component {
         {this.renderName()}
         {this.renderFilename()}
         {this.renderAssetPreview()}
+      </div>
+    )
+  }
+
+  /**
+   * Renders the inspector view for a selected Asset Library folder.
+   */
+  renderFolder = () => {
+    return (
+      <div className="inspector-content">
+        {this.renderName()}
       </div>
     )
   }

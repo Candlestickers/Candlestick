@@ -33,6 +33,9 @@ Wick.Selection = class extends Wick.Base {
         super(args);
 
         this._selectedObjectsUUIDs = args.selectedObjects || [];
+        // Folders are an editor-side Asset Library feature, not Wick.Base
+        // objects, so they can't live in _selectedObjectsUUIDs.
+        this._selectedFolder = null;
         this._widgetRotation = args.widgetRotation || 0;
         this._pivotPoint = { x: 0, y: 0 };
         this._originalWidth = 0;
@@ -228,11 +231,32 @@ Wick.Selection = class extends Wick.Base {
     clear(filter) {
         if (filter === undefined) {
             this._selectedObjectsUUIDs = [];
+            this._selectedFolder = null;
             this._resetPositioningValues();
             this.view.dirty = true;
         } else {
             this.deselectMultipleObjects(this.project.selection.getSelectedObjects(filter));
         }
+    }
+
+    /**
+     * The folder currently selected in the Asset Library, if any.
+     * @type {object}
+     */
+    get selectedFolder() {
+        return this._selectedFolder;
+    }
+
+    /**
+     * Selects a folder in the Asset Library. Clears any other selection,
+     * since a folder can't be selected alongside canvas/timeline/asset
+     * objects.
+     * @param {object} folder - The folder to select, as tracked by the
+     *   editor's AssetLibrary UI (folders aren't Wick.Base objects).
+     */
+    selectFolder(folder) {
+        this.clear();
+        this._selectedFolder = folder;
     }
 
     /**
@@ -298,6 +322,7 @@ Wick.Selection = class extends Wick.Base {
      * @type {string}
      */
     get location() {
+        if (this._selectedFolder) return 'AssetLibrary';
         if (this.numObjects === 0) return null;
         return this._locationOf(this.getSelectedObjects()[0]);
     }
@@ -361,7 +386,9 @@ Wick.Selection = class extends Wick.Base {
                 return 'multitimeline';
             }
         } else if (selection.location === 'AssetLibrary') {
-            if (selection.getSelectedObjects()[0] instanceof window.Wick.ImageAsset) {
+            if (selection.selectedFolder) {
+                return 'folder';
+            } else if (selection.getSelectedObjects()[0] instanceof window.Wick.ImageAsset) {
                 return 'imageasset';
             } else if (selection.getSelectedObjects()[0] instanceof window.Wick.SoundAsset) {
                 return 'soundasset';
@@ -711,10 +738,18 @@ Wick.Selection = class extends Wick.Base {
      * @type {string}
      */
     get name() {
+        if (this._selectedFolder) return this._selectedFolder.name;
         return this._getSingleAttribute('name');
     }
 
     set name(name) {
+        if (this._selectedFolder) {
+            // Folders aren't Wick.Base objects, so mutate the editor-owned
+            // folder object directly (it's the same reference AssetLibrary
+            // holds in its state, so a forced re-render picks up the change).
+            this._selectedFolder.name = name;
+            return;
+        }
         this._setSingleAttribute('name', name);
     }
 
