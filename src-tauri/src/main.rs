@@ -82,7 +82,16 @@ async fn render_video_ffmpeg(
         ).map_err(|e| e.to_string())?;
     }
 
-    let output_path = temp_dir.join(format!("{}.mp4", name));
+    // Sanitize the user-supplied output name to prevent path traversal / injection
+    // via special characters (e.g. "../", "/", null bytes) ending up in file paths
+    // or command arguments.
+    let safe_name: String = name
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+        .collect();
+    let safe_name = if safe_name.is_empty() { "output".to_string() } else { safe_name };
+
+    let output_path = temp_dir.join(format!("{}.mp4", safe_name));
 
     let mut cmd = Command::new("ffmpeg");
     cmd.current_dir(&temp_dir)
