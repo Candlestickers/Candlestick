@@ -61527,10 +61527,16 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
     super.draw();
     var ctx = this.ctx;
     var r = Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
+    var _tcw = this.gridCellWidth;
+    var _tG = Wick.GUIElement;
 
-    if (this.project.frameSizeMode === 'large') {
-      r *= 1.25;
-    } // Tween diamond
+    if(_tcw <= _tG.GRID_SMALL_CELL_WIDTH)
+      r *= 0.5+0.25 * (_tcw / _tG.GRID_SMALL_CELL_WIDTH);
+    else if(_tcw <= _tG.GRID_NORMAL_CELL_WIDTH)
+      r *= 0.75+0.25 * ((_tcw - _tG.GRID_SMALL_CELL_WIDTH) / (_tG.GRID_NORMAL_CELL_WIDTH - _tG.GRID_SMALL_CELL_WIDTH));
+    else
+      r *= 1+0.25 * ((_tcw - _tG.GRID_NORMAL_CELL_WIDTH) / (_tG.GRID_LARGE_CELL_WIDTH - _tG.GRID_NORMAL_CELL_WIDTH));
+    // Tween diamond
 
 
     ctx.save();
