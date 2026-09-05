@@ -81,6 +81,7 @@ Wick.Selection = class extends Wick.Base {
             "strokeWidth",
             "fillColor",
             "strokeColor",
+            "layerColor",
             "name",
             "filename",
             "fontSize",
@@ -752,6 +753,18 @@ Wick.Selection = class extends Wick.Base {
 
     set strokeWidth(strokeWidth) {
         this._setSingleAttribute('strokeWidth', strokeWidth);
+    }
+
+    /**
+     * The color of the layer.
+     * @type {paper.color}
+     */
+    get layerColor(){
+        return this._getSingleAttribute('layerColor')
+    }
+
+    set layerColor(layerColor){
+        this._setSingleAttribute('layerColor', layerColor)
     }
 
     /**

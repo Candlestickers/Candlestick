@@ -100,6 +100,7 @@ class Inspector extends Component {
     this.inspectorTitles = {
       "frame": "Frame",
       "multiframe": "Multi-Frame",
+      "layer": "Layer",
       "tween": "Tween",
       "multitween": "Multi-Tween",
       "clip": "Clip",
@@ -286,6 +287,30 @@ class Inspector extends Component {
         />
       </div>
     );
+  }
+
+  /**
+   * Renders an inspector row allowing editing of a layer's colour.
+   */
+  renderLayerColor = () => {
+    return (
+      <div>
+        <InspectorColorNumericInput
+          tooltip1="Color"
+          val1={this.getSelectionAttribute('layerColor')}
+          onChange1={(col) => this.setSelectionAttribute('layerColor', col)}
+          onChangeIntermediate1={(col) => {console.log('intermediiate'); this.setSelectionAttributeIntermediate('layerColor', col)}}
+          colorPickerType={this.props.colorPickerType}
+          changeColorPickerType={this.props.changeColorPickerType}
+          enableGradient={false}
+          selectionProps={{
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.root.timeline.view.render(),
+          }}
+          id={"inspector-selection-layer-color"}
+        />
+      </div>
+    )
   }
 
   /**
@@ -738,6 +763,7 @@ class Inspector extends Component {
       <div className="inspector-content">
         {this.renderName()}
         {this.renderOpacity()}
+        {this.renderLayerColor()}
       </div>
     )
   }
