@@ -43,33 +43,17 @@ export default function EditorWrapper(props) {
     useEffect(() => {
         let editorElem = document.getElementById('editor');
 
+        // Merge the virtual modifier-key state onto the real, trusted mousedown event
+        // instead of replacing it. ctrlKey/altKey/shiftKey are accessor properties
+        // inherited from MouseEvent.prototype, so Object.defineProperty is needed to define them on the instance.
         let onMouseDownCapture = (e) => {
-            if (e._modifierKeysApplied) {
-                return;
-            }
             if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
                 return;
             }
 
-            e.stopPropagation();
-            e.preventDefault();
-
-            let redispatchedEvent = new MouseEvent(e.type, {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                detail: e.detail,
-                screenX: e.screenX,
-                screenY: e.screenY,
-                clientX: e.clientX,
-                clientY: e.clientY,
-                button: e.button,
-                buttons: e.buttons,
-                relatedTarget: e.relatedTarget,
-                ...props.editor.modifierKeys,
-            });
-            redispatchedEvent._modifierKeysApplied = true;
-            e.target.dispatchEvent(redispatchedEvent);
+            Object.defineProperty(e, 'ctrlKey', { value: e.ctrlKey || props.editor.modifierKeys.ctrlKey, configurable: true });
+            Object.defineProperty(e, 'altKey', { value: e.altKey || props.editor.modifierKeys.altKey, configurable: true });
+            Object.defineProperty(e, 'shiftKey', { value: e.shiftKey || props.editor.modifierKeys.shiftKey, configurable: true });
         };
 
         editorElem.addEventListener('mousedown', onMouseDownCapture, true);
