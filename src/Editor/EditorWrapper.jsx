@@ -47,9 +47,7 @@ export default function EditorWrapper(props) {
         // instead of replacing it. ctrlKey/altKey/shiftKey are accessor properties
         // inherited from MouseEvent.prototype, so Object.defineProperty is needed to define them on the instance.
         let onMouseDownCapture = (e) => {
-            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
-                return;
-            }
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
 
             Object.defineProperty(e, 'ctrlKey', { value: e.ctrlKey || props.editor.modifierKeys.ctrlKey, configurable: true });
             Object.defineProperty(e, 'altKey', { value: e.altKey || props.editor.modifierKeys.altKey, configurable: true });
