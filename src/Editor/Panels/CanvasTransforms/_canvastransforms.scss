@@ -1,4 +1,4 @@
-@import 'Editor/_wickbrand.scss';
+@use 'Editor/_wickbrand.scss' as *;
 
 $canvas-transforms-size: 40px;
 

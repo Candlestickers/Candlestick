@@ -143,9 +143,9 @@ async function loadPathIntoEditor(editorThis, filePath) {
 }
 
 
-const { version } = require('../../package.json');
+import { version } from '../../package.json';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 // Watches for container resize and calls onResize, replacing react-sizeme
 function ResizeTrigger({ onResize, children }) {
