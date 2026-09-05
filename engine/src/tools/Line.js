@@ -160,15 +160,16 @@ Wick.Tools.Line = class extends Wick.Tool {
 			const dy = Math.abs(this.startPoint.y - e.point.y);
 			const dx = Math.abs(this.startPoint.x - e.point.x);
 
-			// diagnol
-			if (dy && dx && (dy / dx) > 0.5 && (dx / dy) > 0.5) {
+			// diagnol (tan(22.5) = 0.41421356237309503)
+			if (dy && dx && (dy / dx) > 0.41421356237309503 && (dx / dy) > 0.41421356237309503) {
 				const diff = {
 					x: this.endPoint.x - this.startPoint.x,
 					y: this.endPoint.y - this.startPoint.y
 				}
+				const length = (Math.abs(diff.y) + Math.abs(diff.x)) / 2
 				this.endPoint = {
-					x: this.startPoint.x + (dy + dx) / 2 * diff.x / Math.abs(diff.x),
-					y: this.startPoint.y + (dy + dx) / 2 * diff.y / Math.abs(diff.y)
+					x: this.startPoint.x + length * diff.x / Math.abs(diff.x),
+					y: this.startPoint.y + length * diff.y / Math.abs(diff.y)
 				}
 			} else if (dy > dx) // straight vertical
 				this.endPoint.x = this.startPoint.x;
