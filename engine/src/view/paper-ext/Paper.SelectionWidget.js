@@ -205,7 +205,8 @@ class SelectionWidget {
     }
 
     set currentTransformation(currentTransformation) {
-        if(['translate', 'scale', 'rotate', 'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
+        if(['translate', 'scale-edge', 'scale-corner', 'rotate', 'move-pivot',
+            'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
             console.error('Paper.SelectionWidget: Invalid transformation type: ' + currentTransformation);
             currentTransformation = null;
         } else {
@@ -251,6 +252,7 @@ class SelectionWidget {
                 this._buildGUI();
             }
             this.layer.addChild(this.item);
+            this._pivotPointHandle.bringToFront();
         }
     }
 
@@ -265,170 +267,142 @@ class SelectionWidget {
         this._ghost = this._buildGhost();
         this._layer.addChild(this._ghost);
 
-        if (item.data.handleType === 'rotation') {
+        if (item.data.handleType === 'pivot') {
+            this.currentTransformation = 'move-pivot';
+            this._newPivot = this.pivot;
+            this._ghost.remove();
+        } else if (item.data.handleType === 'rotation') {
             this.currentTransformation = 'rotate';
         } else if (item.data.handleType === 'scale') {
-            this.currentTransformation = 'scale';
+            if (item.data.handleEdge.includes('Center')) {
+                this.currentTransformation = 'scale-edge';
+            }
+            else {
+                this.currentTransformation = 'scale-corner';
+            }
         } else {
             this.currentTransformation = 'translate';
         }
 
-        this._ghost.data.initialPosition = this._ghost.position;
+        this._initialPoint = e.point;
+        this._truePivot = this.pivot;
+        this._ghost.data.offset = new paper.Point(0, 0);
         this._ghost.data.scale = new paper.Point(1, 1);
+        this._ghost.data.transform = new paper.Matrix();
     }
 
     /**
      *
      */
     updateTransformation (item, e) {
-        if(this.currentTransformation.substring(0,8) === 'gradient') {
+        if(this.currentTransformation && this.currentTransformation.substring(0,8) === 'gradient') {
             return this.updateGradientTransformation(item, e);
         }
 
-        if (!this.mod || !this.mod.initiated) {
-            this.mod = {
-                initiated: true
-            }
+        var modifiers = {
+            skew: e.modifiers.command,   // Skew when Ctrl/Cmd pressed
+            center: !e.modifiers.alt,    // Always scale from center unless Alt pressed
+            constrain: e.modifiers.shift // Never retain proportions unless Shift pressed
+        };
+        var topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
+        var vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
 
-            this.mod.onePoint = new paper.Point(1, 1);
-            this.mod.initialPoint = e.point;
-
-            this.mod.truePivot = this.pivot;
-
-            if (this.currentTransformation === 'translate') {
-                this.mod.action = 'translate';
-                this.mod.initialPosition = this._ghost.position;
-            }
-            else if (this.currentTransformation === 'rotate') {
-                this.mod.action = 'rotate';
-                this.mod.rotateDelta = 0;
-                this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-                this.mod.initialBoxRotation = this.boxRotation || 0;
-            } else if (item.data.handleEdge.includes('Center')) {
-                this.mod.action = 'move-edge';
-                this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
-                this.mod.vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
-
-                this.mod.transformMatrix = new paper.Matrix();
-            } else {
-                this.mod.action = 'move-corner';
-                this.mod.scaleFactor = this.mod.onePoint;
+        this._ghost.matrix.reset();
+        this._ghost.rotate(-this.boxRotation, this.pivot);
+        if (modifiers.center) {
+            this._truePivot = this.pivot;
+        } else if (this.currentTransformation === 'scale-edge') {
+            this._truePivot = topLeft ? this._ghost.bounds.bottomRight : this._ghost.bounds.topLeft;
+        } else {
+            let bounds = this._ghost.bounds;
+            switch (item.data.handleEdge) {
+                case 'topRight':
+                    this._truePivot = bounds.bottomLeft;
+                    break;
+                case 'topLeft':
+                    this._truePivot = bounds.bottomRight;
+                    break;
+                case 'bottomRight':
+                    this._truePivot = bounds.topLeft;
+                    break;
+                case 'bottomLeft':
+                    this._truePivot = bounds.topRight;
+                    break;
             }
         }
+        let unrotatedPivot = this._truePivot;
+        this._truePivot = this._truePivot.rotate(this.boxRotation, this.pivot);
 
-        this.mod.modifiers = {
-            skew: e.modifiers.command, // Skew when Ctrl/Cmd pressed
-            center: !e.modifiers.alt, // Always scale from center unless Alt pressed
-            freescale: !e.modifiers.shift // Never retain proportions unless Shift pressed
-        }
-
-        if (this.mod.action === 'translate') {
-            var initialDelta = e.point.subtract(this.mod.initialPoint);
-            if (!this.mod.modifiers.freescale) {
-                var angle = initialDelta.angle;
-                angle = Math.round(Math.round(angle / 45) * 45) * Math.PI / 180;
-                var angleVector = new paper.Point(Math.cos(angle), Math.sin(angle));
-                initialDelta = initialDelta.project(angleVector);
+        if (this.currentTransformation === 'move-pivot') {
+            item.matrix.reset();
+            var initialDelta = e.point.subtract(this._initialPoint);
+            if (modifiers.constrain) {
+                var direction = new paper.Point({ length: 1, angle: Math.round(initialDelta.angle / 45) * 45 });
+                initialDelta = initialDelta.project(direction);
             }
-            this.mod.offset = initialDelta;
-            this._ghost.position = this.mod.initialPosition.add(initialDelta);
-        }
-        else if (this.mod.action === 'rotate') {
-            this._ghost.rotate(-this.mod.rotateDelta, this.pivot);
-
-            var rotateDelta = e.point.subtract(this.pivot).angle - this.mod.initialAngle;
-            if (!this.mod.modifiers.freescale) {
-                rotateDelta = Math.round(Math.round(rotateDelta / 45) * 45);
+            item.translate(initialDelta);
+            this._newPivot = item.position;
+        } else if (this.currentTransformation === 'translate') {
+            this._ghost.matrix.reset();
+            var initialDelta = e.point.subtract(this._initialPoint);
+            if (modifiers.constrain) {
+                var direction = new paper.Point({ length: 1, angle: Math.round(initialDelta.angle / 45) * 45 });
+                initialDelta = initialDelta.project(direction);
             }
-            this.mod.rotateDelta = rotateDelta;
-            this.boxRotation = this.mod.initialBoxRotation + rotateDelta;
-
-            this._ghost.rotate(this.mod.rotateDelta, this.pivot);
-        } else if (this.mod.action === 'move-corner') {
-            this._ghost.rotate(-this.boxRotation, this.pivot);
-            this._ghost.scale(this.mod.onePoint.divide(this.mod.scaleFactor), this.mod.truePivot);
-
-            if (this.mod.modifiers.center) {
-                this.mod.truePivot = this.pivot;
-            } else {
-                let bounds = this._ghost.bounds;
-                switch (item.data.handleEdge) {
-                    case 'topRight':
-                        this.mod.truePivot = bounds.bottomLeft;
-                        break;
-                    case 'topLeft':
-                        this.mod.truePivot = bounds.bottomRight;
-                        break;
-                    case 'bottomRight':
-                        this.mod.truePivot = bounds.topLeft;
-                        break;
-                    case 'bottomLeft':
-                        this.mod.truePivot = bounds.topRight;
-                        break;
-                }
+            this._ghost.data.offset = initialDelta;
+            this._ghost.translate(initialDelta);
+        } else if (this.currentTransformation === 'rotate') {
+            this._ghost.matrix.reset();
+            var rotateDelta = e.point.subtract(this._truePivot).angle - this._initialPoint.subtract(this._truePivot).angle;
+            if (modifiers.constrain) {
+                rotateDelta = Math.round(rotateDelta / 45) * 45;
             }
-
-            var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot).subtract(this.mod.truePivot);
-            var initialPointRelative = this.mod.initialPoint.rotate(-this.boxRotation, this.pivot).subtract(this.mod.truePivot);
+            this._ghost.rotate(rotateDelta, this._truePivot);
+        } else if (this.currentTransformation === 'scale-corner') {
+            var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
+            var initialPointRelative = this._initialPoint.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
             var scaleFactor = currentPointRelative.divide(initialPointRelative);
-            if (!this.mod.modifiers.freescale) {
+            if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
                 } else {
                     scaleFactor.y = Math.sign(scaleFactor.y) * Math.abs(scaleFactor.x);
                 }
             }
-            this.mod.scaleFactor = scaleFactor;
+            this._ghost.data.scale = scaleFactor;
 
-            this._ghost.scale(this.mod.scaleFactor, this.mod.truePivot);
+            this._ghost.scale(scaleFactor, unrotatedPivot);
             this._ghost.rotate(this.boxRotation, this.pivot);
         } else {
-            this._ghost.rotate(-this.boxRotation, this.pivot);
-            this._ghost.translate(this.mod.truePivot.multiply(-1)).transform(this.mod.transformMatrix.inverted()).translate(this.mod.truePivot);
-
-            if (this.mod.modifiers.center) {
-                this.mod.truePivot = this.pivot;
-            } else {
-                if (this.mod.topLeft) {
-                    this.mod.truePivot = this._ghost.bounds.bottomRight;
-                } else {
-                    this.mod.truePivot = this._ghost.bounds.topLeft;
-                }
-            }
-
-            this.mod.transformMatrix.reset();
-
             var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot);
-            var initialPointRelative = this.mod.initialPoint.rotate(-this.boxRotation, this.pivot);
+            var initialPointRelative = this._initialPoint.rotate(-this.boxRotation, this.pivot);
 
-            if (!this.mod.modifiers.skew || (this.mod.modifiers.skew && e.modifiers.shift)) {
-                var scaleFactor = currentPointRelative.subtract(this.mod.truePivot).divide(initialPointRelative.subtract(this.mod.truePivot));
-                if (this.mod.vertical) {
+            this._ghost.data.transform.reset();
+            if (!modifiers.skew || (modifiers.skew && e.modifiers.shift)) {
+                var scaleFactor = currentPointRelative.subtract(unrotatedPivot).divide(initialPointRelative.subtract(unrotatedPivot));
+                if (vertical)
                     scaleFactor.x = 1;
-                } else {
+                else
                     scaleFactor.y = 1;
-                }
 
-                this.mod.transformMatrix.scale(scaleFactor)
+                this._ghost.data.transform.scale(scaleFactor)
             }
-            if (this.mod.modifiers.skew) {
+            if (modifiers.skew) {
                 var shearFactor = currentPointRelative.subtract(initialPointRelative).divide(this._ghost.bounds.height, this._ghost.bounds.width);
-                if (this.mod.vertical) {
+                if (vertical)
                     shearFactor.y = 0;
-                } else {
+                else
                     shearFactor.x = 0;
-                }
-                if (this.mod.modifiers.center) {
-                    shearFactor = shearFactor.multiply(2);
-                }
-                if (this.mod.topLeft) {
-                    shearFactor = shearFactor.multiply(-1);
-                };
 
-                this.mod.transformMatrix.shear(shearFactor.transform(this.mod.transformMatrix.inverted()));
+                if (modifiers.center)
+                    shearFactor = shearFactor.multiply(2);
+                if (topLeft)
+                    shearFactor = shearFactor.multiply(-1);
+
+                this._ghost.data.transform.shear(shearFactor);
             }
 
-            this._ghost.translate(this.mod.truePivot.multiply(-1)).transform(this.mod.transformMatrix).translate(this.mod.truePivot);
+            this._ghost.translate(unrotatedPivot.multiply(-1)).transform(this._ghost.data.transform).translate(unrotatedPivot);
             this._ghost.rotate(this.boxRotation, this.pivot);
         }
     }
@@ -444,18 +418,22 @@ class SelectionWidget {
 
         this._ghost.remove();
 
-        if (this.mod.action === 'translate') {
-            this.translateSelection(this.mod.offset);
-        } else if (this.mod.action === 'rotate') {
-            this.rotateSelection(this._ghost.rotation);
-        } else if (this.mod.action === 'move-corner') {
-            this.scaleSelection(this.mod.scaleFactor, this.mod.truePivot);
+        if (this.currentTransformation === 'move-pivot') {
+            if (this._newPivot) this.pivot = this._newPivot;
+            if (this._itemsInSelection.length === 1 && this._itemsInSelection[0] instanceof paper.Group)
+                this._itemsInSelection[0].pivot = this._itemsInSelection[0].globalToLocal(this._newPivot);
+        } else if (this.currentTransformation === 'translate') {
+            this.translateSelection(this._ghost.data.offset);
+        } else if (this.currentTransformation === 'rotate') {
+            this.boxRotation += this._ghost.rotation;
+            this.rotateSelection(this._ghost.rotation, this._truePivot);
+        } else if (this.currentTransformation === 'scale-corner') {
+            this.scaleSelection(this._ghost.data.scale, this._truePivot);
         } else {
-            this.transformSelection(this.mod.transformMatrix, this.mod.truePivot);
+            this.transformSelection(this._ghost.data.transform, this._truePivot);
         }
 
         this._currentTransformation = null;
-        this.mod.initiated = false;
     }
 
     /**
@@ -471,23 +449,26 @@ class SelectionWidget {
     /**
      *
      */
-    rotateSelection(angle) {
+    rotateSelection(angle, pivot = this.pivot) {
         this._itemsInSelection.forEach(item => {
-            item.rotate(angle, this.pivot);
+            item.rotate(angle, pivot);
         });
+
+        this.pivot = this.pivot.rotate(angle, pivot);
     }
 
     /**
      *
      */
     scaleSelection(scale, pivot = this.pivot) {
+        let unrotatedPivot = pivot.rotate(-this.boxRotation, this.pivot);
         this._itemsInSelection.forEach(item => {
             item.rotate(-this.boxRotation, this.pivot);
-            item.scale(scale, pivot);
+            item.scale(scale, unrotatedPivot);
             item.rotate(this.boxRotation, this.pivot);
         });
 
-        var newPivot = pivot.add(this.pivot.subtract(pivot).multiply(scale));
+        var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).multiply(scale));
         this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
     }
 
@@ -495,15 +476,16 @@ class SelectionWidget {
      *
      */
     transformSelection(matrix, pivot = this.pivot) {
+        let unrotatedPivot = pivot.rotate(-this.boxRotation, this.pivot);
         this._itemsInSelection.forEach(item => {
             item.rotate(-this.boxRotation, this.pivot);
-            item.translate(pivot.multiply(-1)).transform(matrix).translate(pivot);
+            item.translate(unrotatedPivot.multiply(-1)).transform(matrix).translate(unrotatedPivot);
             item.rotate(this.boxRotation, this.pivot);
         });
 
         // Note that the GUI won't show this pivot as the center because it doesn't account for skew.
         // The pivot point after the skew will look a bit off.
-        var newPivot = pivot.add(this.pivot.subtract(pivot).transform(matrix));
+        var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).transform(matrix));
         this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
     }
 
@@ -591,7 +573,8 @@ class SelectionWidget {
             fillColor: SelectionWidget.PIVOT_FILL_COLOR,
             strokeColor: SelectionWidget.PIVOT_STROKE_COLOR,
         });
-        handle.locked = true;
+        // Lock handle if it interferes with dragging the selection
+        handle.locked = (this.boundingBox.width <= 4*handle.bounds.width) && (this.boundingBox.height <= 4*handle.bounds.height);
         return handle;
     }
 

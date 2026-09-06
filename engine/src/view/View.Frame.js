@@ -138,6 +138,7 @@ Wick.View.Frame = class extends Wick.View {
                     opacity: child.opacity
 
                 });
+                wickClip.pivot = [child.pivot.x, child.pivot.y];
             }
         });
 
