@@ -2364,12 +2364,14 @@ class EditorCore extends Component {
 
     extendFrame = () => {
         var frames = this.project.selection.getSelectedObjects('Frame');
+        if (frames.length === 0) frames = this.project.activeTimeline.activeFrames;
         this.project.extendFrames(frames);
         this.project.guiElement.draw();
     }
 
     shrinkFrame = () => {
         var frames = this.project.selection.getSelectedObjects('Frame');
+        if (frames.length === 0) frames = this.project.activeTimeline.activeFrames;
         this.project.shrinkFrames(frames);
         this.project.guiElement.draw();
     }
