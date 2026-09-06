@@ -564,6 +564,19 @@ componentWillUnmount() { this._mounted = false; }
   }
 
   /**
+   * Renders an inspector row allowing viewing and editing of the selection's shear.
+   */
+  renderShear = () => {
+    return (
+      <InspectorNumericInput
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -590,6 +603,7 @@ componentWillUnmount() { this._mounted = false; }
         {this.renderSize()}
         {this.renderScale()}
         {this.renderRotation()}
+        {this.renderShear()}
         {this.renderOpacity()}
       </div>
     )

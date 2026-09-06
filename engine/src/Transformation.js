@@ -36,7 +36,12 @@ Wick.Transformation = class {
         this.scaleX = args.scaleX === undefined ? 1 : args.scaleX;
         this.scaleY = args.scaleY === undefined ? 1 : args.scaleY;
         this.rotation = args.rotation === undefined ? 0 : args.rotation;
+        this.shear = args.shear === undefined ? 0 : args.shear;
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
+    }
+
+    get scaledSkew () {
+        return Math.atan(this.shear * this.scaleY / this.scaleX) * 180/Math.PI;
     }
 
     /**
@@ -49,8 +54,29 @@ Wick.Transformation = class {
             scaleX: this.scaleX,
             scaleY: this.scaleY,
             rotation: this.rotation,
+            shear: this.shear,
             opacity: this.opacity,
         }
+    }
+
+    /**
+     * An array containing the matrix values of this transformation.
+     */
+    get matrix () {
+        // https://github.com/paperjs/paper.js/blob/92775f5279c05fb7f0a743e9e7fa02cd40ec1e70/src/basic/Matrix.js#L687
+        const { x, y, scaleX, scaleY, rotation } = this;
+        const degrees = 180 / Math.PI,
+            rotateRad = rotation / degrees,
+            skewRad = this.scaledSkew / degrees;
+        let a, b, c, d;
+        let r = scaleX, r2 = r * r,
+            det = scaleY * r,
+            at = Math.tan(skewRad) * r2;
+        a = Math.cos(rotateRad) * r;
+        b = Math.sqrt(r2 - a * a) * (rotateRad > 0 ? 1 : -1);
+        d = (b * at + a * det) / r2;
+        c = (a * at - b * det) / r2;
+        return [a, b, c, d, x, y];
     }
 
     /**

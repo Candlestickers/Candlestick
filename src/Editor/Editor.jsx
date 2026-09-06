@@ -510,7 +510,33 @@ class Editor extends EditorCore {
      * Resets the editor in preparation for a project load.
      */
     resetEditorForLoad = () => {
-
+        // Re-apply saved frame size so HIDE_CONTENT_DOTS and cell dims are correct after every project load
+        if (window.Wick && window.Wick.GUIElement) {
+            const G = window.Wick.GUIElement;
+            const stored = localStorage.getItem('wickEditorFrameSizeValue');
+            if (stored !== null) {
+                const v = parseInt(stored);
+                const XSW = 8, XSH = 16;
+                let w, h;
+                if (v <= 50) {
+                    const t = v / 50;
+                    w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH - XSW));
+                    const ht = Math.max(v, 25) / 50;
+                    h = Math.round(XSH + ht * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+                } else if (v <= 100) {
+                    const t = (v - 50) / 50;
+                    w = Math.round(G.GRID_SMALL_CELL_WIDTH + t * (G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH));
+                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+                } else {
+                    const t = (v - 100) / 50;
+                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
+                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+                }
+                G.GRID_DEFAULT_CELL_WIDTH = w;
+                G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
+                G.HIDE_CONTENT_DOTS = v < 15;
+            }
+        }
     }
 
     /**
