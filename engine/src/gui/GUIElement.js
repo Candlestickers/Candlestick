@@ -222,20 +222,45 @@ if(isTablet) {
     Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
 }
 // Restore saved frame size preference (overrides tablet/desktop default)
-const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
-if(_savedFrameSize) switch(_savedFrameSize){
-    case 'small':
-        Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-        Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
-        break;
-    case 'large':
-        Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-        Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
-        break;
-    case 'normal':
-    default:
-        Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-        Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
+if (_savedFrameSizeValue !== null) {
+    const _v = parseInt(_savedFrameSizeValue);
+    const _G = Wick.GUIElement;
+    const _XSW = 8, _XSH = 16;
+    let _w, _h;
+    if (_v <= 50) {
+        const _t = _v / 50;
+        _w = Math.round(_XSW + _t * (_G.GRID_SMALL_CELL_WIDTH - _XSW));
+        const _ht = Math.max(_v, 25) / 50;
+        _h = Math.round(_XSH + _ht * (_G.GRID_SMALL_CELL_HEIGHT - _XSH));
+    } else if (_v <= 100) {
+        const _t = (_v - 50) / 50;
+        _w = Math.round(_G.GRID_SMALL_CELL_WIDTH + _t * (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH));
+        _h = Math.round(_G.GRID_SMALL_CELL_HEIGHT + _t * (_G.GRID_NORMAL_CELL_HEIGHT - _G.GRID_SMALL_CELL_HEIGHT));
+    } else {
+        const _t = (_v - 100) / 50;
+        _w = Math.round(_G.GRID_NORMAL_CELL_WIDTH + _t * (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH));
+        _h = Math.round(_G.GRID_NORMAL_CELL_HEIGHT + _t * (_G.GRID_LARGE_CELL_HEIGHT - _G.GRID_NORMAL_CELL_HEIGHT));
+    }
+    _G.GRID_DEFAULT_CELL_WIDTH = _w;
+    _G.GRID_DEFAULT_CELL_HEIGHT = Math.max(_h, 30);
+    _G.HIDE_CONTENT_DOTS = _v < 15;
+} else {
+    const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
+    if(_savedFrameSize) switch(_savedFrameSize){
+        case 'small':
+            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
+            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+            break;
+        case 'large':
+            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+            break;
+        case 'normal':
+        default:
+            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
+            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+    }
 }
 Wick.GUIElement.GRID_MARGIN = 1;
 

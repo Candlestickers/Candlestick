@@ -53,6 +53,7 @@ Wick.Clip = class extends Wick.Tickable {
         this._isSynced = false;
 
         this._transformation = args.transformation || new Wick.Transformation();
+        this._pivot = args.pivot || [0,0];
 
         this.cursor = 'default';
 
@@ -75,6 +76,7 @@ Wick.Clip = class extends Wick.Tickable {
         var data = super._serialize(args);
 
         data.transformation = this.transformation.values;
+        data.pivot = this._pivot;
         data.timeline = this._timeline;
         data.animationType = this._animationType;
         data.singleFrameNumber = this._singleFrameNumber;
@@ -89,6 +91,7 @@ Wick.Clip = class extends Wick.Tickable {
         super._deserialize(data);
 
         this.transformation = new Wick.Transformation(data.transformation);
+        this.pivot = data.pivot;
         this._timeline = data.timeline;
         this._animationType = data.animationType || 'loop';
         this._singleFrameNumber = data.singleFrameNumber || 1;
@@ -550,6 +553,18 @@ Wick.Clip = class extends Wick.Tickable {
                 tween.transformation = this._transformation.copy();
             }
         }
+    }
+
+    /**
+     * The pivot point of the clip.
+     * @type {Array}
+     */
+    get pivot() {
+        return this._pivot;
+    }
+
+    set pivot(pivot) {
+        this._pivot = pivot;
     }
 
     /**
@@ -1319,6 +1334,19 @@ let avgIntersection = {
     
       set rotation(rotation) {
         this.transformation.rotation = rotation;
+    
+        this._onDirtyTransform();
+      }
+      /**
+     * The shear of the clip.
+     * @type {number}
+     */
+      get shear() {
+        return this.transformation.shear;
+      }
+    
+      set shear(shear) {
+        this.transformation.shear = shear;
     
         this._onDirtyTransform();
       }
