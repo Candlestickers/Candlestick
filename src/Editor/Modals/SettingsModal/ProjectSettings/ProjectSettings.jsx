@@ -67,6 +67,7 @@ class ProjectSettings extends Component {
       height: this.props.project.height,
       framerate: this.props.project.framerate,
       backgroundColor: this.props.project.backgroundColor.rgba,
+      imageSmoothing: this.props.project.imageSmoothing,
       preset: this.getPreset(this.props.project.width, this.props.project.height),
     }
   }
@@ -137,6 +138,12 @@ class ProjectSettings extends Component {
     });
   }
 
+  changeProjectImageSmoothing = () => {
+    this.setState({
+      imageSmoothing: !this.state.imageSmoothing,
+    });
+  }
+
   acceptProjectSettings = () => {
     let newSettings = {
       name: this.state.name === '' ? this.defaultName : this.state.name,
@@ -144,6 +151,7 @@ class ProjectSettings extends Component {
       height: this.state.height,
       backgroundColor: new window.Wick.Color(this.state.backgroundColor),
       framerate: this.state.framerate,
+      imageSmoothing: this.state.imageSmoothing,
     }
 
     this.props.updateProjectSettings(newSettings);
@@ -157,6 +165,7 @@ class ProjectSettings extends Component {
       height: this.props.project.height,
       framerate: this.props.project.framerate,
       backgroundColor: this.props.project.backgroundColor.rgba,
+      imageSmoothing: this.props.project.imageSmoothing,
       preset: this.getPreset(this.props.project.width, this.props.project.height)
     });
   }
@@ -293,6 +302,21 @@ class ProjectSettings extends Component {
     );
   }
 
+  renderImageSmoothingObject = () => {
+    return (
+      <div className={classNames("project-setting-element", this.props.isMobile && "mobile")}>
+        <div className="project-settings-property-container">
+          <WickInput
+            type="checkbox"
+            id="project-image-smoothing-toggle"
+            label="Image Smoothing"
+            checked={this.state.imageSmoothing}
+            onChange={this.changeProjectImageSmoothing} />
+        </div>
+      </div>
+    );
+  }
+
   selectPreset = (preset) => {
     this.setState({
       width: preset.width,
@@ -407,6 +431,9 @@ class ProjectSettings extends Component {
             <div className="project-settings-modal-row">
               {this.renderPresets()}
             </div>
+            <div className="project-settings-modal-row">
+              {this.renderImageSmoothingObject()}
+            </div>
           </div>
           {/* Footer */}
           <div id="project-settings-modal-footer">
@@ -451,9 +478,12 @@ class ProjectSettings extends Component {
           <div className="project-settings-modal-row">
             {this.renderSizeObjectMobile()}
           </div>
+          <div className="project-settings-modal-row">
+            {this.renderImageSmoothingObject()}
+          </div>
         </div>
         {/* Footer */}
-        <div id="project-settings-modal-footer">
+        <div id="project-settings-modal-footer" className="mobile">
           <div className="project-settings-modal-cancel mobile">
             <ActionButton
               className="project-settings-modal-button"

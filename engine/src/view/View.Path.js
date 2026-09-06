@@ -49,6 +49,10 @@ Wick.View.Path = class extends Wick.View {
 
         this.importJSON(this.model.json);
 
+        if(this.item instanceof this.paper.Raster) {
+            this.item.smoothing = this.model.project.imageSmoothing;
+        };
+
         // Apply onion skin style if Needed
         // (This is done here in the Path code because we actually change the style of the path
         // if the current onion skin mode is set to "outlines" or "tint")
