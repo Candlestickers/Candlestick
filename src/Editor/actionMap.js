@@ -130,10 +130,11 @@ class ActionMapInterface extends Object {
         action: () => {
           const selectedObject = this.editor.project?.selection?.getSelectedObject();
           if (selectedObject === null) return;
-          if(!selectedObject.identifier) this.editor.toast("Object added to library without identifier, please do not repeat")
+          if (selectedObject.assetSourceUUID) return;
+          if(!selectedObject.identifier) selectedObject.identifier = 'clip_' + this.editor.project.assets.length;
           window.Wick.WickObjectFile.toWickObjectFile(selectedObject, 'blob', file => {
-            let FileObj = new File([file], selectedObject.identifier || "unnamed_object", { type: file.type });
-            this.editor.createAssets([FileObj], [])})
+            let FileObj = new File([file], selectedObject.identifier, { type: file.type });
+            this.editor.importFileAsAsset(FileObj)});
         },
         id: 'action-add-clip-as-asset',
       },
