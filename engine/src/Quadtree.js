@@ -7,6 +7,8 @@
 // this.elements:
 //   - dictionary of elements {uuid1: element1, uuid2: element2}
 //   - these are the exact objects that go into this.quadtree by reference 
+const Quadtree = require('quadtree-lib');
+
 Wick.Quadtree = class {
     constructor(width, height) {
       this._quadtree = new Quadtree({

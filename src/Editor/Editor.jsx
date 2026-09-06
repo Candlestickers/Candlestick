@@ -143,9 +143,9 @@ async function loadPathIntoEditor(editorThis, filePath) {
 }
 
 
-const { version } = require('../../package.json');
+import { version } from '../../package.json';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 // Watches for container resize and calls onResize, replacing react-sizeme
 function ResizeTrigger({ onResize, children }) {
@@ -156,6 +156,7 @@ function ResizeTrigger({ onResize, children }) {
 class Editor extends EditorCore {
     constructor() {
         super();
+
         // Set path for engine dependencies
         window.Wick.resourcepath = 'corelibs/wick-engine/';
 
@@ -265,7 +266,7 @@ class Editor extends EditorCore {
 
         // Wick file input
         this.openAssetFileFromClient = window.createFileInput({
-            accept: window.Wick.FileAsset.getValidExtensions().join(', ') + ', video/*',
+            accept: window.Wick?.FileAsset?.getValidExtensions().join(', '),
             onChange: this.handleAssetFileImport,
             multiple: true,
         });
@@ -297,8 +298,9 @@ class Editor extends EditorCore {
         this.builtinPreviews = {};
     }
 
-    UNSAFE_componentWillMount = () => {
+    componentDidMount = async () => {
         document.title = `Candlestick ${this.editorVersion}`;
+
         // Initialize "live" engine state
         this.project = new window.Wick.Project();
         this.attachErrorHandlers();
@@ -335,8 +337,6 @@ class Editor extends EditorCore {
             }
         );
 
-
-
         // Setup the initial project state
         this.setState({
             ...this.state,
@@ -355,11 +355,9 @@ class Editor extends EditorCore {
             (event || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
         };
-    }
 
-
-    componentDidMount = () => {
         console.log("Project Mounted");
+        this.project.WickPM.install();
         this.hidePreloader();
         this.onWindowResize();
         // onWindowResize() call above. second resize after a short delay to lets WebKit complete its paint before we recalculate panel sizes
@@ -390,8 +388,6 @@ class Editor extends EditorCore {
         };
         document.addEventListener('paste', this._pasteHandler);
 
-
-
         // check to see if we're in the app
         if (window.__TAURI__) {
             // Force a window resize event shortly after app launches.
@@ -416,8 +412,6 @@ class Editor extends EditorCore {
                 }
             }, 200) // small delay
         }
-
-
     }
 
     // apparently need this for cleanup -H.A.
@@ -484,10 +478,6 @@ class Editor extends EditorCore {
         enableHover()
     }
 
-
-
-    //
-
     hidePreloader = () => {
         let preloader = window.document.getElementById('preloader');
         setTimeout(() => {
@@ -497,7 +487,7 @@ class Editor extends EditorCore {
                 preloader.style.display = 'none';
                 preloader.remove();
             }, 500);
-            this.project.view.render()
+            this.project?.view?.render()
         }, 2000); // Wait two seconds to allow editor to set up... TODO: Should connect this to load events.
     }
 
@@ -570,7 +560,7 @@ class Editor extends EditorCore {
         });
 
         // re-render project to avoid incorrect pan
-        this.project.view.render();
+        this.project?.view.render();
         this.recenterCanvas();
     }
 
@@ -625,8 +615,8 @@ class Editor extends EditorCore {
     }
 
     onResize = (e) => {
-        this.project.view.resize();
-        this.project.guiElement.draw();
+        this.project?.view?.resize();
+        this.project?.guiElement?.draw();
     }
 
     onStopResize = ({ domElement, component }) => {
@@ -901,8 +891,8 @@ class Editor extends EditorCore {
         }
 
         // Render engine
-        this.project.view.render();
-        this.project.guiElement.draw();
+        this.project?.view.render();
+        this.project?.guiElement.draw();
 
         // Force react to render
         // TODO: Determine a non-hack way to do this.
@@ -1151,6 +1141,9 @@ class Editor extends EditorCore {
     }
 
     render = () => {
+        if (!this.project || !this.project.view) {
+            return <div className="editor-loading">Loading editor…</div>;
+        }
         // Create some references to the project and editor to make debugging in the console easier:
         window.project = this.project;
         window.editor = this;
@@ -1168,7 +1161,7 @@ class Editor extends EditorCore {
                             <MenuBar
                                 renderSize={renderSize}
                                 openModal={this.openModal}
-                                projectName={this.project.name}
+                                projectName={this.project?.name}
                                 openProjectFileDialog={this.openProjectFileDialog}
                                 openNewProjectConfirmation={this.openNewProjectConfirmation}
                                 exportProjectAsWickFile={this.exportProjectAsWickFile}
@@ -1194,8 +1187,8 @@ class Editor extends EditorCore {
                                         <DockedPanel showOverlay={this.state.previewPlaying}>
                                             <Toolbox
                                                 project={this.state.project}
-                                                getActiveToolName={() => this.getActiveTool().name}
-                                                activeToolName={this.getActiveTool().name}
+                                                getActiveToolName={() => this.getActiveTool()?.name}
+                                                activeToolName={this.getActiveTool()?.name}
                                                 setActiveTool={this.setActiveTool}
                                                 getToolSetting={this.getToolSetting}
                                                 setToolSetting={this.setToolSetting}
@@ -1248,12 +1241,12 @@ class Editor extends EditorCore {
                                                             </ResizeTrigger>
 
                                                             <CanvasTransforms
-                                                                onionSkinEnabled={this.project.onionSkinEnabled}
+                                                                onionSkinEnabled={this.project?.onionSkinEnabled}
                                                                 toggleOnionSkin={this.toggleOnionSkin}
                                                                 zoomIn={this.zoomIn}
                                                                 zoomOut={this.zoomOut}
                                                                 recenterCanvas={this.recenterCanvas}
-                                                                activeToolName={this.getActiveTool().name}
+                                                                activeToolName={this.getActiveTool()?.name}
                                                                 setActiveTool={this.setActiveTool}
                                                                 previewPlaying={this.state.previewPlaying}
                                                                 togglePreviewPlaying={this.togglePreviewPlaying}
@@ -1446,7 +1439,7 @@ class Editor extends EditorCore {
                                                     <DockedPanel showOverlay={this.state.previewPlaying}>
                                                         <AssetLibrary
                                                             projectData={this.state.project}
-                                                            assets={this.project.getAssets()}
+                                                            assets={this.project?.getAssets()}
                                                             openModal={this.openModal}
                                                             openImportAssetFileDialog={this.openImportAssetFileDialog}
                                                             selectObjects={this.selectObjects}

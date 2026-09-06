@@ -17,8 +17,8 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@import 'Editor/_wickbrand.scss';
-@import '../_toolbox.scss';
+@use 'Editor/_wickbrand.scss' as *;
+@use '../_toolbox.scss' as *;
 
 $tool-button-container-width: $toolbox-max-button-size;
 $tool-button-container-height: $toolbox-max-button-size;

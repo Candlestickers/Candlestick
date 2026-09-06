@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const localforage = require('localforage');
+
 Wick.ToolSettings = class {
     static get DEFAULT_SETTINGS () {
         return [{
