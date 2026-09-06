@@ -1019,6 +1019,12 @@ class EditorCore extends Component {
      * @param {Function} callback - (optional) Callback to return asset to. If the import was unsuccessful, null is sent to the callback.
      */
     importFileAsAsset = async (file, callback) => {
+        
+        if (this.project.getAssetByName(file.name)) {
+            this.toast(`Asset with name '${file.name}' already exists.`, 'warning');
+            Object.defineProperty(file, 'name', {value: file.name + '-copy'});
+        }
+
         // Content-based dedup: fingerprint the new file (size + first 64 bytes)
         // then compare against all existing assets via their data-URL base64.
         try {
