@@ -48,6 +48,7 @@ Wick.View.Selection = class extends Wick.View {
      */
     applyChanges () {
         this.model.widgetRotation = this.widget.rotation;
+        this.model.widgetShear = this.widget.shear;
         this.model.pivotPoint = {
             x: this.widget.pivot.x,
             y: this.widget.pivot.y,
@@ -118,6 +119,19 @@ Wick.View.Selection = class extends Wick.View {
     /**
      *
      */
+    get shear () {
+        return this.widget.shear;
+    }
+
+    set shear (shear) {
+        this.widget.shear = shear;
+        this.model.project.view.applyChanges();
+        this.model.widgetShear = shear;
+    }
+
+    /**
+     *
+     */
     flipHorizontally () {
         this.widget.flipHorizontally();
         this.model.project.view.applyChanges();
@@ -166,6 +180,7 @@ Wick.View.Selection = class extends Wick.View {
     render () {
         this._widget.build({
             boxRotation: this.model.widgetRotation,
+            boxShear: this.model.widgetShear,
             items: this._getSelectedObjectViews(),
             pivot: new paper.Point(this.model.pivotPoint.x, this.model.pivotPoint.y),
             useGradientGUI: this.model.useGradientGUI,
