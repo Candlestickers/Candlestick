@@ -948,8 +948,8 @@ class Editor extends EditorCore {
         // Default options for the toast:
         let defaultOptions = {
             position: "bottom-right",
-            autoClose: 2000,
-            hideProgressBar: false,
+            autoClose: 2750,
+            hideProgressBar: true,
             closeOnClick: true,
             pauseOnHover: true,
             draggable: false,
