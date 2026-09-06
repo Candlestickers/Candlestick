@@ -133,6 +133,7 @@ class ActionMapInterface extends Object {
           if (selectedObject.assetSourceUUID) return;
           if(!selectedObject.identifier) selectedObject.identifier = 'clip_' + this.editor.project.assets.length;
           window.Wick.WickObjectFile.toWickObjectFile(selectedObject, 'blob', file => {
+            selectedObject.asseted = true;
             let FileObj = new File([file], selectedObject.identifier, { type: file.type });
             this.editor.importFileAsAsset(FileObj)});
         },

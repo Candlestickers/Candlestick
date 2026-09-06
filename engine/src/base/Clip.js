@@ -60,6 +60,7 @@ Wick.Clip = class extends Wick.Tickable {
         this._sourceClipUUID = null;
 
         this._assetSourceUUID = null;
+        this.asseted = false;
 
         /* If objects are passed in, add them to the clip and reposition them */
         if (args.objects) {
@@ -79,6 +80,7 @@ Wick.Clip = class extends Wick.Tickable {
         data.singleFrameNumber = this._singleFrameNumber;
         data.assetSourceUUID = this._assetSourceUUID;
         data.isSynced = this._isSynced;
+        data.asseted = this.asseted;
 
         return data;
     }
@@ -92,6 +94,7 @@ Wick.Clip = class extends Wick.Tickable {
         this._singleFrameNumber = data.singleFrameNumber || 1;
         this._assetSourceUUID = data.assetSourceUUID;
         this._isSynced = data.isSynced;
+        this.asseted = data.asseted || false;
 
         this._playedOnce = false;
 
