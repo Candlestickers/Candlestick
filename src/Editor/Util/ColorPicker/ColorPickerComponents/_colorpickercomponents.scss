@@ -2,7 +2,8 @@
  * Copyright I don't know
  */
 
-@import 'Editor/_wickbrand.scss';
+@use 'sass:math';
+@use 'Editor/_wickbrand.scss' as *;
 
 $color-picker-stop-width: 24px;
 $color-picker-pointer-radius: 8px;
@@ -21,12 +22,12 @@ $color-picker-pointer-radius: 8px;
 }
 .wick-color-picker-gradient-stop {
     top: 0;
-    translate: -$color-picker-stop-width / 2;
+    translate: math.div(-$color-picker-stop-width, 2);
     width: $color-picker-stop-width;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: $color-picker-stop-width / 2;
+    margin-top: math.div($color-picker-stop-width, 2);
 }
 .wick-color-picker-gradient-arrow:after {
     content: "";

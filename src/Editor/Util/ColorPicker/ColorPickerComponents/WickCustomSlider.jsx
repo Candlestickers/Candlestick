@@ -4,9 +4,15 @@ class WickCustomSlider extends Component {
     constructor () {
         super();
         this.container = createRef(null);
+        this.state = {
+            // Used to re-render the hover pointer
+            hoverOffset: null
+        };
     }
     componentWillUnmount () {
         this.unbindEvents();
+        // eslint-disable-next-line react/no-direct-mutation-state
+        this.state.hoverOffset = null;
     }
     calculateOffset = (e) => {
         if (!this.container.current) return;
@@ -94,6 +100,8 @@ class WickCustomSlider extends Component {
                 style={this.props.style && this.props.style.container} >
                 <div className="wick-custom-slider-background"
                     ref={this.container}
+                    onMouseMove={this.handleContainerHover}
+                    onMouseLeave={this.handleContainerExit}
                     onMouseDown={e => {this.handleContainer(e); this.bindEvents();}}
                     onTouchStart={this.handleContainer}
                     onTouchMove={this.handleMouseMove}
@@ -101,8 +109,45 @@ class WickCustomSlider extends Component {
                     onTouchCancel={this.handleTouchEnd}
                     style={this.props.style && this.props.style.background}>
                     {this.renderPointers()}
+                    {this.props.getHoverColor && this.renderHoverPointer()}
                 </div>
             </div>
+        );
+    }
+
+    handleContainerHover = (e) => {
+        // Check if hovering over a pointer
+        if (e.target !== e.currentTarget || e.buttons !== 0)
+            this.setState({ hoverOffset: null });
+        else
+            this.setState({ hoverOffset: this.calculateOffset(e) });
+    }
+    handleContainerExit = (e) => this.setState({ hoverOffset: null });
+    renderHoverPointer () {
+        if (!this.state.hoverOffset) return (<></>);
+        let offset = this.state.hoverOffset,
+            style  = { position: 'absolute', pointerEvents: 'none' };
+        if (this.props.pointersDirection) {
+            if (this.props.pointersDirection === 'x') {
+                offset = offset.x;
+                style.left = `${offset * 100}%`;
+            }
+            else {
+                offset = offset.y;
+                style.top = `${offset * 100}%`;
+            }
+        }
+        else {
+            style.left = `${offset.x * 100}%`;
+            style.top  = `${offset.y * 100}%`;
+        }
+        return (
+            <this.props.pointerComponent className="wick-custom-slider-pointer"
+                stopIndex={-1}
+                color={this.props.getHoverColor(offset)}
+                pointerType={this.props.pointerType}
+                style={style}
+                {...this.props.pointerProps} />
         );
     }
 }

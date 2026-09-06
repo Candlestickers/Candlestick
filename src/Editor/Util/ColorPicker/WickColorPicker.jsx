@@ -36,6 +36,11 @@ class WickGradientColorPicker extends Component {
         this.setState({ colorOnDrag: null });
     }
     onGradientChange = (color, args) => {
+        // Set null gradient stops to black
+        for(let stop of color.stops) {
+            if(!stop.color) stop.color = '#000000';
+        }
+
         // Sort color stops, keep the selected stop
         let index;
         if (args && typeof args.stopIndex === 'number') {
@@ -45,7 +50,7 @@ class WickGradientColorPicker extends Component {
             index = this.props.getSelectedStopIndex();
         }
         let selectedStop = color.stops[index];
-        color.stops = color.stops.toSorted((stop1, stop2) => stop1.offset - stop2.offset);
+        color.stops.sort((stop1, stop2) => stop1.offset - stop2.offset);
         let newIndex = color.stops.indexOf(selectedStop);
         if (newIndex < 0) newIndex = 0;
 
@@ -196,6 +201,10 @@ class WickGradientColorPicker extends Component {
         }
         let bounds = this.reducePaperBounds(this.props.selectedObjectsBounds);
 
+        // Fixes bug where canvas gradient tool disappears on undo
+        if (color.stops) {
+            this.props.setGradientActive(index);
+        }
         return (
             <div className="wick-color-picker">
                 {this.renderHeader(color)}

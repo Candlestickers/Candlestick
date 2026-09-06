@@ -10,10 +10,10 @@
 
 # production
 /build
-/build-ios/WebViewExample/local_html
-/build-electron
-/engine/dist/
+/dist
 /public/corelibs/wick-engine/
+/public/corelibs/ffmpeg/
+/engine/dist/
 
 # misc
 .DS_Store
@@ -28,6 +28,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # docs
-/engine/docs/
-
-/src-tauri/binaries/
+engine/docs/*
+engine/dist/*
+src-tauri/binaries/*
+src-tauri/gen/*
+*.keystore

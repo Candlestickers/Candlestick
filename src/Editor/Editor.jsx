@@ -28,11 +28,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
 import 'react-reflex/styles.css'
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
-import { throttle } from 'underscore';
 import localForage from 'localforage';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { SizeMe } from 'react-sizeme';
+import { useResizeDetector } from 'react-resize-detector';
 
 import HotKeyInterface from './hotKeyMap';
 import ActionMapInterface from './actionMap';
@@ -60,6 +59,17 @@ import EditorWrapper from './EditorWrapper';
 import { readFile } from '@tauri-apps/plugin-fs'
 import { invoke } from '@tauri-apps/api/core';
 
+function throttle(fn, wait) {
+  let lastCall = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastCall >= wait) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
+
 // app wick, for handling directly opening files from finder/ file explorer
 async function loadPathIntoEditor(editorThis, filePath) {
     try {
@@ -67,17 +77,28 @@ async function loadPathIntoEditor(editorThis, filePath) {
         const name = filePath.split('/').pop();
 
         // .WICK/ PROJECT FILE
+        const VIDEO_MIME = {
+            '.mp4': 'video/mp4', '.m4v': 'video/x-m4v',
+            '.mov': 'video/quicktime',
+            '.webm': 'video/webm',
+            '.ogv': 'video/ogg', '.ogg': 'video/ogg',
+            '.avi': 'video/x-msvideo',
+            '.mkv': 'video/x-matroska',
+            '.3gp': 'video/3gpp',
+            '.wmv': 'video/x-ms-wmv',
+        }
+        const videoExt = Object.keys(VIDEO_MIME).find(ext => name.endsWith(ext))
+
         if (
             name.endsWith('.wick') ||
-            name.endsWith('.mov') ||
-            name.endsWith('.mp4')
+            videoExt
         ) {
 
 
             const bytes = await readFile(filePath, { encoding: null })
             const blob = new Blob([bytes])
             const file = new File([blob], name, {
-                type: (name.endsWith('.wick') && 'application/zip') || (name.endsWith('.pdf') && 'application/pdf') || 'video/mp4'
+                type: (name.endsWith('.wick') && 'application/zip') || (videoExt && VIDEO_MIME[videoExt]) || 'video/mp4'
             });
 
 
@@ -125,6 +146,12 @@ async function loadPathIntoEditor(editorThis, filePath) {
 const { version } = require('../../package.json');
 
 var classNames = require('classnames');
+
+// Watches for container resize and calls onResize, replacing react-sizeme
+function ResizeTrigger({ onResize, children }) {
+    const { ref } = useResizeDetector({ onResize });
+    return <div ref={ref} style={{ width: '100%', height: '100%' }}>{children}</div>;
+}
 
 class Editor extends EditorCore {
     constructor() {
@@ -234,13 +261,13 @@ class Editor extends EditorCore {
 
         // Wick Project File Input
         this.openProjectFileFromClient = window.createFileInput({
-            accept: '.zip, .wick, .mp4, .pdf',
+            accept: '.zip, .wick, video/*, .pdf',
             onChange: this.handleWickFileLoad,
         });
 
         // Wick file input
         this.openAssetFileFromClient = window.createFileInput({
-            accept: window.Wick.FileAsset.getValidExtensions().join(', '),
+            accept: window.Wick.FileAsset.getValidExtensions().join(', ') + ', video/*',
             onChange: this.handleAssetFileImport,
             multiple: true,
         });
@@ -337,6 +364,9 @@ class Editor extends EditorCore {
         console.log("Project Mounted");
         this.hidePreloader();
         this.onWindowResize();
+        // onWindowResize() call above. second resize after a short delay to lets WebKit complete its paint before we recalculate panel sizes
+        // THIS IS IMPORTANT for safari & mac builts -H.A.
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
         if (!this.tryToParseProjectURL()) {
             this.showAutosavedProjects();
         }
@@ -366,6 +396,8 @@ class Editor extends EditorCore {
 
         // check to see if we're in the app
         if (window.__TAURI__) {
+            // Force a window resize event shortly after app launches.
+            // This is a hacky fix to make sure the MacOS tauri app doesn't render the UI with a width/height of zero.
 
             window.alert = (text) => window.editor.toast(text);
 
@@ -490,7 +522,33 @@ class Editor extends EditorCore {
      * Resets the editor in preparation for a project load.
      */
     resetEditorForLoad = () => {
-
+        // Re-apply saved frame size so HIDE_CONTENT_DOTS and cell dims are correct after every project load
+        if (window.Wick && window.Wick.GUIElement) {
+            const G = window.Wick.GUIElement;
+            const stored = localStorage.getItem('wickEditorFrameSizeValue');
+            if (stored !== null) {
+                const v = parseInt(stored);
+                const XSW = 8, XSH = 16;
+                let w, h;
+                if (v <= 50) {
+                    const t = v / 50;
+                    w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH - XSW));
+                    const ht = Math.max(v, 25) / 50;
+                    h = Math.round(XSH + ht * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+                } else if (v <= 100) {
+                    const t = (v - 50) / 50;
+                    w = Math.round(G.GRID_SMALL_CELL_WIDTH + t * (G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH));
+                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+                } else {
+                    const t = (v - 100) / 50;
+                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
+                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+                }
+                G.GRID_DEFAULT_CELL_WIDTH = w;
+                G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
+                G.HIDE_CONTENT_DOTS = v < 15;
+            }
+        }
     }
 
     /**
@@ -965,7 +1023,7 @@ class Editor extends EditorCore {
     getRenderSize = () => {
         if (window.innerWidth > 1200) {
             return "large";
-        } else if (window.innerWidth > 850) {
+        } else if (window.innerWidth > 800) {
             return "medium";
         } else {
             return "small";
@@ -1098,20 +1156,6 @@ class Editor extends EditorCore {
         }
     }
 
-    /**
-     * Returns a string representing the render size elements should use in the editor.
-     * @returns {String} "large", "medium" or "small" depending on the width of the window.
-     */
-    getRenderSize = () => {
-        if (window.innerWidth > 1200) {
-            return "large";
-        } else if (window.innerWidth > 800) {
-            return "medium";
-        } else {
-            return "small";
-        }
-    }
-
     setConsoleLogs = (logs) => {
         this.setState({
             consoleLogs: logs,
@@ -1197,9 +1241,8 @@ class Editor extends EditorCore {
                                                     {/*Canvas*/}
                                                     <ReflexElement {...this.resizeProps}>
                                                         <DockedPanel>
-                                                            <SizeMe>{({ size }) => {
-                                                                this.project.view.render();
-                                                                return (<Canvas
+                                                            <ResizeTrigger onResize={() => this.project.view.render()}>
+                                                                <Canvas
                                                                     editor={this}
                                                                     project={this.project}
                                                                     projectDidChange={this.projectDidChange}
@@ -1213,9 +1256,8 @@ class Editor extends EditorCore {
                                                                     importProjectAsWickFile={this.importProjectAsWickFile}
                                                                     openProjectFile={(file) => this.handleWickFileLoad({ target: { files: [file] } })}
                                                                     onRef={ref => this.canvasComponent = ref}
-                                                                />);
-                                                            }}
-                                                            </SizeMe>
+                                                                />
+                                                            </ResizeTrigger>
 
                                                             <CanvasTransforms
                                                                 onionSkinEnabled={this.project.onionSkinEnabled}

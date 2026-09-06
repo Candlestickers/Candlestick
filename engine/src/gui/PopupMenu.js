@@ -33,6 +33,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             icon: 'gap_fill_extend_frames',
             clickFn: () => {
                 this.project.model.activeTimeline.fillGapsMethod = 'auto_extend';
+                localStorage.setItem('wickEditorFillGapsMethod', 'auto_extend');
                 this.projectWasModified();
             }
         });
@@ -42,6 +43,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             icon: 'gap_fill_empty_frames',
             clickFn: () => {
                 this.project.model.activeTimeline.fillGapsMethod = 'blank_frames';
+                localStorage.setItem('wickEditorFillGapsMethod', 'blank_frames');
                 this.projectWasModified();
             }
         });
@@ -52,6 +54,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             clickFn: () => {
                 Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
                 Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+                Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+                localStorage.setItem('wickEditorFrameSizeMode', 'small');
+                localStorage.setItem('wickEditorFrameSizeValue', '50');
             }
         });
 
@@ -61,6 +66,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             clickFn: () => {
                 Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
                 Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+                Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+                localStorage.setItem('wickEditorFrameSizeMode', 'normal');
+                localStorage.setItem('wickEditorFrameSizeValue', '100');
             }
         });
 
@@ -70,6 +78,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             clickFn: () => {
                 Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
                 Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+                Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+                localStorage.setItem('wickEditorFrameSizeMode', 'large');
+                localStorage.setItem('wickEditorFrameSizeValue', '150');
             }
         });
     };

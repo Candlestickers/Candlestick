@@ -117,10 +117,15 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 
                 if(stopIndex !== null) {
                     this._selection.selectedStopIndex = stopIndex;
+					widget._updateItems();
                     this.fireEvent({eventName: 'canvasModified', actionName: 'cursorSelectStop'});
                 }
+				
+				if((item && item.data.handleType && item.data.handleType.startsWith('gradient-'))
+				   || stopIndex !== null) return;
             }
-        } else if(this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
+        }
+		if(this.hitResult.item && this.hitResult.item.data.isSelectionBoxGUI) {
 			// Clicked the selection box GUI, do nothing
 		} else if (this.hitResult.item && this._isItemSelected(this.hitResult.item)) {
 			// We clicked something that was already selected.
@@ -345,6 +350,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			(this.hitResult.item.data.parentItem
 				&& this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop')
 			|| this.hitResult.item.data.handleType === 'gradient-point'
+			|| this.hitResult.item.data.handleType === 'pivot'
 		) {
 			return this.CURSOR_GRAD;
 		} else if (this.hitResult.item.data.isSelectionBoxGUI) {
