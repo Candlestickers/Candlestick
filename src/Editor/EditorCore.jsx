@@ -1100,6 +1100,7 @@ class EditorCore extends Component {
      * @param {object} options - optional flags. Can include "create", which if true will create an instance of the object on the canvas.
      */
     createAssets = (acceptedFiles, rejectedFiles, options) => {
+        if (!rejectedFiles) rejectedFiles = [];
         if (!options) options = {};
 
         let toastID = this.toast('Importing files...', 'info');
