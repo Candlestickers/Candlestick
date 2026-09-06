@@ -79,6 +79,12 @@ class SelectionWidget {
         };
     }
 
+    _shearPoint = (point, shearX, shearY, pivot) => {
+        if (!pivot) pivot = new paper.Point(0,0);
+        let d = point.subtract(pivot);
+        return pivot.add(d.add(d.y * shearX, d.x * shearY));
+    }
+
     /**
      * The item containing the widget GUI
      */
@@ -109,6 +115,17 @@ class SelectionWidget {
     }
 
     /**
+     * The horizontal shear of the selection box GUI.
+     */
+    get boxShear() {
+        return this._boxShear;
+    }
+
+    set boxShear(boxShear) {
+        this._boxShear = boxShear;
+    }
+
+    /**
      * The items currently inside the selection widget
      */
     get itemsInSelection() {
@@ -130,7 +147,7 @@ class SelectionWidget {
      * The position of the top left corner of the selection box.
      */
     get position() {
-        return this._boundingBox.topLeft.rotate(this.rotation, this.pivot);
+        return this._shearPoint(this._boundingBox.topLeft, this.shear, 0, this.pivot).rotate(this.rotation, this.pivot);
     }
 
     set position(position) {
@@ -173,6 +190,18 @@ class SelectionWidget {
     set rotation(rotation) {
         var d = rotation - this.rotation;
         this.rotateSelection(d);
+    }
+
+    /**
+     * The horizontal shear of the selection.
+     */
+    get shear() {
+        return this._boxShear;
+    }
+
+    set shear(shear) {
+        var d = shear - this.shear;
+        this.transformSelection((new paper.Matrix()).shear(d, 0));
     }
 
     /**
@@ -224,11 +253,13 @@ class SelectionWidget {
     build(args) {
         if (!args) args = {};
         if (!args.boxRotation) args.boxRotation = 0;
+        if (!args.boxShear) args.boxShear = 0;
         if (!args.items) args.items = [];
         if (!args.pivot) args.pivot = new paper.Point();
 
         this._itemsInSelection = args.items;
         this._boxRotation = args.boxRotation;
+        this._boxShear = args.boxShear;
         this._pivot = args.pivot;
         this._useGradientGUI = args.useGradientGUI;
 
@@ -308,7 +339,7 @@ class SelectionWidget {
         var vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
 
         this._ghost.matrix.reset();
-        this._ghost.rotate(-this.boxRotation, this.pivot);
+        this._ghost.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
         if (modifiers.center) {
             this._truePivot = this.pivot;
         } else if (this.currentTransformation === 'scale-edge') {
@@ -331,7 +362,7 @@ class SelectionWidget {
             }
         }
         let unrotatedPivot = this._truePivot;
-        this._truePivot = this._truePivot.rotate(this.boxRotation, this.pivot);
+        this._truePivot = this._shearPoint(this._truePivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
 
         if (this.currentTransformation === 'move-pivot') {
             item.matrix.reset();
@@ -359,9 +390,11 @@ class SelectionWidget {
             }
             this._ghost.rotate(rotateDelta, this._truePivot);
         } else if (this.currentTransformation === 'scale-corner') {
-            var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
-            var initialPointRelative = this._initialPoint.rotate(-this.boxRotation, this.pivot).subtract(unrotatedPivot);
-            var scaleFactor = currentPointRelative.divide(initialPointRelative);
+            var deltaLocal = this._shearPoint(e.point.subtract(this._initialPoint).rotate(-this.boxRotation), -this.boxShear, 0),
+                cornerLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
+                distCorner = cornerLocal.subtract(unrotatedPivot),
+                distMovedCorner = distCorner.add(deltaLocal);
+            var scaleFactor = distMovedCorner.divide(distCorner);
             if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
@@ -372,38 +405,34 @@ class SelectionWidget {
             this._ghost.data.scale = scaleFactor;
 
             this._ghost.scale(scaleFactor, unrotatedPivot);
-            this._ghost.rotate(this.boxRotation, this.pivot);
+            this._ghost.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
         } else {
-            var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot);
-            var initialPointRelative = this._initialPoint.rotate(-this.boxRotation, this.pivot);
-
+            var deltaLocal = this._shearPoint(e.point.subtract(this._initialPoint).rotate(-this.boxRotation), -this.boxShear, 0),
+                edgeLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
+                distEdge = edgeLocal.subtract(unrotatedPivot),
+                distMovedEdge = distEdge.add(deltaLocal);
             this._ghost.data.transform.reset();
             if (!modifiers.skew || (modifiers.skew && e.modifiers.shift)) {
-                var scaleFactor = currentPointRelative.subtract(unrotatedPivot).divide(initialPointRelative.subtract(unrotatedPivot));
-                if (vertical)
-                    scaleFactor.x = 1;
-                else
-                    scaleFactor.y = 1;
-
-                this._ghost.data.transform.scale(scaleFactor)
+                var scaleFactor = distMovedEdge.divide(distEdge);
+                if (vertical) scaleFactor.x = 1;
+                else scaleFactor.y = 1;
+                
+                this._ghost.data.transform.scale(scaleFactor);
             }
             if (modifiers.skew) {
-                var shearFactor = currentPointRelative.subtract(initialPointRelative).divide(this._ghost.bounds.height, this._ghost.bounds.width);
-                if (vertical)
+                var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
+                if (vertical) {
                     shearFactor.y = 0;
-                else
+                    shearFactor.x *= this._ghost.bounds.height / distEdge.y;
+                } else {
                     shearFactor.x = 0;
-
-                if (modifiers.center)
-                    shearFactor = shearFactor.multiply(2);
-                if (topLeft)
-                    shearFactor = shearFactor.multiply(-1);
+                    shearFactor.y *= this._ghost.bounds.width / distEdge.x;
+                }
 
                 this._ghost.data.transform.shear(shearFactor);
             }
-
             this._ghost.translate(unrotatedPivot.multiply(-1)).transform(this._ghost.data.transform).translate(unrotatedPivot);
-            this._ghost.rotate(this.boxRotation, this.pivot);
+            this._ghost.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
         }
     }
 
@@ -431,6 +460,12 @@ class SelectionWidget {
             this.scaleSelection(this._ghost.data.scale, this._truePivot);
         } else {
             this.transformSelection(this._ghost.data.transform, this._truePivot);
+
+            // Paper.js matrix transforms are reversed.
+            var mat = (new paper.Matrix()).rotate(this.boxRotation).shear(this.boxShear, 0).append(this._ghost.data.transform);
+            var adj = mat.decompose();
+            this.boxRotation = adj.rotation;
+            this.boxShear = Math.tan(adj.skewing.x * Math.PI/180) * adj.scaling.x/adj.scaling.y;
         }
 
         this._currentTransformation = null;
@@ -461,32 +496,30 @@ class SelectionWidget {
      *
      */
     scaleSelection(scale, pivot = this.pivot) {
-        let unrotatedPivot = pivot.rotate(-this.boxRotation, this.pivot);
+        let unrotatedPivot = this._shearPoint(pivot.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot);
         this._itemsInSelection.forEach(item => {
-            item.rotate(-this.boxRotation, this.pivot);
+            item.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
             item.scale(scale, unrotatedPivot);
-            item.rotate(this.boxRotation, this.pivot);
+            item.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
         });
 
         var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).multiply(scale));
-        this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
+        this.pivot = this._shearPoint(newPivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     }
 
     /**
      *
      */
     transformSelection(matrix, pivot = this.pivot) {
-        let unrotatedPivot = pivot.rotate(-this.boxRotation, this.pivot);
+        let unrotatedPivot = this._shearPoint(pivot.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot);
         this._itemsInSelection.forEach(item => {
-            item.rotate(-this.boxRotation, this.pivot);
+            item.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
             item.translate(unrotatedPivot.multiply(-1)).transform(matrix).translate(unrotatedPivot);
-            item.rotate(this.boxRotation, this.pivot);
+            item.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
         });
 
-        // Note that the GUI won't show this pivot as the center because it doesn't account for skew.
-        // The pivot point after the skew will look a bit off.
         var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).transform(matrix));
-        this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
+        this.pivot = this._shearPoint(newPivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     }
 
     _buildGUI() {
@@ -517,7 +550,7 @@ class SelectionWidget {
         this._pivotPointHandle = this._buildPivotPointHandle();
         this.layer.addChild(this._pivotPointHandle);
 
-        this.item.rotate(this.boxRotation, this._center);
+        this.item.shear(this.boxShear, 0, this._center).rotate(this.boxRotation, this._center);
 
         this.item.children.forEach(child => {
             child.data.isSelectionBoxGUI = true;
@@ -540,7 +573,7 @@ class SelectionWidget {
     _buildItemOutlines() {
         return this._itemsInSelection.map(item => {
             var clone = item.clone({ insert: false });
-            clone.rotate(-this.boxRotation, this._center);
+            clone.rotate(-this.boxRotation, this._center).shear(-this.boxShear, 0, this._center);
             var bounds = clone.bounds;
             var border = new paper.Path.Rectangle({
                 from: bounds.topLeft,
@@ -562,6 +595,7 @@ class SelectionWidget {
             fillColor: SelectionWidget.HANDLE_FILL_COLOR,
             strokeColor: SelectionWidget.HANDLE_STROKE_COLOR,
         });
+        handle.shear(-this.boxShear, 0);
         return handle;
     }
 
@@ -602,36 +636,27 @@ class SelectionWidget {
     }
 
     _buildRotationHotspot(cornerName) {
-        // Build the not-yet-rotated hotspot, which starts out like this:
-
-        //       |
-        //       +---+
-        //       |   |
-        // ---+--+   |---
-        //    |      |
-        //    +------+
-        //       |
-
+        // Build the not-yet-rotated hotspot
         var r = SelectionWidget.ROTATION_HOTSPOT_RADIUS / paper.view.zoom;
-        var hotspot = new paper.Path([
-            new paper.Point(0, 0),
-            new paper.Point(0, r),
-            new paper.Point(r, r),
-            new paper.Point(r, -r),
-            new paper.Point(-r, -r),
-            new paper.Point(-r, 0),
-        ]);
+        var angle = (Math.atan(this.boxShear) + Math.PI/2) % Math.PI - Math.PI/2;
+        if (angle === -Math.PI/2) angle = Math.sign(this.boxShear) * 1.57; // Just under pi/2
+        if (cornerName === 'topLeft' || cornerName === 'bottomRight') angle *= -1;
+        var hotspot = new paper.Path.Arc({
+            from: [r * Math.sin(angle), r * Math.cos(angle)], through: [0,-r], to: [-r,0],
+            pivot: [0, 0]
+        });
+        hotspot.firstSegment.handleIn = [0,0];
+        hotspot.lastSegment.handleOut = [0,0];
+        hotspot.add([0,0]);
         hotspot.fillColor = SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR;
-        hotspot.position.x = this.boundingBox[cornerName].x;
-        hotspot.position.y = this.boundingBox[cornerName].y;
+        hotspot.position = this.boundingBox[cornerName];
 
         // Orient the rotation handles in the correct direction, even if the selection is flipped
-        hotspot.rotate({
-            'topRight': 0,
-            'bottomRight': 90,
-            'bottomLeft': 180,
-            'topLeft': 270,
-        }[cornerName]);
+        hotspot.scale(
+            (cornerName === 'topLeft' || cornerName === 'bottomLeft') ? -1 : 1,
+            (cornerName === 'bottomRight' || cornerName === 'bottomLeft') ? -1 : 1
+        );
+        hotspot.shear(-this.boxShear, 0);
 
         // Some metadata.
         hotspot.data.handleType = 'rotation';
@@ -670,7 +695,7 @@ class SelectionWidget {
             strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom,
             applyMatrix: false,
         });
-        boundsOutline.rotate(this.boxRotation, this._center);
+        boundsOutline.shear(this.boxShear, 0, this._center).rotate(this.boxRotation, this._center);
         ghost.addChild(boundsOutline);
 
         ghost.opacity = 0.5;
@@ -687,7 +712,7 @@ class SelectionWidget {
 
         var itemsForBoundsCalc = this._itemsInSelection.map(item => {
             var clone = item.clone();
-            clone.rotate(-this.boxRotation, center);
+            clone.rotate(-this.boxRotation, center).shear(-this.boxShear, 0, center);
             clone.remove();
             return clone;
         });
