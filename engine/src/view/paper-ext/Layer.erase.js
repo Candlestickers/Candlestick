@@ -70,6 +70,7 @@
             return resolvedHoles.indexOf(hole) === -1;
         }).forEach(hole => {
             hole.clockwise = !hole.clockwise;
+            hole.fillColor = compoundPath.fillColor;
             paper.project.activeLayer.addChild(hole);
         });
 
