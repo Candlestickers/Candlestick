@@ -160,8 +160,11 @@ class Inspector extends Component {
     }
   }
 
+  brushPreviewRef = React.createRef();
+
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
+    if (this.props.activeTool === 'brush') this.drawBrushPreview();
   }
   componentWillUnmount() {
     Unhook(window.console);
@@ -173,6 +176,138 @@ class Inspector extends Component {
       this.consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
 
+    if (this.props.activeTool === 'brush') {
+      this.drawBrushPreview();
+    }
+
+  }
+
+  // BRUSH PREVIEW— we're literally drawing a brush stroke here -H.A.
+  drawBrushPreview = () => {
+    const canvas = this.brushPreviewRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Background — use project background color
+    let bgColor = '#1c1c1c';
+    try {
+      const bg = window.project && window.project.backgroundColor;
+      if (bg) bgColor = bg.rgba;
+    } catch(e) {}
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, W, H);
+
+    // Brush color — use current fill color
+    let brushColor = '#5a9fd4';
+    try {
+      const fc = this.props.getToolSetting('fillColor');
+      if (fc) brushColor = fc.rgba;
+    } catch(e) {}
+
+    const shape          = this.props.getToolSetting('brushShape') || 'circle';
+    const spacing        = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
+    const scatterEnabled = this.props.getToolSetting('brushScatterEnabled');
+    const scatterAmount  = this.props.getToolSetting('brushScatterAmount') || 0.3;
+    const randomRotation = this.props.getToolSetting('brushRandomRotation');
+
+    const stampSize = 13;
+    const stepDist  = Math.max(2, stampSize * spacing * 1.5);
+
+    // Seeded PRNG — same seed every redraw so preview is stable
+    let _seed = 12345;
+    const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
+
+    const margin    = stampSize + 2;
+    const amplitude = (H - stampSize * 2) / 4;
+    const pathW     = W - margin * 2;
+    const numSteps  = Math.ceil(pathW / stepDist) + 1;
+
+    for (let i = 0; i < numSteps; i++) {
+      const t  = numSteps > 1 ? i / (numSteps - 1) : 0;
+      let   x  = margin + t * pathW;
+      let   y  = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
+      const rotation = randomRotation ? rand() * Math.PI * 2 : 0;
+      if (scatterEnabled) {
+        const sc = stampSize * scatterAmount;
+        x +=(rand() - 0.5) * sc * 2;
+        y +=(rand() - 0.5) * sc * 2;
+      }
+      this._drawBrushStamp(ctx, x, y, stampSize, shape, rotation, brushColor);
+    }
+  }
+
+  _drawBrushStamp = (ctx, x, y, size, shape, rotation, color) => {
+    const r = size / 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = color || '#5a9fd4';
+
+    // Shapes with custom fill logic
+    if (shape === 'chisel') {
+      ctx.save(); ctx.rotate(Math.PI / 4); ctx.scale(1, 0.25);
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore(); ctx.restore(); return;
+    }
+    if (shape === 'softcircle') {
+      // Parse the rgba color to build a gradient with the same hue but fading alpha
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      const c0 = color || 'rgba(90,159,212,1)';
+      // Replace alpha in the rgba string for gradient stops
+      const toAlpha = (rgba, a) => rgba.replace(/[\d.]+\)$/, `${a})`);
+      g.addColorStop(0,   toAlpha(c0, 1));
+      g.addColorStop(0.5, toAlpha(c0, 0.55));
+      g.addColorStop(1,   toAlpha(c0, 0));
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+      ctx.restore(); return;
+    }
+    if (shape === 'scatter') {
+      [[0,0,0.4],[-0.6,-0.5,0.3],[0.6,-0.5,0.25],[-0.6,0.5,0.3],[0.6,0.5,0.25]].forEach(([px,py,pr]) => {
+        ctx.beginPath(); ctx.arc(px*r, py*r, pr*r, 0, Math.PI*2); ctx.fill();
+      });
+      ctx.restore(); return;
+    }
+    if (shape === 'cross') {
+      ctx.fillRect(-r*0.28, -r, r*0.56, size);
+      ctx.fillRect(-r, -r*0.28, size, r*0.56);
+      ctx.restore(); return;
+    }
+
+    // Standard path shapes
+    ctx.beginPath();
+    switch (shape) {
+      case 'square':    ctx.rect(-r, -r, size, size); break;
+      case 'rect':      ctx.rect(-r, -r*0.35, size, size*0.35); break;
+      case 'diamond':
+        ctx.moveTo(0,-r); ctx.lineTo(r,0); ctx.lineTo(0,r); ctx.lineTo(-r,0); ctx.closePath(); break;
+      case 'triangle':
+        ctx.moveTo(0,-r); ctx.lineTo(r,r); ctx.lineTo(-r,r); ctx.closePath(); break;
+      case 'star':
+        for (let i=0;i<10;i++){const a=(i*Math.PI)/5-Math.PI/2,rad=i%2?r*0.4:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
+        ctx.closePath(); break;
+      case 'sparkle':
+        for (let i=0;i<8;i++){const a=(i*Math.PI)/4-Math.PI/4,rad=i%2?r*0.2:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
+        ctx.closePath(); break;
+      case 'leaf':
+        ctx.moveTo(0,-r); ctx.quadraticCurveTo(r*1.2,0,0,r); ctx.quadraticCurveTo(-r*1.2,0,0,-r); break;
+      case 'rough':
+        ctx.moveTo(0,-r);
+        ctx.bezierCurveTo(r*0.7,-r*1.2, r*1.4,r*0.2, r*0.8,r*0.7);
+        ctx.bezierCurveTo(r*0.3,r*1.2, -r*0.8,r*1.1, -r*0.9,r*0.5);
+        ctx.bezierCurveTo(-r*1.3,-r*0.1, -r*0.6,-r*1.1, 0,-r); break;
+      case 'crescent':
+        ctx.arc(0,0,r,Math.PI*0.8,Math.PI*2.2);
+        ctx.arc(r*0.35,0,r*0.72,Math.PI*2.2,Math.PI*0.8,true); break;
+      case 'hexagon':
+        for (let i=0;i<6;i++){const a=(i*Math.PI)/3-Math.PI/6;i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);}
+        ctx.closePath(); break;
+      default: // circle
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
   }
 
 
@@ -1020,6 +1155,15 @@ class Inspector extends Component {
 
     return (
       <div>
+        {/* Brush stroke preview */}
+        <div style={{ margin: '6px 8px 2px', borderRadius: '3px', overflow: 'hidden', border: '1px solid #333' }}>
+          <canvas
+            ref={this.brushPreviewRef}
+            width={220}
+            height={100}
+            style={{ display: 'block', width: '100%' }}
+          />
+        </div>
         {this.renderBrushShapePicker()}
         {/* Sliders — same inspector-item wrapper as opacity/transform rows */}
         <div className="inspector-item">
