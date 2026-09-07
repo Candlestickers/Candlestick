@@ -194,6 +194,12 @@ class Inspector extends Component {
   drawBrushPreview = () => {
     const canvas = this.brushPreviewRef.current;
     if (!canvas) return;
+    // Size the canvas buffer to physical pixels so it's sharp on Retina/HiDPI displays
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth  || 220;
+    const cssH = canvas.clientHeight || 80;
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
 
