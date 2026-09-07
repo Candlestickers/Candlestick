@@ -46,6 +46,23 @@ import { Console, Hook, Unhook } from 'console-feed';
 
 window.EditorGradientColorSwapState = false;
 
+// Default brushes — structured like a parsed .cbrush JSON for easy migration later.
+// Each field matches the keys stored/loaded by saveBrush / applyBrush.
+const DEFAULT_BRUSHES = [
+  {
+    name: 'Basic',
+    shape: 'circle',
+    brushSize: 10,
+    brushResolution: 0.75,
+    brushSpacing: 0.2,
+    brushScatterEnabled: false,
+    brushScatterAmount: 0.3,
+    brushRandomRotation: false,
+    brushStabilizerWeight: 20,
+    fillColorRgba: '#000000',
+  },
+];
+
 const BRUSH_SHAPES = [
   { id: 'circle',     name: 'Circle',
     svg: <circle cx="14" cy="14" r="12"/> },
@@ -87,7 +104,7 @@ class Inspector extends Component {
       logs: [],
       showBrushModes: false,
       isEditingBrush: false,
-      savedBrushes: [],
+      savedBrushes: DEFAULT_BRUSHES,
       selectedBrushIndex: null,
     };
 
