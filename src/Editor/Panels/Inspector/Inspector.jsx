@@ -1894,7 +1894,7 @@ class Inspector extends Component {
       return (
         <div className="docked-pane inspector" aria-label="Inspector Panel">
           <div className="inspector-title-container">
-            <InspectorTitle type="" title="Brush Tools" />
+            <InspectorTitle type="brush" title="Brush Sets" />
           </div>
           <div className="inspector-body">
             {this.renderBrushSettings()}
