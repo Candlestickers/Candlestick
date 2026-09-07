@@ -178,14 +178,14 @@ class Inspector extends Component {
 
     if (this.props.activeTool === 'brush') {
       const justSwitchedToBrush = prevProps.activeTool !== 'brush';
-      const prev = prevProps.getToolSetting;
-      const curr = this.props.getToolSetting;
-      const previewSettings = [
+      if (justSwitchedToBrush) this._lastPreviewSettings = null;
+      const keys = [
         'brushResolution', 'brushSpacing', 'brushScatterAmount',
         'brushScatterEnabled', 'brushRandomRotation', 'brushShape'
       ];
-      const settingChanged = previewSettings.some(k => prev(k) !== curr(k));
-      if (justSwitchedToBrush || settingChanged) this.drawBrushPreview();
+      const last = this._lastPreviewSettings;
+      const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
+      if (settingChanged) this.drawBrushPreview();
     }
 
   }
@@ -218,9 +218,14 @@ class Inspector extends Component {
     const scatterEnabled = this.props.getToolSetting('brushScatterEnabled');
     const scatterAmount  = this.props.getToolSetting('brushScatterAmount') || 0.3;
     const randomRotation = this.props.getToolSetting('brushRandomRotation');
+    const resT           = this.props.getToolSetting('brushResolution') ?? 0.75;
+
+    // Snapshot current settings so componentDidUpdate can detect future changes
+    this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
+      brushScatterAmount: scatterAmount, brushScatterEnabled: scatterEnabled,
+      brushRandomRotation: randomRotation, brushShape: shape };
 
     // Resolution: same smoothnessFactor formula as the engine
-    const resT       = this.props.getToolSetting('brushResolution') ?? 1;
     const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
 
     const stampSize = 13;
