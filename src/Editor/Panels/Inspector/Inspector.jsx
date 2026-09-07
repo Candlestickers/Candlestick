@@ -93,8 +93,6 @@ const BRUSH_SHAPES = [
     svg: <path d="M14,2 C6,5 2,10 2,14 C2,18 6,23 14,26 C12,22 10,18 10,14 C10,10 12,6 14,2 Z"/> },
   { id: 'hexagon',    name: 'Hexagon',
     svg: <polygon points="14,2 24.4,8 24.4,20 14,26 3.6,20 3.6,8"/> },
-  { id: 'softcircle', name: 'Soft',
-    svg: <><circle cx="14" cy="14" r="12" fillOpacity="0.2"/><circle cx="14" cy="14" r="8" fillOpacity="0.45"/><circle cx="14" cy="14" r="4"/></> },
 ];
 
 class Inspector extends Component {
