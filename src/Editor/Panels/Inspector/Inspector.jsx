@@ -1291,6 +1291,15 @@ class Inspector extends Component {
         {/* Sliders — same inspector-item wrapper as opacity/transform rows */}
         <div className="inspector-item">
           <InspectorNumericSlider
+            tooltip="Brush Size"
+            icon="brushsize"
+            label="Size"
+            val={this.props.getToolSetting('brushSize')}
+            onChange={(val) => this.props.setToolSetting('brushSize', val)}
+            inputProps={this.props.getToolSettingRestrictions('brushSize')}
+            onReset={() => this.props.setToolSetting('brushSize', 10)}
+          />
+          <InspectorNumericSlider
             tooltip="Smoothing"
             icon="brushsmoothness"
             label="Lead"
