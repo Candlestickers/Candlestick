@@ -40,7 +40,7 @@ import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsIn
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 import ReactTooltip from 'react-tooltip';
 import localForage from 'localforage';
-// import ActionButton from 'Editor/Util/ActionButton/ActionButton';
+import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
@@ -106,6 +106,7 @@ class Inspector extends Component {
       savedBrushes: DEFAULT_BRUSHES,
       selectedBrushIndex: null,
       customShapes: [],
+      removedShapes: [],
     };
 
     this.handleConsoleLog = (log) => {
@@ -192,6 +193,11 @@ class Inspector extends Component {
         // Register with engine so _buildBrushTipCanvas can find them
         window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
         shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+      }
+    });
+    localForage.getItem('WICK.REMOVED_SHAPES').then(removed => {
+      if (removed && Array.isArray(removed)) {
+        this.setState({ removedShapes: removed });
       }
     });
     localForage.getItem('WICK.BRUSHPRESETS').then(saved => {
@@ -1295,6 +1301,49 @@ class Inspector extends Component {
     this.setState({ showBrushModes: false });
   }
 
+  deleteSelectedShape = () => {
+    const shape = this.props.getToolSetting('brushShape');
+    if (!shape) return;
+    const { customShapes, removedShapes } = this.state;
+    // Build the current available shape list to find the next one to select
+    const allAvailable = [
+      ...BRUSH_SHAPES.filter(s => !removedShapes.includes(s.id)),
+      ...customShapes,
+    ];
+    if (allAvailable.length <= 1) return; // never delete the last shape
+    const currentIdx = allAvailable.findIndex(s => s.id === shape);
+    const nextIdx = currentIdx > 0 ? currentIdx - 1 : 1;
+    const nextShape = allAvailable[nextIdx] || allAvailable[0];
+
+    if (shape.startsWith('custom_')) {
+      // Remove from customShapes
+      const updatedCustomShapes = customShapes.filter(cs => cs.id !== shape);
+      if (window.wickCustomBrushShapes) delete window.wickCustomBrushShapes[shape];
+      this.setState({ customShapes: updatedCustomShapes });
+      localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+    } else {
+      // Add to removedShapes (built-in shapes are hidden, not truly deleted)
+      const updatedRemoved = [...removedShapes, shape];
+      this.setState({ removedShapes: updatedRemoved });
+      localForage.setItem('WICK.REMOVED_SHAPES', updatedRemoved);
+    }
+    // Select and apply the next shape
+    this.props.setToolSetting('brushShape', nextShape.id);
+  }
+
+  deleteSelectedBrush = () => {
+    const { savedBrushes, selectedBrushIndex } = this.state;
+    if (selectedBrushIndex === null) return;
+    if (savedBrushes.length <= 1) return; // keep at least one preset
+    const updated = savedBrushes.filter((_, i) => i !== selectedBrushIndex);
+    const newIndex = Math.min(selectedBrushIndex, updated.length - 1);
+    this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex });
+    localForage.setItem('WICK.BRUSHPRESETS', updated);
+    localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', newIndex);
+    // Apply the newly selected brush
+    this.applyBrush(updated[newIndex]);
+  }
+
   saveBrush = () => {
     const { savedBrushes, selectedBrushIndex } = this.state;
     const brushData = {
@@ -1446,9 +1495,9 @@ class Inspector extends Component {
 
   renderBrushShapePicker = () => {
     const currentShape = this.props.getToolSetting('brushShape');
-    const { customShapes } = this.state;
+    const { customShapes, removedShapes } = this.state;
     const allShapes = [
-      ...BRUSH_SHAPES,
+      ...BRUSH_SHAPES.filter(s => !removedShapes.includes(s.id)),
       ...customShapes.map(cs => ({
         id: cs.id,
         name: cs.name,
@@ -1638,6 +1687,27 @@ class Inspector extends Component {
               onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
             />
           </>)}
+          {/* Trash — delete custom shape (edit mode) or delete preset (browse mode) */}
+          {(() => {
+            const currentShape = this.props.getToolSetting('brushShape');
+            const availableShapeCount = BRUSH_SHAPES.filter(s => !this.state.removedShapes.includes(s.id)).length + this.state.customShapes.length;
+            const canDeleteShape = isEditingBrush && !!currentShape && availableShapeCount > 1;
+            const canDeleteBrush = !isEditingBrush && selectedBrushIndex !== null && this.state.savedBrushes.length > 1;
+            const deleteAction = canDeleteShape ? this.deleteSelectedShape : canDeleteBrush ? this.deleteSelectedBrush : () => {};
+            const deleteTooltip = canDeleteShape ? 'Delete Shape' : canDeleteBrush ? 'Delete Brush' : 'Delete';
+            return (
+              <div className="settings-checkbox-input">
+                <ActionButton
+                  icon='delete'
+                  color='checkbox'
+                  id='settings-input-id-delete-brush'
+                  tooltip={deleteTooltip}
+                  action={deleteAction}
+                  iconClassName='toolbox-input-icon'
+                />
+              </div>
+            );
+          })()}
         </div>
         {/* Edit Brush / Save Brush button */}
         {canEdit && (

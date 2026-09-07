@@ -49,6 +49,11 @@ $inspector-transition-duration: 0.2s;
 
 .inspector-body:hover {
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.inspector-body:hover::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge */
 }
 
 /* Brush shape grid — thin scrollbar, only visible on hover */
