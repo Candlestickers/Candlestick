@@ -249,7 +249,8 @@ class Inspector extends Component {
     canvas.width  = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
+    const W = canvas.width;
+    const H = canvas.height;
 
     // Background — use project background color
     let bgColor = '#1c1c1c';
@@ -267,12 +268,12 @@ class Inspector extends Component {
       if (fc) brushColor = fc.rgba;
     } catch(e) {}
 
-    const shape          = this.props.getToolSetting('brushShape') || 'circle';
-    const spacing        = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
+    const shape = this.props.getToolSetting('brushShape') || 'circle';
+    const spacing = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
     const scatterEnabled = this.props.getToolSetting('brushScatterEnabled');
-    const scatterAmount  = this.props.getToolSetting('brushScatterAmount') || 0.3;
+    const scatterAmount= this.props.getToolSetting('brushScatterAmount') || 0.3;
     const randomRotation = this.props.getToolSetting('brushRandomRotation');
-    const resT           = this.props.getToolSetting('brushResolution') ?? 0.75;
+    const resT=this.props.getToolSetting('brushResolution') ?? 0.75;
 
     // Snapshot current settings so componentDidUpdate can detect future changes
     this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
@@ -289,10 +290,10 @@ class Inspector extends Component {
     let _seed = 12345;
     const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
 
-    const margin    = stampSize + 4;
+    const margin= stampSize + 4;
     const amplitude = (H - stampSize * 2) / 2.5;
-    const pathW     = W - margin * 2;
-    const numSteps  = Math.ceil(pathW / stepDist) + 1;
+    const pathW = W - margin * 2;
+    const numSteps = Math.ceil(pathW / stepDist) + 1;
 
     // Rasterize stamps onto a TRANSPARENT offscreen canvas.
     // potrace.createFromImage classifies pixels by alpha (alpha > 155 = foreground).
@@ -1472,7 +1473,7 @@ class Inspector extends Component {
                     border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
                   }}>
                   <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
-                    <span>{brush.name}</span>
+                    <span>{brush.name || 'Brush'}</span>
                   </ReactTooltip>
                   <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
                     <g fill="white">{shape.svg}</g>
@@ -1565,6 +1566,23 @@ class Inspector extends Component {
 
     return (
       <div>
+        {/* Brush name input — only in edit mode */}
+        {isEditingBrush && (
+          <div className="inspector-item">
+            <InspectorTextInput
+              tooltip="Name"
+              val={selectedBrushIndex !== null ? (this.state.savedBrushes[selectedBrushIndex]?.name || '') : ''}
+              onChange={(val) => {
+                if (selectedBrushIndex === null) return;
+                const updated = [...this.state.savedBrushes];
+                updated[selectedBrushIndex] = { ...updated[selectedBrushIndex], name: val };
+                this.setState({ savedBrushes: updated });
+              }}
+              placeholder="Brush"
+              id="inspector-brush-name"
+            />
+          </div>
+        )}
         {/* Brush stroke preview */}
         <div style={{ margin: '6px 8px 2px', borderRadius: '3px', overflow: 'hidden', border: '1px solid #333' }}>
           <canvas
