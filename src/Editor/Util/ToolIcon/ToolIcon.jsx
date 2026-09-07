@@ -22,11 +22,13 @@ import './_toolbutton.scss'
 
 // Tools
 import iconBrush from 'resources/toolbar-icons/brush.svg';
+import iconBrushBlack from 'resources/toolbar-icons/brush-black.svg';
 import iconCursor from 'resources/toolbar-icons/cursor.svg';
 import iconEllipse from 'resources/toolbar-icons/ellipse.svg';
 import iconRectangle from 'resources/toolbar-icons/rectangle.svg';
 import iconLine from 'resources/toolbar-icons/line.svg';
 import iconPencil from 'resources/toolbar-icons/pencil.svg';
+import iconPencilBlack from 'resources/toolbar-icons/pencil-black.svg';
 import iconEyeDropper from 'resources/toolbar-icons/eyedropper.svg';
 import iconEraser from 'resources/toolbar-icons/eraser.svg';
 import iconText from 'resources/toolbar-icons/text.svg';
@@ -158,6 +160,7 @@ import iconAutosave from 'resources/interface-images/accept.svg';
 import iconCancel from 'resources/interface-images/cancel.svg';
 import iconWarning from 'resources/interface-images/warning.svg';
 import iconCheck from 'resources/interface-images/check.svg';
+import iconCheckBlack from 'resources/interface-images/check-black.svg';
 import iconCircle from 'resources/tool-icons/circle.svg';
 import iconCloseTab from 'resources/tool-icons/closetab.svg';
 import iconWarningDelete from 'resources/interface-images/warning_delete.svg';
@@ -208,11 +211,13 @@ import iconRedHeart from 'resources/support-us-icons/red-heart.svg';
 
 const icons = {
   "brush":iconBrush,
+  "brush-black":iconBrushBlack,
   "cursor":iconCursor,
   "ellipse":iconEllipse,
   "rectangle":iconRectangle,
   "line":iconLine,
   "pencil":iconPencil,
+  "pencil-black":iconPencilBlack,
   "eyedropper":iconEyeDropper,
   "eraser":iconEraser,
   "pan":iconPan,
@@ -291,6 +296,7 @@ const icons = {
   "warning": iconWarning,
   "cancel": iconCancel,
   "check": iconCheck,
+  "check-black": iconCheckBlack,
   "add": iconAdd,
   "circle": iconCircle,
   "closetab": iconCloseTab,

@@ -1644,7 +1644,7 @@ class Inspector extends Component {
           <div className="inspector-item" style={{ marginTop: '6px' }}>
             <InspectorActionButton action={{
               id: 'brush-edit-save',
-              icon: isEditingBrush ? 'check' : 'pencil',
+              icon: isEditingBrush ? 'check-black' : 'pencil-black',
               tooltip: isEditingBrush ? 'Save Brush' : 'Edit Brush',
               color: 'inspector',
               action: isEditingBrush
@@ -1738,7 +1738,7 @@ class Inspector extends Component {
           <div className="inspector-item">
             <InspectorActionButton action={{
               id: 'create-brush',
-              icon: 'brush',
+              icon: 'brush-black',
               tooltip: 'Create Brush',
               color: 'inspector',
               action: this.createBrushFromPath,
