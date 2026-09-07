@@ -436,6 +436,27 @@ class Inspector extends Component {
       ctx.restore(); return;
     }
 
+    // Custom shapes in preview mode
+    if (shape && shape.startsWith('custom_')) {
+      const customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
+      if (customData && customData.pathD) {
+        ctx.save();
+        ctx.translate(-size / 2, -size / 2); // center the 28×28 box at origin
+        const toLocal = size / 28;
+        ctx.scale(toLocal, toLocal);
+        ctx.translate(customData.tx, customData.ty);
+        ctx.scale(customData.scale, customData.scale);
+        ctx.fill(new Path2D(customData.pathD));
+        ctx.restore();
+      } else {
+        // fallback circle in case something's wrong with the shapes ;-;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore(); return;
+    }
+
     // Standard path shapes
     ctx.beginPath();
     switch (shape) {
