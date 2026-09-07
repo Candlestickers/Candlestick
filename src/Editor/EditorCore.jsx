@@ -34,7 +34,7 @@ class EditorCore extends Component {
      * @returns {string} The string representation active tool name.
      */
     getActiveTool = () => {
-        return this.project.activeTool;
+        return this.project?.activeTool;
     }
 
     /**
@@ -106,7 +106,7 @@ class EditorCore extends Component {
      * Recenters the canvas.
      */
     recenterCanvas = () => {
-        this.project.recenter();
+        this.project?.recenter();
         this.projectDidChange({ skipHistory: true, actionName: "recenterCanvas" });
     }
 
@@ -131,7 +131,7 @@ class EditorCore extends Component {
      * @returns {object} The object containing the tool settings.
      */
     getToolSetting = (name) => {
-        return this.project.toolSettings.getSetting(name);
+        return this.project?.toolSettings?.getSetting(name);
     }
 
     /**
@@ -214,7 +214,7 @@ class EditorCore extends Component {
      * @returns {string} The string representation of the type of object/objects selected
      */
     getSelectionType = () => {
-        return this.project.selection.selectionType;
+        return this.project?.selection?.selectionType;
     }
 
     /**
@@ -222,7 +222,7 @@ class EditorCore extends Component {
      * @return {boolean} True if the selection is scriptable.
      */
     selectionIsScriptable = () => {
-        return this.project.selection.isScriptable;
+        return this.project?.selection.isScriptable;
     }
 
     /**
@@ -1084,7 +1084,7 @@ class EditorCore extends Component {
      * @param {string} filename - name of file
      */
     isAssetInLibrary = (filename) => {
-        let assets = this.project.getAssets();
+        let assets = this.project?.getAssets() || [];
         for (let i = 0; i < assets.length; i++) {
             if (assets[i].filename === filename) {
                 return true;
@@ -1833,7 +1833,7 @@ class EditorCore extends Component {
         }
 
         // Check if the provided URL is allowed in the whitelist.
-        var whitelist = ['wickeditor.com', 'editor.wickeditor.com', 'test.wickeditor.com', 'aka.ms'];
+        var whitelist = ['candlestickers.app', 'candlestickers.app/test', 'candlestickers.app/test/', 'localhost:3000', 'aka.ms'];
 
         if (whitelist.indexOf(url.hostname) === -1) {
             this.toast('Could not open project from link! \n URL is not on whitelist.', 'warning');

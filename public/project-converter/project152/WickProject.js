@@ -14,7 +14,7 @@
 
     You should have received a copy of the GNU General Public License
     along with Wick.  If not, see <http://www.gnu.org/licenses/>. */
-
+const JSZip = require('jszip');
 var WickProject = function () {
 
     // Create the root object. The editor is always editing the root

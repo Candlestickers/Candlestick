@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+const hull = require('hull');
 /**
  * A class representing a Wick Clip.
  */

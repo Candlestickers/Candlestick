@@ -17,6 +17,7 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const potrace = require('../../../lib/potrace.cjs')
 /*
     paper-potrace.js
     Adds a potrace() method to paper Items that runs potrace on a rasterized
