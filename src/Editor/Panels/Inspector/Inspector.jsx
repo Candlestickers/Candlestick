@@ -39,6 +39,7 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 import ReactTooltip from 'react-tooltip';
+import localForage from 'localforage';
 // import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
@@ -186,6 +187,16 @@ class Inspector extends Component {
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
     if (this.props.activeTool === 'brush') this.drawBrushPreview();
+    localForage.getItem('WICK.BRUSHPRESETS').then(saved => {
+      const brushes = (saved && Array.isArray(saved) && saved.length > 0) ? saved : DEFAULT_BRUSHES;
+      localForage.getItem('WICK.BRUSHPRESETS.selectedIndex').then(idx => {
+        const validIdx = (typeof idx === 'number' && idx >= 0 && idx < brushes.length) ? idx : null;
+        // Restore visual selection only — ToolSettings already restores each
+        // individual setting (brushSize, brushResolution, etc.) from its own
+        // localforage keys, so calling applyBrush here would race and overwrite them.
+        this.setState({ savedBrushes: brushes, selectedBrushIndex: validIdx });
+      });
+    });
   }
   componentWillUnmount() {
     Unhook(window.console);
@@ -1274,8 +1285,14 @@ class Inspector extends Component {
       const updated = [...savedBrushes];
       updated[selectedBrushIndex] = brushData;
       this.setState({ savedBrushes: updated, isEditingBrush: false });
+      localForage.setItem('WICK.BRUSHPRESETS', updated);
+      localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', selectedBrushIndex);
     } else {
-      this.setState({ savedBrushes: [...savedBrushes, brushData], selectedBrushIndex: savedBrushes.length, isEditingBrush: false });
+      const newIndex = savedBrushes.length;
+      const updated = [...savedBrushes, brushData];
+      this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex, isEditingBrush: false });
+      localForage.setItem('WICK.BRUSHPRESETS', updated);
+      localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', newIndex);
     }
   }
 
@@ -1312,6 +1329,7 @@ class Inspector extends Component {
                   onClick={() => {
                     this.setState({ selectedBrushIndex: i, isEditingBrush: false });
                     this.applyBrush(brush);
+                    localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
                   }}
                   style={{
                     display: 'flex',
