@@ -184,6 +184,7 @@ class Inspector extends Component {
   }
 
   brushPreviewRef = React.createRef();
+  brushFileInputRef = React.createRef();
 
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
@@ -284,14 +285,14 @@ class Inspector extends Component {
     // Resolution: same smoothnessFactor formula as the engine
     const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
 
-    const stampSize = 13;
-    const stepDist  = Math.max(2, stampSize * spacing * 1.5);
+    const stampSize = 35;
+    const stepDist  = Math.max(2, stampSize * spacing - 1);
 
     let _seed = 12345;
     const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
 
     const margin= stampSize + 4;
-    const amplitude = (H - stampSize * 2) / 2.5;
+    const amplitude = (H - stampSize * 2) / 2.8;
     const pathW = W - margin * 2;
     const numSteps = Math.ceil(pathW / stepDist) + 1;
 
@@ -1303,6 +1304,81 @@ class Inspector extends Component {
     this.setState({ showBrushModes: false });
   }
 
+  importBrush = () => {
+    if (this.brushFileInputRef.current) this.brushFileInputRef.current.click();
+  }
+
+  handleBrushFileImport = (e) => {
+    const input = this.brushFileInputRef.current;
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const fileName = file.name;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const brush = JSON.parse(ev.target.result);
+        if (!brush || typeof brush !== 'object') throw new Error('Invalid');
+        // If brush has an embedded custom shape, register it with a fresh ID
+        let resolvedShape = brush.shape || 'circle';
+        let updatedCustomShapes = [...this.state.customShapes];
+        if (brush.shapeData && brush.shapeData.pathD) {
+          const newId = 'custom_' + Date.now();
+          const newShape = { ...brush.shapeData, id: newId };
+          window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+          window.wickCustomBrushShapes[newId] = newShape;
+          updatedCustomShapes = [...updatedCustomShapes, newShape];
+          resolvedShape = newId;
+          localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+        }
+        const newBrush = {
+          name: brush.name || fileName.replace(/\.cbrush$/i, '') || 'Imported Brush',
+          shape: resolvedShape,
+          brushSize: brush.brushSize ?? 10,
+          brushResolution: brush.brushResolution ?? 0.75,
+          brushSpacing: brush.brushSpacing ?? 0.2,
+          brushScatterEnabled: brush.brushScatterEnabled ?? false,
+          brushScatterAmount: brush.brushScatterAmount ?? 0.3,
+          brushRandomRotation: brush.brushRandomRotation ?? false,
+          brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
+          fillColorRgba: brush.fillColorRgba || '#000000',
+        };
+        const updated = [...this.state.savedBrushes, newBrush];
+        const newIndex = updated.length - 1;
+        this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex, customShapes: updatedCustomShapes });
+        localForage.setItem('WICK.BRUSHPRESETS', updated);
+        localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', newIndex);
+        this.applyBrush(newBrush);
+      } catch (err) {
+        toast.warning('Could not import brush file.', {
+          position: 'top-right', autoClose: 3000, hideProgressBar: true,
+          closeOnClick: true, pauseOnHover: true, draggable: true,
+          className: 'warning-toast-background', bodyClassName: 'warning-toast-body',
+        });
+      }
+      // Reset so the same file can be re-imported
+      if (input) input.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  exportBrush = (brush) => {
+    if (!brush) return;
+    const exportData = { ...brush };
+    // Embed custom shape data so it can be re-imported on another machine
+    if (brush.shape && brush.shape.startsWith('custom_')) {
+      const shapeData = this.state.customShapes.find(cs => cs.id === brush.shape);
+      if (shapeData) exportData.shapeData = shapeData;
+    }
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (brush.name || 'brush') + '.cbrush';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   deleteSelectedShape = () => {
     const shape = this.props.getToolSetting('brushShape');
     if (!shape) return;
@@ -1722,6 +1798,21 @@ class Inspector extends Component {
               onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
             />
           </>)}
+          {/* Upload .cbrush — browse mode only */}
+          {!isEditingBrush && (
+            <div className="setting-input-container">
+              <div className="settings-checkbox-input">
+                <ActionButton
+                  icon='upload'
+                  color='checkbox'
+                  id='settings-input-id-upload-brush'
+                  tooltip='Import Brush'
+                  action={this.importBrush}
+                  iconClassName='toolbox-input-icon'
+                />
+              </div>
+            </div>
+          )}
           {/* Trash — delete custom shape (edit mode) or delete preset (browse mode) */}
           {(() => {
             const currentShape = this.props.getToolSetting('brushShape');
@@ -1731,15 +1822,17 @@ class Inspector extends Component {
             const deleteAction = canDeleteShape ? this.deleteSelectedShape : canDeleteBrush ? this.deleteSelectedBrush : () => {};
             const deleteTooltip = canDeleteShape ? 'Delete Shape' : canDeleteBrush ? 'Delete Brush' : 'Delete';
             return (
-              <div className="settings-checkbox-input">
-                <ActionButton
-                  icon='delete'
-                  color='checkbox'
-                  id='settings-input-id-delete-brush'
-                  tooltip={deleteTooltip}
-                  action={deleteAction}
-                  iconClassName='toolbox-input-icon'
-                />
+              <div className="setting-input-container">
+                <div className="settings-checkbox-input">
+                  <ActionButton
+                    icon='delete'
+                    color='checkbox'
+                    id='settings-input-id-delete-brush'
+                    tooltip={deleteTooltip}
+                    action={deleteAction}
+                    iconClassName='toolbox-input-icon'
+                  />
+                </div>
               </div>
             );
           })()}
@@ -1758,6 +1851,42 @@ class Inspector extends Component {
             }} />
           </div>
         )}
+        {/* Download Brush button — edit mode only */}
+        {isEditingBrush && (
+          <div className="inspector-item" style={{ marginTop: '4px' }}>
+            <InspectorActionButton action={{
+              id: 'brush-download',
+              icon: 'brush-black',
+              tooltip: 'Download Brush',
+              color: 'inspector',
+              action: () => {
+                const { savedBrushes, selectedBrushIndex } = this.state;
+                const brush = selectedBrushIndex !== null
+                  ? savedBrushes[selectedBrushIndex]
+                  : {
+                      name: 'brush',
+                      shape: this.props.getToolSetting('brushShape'),
+                      brushSize: this.props.getToolSetting('brushSize'),
+                      brushResolution: this.props.getToolSetting('brushResolution'),
+                      brushSpacing: this.props.getToolSetting('brushSpacing'),
+                      brushScatterEnabled: this.props.getToolSetting('brushScatterEnabled'),
+                      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
+                      brushRandomRotation: this.props.getToolSetting('brushRandomRotation'),
+                      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+                    };
+                this.exportBrush(brush);
+              },
+            }} />
+          </div>
+        )}
+        {/* Hidden file input for importing .cbrush files */}
+        <input
+          type="file"
+          accept=".cbrush,.json"
+          ref={this.brushFileInputRef}
+          style={{ display: 'none' }}
+          onChange={this.handleBrushFileImport}
+        />
       </div>
     );
   }
@@ -1894,7 +2023,7 @@ class Inspector extends Component {
       return (
         <div className="docked-pane inspector" aria-label="Inspector Panel">
           <div className="inspector-title-container">
-            <InspectorTitle type="brush" title="Brush Sets" />
+            <InspectorTitle type="brush" title={(() => { const { savedBrushes, selectedBrushIndex } = this.state; return (selectedBrushIndex !== null && savedBrushes[selectedBrushIndex]?.name) || 'Brush Sets'; })()} />
           </div>
           <div className="inspector-body">
             {this.renderBrushSettings()}
