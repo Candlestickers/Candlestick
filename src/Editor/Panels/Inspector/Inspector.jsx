@@ -105,6 +105,7 @@ class Inspector extends Component {
       isEditingBrush: false,
       savedBrushes: DEFAULT_BRUSHES,
       selectedBrushIndex: null,
+      customShapes: [],
     };
 
     this.handleConsoleLog = (log) => {
@@ -185,6 +186,14 @@ class Inspector extends Component {
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
     if (this.props.activeTool === 'brush') this.drawBrushPreview();
+    localForage.getItem('WICK.CUSTOM_SHAPES').then(shapes => {
+      if (shapes && Array.isArray(shapes)) {
+        this.setState({ customShapes: shapes });
+        // Register with engine so _buildBrushTipCanvas can find them
+        window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+        shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+      }
+    });
     localForage.getItem('WICK.BRUSHPRESETS').then(saved => {
       const brushes = (saved && Array.isArray(saved) && saved.length > 0) ? saved : DEFAULT_BRUSHES;
       localForage.getItem('WICK.BRUSHPRESETS.selectedIndex').then(idx => {
@@ -1305,10 +1314,46 @@ class Inspector extends Component {
     this.props.setToolSetting('brushStabilizerWeight', brush.brushStabilizerWeight);
   }
 
+  createBrushFromPath = () => {
+    const objs = this.props.project.selection.getSelectedObjects();
+    if (!objs || objs.length !== 1) return;
+    const wickPath = objs[0];
+    if (!wickPath.view || !wickPath.view.item) return;
+
+    const item = wickPath.view.item;
+    const svgEl = item.exportSVG();
+    const d = svgEl.getAttribute('d');
+    if (!d) return;
+
+    const b = item.bounds;
+    const size = Math.max(b.width, b.height) || 1;
+    const scale = 24 / size;
+    const tx = 2 + (24 - b.width * scale) / 2 - b.x * scale;
+    const ty = 2 + (24 - b.height * scale) / 2 - b.y * scale;
+
+    const id = 'custom_' + Date.now();
+    const newShape = { id, name: 'Custom', pathD: d, tx, ty, scale };
+    const updatedCustomShapes = [...this.state.customShapes, newShape];
+
+    // Register with engine immediately so brush can draw it right away
+    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+    window.wickCustomBrushShapes[id] = newShape;
+
+    this.setState({ customShapes: updatedCustomShapes, isEditingBrush: true, selectedBrushIndex: null });
+    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+
+    this.props.setActiveTool('brush');
+    this.props.setToolSetting('brushShape', id);
+  }
+
   renderBrushList = () => {
-    const { savedBrushes, selectedBrushIndex } = this.state;
+    const { savedBrushes, selectedBrushIndex, customShapes } = this.state;
     const shapeMap = {};
     BRUSH_SHAPES.forEach(s => { shapeMap[s.id] = s; });
+    customShapes.forEach(cs => {
+      shapeMap[cs.id] = { id: cs.id, name: cs.name,
+        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g> };
+    });
 
     return (
       <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
@@ -1380,11 +1425,20 @@ class Inspector extends Component {
 
   renderBrushShapePicker = () => {
     const currentShape = this.props.getToolSetting('brushShape');
+    const { customShapes } = this.state;
+    const allShapes = [
+      ...BRUSH_SHAPES,
+      ...customShapes.map(cs => ({
+        id: cs.id,
+        name: cs.name,
+        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
+      })),
+    ];
     return (
       <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
         <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', width: '100%' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
-            {BRUSH_SHAPES.map(shape => {
+            {allShapes.map(shape => {
               const active = currentShape === shape.id;
               return (
                 <div
@@ -1659,6 +1713,17 @@ class Inspector extends Component {
         {actions.map((action, i) => {
             return this.renderActionButton(this.props.editorActions[action], i);
           })}
+        {selectionType === 'path' && (
+          <div className="inspector-item">
+            <InspectorActionButton action={{
+              id: 'create-brush',
+              icon: 'brush',
+              tooltip: 'Create Brush',
+              color: 'inspector',
+              action: this.createBrushFromPath,
+            }} />
+          </div>
+        )}
       </div>
     )
   }

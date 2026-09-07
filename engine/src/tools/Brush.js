@@ -762,6 +762,22 @@ Wick.Tools.Brush = class extends Wick.Tool {
         var cx = S / 2, cy = S / 2, r = S / 2 - 1;
         var PI2 = Math.PI * 2;
 
+        // Custom canvas-derived shapes registered via window.wickCustomBrushShapes
+        if (shape && shape.startsWith('custom_')) {
+            var customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
+            if (customData && customData.pathD) {
+                var to64 = S / 28;
+                ctx.save();
+                ctx.scale(to64, to64);
+                ctx.translate(customData.tx, customData.ty);
+                ctx.scale(customData.scale, customData.scale);
+                ctx.fill(new Path2D(customData.pathD));
+                ctx.restore();
+                return canvas;
+            }
+            return null;
+        }
+
         switch (shape) {
             case 'softcircle': {
                 var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);

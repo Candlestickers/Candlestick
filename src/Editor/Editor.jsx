@@ -1352,6 +1352,7 @@ class Editor extends EditorCore {
                                                 <DockedPanel showOverlay={false /*this.state.previewPlaying*/}>
                                                     <Inspector
                                                         activeTool={this.getActiveTool().name}
+                                                        setActiveTool={this.setActiveTool}
                                                         getToolSetting={this.getToolSetting}
                                                         setToolSetting={this.setToolSetting}
                                                         getToolSettingRestrictions={this.getToolSettingRestrictions}
