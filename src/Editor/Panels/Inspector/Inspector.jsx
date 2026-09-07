@@ -1297,7 +1297,7 @@ class Inspector extends Component {
             val={this.props.getToolSetting('brushResolution')}
             onChange={(val) => this.props.setToolSetting('brushResolution', val)}
             inputProps={this.props.getToolSettingRestrictions('brushResolution')}
-            onReset={() => this.props.setToolSetting('brushResolution', 0.25)}
+            onReset={() => this.props.setToolSetting('brushResolution', 0.75)}
           />
           <InspectorNumericSlider
             tooltip="Spacing"
