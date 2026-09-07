@@ -38,6 +38,7 @@ import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbo
 
 import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
+import ReactTooltip from 'react-tooltip';
 // import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
@@ -85,6 +86,9 @@ class Inspector extends Component {
     this.state = {
       logs: [],
       showBrushModes: false,
+      isEditingBrush: false,
+      savedBrushes: [],
+      selectedBrushIndex: null,
     };
 
     this.handleConsoleLog = (log) => {
@@ -1235,6 +1239,112 @@ class Inspector extends Component {
     this.setState({ showBrushModes: false });
   }
 
+  saveBrush = () => {
+    const { savedBrushes, selectedBrushIndex } = this.state;
+    const brushData = {
+      name: selectedBrushIndex !== null ? savedBrushes[selectedBrushIndex].name : `Brush ${savedBrushes.length + 1}`,
+      shape:             this.props.getToolSetting('brushShape'),
+      brushSize:         this.props.getToolSetting('brushSize'),
+      brushResolution:   this.props.getToolSetting('brushResolution'),
+      brushSpacing:      this.props.getToolSetting('brushSpacing'),
+      brushScatterEnabled:  this.props.getToolSetting('brushScatterEnabled'),
+      brushScatterAmount:   this.props.getToolSetting('brushScatterAmount'),
+      brushRandomRotation:  this.props.getToolSetting('brushRandomRotation'),
+      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+      fillColorRgba: (() => { try { return this.props.getToolSetting('fillColor').rgba; } catch(e) { return '#000000'; } })(),
+    };
+    if (selectedBrushIndex !== null) {
+      const updated = [...savedBrushes];
+      updated[selectedBrushIndex] = brushData;
+      this.setState({ savedBrushes: updated, isEditingBrush: false });
+    } else {
+      this.setState({ savedBrushes: [...savedBrushes, brushData], selectedBrushIndex: savedBrushes.length, isEditingBrush: false });
+    }
+  }
+
+  applyBrush = (brush) => {
+    this.props.setToolSetting('brushShape', brush.shape);
+    this.props.setToolSetting('brushSize', brush.brushSize);
+    this.props.setToolSetting('brushResolution', brush.brushResolution);
+    this.props.setToolSetting('brushSpacing', brush.brushSpacing);
+    this.props.setToolSetting('brushScatterEnabled', brush.brushScatterEnabled);
+    this.props.setToolSetting('brushScatterAmount', brush.brushScatterAmount);
+    this.props.setToolSetting('brushRandomRotation', brush.brushRandomRotation);
+    this.props.setToolSetting('brushStabilizerWeight', brush.brushStabilizerWeight);
+  }
+
+  renderBrushList = () => {
+    const { savedBrushes, selectedBrushIndex } = this.state;
+    const shapeMap = {};
+    BRUSH_SHAPES.forEach(s => { shapeMap[s.id] = s; });
+
+    return (
+      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
+        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
+            {savedBrushes.map((brush, i) => {
+              const active = selectedBrushIndex === i;
+              const shape = shapeMap[brush.shape] || shapeMap['circle'];
+              const tipId = `brush-tip-${i}`;
+              return (
+                <div
+                  key={i}
+                  id={tipId}
+                  data-tip
+                  data-for={tipId}
+                  onClick={() => {
+                    this.setState({ selectedBrushIndex: i, isEditingBrush: false });
+                    this.applyBrush(brush);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: '6px 2px',
+                    borderRadius: '5px',
+                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
+                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
+                  }}>
+                  <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
+                    <span>{brush.name}</span>
+                  </ReactTooltip>
+                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
+                    <g fill="white">{shape.svg}</g>
+                  </svg>
+                </div>
+              );
+            })}
+            {/* "+" add new brush cell */}
+            <div
+              id="brush-tip-new"
+              data-tip
+              data-for="brush-tip-new"
+              onClick={() => this.setState({ selectedBrushIndex: null, isEditingBrush: true })}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                padding: '6px 2px',
+                borderRadius: '5px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px dashed rgba(255,255,255,0.2)',
+                fontSize: '18px',
+                color: 'rgba(255,255,255,0.4)',
+                lineHeight: 1,
+              }}>
+              <ReactTooltip id="brush-tip-new" type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
+                <span>New Brush</span>
+              </ReactTooltip>
+              +
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   renderBrushShapePicker = () => {
     const currentShape = this.props.getToolSetting('brushShape');
     return (
@@ -1276,6 +1386,9 @@ class Inspector extends Component {
     if (brushMode === 'inside') brushModeIcon = 'brushmodeinside';
     else if (brushMode === 'outside') brushModeIcon = 'brushmodeoutside';
 
+    const { isEditingBrush, selectedBrushIndex } = this.state;
+    const canEdit = selectedBrushIndex !== null || isEditingBrush;
+
     return (
       <div>
         {/* Brush stroke preview */}
@@ -1287,8 +1400,10 @@ class Inspector extends Component {
             style={{ display: 'block', width: '100%' }}
           />
         </div>
-        {this.renderBrushShapePicker()}
-        {/* Sliders — same inspector-item wrapper as opacity/transform rows */}
+        {/* Saved brush list */}
+        {/* Brush list — hidden while editing */}
+        {!isEditingBrush && this.renderBrushList()}
+        {/* Sliders always visible */}
         <div className="inspector-item">
           <InspectorNumericSlider
             tooltip="Brush Size"
@@ -1308,37 +1423,42 @@ class Inspector extends Component {
             inputProps={this.props.getToolSettingRestrictions('brushStabilizerWeight')}
             onReset={() => this.props.setToolSetting('brushStabilizerWeight', 20)}
           />
-          <InspectorNumericSlider
-            tooltip="Resolution"
-            icon="brushresolution"
-            label="Reso"
-            val={this.props.getToolSetting('brushResolution')}
-            onChange={(val) => this.props.setToolSetting('brushResolution', val)}
-            inputProps={this.props.getToolSettingRestrictions('brushResolution')}
-            onReset={() => this.props.setToolSetting('brushResolution', 0.75)}
-          />
-          <InspectorNumericSlider
-            tooltip="Spacing"
-            icon="brushspacing"
-            label="Link"
-            val={this.props.getToolSetting('brushSpacing')}
-            onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
-            inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
-            onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
-          />
-          {this.props.getToolSetting('brushScatterEnabled') && (
+          {/* Edit-only sliders */}
+          {isEditingBrush && (<>
             <InspectorNumericSlider
-              tooltip="Scatter Amount"
-              icon="brushscatter"
-              label="Spread"
-              val={this.props.getToolSetting('brushScatterAmount')}
-              onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
-              onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
+              tooltip="Resolution"
+              icon="brushresolution"
+              label="Reso"
+              val={this.props.getToolSetting('brushResolution')}
+              onChange={(val) => this.props.setToolSetting('brushResolution', val)}
+              inputProps={this.props.getToolSettingRestrictions('brushResolution')}
+              onReset={() => this.props.setToolSetting('brushResolution', 0.75)}
             />
-          )}
+            <InspectorNumericSlider
+              tooltip="Spacing"
+              icon="brushspacing"
+              label="Link"
+              val={this.props.getToolSetting('brushSpacing')}
+              onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
+              inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
+              onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
+            />
+            {this.props.getToolSetting('brushScatterEnabled') && (
+              <InspectorNumericSlider
+                tooltip="Scatter Amount"
+                icon="brushscatter"
+                label="Spread"
+                val={this.props.getToolSetting('brushScatterAmount')}
+                onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
+                inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
+                onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
+              />
+            )}
+          </>)}
         </div>
-        {/* Icon buttons — same as toolbar */}
+        {/* Edit-only: shape picker */}
+        {isEditingBrush && this.renderBrushShapePicker()}
+        {/* Toggles — all in one row; scatter/rotation only when editing */}
         <div className='settings-input-container' style={{ marginTop: '8px' }}>
           <ToolSettingsInput
             name='Enable Pressure'
@@ -1353,20 +1473,6 @@ class Inspector extends Component {
             type='checkbox'
             value={this.props.getToolSetting('relativeBrushSize')}
             onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
-          />
-          <ToolSettingsInput
-            name='Random Scatter'
-            icon='brushscatter'
-            type='checkbox'
-            value={this.props.getToolSetting('brushScatterEnabled')}
-            onChange={() => this.props.setToolSetting('brushScatterEnabled', !this.props.getToolSetting('brushScatterEnabled'))}
-          />
-          <ToolSettingsInput
-            name='Random Rotation'
-            icon='brushrandomrotation'
-            type='checkbox'
-            value={this.props.getToolSetting('brushRandomRotation')}
-            onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
           />
           <div id="inspector-brush-modes-popover-button">
             <ToolSettingsInput
@@ -1408,7 +1514,37 @@ class Inspector extends Component {
               </div>
             </PopupMenu>
           </div>
+          {isEditingBrush && (<>
+            <ToolSettingsInput
+              name='Random Scatter'
+              icon='brushscatter'
+              type='checkbox'
+              value={this.props.getToolSetting('brushScatterEnabled')}
+              onChange={() => this.props.setToolSetting('brushScatterEnabled', !this.props.getToolSetting('brushScatterEnabled'))}
+            />
+            <ToolSettingsInput
+              name='Random Rotation'
+              icon='brushrandomrotation'
+              type='checkbox'
+              value={this.props.getToolSetting('brushRandomRotation')}
+              onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
+            />
+          </>)}
         </div>
+        {/* Edit Brush / Save Brush button */}
+        {canEdit && (
+          <div className="inspector-item" style={{ marginTop: '6px' }}>
+            <InspectorActionButton action={{
+              id: 'brush-edit-save',
+              icon: isEditingBrush ? 'check' : 'pencil',
+              tooltip: isEditingBrush ? 'Save Brush' : 'Edit Brush',
+              color: 'inspector',
+              action: isEditingBrush
+                ? this.saveBrush
+                : () => this.setState({ isEditingBrush: true }),
+            }} />
+          </div>
+        )}
       </div>
     );
   }
