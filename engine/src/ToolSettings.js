@@ -65,7 +65,7 @@ Wick.ToolSettings = class {
         }, {
             type: "number",
             name: 'brushResolution',
-            default: 1,
+            default: 0.75,
             min: 0,
             max: 1,
             step: 0.01,

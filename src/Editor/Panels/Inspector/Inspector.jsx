@@ -177,7 +177,15 @@ class Inspector extends Component {
     }
 
     if (this.props.activeTool === 'brush') {
-      this.drawBrushPreview();
+      const justSwitchedToBrush = prevProps.activeTool !== 'brush';
+      const prev = prevProps.getToolSetting;
+      const curr = this.props.getToolSetting;
+      const previewSettings = [
+        'brushResolution', 'brushSpacing', 'brushScatterAmount',
+        'brushScatterEnabled', 'brushRandomRotation', 'brushShape'
+      ];
+      const settingChanged = previewSettings.some(k => prev(k) !== curr(k));
+      if (justSwitchedToBrush || settingChanged) this.drawBrushPreview();
     }
 
   }
@@ -211,55 +219,155 @@ class Inspector extends Component {
     const scatterAmount  = this.props.getToolSetting('brushScatterAmount') || 0.3;
     const randomRotation = this.props.getToolSetting('brushRandomRotation');
 
+    // Resolution: same smoothnessFactor formula as the engine
+    const resT       = this.props.getToolSetting('brushResolution') ?? 1;
+    const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
+
     const stampSize = 13;
     const stepDist  = Math.max(2, stampSize * spacing * 1.5);
 
-    // Seeded PRNG — same seed every redraw so preview is stable
     let _seed = 12345;
     const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
 
-    const margin    = stampSize + 2;
-    const amplitude = (H - stampSize * 2) / 4;
+    const margin    = stampSize + 4;
+    const amplitude = (H - stampSize * 2) / 2.5;
     const pathW     = W - margin * 2;
     const numSteps  = Math.ceil(pathW / stepDist) + 1;
 
+    // Rasterize stamps onto a TRANSPARENT offscreen canvas.
+    // potrace.createFromImage classifies pixels by alpha (alpha > 155 = foreground).
+    // So we must NOT fill a white background — transparent = background, opaque stamp = foreground.
+    // If you don't get it uhhhh… just trust me bro
+    const stampCanvas = document.createElement('canvas');
+    stampCanvas.width = W;
+    stampCanvas.height = H;
+    const sCtx = stampCanvas.getContext('2d');
+
     for (let i = 0; i < numSteps; i++) {
-      const t  = numSteps > 1 ? i / (numSteps - 1) : 0;
-      let   x  = margin + t * pathW;
-      let   y  = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
-      const rotation = randomRotation ? rand() * Math.PI * 2 : 0;
+      const t = numSteps > 1 ? i / (numSteps - 1) : 0;
+
+      const sz = stampSize;
+
+      let x = margin + t * pathW;
+      let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
+
+      rand(); rand(); // consume position-jitter slots (not applied; potrace handles jaggedness via scale)
+      const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
+      const r4 = rand(), r5 = rand();
       if (scatterEnabled) {
-        const sc = stampSize * scatterAmount;
-        x +=(rand() - 0.5) * sc * 2;
-        y +=(rand() - 0.5) * sc * 2;
+        const sc = sz * scatterAmount;
+        x += (r4 - 0.5) * sc * 2;
+        y += (r5 - 0.5) * sc * 2;
       }
-      this._drawBrushStamp(ctx, x, y, stampSize, shape, rotation, brushColor);
+
+      // Always draw at 24 segs — jaggedness comes from potrace on a smaller canvas below
+      this._drawBrushStamp(sCtx, x, y, sz, shape, rotation, '#000000', 24);
+    }
+
+    // Scale down to simulate low resolution: fewer pixels → potrace produces angular shapes.
+    // imageScaleFactor range mirrors the engine: ~0.25 at Reso=0, 1.0 at Reso=1.
+    const imageScaleFactor = 0.25 + smoothness * 0.75;
+    const smallW = Math.max(30, Math.round(W * imageScaleFactor));
+    const smallH = Math.max(15, Math.round(H * imageScaleFactor));
+    const smallCanvas = document.createElement('canvas');
+    smallCanvas.width = smallW;
+    smallCanvas.height = smallH;
+    const smallCtx = smallCanvas.getContext('2d');
+    smallCtx.imageSmoothingEnabled = true;
+    smallCtx.drawImage(stampCanvas, 0, 0, smallW, smallH);
+
+    // Run potrace — same step as the engine does after the croquis rasterization
+    const pt = window.potrace;
+    if (pt) {
+      try {
+        let svgStr = pt.fromImage(smallCanvas).toSVG(1);
+        // Replace the traced fill color with the actual brush color
+        svgStr = svgStr.replace(/fill="[^"]*"/g, `fill="${brushColor}"`);
+        // Render via Image so the browser handles SVG fill-rule correctly
+        const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+        const url  = URL.createObjectURL(blob);
+        const img  = new Image();
+        img.onload = () => {
+          // Draw background again in case a previous (slower) load fires late
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, W, H);
+          // Scale SVG back up to full preview size — low-res SVG drawn large = jagged edges visible
+          ctx.drawImage(img, 0, 0, W, H);
+          URL.revokeObjectURL(url);
+        };
+        img.src = url;
+      } catch(e) {
+        this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+          scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+          margin, amplitude, pathW, numSteps);
+      }
+    } else {
+      this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+        scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+        margin, amplitude, pathW, numSteps);
     }
   }
 
-  _drawBrushStamp = (ctx, x, y, size, shape, rotation, color) => {
+  // Polygon-approximation fallback when potrace is unavailable
+  _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+    scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+    margin, amplitude, pathW, numSteps) => {
+    const curveSegs = Math.max(3, Math.round(smoothness * 24));
+    const jitterAmt = (1 - smoothness) * 4;
+    let _seed = 12345;
+    const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
+    for (let i = 0; i < numSteps; i++) {
+      const t = numSteps > 1 ? i / (numSteps - 1) : 0;
+      const sz = stampSize;
+      let x = margin + t * pathW;
+      let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
+      if (jitterAmt > 0) { x += (rand() - 0.5) * jitterAmt; y += (rand() - 0.5) * jitterAmt; } else { rand(); rand(); }
+      const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
+      const r4 = rand(), r5 = rand();
+      if (scatterEnabled) { const sc = sz * scatterAmount; x += (r4 - 0.5) * sc * 2; y += (r5 - 0.5) * sc * 2; }
+      this._drawBrushStamp(ctx, x, y, sz, shape, rotation, brushColor, curveSegs);
+    }
+  }
+
+  _drawBrushStamp = (ctx, x, y, size, shape, rotation, color, curveSegs = 24) => {
     const r = size / 2;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
     ctx.fillStyle = color || '#5a9fd4';
 
-    // Shapes with custom fill logic
+    // Helper: draw a circle/ellipse as a polygon with curveSegs sides.
+    // rx, ry = radii; pre-rotate by startAngle.
+    const polyArc = (rx, ry, startAngle = 0) => {
+      for (let i = 0; i <= curveSegs; i++) {
+        const a = startAngle + (i / curveSegs) * Math.PI * 2;
+        const px = Math.cos(a) * rx, py = Math.sin(a) * ry;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    };
+
     if (shape === 'chisel') {
-      ctx.save(); ctx.rotate(Math.PI / 4); ctx.scale(1, 0.25);
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
-      ctx.restore(); ctx.restore(); return;
+      // Ellipse rotated 45°, approximated with curveSegs points
+      ctx.beginPath();
+      for (let i = 0; i <= curveSegs; i++) {
+        const a  = (i / curveSegs) * Math.PI * 2;
+        const ex = Math.cos(a) * r, ey = Math.sin(a) * r * 0.25;
+        const rx = ex * Math.cos(Math.PI/4) - ey * Math.sin(Math.PI/4);
+        const ry = ex * Math.sin(Math.PI/4) + ey * Math.cos(Math.PI/4);
+        i === 0 ? ctx.moveTo(rx, ry) : ctx.lineTo(rx, ry);
+      }
+      ctx.closePath(); ctx.fill();
+      ctx.restore(); return;
     }
     if (shape === 'softcircle') {
-      // Parse the rgba color to build a gradient with the same hue but fading alpha
       const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
       const c0 = color || 'rgba(90,159,212,1)';
-      // Replace alpha in the rgba string for gradient stops
       const toAlpha = (rgba, a) => rgba.replace(/[\d.]+\)$/, `${a})`);
       g.addColorStop(0,   toAlpha(c0, 1));
       g.addColorStop(0.5, toAlpha(c0, 0.55));
       g.addColorStop(1,   toAlpha(c0, 0));
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.beginPath(); polyArc(r, r);
       ctx.fillStyle = g; ctx.fill();
       ctx.restore(); return;
     }
@@ -278,6 +386,7 @@ class Inspector extends Component {
     // Standard path shapes
     ctx.beginPath();
     switch (shape) {
+      case 'circle':    polyArc(r, r); break;
       case 'square':    ctx.rect(-r, -r, size, size); break;
       case 'rect':      ctx.rect(-r, -r*0.35, size, size*0.35); break;
       case 'diamond':
@@ -303,8 +412,8 @@ class Inspector extends Component {
       case 'hexagon':
         for (let i=0;i<6;i++){const a=(i*Math.PI)/3-Math.PI/6;i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);}
         ctx.closePath(); break;
-      default: // circle
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
+      default: // circle fallback
+        polyArc(r, r);
     }
     ctx.fill();
     ctx.restore();
