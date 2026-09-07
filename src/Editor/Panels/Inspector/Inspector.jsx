@@ -184,8 +184,10 @@ class Inspector extends Component {
         'brushScatterEnabled', 'brushRandomRotation', 'brushShape'
       ];
       const last = this._lastPreviewSettings;
+      const currColor = this.props.getToolSetting('fillColor');
+      const colorChanged = !last || (currColor && currColor.rgba) !== last.fillColorRgba;
       const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
-      if (settingChanged) this.drawBrushPreview();
+      if (colorChanged || settingChanged) this.drawBrushPreview();
     }
 
   }
@@ -229,7 +231,8 @@ class Inspector extends Component {
     // Snapshot current settings so componentDidUpdate can detect future changes
     this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
       brushScatterAmount: scatterAmount, brushScatterEnabled: scatterEnabled,
-      brushRandomRotation: randomRotation, brushShape: shape };
+      brushRandomRotation: randomRotation, brushShape: shape,
+      fillColorRgba: brushColor };
 
     // Resolution: same smoothnessFactor formula as the engine
     const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
