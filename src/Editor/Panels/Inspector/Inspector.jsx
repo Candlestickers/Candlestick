@@ -40,6 +40,7 @@ import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsIn
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 import ReactTooltip from 'react-tooltip';
 import localForage from 'localforage';
+import { toast } from 'react-toastify';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
@@ -1304,6 +1305,22 @@ class Inspector extends Component {
   deleteSelectedShape = () => {
     const shape = this.props.getToolSetting('brushShape');
     if (!shape) return;
+    // Block deletion if any saved preset uses this shape
+    const inUse = this.state.savedBrushes.some(b => b.shape === shape);
+    if (inUse) {
+      toast.warning('Cannot delete shape; being used by another preset', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        className: 'warning-toast-background',
+        bodyClassName: 'warning-toast-body',
+        progressClassName: 'warning-toast-progress',
+      });
+      return;
+    }
     const { customShapes, removedShapes } = this.state;
     // Build the current available shape list to find the next one to select
     const allAvailable = [
