@@ -23,7 +23,7 @@ import WickInput from 'Editor/Util/WickInput/WickInput';
 import { Rnd } from 'react-rnd';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import AddScriptPanel from './AddScriptPanel/AddScriptPanel';
-import { Console } from 'console-feed'
+import Console from 'console-feed/lib/Component/index.js'
 
 // Import Ace Editor and themes.
 import AceEditor from 'react-ace';
@@ -63,7 +63,7 @@ const editorThemes = [
     label: 'Github',
   }]
 
-let classNames = require('classnames');
+import classNames from 'classnames';
 let thValue = 'monokai';
 export default function WickCodeEditor(props) {
 
