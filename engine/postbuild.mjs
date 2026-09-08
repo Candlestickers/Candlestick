@@ -6,7 +6,7 @@ const engineFile = path.join(path.resolve('./dist'), 'wickengine.js');
 
 // Read bundle
 const engineSRC = fs.readFileSync(engineFile, 'utf8');
-const engineSRCSafe = engineSRC.replace(/\$/g, "$$$");
+const engineSRCSafe = engineSRC.replace(/\$/g, "$$$"); // http://forums.mozillazine.org/viewtopic.php?f=19&t=2182187
 
 // Inject into project.html
 let distDir = 'dist';
