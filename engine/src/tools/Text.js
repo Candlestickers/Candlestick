@@ -76,11 +76,18 @@ Wick.Tools.Text = class extends Wick.Tool {
             return;
         }
 
+        let oldTargetOnClick = e.event.target.onclick;
+        const targetOnClick = targetEvent => {
+            oldTargetOnClick && oldTargetOnClick(targetEvent);
+            e.event.target.onclick = oldTargetOnClick;
+            this.editingText.focus();
+        }
         if (this.editingText) {
             this.finishEditingText();
         } else if(this.hoveredOverText) {
             this.editingText = this.hoveredOverText;
             e.item.edit(this.project.view.paper);
+            e.event.target.onclick = targetOnClick;
         } else {
             var text = new this.paper.PointText(e.point);
             text.justification = 'left';
@@ -99,6 +106,7 @@ Wick.Tools.Text = class extends Wick.Tool {
 
             this.editingText = wickText.view.item;
             this.editingText.edit(this.project.view.paper);
+            e.event.target.onclick = targetOnClick;
 
             //this.fireEvent('canvasModified');
         }
