@@ -579,6 +579,27 @@ class MobileInspector extends Component {
   }
 
   /**
+   * Renders an inspector row allowing viewing and editing of the selection's pivot x y position.
+   */
+  renderPivot = () => {
+    var { x, y } = this.getSelectionAttribute('relativePivot');
+    return (
+      <MobileInspectorDualNumericInput
+        tooltip1="Pivot X"
+        tooltip2="Pivot Y"
+        icon1={xIcon}
+        iconAlt1="x Icon"
+        icon2={yIcon}
+        iconAlt2="Y Icon"
+        val1={x}
+        val2={y}
+        onChange1={(val) => this.setSelectionAttribute('relativePivot', {x: val, y})}
+        onChange2={(val) => this.setSelectionAttribute('relativePivot', {x, y: val})}
+        id="inspector-pivot" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -615,6 +636,7 @@ class MobileInspector extends Component {
           iconAlt2="Shear Icon"
           shearVal={this.getSelectionAttribute('shear')}
           onShearChange={(val) => this.setSelectionAttribute('shear', val)} />
+        {this.renderPivot()}
       </div>
     )
   }
