@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.9.8.21.17.6";
+var WICK_ENGINE_BUILD_VERSION = "2026.9.8.22.10.56";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -54278,7 +54278,8 @@ Wick.ImageAsset = class extends Wick.FileAsset {
   static getValidMIMETypes() {
     let jpgTypes = ['image/jpeg'];
     let pngTypes = ['image/png'];
-    return jpgTypes.concat(pngTypes);
+    let webpTypes = ['image/webp'];
+    return jpgTypes.concat(pngTypes).concat(webpTypes);
   }
 
   /**
@@ -54286,7 +54287,7 @@ Wick.ImageAsset = class extends Wick.FileAsset {
    * @returns {string[]} Array of strings representing extensions.
    */
   static getValidExtensions() {
-    return ['.jpeg', '.jpg', '.png'];
+    return ['.jpeg', '.jpg', '.png', '.webp'];
   }
 
   /**
@@ -67639,7 +67640,7 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
     if (!this.model.isPublished) {
       // Modifier + scroll (zoom instead of scroll if ctrl/ cmmd/ alt keys)
       if (e.ctrlKey || e.metaKey || e.altKey) {
-        var frameDelta = -(e.deltaY * e.deltaFactor);
+        var frameDelta = e.deltaY * e.deltaFactor;
         this._canvas.dispatchEvent(new CustomEvent('wickFrameSizeScroll', {
           detail: {
             delta: frameDelta
