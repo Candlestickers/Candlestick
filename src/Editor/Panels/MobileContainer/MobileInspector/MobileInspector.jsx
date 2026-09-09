@@ -53,6 +53,7 @@ import hIcon from 'resources/mobile-inspector-icons/h-icon.svg';
 import scaleWIcon from 'resources/mobile-inspector-icons/scaleW-icon.svg';
 import scaleHIcon from 'resources/mobile-inspector-icons/scaleH-icon.svg';
 import rotateIcon from 'resources/mobile-inspector-icons/rotate-icon.svg';
+import shearIcon from 'resources/mobile-inspector-icons/shear-icon.svg';
 import strokeIcon from 'resources/mobile-inspector-icons/strokewidth-icon.svg';
 import opacityIcon from 'resources/mobile-inspector-icons/opacity-icon.svg';
 import fillOpacityIcon from 'resources/mobile-inspector-icons/fillopacity-icon.svg';
@@ -564,6 +565,19 @@ class MobileInspector extends Component {
   }
 
   /**
+   * Renders an inspector row for the shear.
+   */
+  renderShear = () => {
+    return (
+      <MobileInspectorNumericInput
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -589,7 +603,18 @@ class MobileInspector extends Component {
         {this.renderPosition()}
         {this.renderSize()}
         {this.renderScale()}
-        {this.renderRotation()}
+        <MobileInspectorDualNumericInput
+          tooltip1="Rotation"
+          tooltip2="Shear"
+          icon1={rotateIcon}
+          iconAlt1="Rotation Icon"
+          icon2={shearIcon}
+          iconAlt2="Shear Icon"
+          val1={this.getSelectionAttribute('rotation')}
+          val2={this.getSelectionAttribute('shear')}
+          onChange1={(val) => this.setSelectionAttribute('rotation', val)}
+          onChange2={(val) => this.setSelectionAttribute('shear', val)}
+          id="inspector-rotation-shear" />
       </div>
     )
   }
