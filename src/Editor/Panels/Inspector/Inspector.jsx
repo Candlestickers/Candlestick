@@ -89,6 +89,7 @@ class Inspector extends Component {
       'breakApart': ["clip", "button",],
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
+      'addToAssetLibraryAsWickobj': ["clip", "button"],
       'editTimeline': ["clip", "button"],
       'addAssetToCanvas': ["imageasset", "clipasset"],
       // 'alignX': [ "multipath"] // H.A.
@@ -1013,7 +1014,14 @@ class Inspector extends Component {
 
     Object.keys(this.actionRules).forEach(action => {
         let actionList = this.actionRules[action];
-        if (actionList.indexOf(selectionType) > -1) actions.push(action);
+        if (actionList.indexOf(selectionType) > -1) {
+          if(action === 'addToAssetLibraryAsWickobj') {
+            if (!this.props.selection[0].assetSourceUUID && !this.props.selection[0].asseted) {
+              actions.push(action);
+            }
+          }
+          else actions.push(action);
+        }
     });
 
     return(
