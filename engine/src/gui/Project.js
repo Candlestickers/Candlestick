@@ -482,7 +482,7 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
         if (!this.model.isPublished) {
             // Modifier + scroll (zoom instead of scroll if ctrl/ cmmd/ alt keys)
             if (e.ctrlKey || e.metaKey || e.altKey) {
-                var frameDelta = -(e.deltaY * e.deltaFactor);
+                var frameDelta = (e.deltaY * e.deltaFactor);
                 this._canvas.dispatchEvent(new CustomEvent('wickFrameSizeScroll', {
                     detail: { delta: frameDelta },
                     bubbles: true
