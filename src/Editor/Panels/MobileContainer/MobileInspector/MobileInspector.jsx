@@ -26,6 +26,7 @@ import MobileInspectorNumericSlider from './MobileInspectorRow/MobileInspectorRo
 import MobileInspectorTextInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorTextInput';
 import MobileInspectorNumericInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorNumericInput';
 import MobileInspectorDualNumericInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorDualNumericInput';
+import MobileInspectorShearSlider from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorShearSlider';
 import MobileInspectorSelector from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorSelector';
 import InspectorActionButton from '../../Inspector/InspectorActionButton/InspectorActionButton';
 import InspectorImagePreview from '../../Inspector/InspectorPreview/InspectorPreviewTypes/InspectorImagePreview';
@@ -603,18 +604,17 @@ class MobileInspector extends Component {
         {this.renderPosition()}
         {this.renderSize()}
         {this.renderScale()}
-        <MobileInspectorDualNumericInput
+        <MobileInspectorShearSlider
           tooltip1="Rotation"
-          tooltip2="Shear"
           icon1={rotateIcon}
           iconAlt1="Rotation Icon"
+          numericVal={this.getSelectionAttribute('rotation')}
+          onNumericChange={(val) => this.setSelectionAttribute('rotation', val)}
+          tooltip2="Shear"
           icon2={shearIcon}
           iconAlt2="Shear Icon"
-          val1={this.getSelectionAttribute('rotation')}
-          val2={this.getSelectionAttribute('shear')}
-          onChange1={(val) => this.setSelectionAttribute('rotation', val)}
-          onChange2={(val) => this.setSelectionAttribute('shear', val)}
-          id="inspector-rotation-shear" />
+          shearVal={this.getSelectionAttribute('shear')}
+          onShearChange={(val) => this.setSelectionAttribute('shear', val)} />
       </div>
     )
   }
