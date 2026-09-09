@@ -127,6 +127,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
                 else if (name.endsWith('.png')) mimeType = 'image/png'
                 else if (name.endsWith('.jpeg') || name.endsWith('.jpg')) mimeType = 'image/jpeg'
                 else if (name.endsWith('.gif')) mimeType = 'image/gif'
+                else if (name.endsWith('.webp')) mimeType = 'image/webp'
 
                 const blob = new Blob([bytes], { type: mimeType })
                 const file = new File([blob], name, { type: mimeType })
