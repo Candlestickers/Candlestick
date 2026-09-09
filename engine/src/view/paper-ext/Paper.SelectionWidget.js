@@ -340,6 +340,7 @@ class SelectionWidget {
 
         this._ghost.matrix.reset();
         this._ghost.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
+        let unrotatedBounds = this._ghost.bounds.clone();
         if (modifiers.center) {
             this._truePivot = this.pivot;
         } else if (this.currentTransformation === 'scale-edge') {
@@ -370,6 +371,17 @@ class SelectionWidget {
             if (modifiers.constrain) {
                 var direction = new paper.Point({ length: 1, angle: Math.round(initialDelta.angle / 45) * 45 });
                 initialDelta = initialDelta.project(direction);
+            } else if (modifiers.center) {
+                let { topLeft, bottomLeft, bottomRight, topRight, topCenter, leftCenter, bottomCenter, rightCenter, center } = unrotatedBounds;
+                let snapPoints = [topLeft, bottomLeft, bottomRight, topRight, topCenter, leftCenter, bottomCenter, rightCenter, center];
+                let matrix = (new paper.Matrix()).translate(this.pivot).rotate(this.boxRotation).shear(this.boxShear, 0).translate(-this.pivot.x, -this.pivot.y);
+                for (let snapPoint of snapPoints) {
+                    snapPoint = matrix.transform(snapPoint);
+                    if (snapPoint.getDistance(e.point) <= SelectionWidget.PIVOT_SNAP_THRESHOLD / paper.view.zoom) {
+                        initialDelta = snapPoint.subtract(item.position);
+                        break;
+                    }
+                }
             }
             item.translate(initialDelta);
             this._newPivot = item.position;
@@ -1137,13 +1149,14 @@ class SelectionWidget {
 SelectionWidget.BOX_STROKE_WIDTH = 1;
 SelectionWidget.BOX_STROKE_COLOR = 'rgba(100,150,255,1.0)';
 SelectionWidget.HANDLE_RADIUS = 5;
-SelectionWidget.HANDLE_STROKE_WIDTH = SelectionWidget.BOX_STROKE_WIDTH
-SelectionWidget.HANDLE_STROKE_COLOR = SelectionWidget.BOX_STROKE_COLOR
+SelectionWidget.HANDLE_STROKE_WIDTH = SelectionWidget.BOX_STROKE_WIDTH;
+SelectionWidget.HANDLE_STROKE_COLOR = SelectionWidget.BOX_STROKE_COLOR;
 SelectionWidget.HANDLE_FILL_COLOR = 'rgba(255,255,255,0.3)';
 SelectionWidget.PIVOT_STROKE_WIDTH = SelectionWidget.BOX_STROKE_WIDTH;
 SelectionWidget.PIVOT_FILL_COLOR = 'rgba(255,255,255,0.5)';
 SelectionWidget.PIVOT_STROKE_COLOR = 'rgba(0,0,0,1)';
-SelectionWidget.PIVOT_RADIUS = SelectionWidget.HANDLE_RADIUS
+SelectionWidget.PIVOT_RADIUS = SelectionWidget.HANDLE_RADIUS;
+SelectionWidget.PIVOT_SNAP_THRESHOLD = SelectionWidget.PIVOT_RADIUS;
 SelectionWidget.ROTATION_HOTSPOT_RADIUS = 20;
 SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR = 'rgba(100,150,255,0.5)';
 SelectionWidget.GHOST_STROKE_COLOR = 'rgba(0, 0, 0, 1.0)';
