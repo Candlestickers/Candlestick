@@ -125,7 +125,7 @@ export default function ColorPicker (props) {
   let color = props.color ? props.color : new window.Wick.Color("#FFFFFF")
   let colorCSS = color;
   let colorCSSOpaque = color;
-  if (color instanceof window.paper.Color) {
+  if (color instanceof (window.paper?.Color || Object)) {
     if (color.gradient) {
       colorCSS = colorCSSOpaque = 'linear-gradient(to right';
 
