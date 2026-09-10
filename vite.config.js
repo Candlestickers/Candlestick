@@ -17,5 +17,19 @@ export default defineConfig({
   },
   build: {
     outDir: "build",
+    /* I think this is the same as the browserslist config; for reference it's here: 
+    "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"],*/
+    target: [
+      'chrome109',
+      'ios15.6',
+      'safari15.6',
+      'edge149',
+      'firefox121',
+      'opera80'
+    ]
   },
 });

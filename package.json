@@ -68,12 +68,6 @@
     "phonegap-deploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app && git add . && git commit -m 'update phonegap build' && git push --force",
     "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ],
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
     "@vitejs/plugin-react": "^6.0.4",
