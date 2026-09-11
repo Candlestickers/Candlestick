@@ -327,7 +327,7 @@ Wick.AudioTrack = class {
 
         var delayedBuffer = ctx.createBuffer(
             originalBuffer.numberOfChannels,
-            lengthOfDelay + lengthOfOriginalSound,
+            Math.round(lengthOfDelay + lengthOfOriginalSound),
             ctx.sampleRate,
         );
 
