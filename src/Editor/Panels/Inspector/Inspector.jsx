@@ -1374,6 +1374,35 @@ class Inspector extends Component {
     URL.revokeObjectURL(url);
   }
 
+  renderTileDeleteBadge = (onDelete) => {
+    return (
+      <div
+        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        title="Delete"
+        style={{
+          position: 'absolute',
+          top: '-5px',
+          left: '-5px',
+          width: '14px',
+          height: '14px',
+          borderRadius: '100%',
+          background: '#4a4a4a',
+          border: '1px solid rgba(255,255,255,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '10px',
+          lineHeight: 1,
+          color: 'white',
+          cursor: 'pointer',
+          zIndex: 2,
+        }}> 
+        {/* draing the X symbol for deleting brush preset/ shape :P -H.A. */}
+        &times;
+      </div>
+    );
+  }
+
   deleteSelectedShape = () => {
     const shape = this.props.getToolSetting('brushShape');
     if (!shape) return;
@@ -1514,7 +1543,7 @@ class Inspector extends Component {
 
     return (
       <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', width: '100%' }}>
+        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
             {savedBrushes.map((brush, i) => {
               const active = selectedBrushIndex === i;
@@ -1532,6 +1561,7 @@ class Inspector extends Component {
                     localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
                   }}
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1544,6 +1574,7 @@ class Inspector extends Component {
                   <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
                     <span>{brush.name || 'Brush'}</span>
                   </ReactTooltip>
+                  {active && savedBrushes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedBrush)}
                   <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
                     <g fill="white">{shape.svg}</g>
                   </svg>
@@ -1593,7 +1624,7 @@ class Inspector extends Component {
     ];
     return (
       <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', width: '100%' }}>
+        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
             {allShapes.map(shape => {
               const active = currentShape === shape.id;
@@ -1603,6 +1634,7 @@ class Inspector extends Component {
                   onClick={() => this.props.setToolSetting('brushShape', shape.id)}
                   title={shape.name}
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1612,6 +1644,7 @@ class Inspector extends Component {
                     background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
                     border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
                   }}>
+                  {active && allShapes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedShape)}
                   <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
                     <g fill="white">{shape.svg}</g>
                   </svg>
@@ -1799,29 +1832,6 @@ class Inspector extends Component {
               </div>
             </div>
           )}
-          {/* Trash — delete custom shape (edit mode) or delete preset (browse mode) */}
-          {(() => {
-            const currentShape = this.props.getToolSetting('brushShape');
-            const availableShapeCount = BRUSH_SHAPES.filter(s => !this.state.removedShapes.includes(s.id)).length + this.state.customShapes.length;
-            const canDeleteShape = isEditingBrush && !!currentShape && availableShapeCount > 1;
-            const canDeleteBrush = !isEditingBrush && selectedBrushIndex !== null && this.state.savedBrushes.length > 1;
-            const deleteAction = canDeleteShape ? this.deleteSelectedShape : canDeleteBrush ? this.deleteSelectedBrush : () => {};
-            const deleteTooltip = canDeleteShape ? 'Delete Shape' : canDeleteBrush ? 'Delete Brush' : 'Delete';
-            return (
-              <div className="setting-input-container">
-                <div className="settings-checkbox-input">
-                  <ActionButton
-                    icon='delete'
-                    color='checkbox'
-                    id='settings-input-id-delete-brush'
-                    tooltip={deleteTooltip}
-                    action={deleteAction}
-                    iconClassName='toolbox-input-icon'
-                  />
-                </div>
-              </div>
-            );
-          })()}
         </div>
         {/* Edit Brush / Save Brush button */}
         {canEdit && (
