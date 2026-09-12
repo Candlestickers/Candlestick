@@ -135,9 +135,17 @@ Wick.ToolSettings = class {
             max: 1.0,
             step: 0.01,
         }, {
-            type: "boolean",
-            name: 'brushRandomRotation',
-            default: false,
+            type: "choice",
+            name: 'brushRotationMode',
+            default: 'path',
+            options: ['path', 'fixed', 'random'],
+        }, {
+            type: "number",
+            name: 'brushRotationOffset',
+            default: 0,
+            min: -180,
+            max: 180,
+            step: 1,
         }];
     }
 

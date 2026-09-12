@@ -58,7 +58,8 @@ const DEFAULT_BRUSHES = [
     brushResolution: 0.75,
     brushSpacing: 0.2,
     brushScatterAmount: 0.3,
-    brushRandomRotation: false,
+    brushRotationMode: 'path',
+    brushRotationOffset: 0,
     brushStabilizerWeight: 20,
     fillColorRgba: '#000000',
   },
@@ -93,6 +94,12 @@ const BRUSH_SHAPES = [
     svg: <path d="M14,2 C6,5 2,10 2,14 C2,18 6,23 14,26 C12,22 10,18 10,14 C10,10 12,6 14,2 Z"/> },
   { id: 'hexagon',    name: 'Hexagon',
     svg: <polygon points="14,2 24.4,8 24.4,20 14,26 3.6,20 3.6,8"/> },
+];
+
+const ROTATION_MODE_OPTIONS = [
+  { label: 'Path',   value: 'path' },
+  { label: 'Fixed',  value: 'fixed' },
+  { label: 'Random', value: 'random' },
 ];
 
 class Inspector extends Component {
@@ -227,7 +234,7 @@ class Inspector extends Component {
       if (justSwitchedToBrush) this._lastPreviewSettings = null;
       const keys = [
         'brushResolution', 'brushSpacing', 'brushScatterAmount',
-        'brushRandomRotation', 'brushShape'
+        'brushRotationMode', 'brushRotationOffset', 'brushShape'
       ];
       const last = this._lastPreviewSettings;
       const currColor = this.props.getToolSetting('fillColor');
@@ -236,6 +243,31 @@ class Inspector extends Component {
       if (colorChanged || settingChanged) this.drawBrushPreview();
     }
 
+  }
+
+  // Wraps a degree value into [-180, 180] instead of clamping, so e.g. 200 becomes
+  // -160 (the same angle) rather than getting truncated to the 180 boundary.
+  _normalizeAngle = (deg) => {
+    let a = ((deg % 360) + 360) % 360;
+    if (a > 180) a -= 360;
+    return a;
+  }
+
+  // Mirrors the engine's rotateToDirection/randomAngle/angle logic (see Brush.js onMouseDown)
+  // for the preview path, which is a fixed sine wave rather than real mouse movement.
+  _brushPreviewRotation = (rotationMode, rotationOffsetDeg, t, pathW, amplitude, rand) => {
+    if (rotationMode === 'random') {
+      return rand() * Math.PI * 2;
+    }
+    rand(); // consume the same random slot 'random' mode uses, so later draws stay stable
+    const offsetRad = rotationOffsetDeg * Math.PI / 180;
+    if (rotationMode === 'path') {
+      // Tangent angle of x(t)=margin+t*pathW, y(t)=H/2+sin(t*pi*2.5)*amplitude
+      const dxdt = pathW;
+      const dydt = amplitude * Math.cos(t * Math.PI * 2.5) * (Math.PI * 2.5);
+      return Math.atan2(dydt, dxdt) + offsetRad;
+    }
+    return offsetRad; // 'fixed'
   }
 
   // BRUSH PREVIEW— we're literally drawing a brush stroke here -H.A.
@@ -271,13 +303,14 @@ class Inspector extends Component {
     const shape = this.props.getToolSetting('brushShape') || 'circle';
     const spacing = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
     const scatterAmount = this.props.getToolSetting('brushScatterAmount') ?? 0.3;
-    const randomRotation = this.props.getToolSetting('brushRandomRotation');
+    const rotationMode = this.props.getToolSetting('brushRotationMode') || 'path';
+    const rotationOffset = this.props.getToolSetting('brushRotationOffset') ?? 0;
     const resT=this.props.getToolSetting('brushResolution') ?? 0.75;
 
     // Snapshot current settings so componentDidUpdate can detect future changes
     this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
       brushScatterAmount: scatterAmount,
-      brushRandomRotation: randomRotation, brushShape: shape,
+      brushRotationMode: rotationMode, brushRotationOffset: rotationOffset, brushShape: shape,
       fillColorRgba: brushColor };
 
     // Resolution: same smoothnessFactor formula as the engine
@@ -312,7 +345,7 @@ class Inspector extends Component {
       let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
 
       rand(); rand(); // consume position-jitter slots (not applied; potrace handles jaggedness via scale)
-      const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
+      const rotation = this._brushPreviewRotation(rotationMode, rotationOffset, t, pathW, amplitude, rand);
       const r4 = rand(), r5 = rand();
       const sc = sz * scatterAmount;
       x += (r4 - 0.5) * sc * 2;
@@ -356,19 +389,19 @@ class Inspector extends Component {
         img.src = url;
       } catch(e) {
         this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
-          scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+          scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
           margin, amplitude, pathW, numSteps);
       }
     } else {
       this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
-        scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+        scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
         margin, amplitude, pathW, numSteps);
     }
   }
 
   // Polygon-approximation fallback when potrace is unavailable
   _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing,
-    scatterAmount, randomRotation, smoothness, stampSize, stepDist,
+    scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
     margin, amplitude, pathW, numSteps) => {
     const curveSegs = Math.max(3, Math.round(smoothness * 24));
     const jitterAmt = (1 - smoothness) * 4;
@@ -380,7 +413,7 @@ class Inspector extends Component {
       let x = margin + t * pathW;
       let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
       if (jitterAmt > 0) { x += (rand() - 0.5) * jitterAmt; y += (rand() - 0.5) * jitterAmt; } else { rand(); rand(); }
-      const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
+      const rotation = this._brushPreviewRotation(rotationMode, rotationOffset, t, pathW, amplitude, rand);
       const r4 = rand(), r5 = rand();
       const sc = sz * scatterAmount; x += (r4 - 0.5) * sc * 2; y += (r5 - 0.5) * sc * 2;
       this._drawBrushStamp(ctx, x, y, sz, shape, rotation, brushColor, curveSegs);
@@ -1333,7 +1366,8 @@ class Inspector extends Component {
           brushResolution: brush.brushResolution ?? 0.75,
           brushSpacing: brush.brushSpacing ?? 0.2,
           brushScatterAmount: brush.brushScatterAmount ?? 0.3,
-          brushRandomRotation: brush.brushRandomRotation ?? false,
+          brushRotationMode: brush.brushRotationMode ?? 'path',
+          brushRotationOffset: brush.brushRotationOffset ?? 0,
           brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
           fillColorRgba: brush.fillColorRgba || '#000000',
         };
@@ -1471,7 +1505,8 @@ class Inspector extends Component {
       brushResolution:   this.props.getToolSetting('brushResolution'),
       brushSpacing:      this.props.getToolSetting('brushSpacing'),
       brushScatterAmount:   this.props.getToolSetting('brushScatterAmount'),
-      brushRandomRotation:  this.props.getToolSetting('brushRandomRotation'),
+      brushRotationMode:    this.props.getToolSetting('brushRotationMode'),
+      brushRotationOffset:  this.props.getToolSetting('brushRotationOffset'),
       brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
       fillColorRgba: (() => { try { return this.props.getToolSetting('fillColor').rgba; } catch(e) { return '#000000'; } })(),
     };
@@ -1496,7 +1531,8 @@ class Inspector extends Component {
     this.props.setToolSetting('brushResolution', brush.brushResolution);
     this.props.setToolSetting('brushSpacing', brush.brushSpacing);
     this.props.setToolSetting('brushScatterAmount', brush.brushScatterAmount);
-    this.props.setToolSetting('brushRandomRotation', brush.brushRandomRotation);
+    this.props.setToolSetting('brushRotationMode', brush.brushRotationMode);
+    this.props.setToolSetting('brushRotationOffset', brush.brushRotationOffset);
     this.props.setToolSetting('brushStabilizerWeight', brush.brushStabilizerWeight);
   }
 
@@ -1662,6 +1698,7 @@ class Inspector extends Component {
     let brushMode = this.props.getToolSetting('brushMode');
     if (brushMode === 'inside') brushModeIcon = 'brushmodeinside';
     else if (brushMode === 'outside') brushModeIcon = 'brushmodeoutside';
+    const rotationMode = this.props.getToolSetting('brushRotationMode');
 
     const { isEditingBrush, selectedBrushIndex } = this.state;
     const canEdit = selectedBrushIndex !== null || isEditingBrush;
@@ -1748,6 +1785,29 @@ class Inspector extends Component {
             />
           </>)}
         </div>
+        {/* Edit-only: rotation mode + offset -H.A */}
+        {isEditingBrush && (
+          <div className="inspector-item">
+            <InspectorSelector
+              tooltip="Rotation"
+              type="select"
+              isSearchable={true}
+              value={rotationMode}
+              options={ROTATION_MODE_OPTIONS}
+              onChange={(val) => this.props.setToolSetting('brushRotationMode', val.value)} />
+            {rotationMode !== 'random' && (
+              <InspectorNumericSlider
+                tooltip="Rotation Offset"
+                icon="brushrandomrotation"
+                label=""
+                val={this.props.getToolSetting('brushRotationOffset')}
+                onChange={(val) => this.props.setToolSetting('brushRotationOffset', this._normalizeAngle(val))}
+                inputProps={this.props.getToolSettingRestrictions('brushRotationOffset')}
+                onReset={() => this.props.setToolSetting('brushRotationOffset', 0)}
+              />
+            )}
+          </div>
+        )}
         {/* Edit-only: shape picker */}
         {isEditingBrush && this.renderBrushShapePicker()}
         {/* Toggles — all in one row; browse-only vs edit-only depending on mode */}
@@ -1808,15 +1868,6 @@ class Inspector extends Component {
               </PopupMenu>
             </div>
           </>)}
-          {isEditingBrush && (
-            <ToolSettingsInput
-              name='Random Rotation'
-              icon='brushrandomrotation'
-              type='checkbox'
-              value={this.props.getToolSetting('brushRandomRotation')}
-              onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
-            />
-          )}
           {/* Upload .cbrush — browse mode only */}
           {!isEditingBrush && (
             <div className="setting-input-container">
@@ -1866,7 +1917,8 @@ class Inspector extends Component {
                       brushResolution: this.props.getToolSetting('brushResolution'),
                       brushSpacing: this.props.getToolSetting('brushSpacing'),
                       brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
-                      brushRandomRotation: this.props.getToolSetting('brushRandomRotation'),
+                      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
+                      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
                       brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
                     };
                 this.exportBrush(brush);

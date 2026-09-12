@@ -202,11 +202,13 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this.croquisBrush.setSpacing(this.getSetting('brushSpacing'));
         var brushShape = this.getSetting('brushShape');
         this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
-        this.croquisBrush.setRotateToDirection(brushShape === 'chisel' || brushShape === 'leaf' || brushShape === 'rect');
+        var rotationMode = this.getSetting('brushRotationMode');
+        this.croquisBrush.setRotateToDirection(rotationMode === 'path');
+        this.croquisBrush.setRandomAngle(rotationMode === 'random');
+        this.croquisBrush.setAngle(rotationMode === 'random' ? 0 : this.getSetting('brushRotationOffset'));
         var scatterAmount = this.getSetting('brushScatterAmount') * 2.8;
         this.croquisBrush.setNormalSpread(scatterAmount);
         this.croquisBrush.setTangentSpread(scatterAmount);
-        this.croquisBrush.setRandomAngle(this.getSetting('brushRandomRotation'));
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
