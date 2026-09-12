@@ -1722,7 +1722,7 @@ class Inspector extends Component {
             <InspectorNumericSlider
               tooltip="Resolution"
               icon="brushresolution"
-              label="Reso"
+              label="Quality"
               val={this.props.getToolSetting('brushResolution')}
               onChange={(val) => this.props.setToolSetting('brushResolution', val)}
               inputProps={this.props.getToolSettingRestrictions('brushResolution')}
