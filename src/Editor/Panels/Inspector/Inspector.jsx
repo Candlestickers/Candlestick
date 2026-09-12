@@ -57,7 +57,6 @@ const DEFAULT_BRUSHES = [
     brushSize: 10,
     brushResolution: 0.75,
     brushSpacing: 0.2,
-    brushScatterEnabled: false,
     brushScatterAmount: 0.3,
     brushRandomRotation: false,
     brushStabilizerWeight: 20,
@@ -228,7 +227,7 @@ class Inspector extends Component {
       if (justSwitchedToBrush) this._lastPreviewSettings = null;
       const keys = [
         'brushResolution', 'brushSpacing', 'brushScatterAmount',
-        'brushScatterEnabled', 'brushRandomRotation', 'brushShape'
+        'brushRandomRotation', 'brushShape'
       ];
       const last = this._lastPreviewSettings;
       const currColor = this.props.getToolSetting('fillColor');
@@ -271,14 +270,13 @@ class Inspector extends Component {
 
     const shape = this.props.getToolSetting('brushShape') || 'circle';
     const spacing = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
-    const scatterEnabled = this.props.getToolSetting('brushScatterEnabled');
-    const scatterAmount= this.props.getToolSetting('brushScatterAmount') || 0.3;
+    const scatterAmount = this.props.getToolSetting('brushScatterAmount') ?? 0.3;
     const randomRotation = this.props.getToolSetting('brushRandomRotation');
     const resT=this.props.getToolSetting('brushResolution') ?? 0.75;
 
     // Snapshot current settings so componentDidUpdate can detect future changes
     this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
-      brushScatterAmount: scatterAmount, brushScatterEnabled: scatterEnabled,
+      brushScatterAmount: scatterAmount,
       brushRandomRotation: randomRotation, brushShape: shape,
       fillColorRgba: brushColor };
 
@@ -316,11 +314,9 @@ class Inspector extends Component {
       rand(); rand(); // consume position-jitter slots (not applied; potrace handles jaggedness via scale)
       const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
       const r4 = rand(), r5 = rand();
-      if (scatterEnabled) {
-        const sc = sz * scatterAmount;
-        x += (r4 - 0.5) * sc * 2;
-        y += (r5 - 0.5) * sc * 2;
-      }
+      const sc = sz * scatterAmount;
+      x += (r4 - 0.5) * sc * 2;
+      y += (r5 - 0.5) * sc * 2;
 
       // Always draw at 24 segs — jaggedness comes from potrace on a smaller canvas below
       this._drawBrushStamp(sCtx, x, y, sz, shape, rotation, '#000000', 24);
@@ -359,19 +355,19 @@ class Inspector extends Component {
         };
         img.src = url;
       } catch(e) {
-        this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+        this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
           scatterAmount, randomRotation, smoothness, stampSize, stepDist,
           margin, amplitude, pathW, numSteps);
       }
     } else {
-      this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+      this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
         scatterAmount, randomRotation, smoothness, stampSize, stepDist,
         margin, amplitude, pathW, numSteps);
     }
   }
 
   // Polygon-approximation fallback when potrace is unavailable
-  _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing, scatterEnabled,
+  _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing,
     scatterAmount, randomRotation, smoothness, stampSize, stepDist,
     margin, amplitude, pathW, numSteps) => {
     const curveSegs = Math.max(3, Math.round(smoothness * 24));
@@ -386,7 +382,7 @@ class Inspector extends Component {
       if (jitterAmt > 0) { x += (rand() - 0.5) * jitterAmt; y += (rand() - 0.5) * jitterAmt; } else { rand(); rand(); }
       const rotation = randomRotation ? rand() * Math.PI * 2 : (rand(), 0);
       const r4 = rand(), r5 = rand();
-      if (scatterEnabled) { const sc = sz * scatterAmount; x += (r4 - 0.5) * sc * 2; y += (r5 - 0.5) * sc * 2; }
+      const sc = sz * scatterAmount; x += (r4 - 0.5) * sc * 2; y += (r5 - 0.5) * sc * 2;
       this._drawBrushStamp(ctx, x, y, sz, shape, rotation, brushColor, curveSegs);
     }
   }
@@ -1336,7 +1332,6 @@ class Inspector extends Component {
           brushSize: brush.brushSize ?? 10,
           brushResolution: brush.brushResolution ?? 0.75,
           brushSpacing: brush.brushSpacing ?? 0.2,
-          brushScatterEnabled: brush.brushScatterEnabled ?? false,
           brushScatterAmount: brush.brushScatterAmount ?? 0.3,
           brushRandomRotation: brush.brushRandomRotation ?? false,
           brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
@@ -1446,7 +1441,6 @@ class Inspector extends Component {
       brushSize:         this.props.getToolSetting('brushSize'),
       brushResolution:   this.props.getToolSetting('brushResolution'),
       brushSpacing:      this.props.getToolSetting('brushSpacing'),
-      brushScatterEnabled:  this.props.getToolSetting('brushScatterEnabled'),
       brushScatterAmount:   this.props.getToolSetting('brushScatterAmount'),
       brushRandomRotation:  this.props.getToolSetting('brushRandomRotation'),
       brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
@@ -1472,7 +1466,6 @@ class Inspector extends Component {
     this.props.setToolSetting('brushSize', brush.brushSize);
     this.props.setToolSetting('brushResolution', brush.brushResolution);
     this.props.setToolSetting('brushSpacing', brush.brushSpacing);
-    this.props.setToolSetting('brushScatterEnabled', brush.brushScatterEnabled);
     this.props.setToolSetting('brushScatterAmount', brush.brushScatterAmount);
     this.props.setToolSetting('brushRandomRotation', brush.brushRandomRotation);
     this.props.setToolSetting('brushStabilizerWeight', brush.brushStabilizerWeight);
@@ -1711,85 +1704,78 @@ class Inspector extends Component {
               inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
               onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
             />
-            {this.props.getToolSetting('brushScatterEnabled') && (
-              <InspectorNumericSlider
-                tooltip="Scatter Amount"
-                icon="brushscatter"
-                label="Spread"
-                val={this.props.getToolSetting('brushScatterAmount')}
-                onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
-                inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
-                onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
-              />
-            )}
+            <InspectorNumericSlider
+              tooltip="Scatter Amount"
+              icon="brushscatter"
+              label="Spread"
+              val={this.props.getToolSetting('brushScatterAmount')}
+              onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
+              inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
+              onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
+            />
           </>)}
         </div>
         {/* Edit-only: shape picker */}
         {isEditingBrush && this.renderBrushShapePicker()}
-        {/* Toggles — all in one row; scatter/rotation only when editing */}
+        {/* Toggles — all in one row; browse-only vs edit-only depending on mode */}
         <div className='settings-input-container' style={{ marginTop: '8px' }}>
-          <ToolSettingsInput
-            name='Enable Pressure'
-            icon='brushpressure'
-            type='checkbox'
-            value={this.props.getToolSetting('pressureEnabled')}
-            onChange={() => this.props.setToolSetting('pressureEnabled', !this.props.getToolSetting('pressureEnabled'))}
-          />
-          <ToolSettingsInput
-            name='Relative Brush Size'
-            icon='brushrelativesize'
-            type='checkbox'
-            value={this.props.getToolSetting('relativeBrushSize')}
-            onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
-          />
-          <div id="inspector-brush-modes-popover-button">
+          {!isEditingBrush && (<>
             <ToolSettingsInput
-              name='Brush Modes'
-              icon={brushModeIcon}
+              name='Enable Pressure'
+              icon='brushpressure'
               type='checkbox'
-              value={brushMode !== 'none'}
-              onChange={this.toggleBrushModes}
+              value={this.props.getToolSetting('pressureEnabled')}
+              onChange={() => this.props.setToolSetting('pressureEnabled', !this.props.getToolSetting('pressureEnabled'))}
             />
-            <PopupMenu
-              isOpen={this.state.showBrushModes}
-              toggle={this.closeBrushModes}
-              target="inspector-brush-modes-popover-button"
-              className="more-canvas-actions-popover">
-              <div className="brush-modes-widget">
-                <div className='actions-container'>
-                  <ToolSettingsInput
-                    name='None'
-                    icon='brushmodenone'
-                    type='checkbox'
-                    value={brushMode === 'none'}
-                    onChange={() => { this.props.setToolSetting('brushMode', 'none'); this.closeBrushModes(); }}
-                  />
-                  <ToolSettingsInput
-                    name='Inside'
-                    icon='brushmodeinside'
-                    type='checkbox'
-                    value={brushMode === 'inside'}
-                    onChange={() => { this.props.setToolSetting('brushMode', 'inside'); this.closeBrushModes(); }}
-                  />
-                  <ToolSettingsInput
-                    name='Outside'
-                    icon='brushmodeoutside'
-                    type='checkbox'
-                    value={brushMode === 'outside'}
-                    onChange={() => { this.props.setToolSetting('brushMode', 'outside'); this.closeBrushModes(); }}
-                  />
+            <ToolSettingsInput
+              name='Relative Brush Size'
+              icon='brushrelativesize'
+              type='checkbox'
+              value={this.props.getToolSetting('relativeBrushSize')}
+              onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
+            />
+            <div id="inspector-brush-modes-popover-button">
+              <ToolSettingsInput
+                name='Brush Modes'
+                icon={brushModeIcon}
+                type='checkbox'
+                value={brushMode !== 'none'}
+                onChange={this.toggleBrushModes}
+              />
+              <PopupMenu
+                isOpen={this.state.showBrushModes}
+                toggle={this.closeBrushModes}
+                target="inspector-brush-modes-popover-button"
+                className="more-canvas-actions-popover">
+                <div className="brush-modes-widget">
+                  <div className='actions-container'>
+                    <ToolSettingsInput
+                      name='None'
+                      icon='brushmodenone'
+                      type='checkbox'
+                      value={brushMode === 'none'}
+                      onChange={() => { this.props.setToolSetting('brushMode', 'none'); this.closeBrushModes(); }}
+                    />
+                    <ToolSettingsInput
+                      name='Inside'
+                      icon='brushmodeinside'
+                      type='checkbox'
+                      value={brushMode === 'inside'}
+                      onChange={() => { this.props.setToolSetting('brushMode', 'inside'); this.closeBrushModes(); }}
+                    />
+                    <ToolSettingsInput
+                      name='Outside'
+                      icon='brushmodeoutside'
+                      type='checkbox'
+                      value={brushMode === 'outside'}
+                      onChange={() => { this.props.setToolSetting('brushMode', 'outside'); this.closeBrushModes(); }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </PopupMenu>
-          </div>
-          {isEditingBrush && (<>
-            <ToolSettingsInput
-              name='Random Scatter'
-              icon='brushscatter'
-              type='checkbox'
-              value={this.props.getToolSetting('brushScatterEnabled')}
-              onChange={() => this.props.setToolSetting('brushScatterEnabled', !this.props.getToolSetting('brushScatterEnabled'))}
-            />
+              </PopupMenu>
+            </div>
+          </>)}
+          {isEditingBrush && (
             <ToolSettingsInput
               name='Random Rotation'
               icon='brushrandomrotation'
@@ -1797,7 +1783,7 @@ class Inspector extends Component {
               value={this.props.getToolSetting('brushRandomRotation')}
               onChange={() => this.props.setToolSetting('brushRandomRotation', !this.props.getToolSetting('brushRandomRotation'))}
             />
-          </>)}
+          )}
           {/* Upload .cbrush — browse mode only */}
           {!isEditingBrush && (
             <div className="setting-input-container">
@@ -1869,7 +1855,6 @@ class Inspector extends Component {
                       brushSize: this.props.getToolSetting('brushSize'),
                       brushResolution: this.props.getToolSetting('brushResolution'),
                       brushSpacing: this.props.getToolSetting('brushSpacing'),
-                      brushScatterEnabled: this.props.getToolSetting('brushScatterEnabled'),
                       brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
                       brushRandomRotation: this.props.getToolSetting('brushRandomRotation'),
                       brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),

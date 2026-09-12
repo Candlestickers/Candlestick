@@ -203,7 +203,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
         var brushShape = this.getSetting('brushShape');
         this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
         this.croquisBrush.setRotateToDirection(brushShape === 'chisel' || brushShape === 'leaf' || brushShape === 'rect');
-        var scatterAmount = this.getSetting('brushScatterEnabled') ? this.getSetting('brushScatterAmount') * 2.8 : 0;
+        var scatterAmount = this.getSetting('brushScatterAmount') * 2.8;
         this.croquisBrush.setNormalSpread(scatterAmount);
         this.croquisBrush.setTangentSpread(scatterAmount);
         this.croquisBrush.setRandomAngle(this.getSetting('brushRandomRotation'));
@@ -607,10 +607,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
         // scatterAmount * 1.4 * brushSize * canvasScaleFactor pixels beyond
         // the raw mouse path, so we expand by that extra amount too.
         var expand = this._getRealBrushSize();
-        if (this.getSetting('brushScatterEnabled')) {
-            var scatterAmount = this.getSetting('brushScatterAmount');
-            expand += scatterAmount * 1.4 * this._getRealBrushSize() * this.canvasScaleFactor;
-        }
+        var scatterAmount = this.getSetting('brushScatterAmount');
+        expand += scatterAmount * 1.4 * this._getRealBrushSize() * this.canvasScaleFactor;
         this.strokeBounds = this.strokeBounds.expand(expand);
     }
 
