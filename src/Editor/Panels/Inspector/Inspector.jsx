@@ -250,6 +250,9 @@ class Inspector extends Component {
   _normalizeAngle = (deg) => {
     let a = ((deg % 360) + 360) % 360;
     if (a > 180) a -= 360;
+    // 180 and -180 are the same angle; keep whichever sign was actually typed
+    // instead of always snapping to +180, so e.g. -180 doesn't jump to 180.
+    if (a === 180 && deg < 0) a = -180;
     return a;
   }
 
@@ -1833,7 +1836,7 @@ class Inspector extends Component {
                 val={this.props.getToolSetting('brushRotationOffset')}
                 onChange={(val) => this.props.setToolSetting('brushRotationOffset', this._normalizeAngle(val))}
                 inputProps={this.props.getToolSettingRestrictions('brushRotationOffset')}
-                onReset={() => this.props.setToolSetting('brushRotationOffset', 0)}
+                // onReset={() => this.props.setToolSetting('brushRotationOffset', 0)}
               />
             )}
           </div>
