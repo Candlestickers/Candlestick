@@ -278,12 +278,19 @@ class Inspector extends Component {
   drawBrushPreview = () => {
     const canvas = this.brushPreviewRef.current;
     if (!canvas) return;
-    // Size the canvas buffer to physical pixels so it's sharp on Retina/HiDPI displays
+    // Size the canvas buffer to physical pixels so it's sharp on Retina/HiDPI displays.
+    // Only touch canvas.width/height when they actually change — assigning to either,
+    // even to the same value, implicitly clears the canvas, which would blank the
+    // preview on every single slider tick before the new stroke is ready to draw.
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.clientWidth  || 220;
     const cssH = canvas.clientHeight || 80;
-    canvas.width  = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
+    const targetW = Math.round(cssW * dpr);
+    const targetH = Math.round(cssH * dpr);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
@@ -294,8 +301,9 @@ class Inspector extends Component {
       const bg = window.project && window.project.backgroundColor;
       if (bg) bgColor = bg.rgba;
     } catch(e) {}
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
+    // Don't blank the canvas here — the new stroke is built off-canvas below and
+    // painted in one shot once ready, so the last good preview stays on screen
+    // (no flicker) instead of flashing blank while potrace/the SVG image loads.
 
     // Brush color — use current fill color
     let brushColor = '#5a9fd4';
@@ -316,6 +324,11 @@ class Inspector extends Component {
       brushScatterAmount: scatterAmount,
       brushRotationMode: rotationMode, brushRotationOffset: rotationOffset, brushShape: shape,
       fillColorRgba: brushColor };
+
+    // Tag this render so that if an older, slower-to-resolve render finishes
+    // after a newer one, it's dropped instead of painting stale content back
+    // over the current preview.
+    const seq = (this._previewSeq = (this._previewSeq || 0) + 1);
 
     // Resolution: same smoothnessFactor formula as the engine
     const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
@@ -383,12 +396,21 @@ class Inspector extends Component {
         const url  = URL.createObjectURL(blob);
         const img  = new Image();
         img.onload = () => {
-          // Draw background again in case a previous (slower) load fires late
+          URL.revokeObjectURL(url);
+          // A newer preview render has since started — drop this now-stale result
+          // instead of painting it over whatever that one has already drawn.
+          if (this._previewSeq !== seq) return;
           ctx.fillStyle = bgColor;
           ctx.fillRect(0, 0, W, H);
           // Scale SVG back up to full preview size — low-res SVG drawn large = jagged edges visible
           ctx.drawImage(img, 0, 0, W, H);
+        };
+        img.onerror = () => {
           URL.revokeObjectURL(url);
+          if (this._previewSeq !== seq) return;
+          this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
+            scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
+            margin, amplitude, pathW, numSteps);
         };
         img.src = url;
       } catch(e) {
@@ -407,6 +429,10 @@ class Inspector extends Component {
   _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing,
     scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
     margin, amplitude, pathW, numSteps) => {
+    // This path draws straight to the visible canvas synchronously (no async
+    // gap), so filling the background here right before the stamps is safe -H.A.
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, W, H);
     const curveSegs = Math.max(3, Math.round(smoothness * 24));
     const jitterAmt = (1 - smoothness) * 4;
     let _seed = 12345;
