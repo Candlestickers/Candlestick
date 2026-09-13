@@ -50,15 +50,16 @@ window.EditorGradientColorSwapState = false;
 
 // Default brushes — structured like a parsed .cbrush JSON for easy migration later.
 // Each field matches the keys stored/loaded by saveBrush / applyBrush.
+// FIXME: these "default" values are in 3 places (search for this same comment)
 const DEFAULT_BRUSHES = [
   {
     name: 'Basic',
     shape: 'circle',
     brushSize: 10,
-    brushResolution: 0.75,
+    brushResolution: 1,
     brushSpacing: 0.2,
-    brushScatterAmount: 0.3,
-    brushRotationMode: 'path',
+    brushScatterAmount: 0,
+    brushRotationMode: 'fixed',
     brushRotationOffset: 0,
     brushStabilizerWeight: 20,
     fillColorRgba: '#000000',
@@ -79,8 +80,8 @@ const BRUSH_SHAPES = [
 ];
 
 const ROTATION_MODE_OPTIONS = [
-  { label: 'Path',   value: 'path' },
   { label: 'Fixed',  value: 'fixed' },
+  { label: 'Path',   value: 'path' },
   { label: 'Random', value: 'random' },
 ];
 
@@ -293,13 +294,14 @@ class Inspector extends Component {
       const fc = this.props.getToolSetting('fillColor');
       if (fc) brushColor = fc.rgba;
     } catch(e) {}
-
+    
+    // FIXME: these "default" values are in 3 places (search for this same comment)
     const shape = this.props.getToolSetting('brushShape') || 'circle';
     const spacing = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
-    const scatterAmount = this.props.getToolSetting('brushScatterAmount') ?? 0.3;
-    const rotationMode = this.props.getToolSetting('brushRotationMode') || 'path';
+    const scatterAmount = this.props.getToolSetting('brushScatterAmount') ?? 0;
+    const rotationMode = this.props.getToolSetting('brushRotationMode') || 'fixed';
     const rotationOffset = this.props.getToolSetting('brushRotationOffset') ?? 0;
-    const resT=this.props.getToolSetting('brushResolution') ?? 0.75;
+    const resT=this.props.getToolSetting('brushResolution') ?? 1;
 
     // Snapshot current settings so componentDidUpdate can detect future changes
     this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
@@ -1384,14 +1386,15 @@ class Inspector extends Component {
           resolvedShape = newId;
           localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
         }
+        // FIXME: these "default" values are in 3 places (search for this same comment)
         const newBrush = {
           name: brush.name || fileName.replace(/\.cbrush$/i, '') || 'Imported Brush',
           shape: resolvedShape,
           brushSize: brush.brushSize ?? 10,
-          brushResolution: brush.brushResolution ?? 0.75,
+          brushResolution: brush.brushResolution ?? 1,
           brushSpacing: brush.brushSpacing ?? 0.2,
           brushScatterAmount: brush.brushScatterAmount ?? 0,
-          brushRotationMode: brush.brushRotationMode ?? 'path',
+          brushRotationMode: brush.brushRotationMode ?? 'fixed',
           brushRotationOffset: brush.brushRotationOffset ?? 0,
           brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
           fillColorRgba: brush.fillColorRgba || '#000000',
@@ -1704,7 +1707,7 @@ class Inspector extends Component {
                 <div className="brush-modes-widget">
                   <div className='actions-container'>
                     <ToolSettingsInput
-                      name='New Brush'
+                      name='Create'
                       icon='add'
                       type='checkbox'
                       value={false}

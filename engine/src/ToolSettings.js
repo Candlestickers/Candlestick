@@ -65,7 +65,7 @@ Wick.ToolSettings = class {
         }, {
             type: "number",
             name: 'brushResolution',
-            default: 0.75,
+            default: 1,
             min: 0,
             max: 1,
             step: 0.01,
@@ -83,7 +83,7 @@ Wick.ToolSettings = class {
         }, {
             type: "boolean",
             name: 'relativeBrushSize',
-            default: true,
+            default: false,
         }, {
             type: "number",
             name: 'gapFillAmount',
@@ -138,7 +138,7 @@ Wick.ToolSettings = class {
             type: "choice",
             name: 'brushRotationMode',
             default: 'path',
-            options: ['path', 'fixed', 'random'],
+            options: ['fixed', 'path', 'random'],
         }, {
             type: "number",
             name: 'brushRotationOffset',
