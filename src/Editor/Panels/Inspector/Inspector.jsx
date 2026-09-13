@@ -521,7 +521,7 @@ class Inspector extends Component {
         for (let i=0;i<10;i++){const a=(i*Math.PI)/5-Math.PI/2,rad=i%2?r*0.4:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
         ctx.closePath(); break;
       case 'sparkle':
-        for (let i=0;i<8;i++){const a=(i*Math.PI)/4-Math.PI/4,rad=i%2?r*0.2:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
+        for (let i=0;i<8;i++){const a=(i*Math.PI)/4-Math.PI/2,rad=i%2?r*0.12:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
         ctx.closePath(); break;
       case 'leaf':
         ctx.moveTo(0,-r); ctx.quadraticCurveTo(r*1.2,0,0,r); ctx.quadraticCurveTo(-r*1.2,0,0,-r); break;
