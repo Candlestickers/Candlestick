@@ -130,7 +130,7 @@ Wick.Path = class extends Wick.Base {
 
     /**
      * The type of path that this path is. Can be 'path', 'text', or 'image'
-     * @returns {string}
+     * @returns {'text' | 'image' | 'path'}
      */
     get pathType() {
         if (this.view.item instanceof paper.TextItem) {
