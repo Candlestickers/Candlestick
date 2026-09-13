@@ -1471,7 +1471,7 @@ class Inspector extends Component {
     // Block deletion if any saved preset uses this shape
     const inUse = this.state.savedBrushes.some(b => b.shape === shape);
     if (inUse) {
-      toast.warning('Cannot delete shape; being used by another preset', {
+      toast.warning('This shape is still being used by a brush.', {
         position: 'top-right',
         autoClose: 3000,
         hideProgressBar: true,
