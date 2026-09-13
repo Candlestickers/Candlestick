@@ -109,6 +109,7 @@ class Inspector extends Component {
     this.state = {
       logs: [],
       showBrushModes: false,
+      showNewBrushMenu: false,
       isEditingBrush: false,
       savedBrushes: DEFAULT_BRUSHES,
       selectedBrushIndex: null,
@@ -1336,6 +1337,19 @@ class Inspector extends Component {
     this.setState({ showBrushModes: false });
   }
 
+  toggleNewBrushMenu = () => {
+    this.setState({ showNewBrushMenu: !this.state.showNewBrushMenu });
+  }
+
+  closeNewBrushMenu = () => {
+    this.setState({ showNewBrushMenu: false });
+  }
+
+  startNewBrush = () => {
+    this._captureEditSnapshot();
+    this.setState({ selectedBrushIndex: null, isEditingBrush: true, showNewBrushMenu: false });
+  }
+
   importBrush = () => {
     if (this.brushFileInputRef.current) this.brushFileInputRef.current.click();
   }
@@ -1655,8 +1669,9 @@ class Inspector extends Component {
               id="brush-tip-new"
               data-tip
               data-for="brush-tip-new"
-              onClick={() => { this._captureEditSnapshot(); this.setState({ selectedBrushIndex: null, isEditingBrush: true }); }}
+              onClick={this.toggleNewBrushMenu}
               style={{
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1669,10 +1684,34 @@ class Inspector extends Component {
                 color: 'rgba(255,255,255,0.4)',
                 lineHeight: 1,
               }}>
-              <ReactTooltip id="brush-tip-new" type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
+              {/* <ReactTooltip id="brush-tip-new" type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
                 <span>New Brush</span>
-              </ReactTooltip>
+              </ReactTooltip> */}
               +
+              <PopupMenu
+                isOpen={this.state.showNewBrushMenu}
+                toggle={this.closeNewBrushMenu}
+                target="brush-tip-new"
+                className="more-canvas-actions-popover">
+                <div className="brush-modes-widget">
+                  <div className='actions-container'>
+                    <ToolSettingsInput
+                      name='New Brush'
+                      icon='add'
+                      type='checkbox'
+                      value={false}
+                      onChange={this.startNewBrush}
+                    />
+                    <ToolSettingsInput
+                      name='Import'
+                      icon='upload'
+                      type='checkbox'
+                      value={false}
+                      onChange={() => { this.importBrush(); this.closeNewBrushMenu(); }}
+                    />
+                  </div>
+                </div>
+              </PopupMenu>
             </div>
           </div>
         </div>
@@ -1899,19 +1938,6 @@ class Inspector extends Component {
                   </div>
                 </div>
               </PopupMenu>
-            </div>
-            {/* Upload .cbrush */}
-            <div className="setting-input-container">
-              <div className="settings-checkbox-input">
-                <ActionButton
-                  icon='upload'
-                  color='checkbox'
-                  id='settings-input-id-upload-brush'
-                  tooltip='Import Brush'
-                  action={this.importBrush}
-                  iconClassName='toolbox-input-icon'
-                />
-              </div>
             </div>
           </div>
         )}
