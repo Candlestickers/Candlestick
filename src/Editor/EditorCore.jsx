@@ -1021,6 +1021,7 @@ class EditorCore extends Component {
     importFileAsAsset = async (file, callback) => {
         // Content-based dedup: fingerprint the new file (size + first 64 bytes)
         // then compare against all existing assets via their data-URL base64.
+
         try {
             const fpBytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
             const newFp = file.size + ':' + btoa(String.fromCharCode(...fpBytes));
@@ -2433,6 +2434,20 @@ class EditorCore extends Component {
 
         window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
             window.saveFileFromWick(file, (clip.identifier || 'object'), '.wickobj');
+        });
+    }
+
+    exportSelectedClipToProject = () => {
+        var clip = this.project.selection.getSelectedObject();
+        if (!clip) return;
+        if (!(clip instanceof window.Wick.Clip)) return;
+
+        window.Wick.WickObjectFile.toWickObjectFile(clip, 'blob', file => {
+            let id = clip.identifier;
+            if (id === null) {
+                id = prompt("What name will you give the asset?");
+            }
+            this.importFileAsAsset(new File([file], id+".wickobj", { type: "application/json" }), ()=>{});
         });
     }
 

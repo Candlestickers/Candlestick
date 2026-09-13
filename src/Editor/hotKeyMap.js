@@ -327,6 +327,10 @@ class HotKeyInterface extends Object {
       'extend-active-frames': {
         name: "Extend Active Frames",
         sequences: ['shift+4'],
+      },
+      'export-selection-to-project': {
+        name: "Export Clip to Project",
+        sequences: ['meta+shift+e']
       }
     }
 
@@ -427,6 +431,7 @@ class HotKeyInterface extends Object {
       "Export": [
         "export-project-as-wick-file",
         "export-selection",
+        "export-selection-to-project"
       ],
       "Preview": [
         "preview-play-toggle",
@@ -543,6 +548,7 @@ class HotKeyInterface extends Object {
       'finish-repeating': this.finishRepeating,
       'shrink-active-frames': this.editor.shrinkActiveFramesAndPullOtherFrames,
       'extend-active-frames': this.editor.extendActiveFramesAndPushOtherFrames,
+      'export-selection-to-project': this.editor.exportSelectedClipToProject
     }
 
     // Wrap each handler for some custom functionality (see wrapHotkeyFunction)
