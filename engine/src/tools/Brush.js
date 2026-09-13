@@ -397,6 +397,38 @@ Wick.Tools.Brush = class extends Wick.Tool {
         var fillColor = color + '88';
         var strokeColor = invert(color);
 
+        // Custom canvas shapes registered via window.wickCustomBrushShapes for cursor -H.A.
+        if (shape && shape.startsWith('custom_')) {
+            var customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
+            if (customData && customData.pathD) {
+                var to64 = S / 28;
+                var totalScale = to64 * customData.scale;
+                var path = new Path2D(customData.pathD);
+                ctx.save();
+                ctx.scale(to64, to64);
+                ctx.translate(customData.tx, customData.ty);
+                ctx.scale(customData.scale, customData.scale);
+                if (transparent) {
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1.5 / totalScale;
+                    ctx.stroke(path);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 0.75 / totalScale;
+                    ctx.stroke(path);
+                } else {
+                    ctx.fillStyle = fillColor;
+                    ctx.fill(path);
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = 1.5 / totalScale;
+                    ctx.stroke(path);
+                }
+                ctx.restore();
+                var hsCustom = Math.round(S / 2);
+                return 'url(' + canvas.toDataURL() + ') ' + hsCustom + ' ' + hsCustom + ', default';
+            }
+            // Custom shape data not loaded for some stupid reason? fall back to circle below
+        }
+
         // Crescent needs compositing — handle separately
         if (shape === 'crescent') {
             ctx.beginPath();
