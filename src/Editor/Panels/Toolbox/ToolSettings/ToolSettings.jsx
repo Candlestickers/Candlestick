@@ -70,10 +70,6 @@ class ToolSettings extends Component {
     return (
       <div className='settings-input-container'>
         {this.renderBrushSize()}
-        {this.renderBrushSmoothing()}
-        {this.renderEnablePressure()}
-        {this.renderEnableRelativeBrushSize()}
-        {this.renderBrushMode()}
       </div>
     );
   }
@@ -231,6 +227,19 @@ class ToolSettings extends Component {
         value={this.getToolSetting('brushStabilizerWeight')}
         onChange={(val) => this.setToolSetting('brushStabilizerWeight', val)}
         inputRestrictions={this.props.getToolSettingRestrictions('brushStabilizerWeight')}/>
+    )
+  }
+
+  renderBrushResolution = () => {
+    return (
+      <ToolSettingsInput renderSize={this.props.renderSize}
+        isMobile={this.props.isMobile}
+        name='Brush Resolution'
+        icon='brushresolution'
+        type='numeric'
+        value={this.getToolSetting('brushResolution')}
+        onChange={(val) => this.setToolSetting('brushResolution', val)}
+        inputRestrictions={this.props.getToolSettingRestrictions('brushResolution')}/>
     )
   }
 
