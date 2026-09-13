@@ -70,30 +70,12 @@ const BRUSH_SHAPES = [
     svg: <circle cx="14" cy="14" r="12"/> },
   { id: 'square',     name: 'Square',
     svg: <rect x="2" y="2" width="24" height="24"/> },
-  { id: 'rect',       name: 'Flat',
-    svg: <rect x="2" y="9" width="24" height="10"/> },
-  { id: 'chisel',     name: 'Chisel',
-    svg: <ellipse cx="14" cy="14" rx="12" ry="3" transform="rotate(45 14 14)"/> },
-  { id: 'diamond',    name: 'Diamond',
-    svg: <polygon points="14,2 26,14 14,26 2,14"/> },
-  { id: 'triangle',   name: 'Triangle',
-    svg: <polygon points="14,2 26,26 2,26"/> },
-  { id: 'star',       name: 'Star',
-    svg: <polygon points="14,2 16.9,10 25.4,10.3 18.8,15.5 21.1,23.7 14,19 6.9,23.7 9.2,15.5 2.6,10.3 11.1,10"/> },
   { id: 'sparkle',    name: 'Sparkle',
     svg: <polygon points="14,1 15.4,12.6 27,14 15.4,15.4 14,27 12.6,15.4 1,14 12.6,12.6"/> },
   { id: 'leaf',       name: 'Leaf',
     svg: <path d="M14,2 Q26,14 14,26 Q2,14 14,2 Z"/> },
-  { id: 'rough',      name: 'Rough',
-    svg: <path d="M14,2 Q18,0 23,5 Q28,9 26,15 Q28,20 23,24 Q18,29 12,26 Q6,28 3,22 Q-1,17 3,11 Q5,5 10,2 Q12,1 14,2 Z"/> },
   { id: 'scatter',    name: 'Scatter',
     svg: <><circle cx="14" cy="14" r="4"/><circle cx="7" cy="8" r="3"/><circle cx="21" cy="8" r="2.5"/><circle cx="7" cy="20" r="3"/><circle cx="21" cy="20" r="2.5"/></> },
-  { id: 'cross',      name: 'Cross',
-    svg: <><rect x="12" y="2" width="4" height="24"/><rect x="2" y="12" width="24" height="4"/></> },
-  { id: 'crescent',   name: 'Crescent',
-    svg: <path d="M14,2 C6,5 2,10 2,14 C2,18 6,23 14,26 C12,22 10,18 10,14 C10,10 12,6 14,2 Z"/> },
-  { id: 'hexagon',    name: 'Hexagon',
-    svg: <polygon points="14,2 24.4,8 24.4,20 14,26 3.6,20 3.6,8"/> },
 ];
 
 const ROTATION_MODE_OPTIONS = [
@@ -1408,7 +1390,7 @@ class Inspector extends Component {
           brushSize: brush.brushSize ?? 10,
           brushResolution: brush.brushResolution ?? 0.75,
           brushSpacing: brush.brushSpacing ?? 0.2,
-          brushScatterAmount: brush.brushScatterAmount ?? 0.3,
+          brushScatterAmount: brush.brushScatterAmount ?? 0,
           brushRotationMode: brush.brushRotationMode ?? 'path',
           brushRotationOffset: brush.brushRotationOffset ?? 0,
           brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
@@ -1879,7 +1861,7 @@ class Inspector extends Component {
               val={this.props.getToolSetting('brushScatterAmount')}
               onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
               inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
-              onReset={() => this.props.setToolSetting('brushScatterAmount', 0.3)}
+              onReset={() => this.props.setToolSetting('brushScatterAmount', 0)}
             />
           </>)}
         </div>

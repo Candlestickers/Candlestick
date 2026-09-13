@@ -126,7 +126,7 @@ Wick.ToolSettings = class {
             type: "choice",
             name: 'brushShape',
             default: 'circle',
-            options: ['circle','square','rect','chisel','diamond','triangle','star','sparkle','leaf','rough','scatter','cross','crescent','hexagon'],
+            options: ['circle','square','sparkle','leaf','scatter'],
         }, {
             type: "number",
             name: 'brushScatterAmount',
