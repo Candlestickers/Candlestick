@@ -63,13 +63,27 @@ Wick.ToolSettings = class {
             max: 100,
             step: 1,
         }, {
+            type: "number",
+            name: 'brushResolution',
+            default: 1,
+            min: 0,
+            max: 1,
+            step: 0.01,
+        }, {
+            type: "number",
+            name: 'brushSpacing',
+            default: 0.2,
+            min: 0.05,
+            max: 1.0,
+            step: 0.05,
+        }, {
             type: "boolean",
             name: 'pressureEnabled',
             default: false,
         }, {
             type: "boolean",
             name: 'relativeBrushSize',
-            default: true,
+            default: false,
         }, {
             type: "number",
             name: 'gapFillAmount',
@@ -107,7 +121,31 @@ Wick.ToolSettings = class {
             type: "choice",
             name: 'brushMode',
             default: 'none',
-            options: ['none', 'behind', 'inside']
+            options: ['none', 'outside', 'inside']
+        }, {
+            type: "choice",
+            name: 'brushShape',
+            default: 'circle',
+            options: ['circle','square','sparkle','leaf','scatter'],
+        }, {
+            type: "number",
+            name: 'brushScatterAmount',
+            default: 0.3,
+            min: 0,
+            max: 1.0,
+            step: 0.01,
+        }, {
+            type: "choice",
+            name: 'brushRotationMode',
+            default: 'path',
+            options: ['fixed', 'path', 'random'],
+        }, {
+            type: "number",
+            name: 'brushRotationOffset',
+            default: 0,
+            min: -180,
+            max: 180,
+            step: 1,
         }];
     }
 

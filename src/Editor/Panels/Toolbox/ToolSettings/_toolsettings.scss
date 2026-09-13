@@ -22,5 +22,29 @@ $setting-height: 70px;
   height: 35px;
   display: flex;
   align-items: center;
+  justify-content: center;
   margin: 1px;
+}
+
+// .actions-container is also defined (as a CSS grid, with its own 5px gap) in
+// CanvasActions' stylesheet for the main toolbar's action row. That bare-class
+// rule can win the cascade over PopupMenu's, so scope this override to the
+// wrapper these brush popovers actually use, and re-set gap explicitly so the
+// colliding rule's gap doesn't leak in on top of it.
+.brush-modes-widget .actions-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+}
+
+// .setting-input-container's default margin-right (see settingsnumericslider.css)
+// is sized for left-aligned toolbar rows; spacing between these buttons is
+// handled by the gap above instead, so drop the margin entirely here (a
+// trailing margin on the last item would also throw off centering).
+.brush-modes-widget .actions-container > .setting-input-container {
+  margin-right: 0;
 }
