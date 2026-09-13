@@ -1536,7 +1536,37 @@ class Inspector extends Component {
     this.props.setToolSetting('brushStabilizerWeight', brush.brushStabilizerWeight);
   }
 
+  // Snapshot the live brush settings right before entering edit mode, so
+  // cancelEditingBrush can put everything back the way it was.
+  _captureEditSnapshot = () => {
+    this._preEditSnapshot = {
+      selectedBrushIndex: this.state.selectedBrushIndex,
+      settings: {
+        shape:             this.props.getToolSetting('brushShape'),
+        brushSize:         this.props.getToolSetting('brushSize'),
+        brushResolution:   this.props.getToolSetting('brushResolution'),
+        brushSpacing:      this.props.getToolSetting('brushSpacing'),
+        brushScatterAmount:    this.props.getToolSetting('brushScatterAmount'),
+        brushRotationMode:     this.props.getToolSetting('brushRotationMode'),
+        brushRotationOffset:   this.props.getToolSetting('brushRotationOffset'),
+        brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+      },
+    };
+  }
+
+  cancelEditingBrush = () => {
+    const snapshot = this._preEditSnapshot;
+    this._preEditSnapshot = null;
+    if (snapshot) {
+      this.applyBrush(snapshot.settings);
+      this.setState({ isEditingBrush: false, selectedBrushIndex: snapshot.selectedBrushIndex });
+    } else {
+      this.setState({ isEditingBrush: false });
+    }
+  }
+
   createBrushFromPath = () => {
+    this._captureEditSnapshot();
     const objs = this.props.project.selection.getSelectedObjects();
     if (!objs || objs.length !== 1) return;
     const wickPath = objs[0];
@@ -1622,7 +1652,7 @@ class Inspector extends Component {
               id="brush-tip-new"
               data-tip
               data-for="brush-tip-new"
-              onClick={() => this.setState({ selectedBrushIndex: null, isEditingBrush: true })}
+              onClick={() => { this._captureEditSnapshot(); this.setState({ selectedBrushIndex: null, isEditingBrush: true }); }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1810,9 +1840,9 @@ class Inspector extends Component {
         )}
         {/* Edit-only: shape picker */}
         {isEditingBrush && this.renderBrushShapePicker()}
-        {/* Toggles — all in one row; browse-only vs edit-only depending on mode */}
-        <div className='settings-input-container' style={{ marginTop: '8px' }}>
-          {!isEditingBrush && (<>
+        {/* Toggles — browse mode only (edit mode has nothing to show here) */}
+        {!isEditingBrush && (
+          <div className='settings-input-container' style={{ marginTop: '8px' }}>
             <ToolSettingsInput
               name='Enable Pressure'
               icon='brushpressure'
@@ -1867,9 +1897,7 @@ class Inspector extends Component {
                 </div>
               </PopupMenu>
             </div>
-          </>)}
-          {/* Upload .cbrush — browse mode only */}
-          {!isEditingBrush && (
+            {/* Upload .cbrush */}
             <div className="setting-input-container">
               <div className="settings-checkbox-input">
                 <ActionButton
@@ -1882,20 +1910,41 @@ class Inspector extends Component {
                 />
               </div>
             </div>
-          )}
-        </div>
-        {/* Edit Brush / Save Brush button */}
+          </div>
+        )}
+        {/* Edit Brush button, or Cancel + Save Brush side by side while editing */}
         {canEdit && (
-          <div className="inspector-item" style={{ marginTop: '6px' }}>
-            <InspectorActionButton action={{
-              id: 'brush-edit-save',
-              icon: isEditingBrush ? 'check-black' : 'pencil-black',
-              tooltip: isEditingBrush ? 'Save Brush' : 'Edit Brush',
-              color: 'inspector',
-              action: isEditingBrush
-                ? this.saveBrush
-                : () => this.setState({ isEditingBrush: true }),
-            }} />
+          <div className="inspector-item">
+            {isEditingBrush ? (
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '6px', width: '100%' }}>
+                <div style={{ flex: 1 }}>
+                  <InspectorActionButton action={{
+                    id: 'brush-cancel-edit',
+                    icon: 'cancel-black',
+                    tooltip: 'Cancel',
+                    color: 'red',
+                    action: this.cancelEditingBrush,
+                  }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <InspectorActionButton action={{
+                    id: 'brush-edit-save',
+                    icon: 'check-black',
+                    tooltip: 'Save',
+                    color: 'inspector',
+                    action: this.saveBrush,
+                  }} />
+                </div>
+              </div>
+            ) : (
+              <InspectorActionButton action={{
+                id: 'brush-edit-save',
+                icon: 'pencil-black',
+                tooltip: 'Edit Brush',
+                color: 'inspector',
+                action: () => { this._captureEditSnapshot(); this.setState({ isEditingBrush: true }); },
+              }} />
+            )}
           </div>
         )}
         {/* Download Brush button — edit mode only */}

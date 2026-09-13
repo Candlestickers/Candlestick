@@ -161,6 +161,7 @@ import iconCancel from 'resources/interface-images/cancel.svg';
 import iconWarning from 'resources/interface-images/warning.svg';
 import iconCheck from 'resources/interface-images/check.svg';
 import iconCheckBlack from 'resources/interface-images/check-black.svg';
+import iconCancelBlack from 'resources/interface-images/cancel-black.svg';
 import iconCircle from 'resources/tool-icons/circle.svg';
 import iconCloseTab from 'resources/tool-icons/closetab.svg';
 import iconWarningDelete from 'resources/interface-images/warning_delete.svg';
@@ -295,6 +296,7 @@ const icons = {
   "autosave": iconAutosave,
   "warning": iconWarning,
   "cancel": iconCancel,
+  "cancel-black": iconCancelBlack,
   "check": iconCheck,
   "check-black": iconCheckBlack,
   "add": iconAdd,
