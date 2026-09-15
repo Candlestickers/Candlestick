@@ -92,6 +92,7 @@ class WelcomeModal extends Component {
                         className="welcome-modal-button"
                         color='green'
                         action={this.props.toggle}
+                        useClickEvent={true}
                         text="Try it"
                     />
                 </div>
@@ -124,6 +125,7 @@ class WelcomeModal extends Component {
                                     className="welcome-modal-button"
                                     color='green'
                                     action={this.props.toggle}
+                                    useClickEvent={true}
                                     text="Try it"
                                 />
                             </div>
