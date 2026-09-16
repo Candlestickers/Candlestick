@@ -21,7 +21,7 @@ import React, { Component } from 'react';
 import { Popover } from 'reactstrap';
 import './_popupmenu.scss'
 
-var classNames = require("classnames");
+import classNames from 'classnames';
 
 class PopupMenu extends Component {
   render() {

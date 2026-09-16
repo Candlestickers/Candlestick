@@ -23,7 +23,7 @@ import WickInput from 'Editor/Util/WickInput/WickInput';
 
 import './_projectsettings.scss';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 class ProjectSettings extends Component {
   constructor(props) {
