@@ -23,6 +23,9 @@ import './_editor.scss';
 import './styles/default_theme.css';
 import './styles/default_styles.css';
 
+import version from '../../package.json';
+import classNames from 'classnames';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
@@ -130,11 +133,6 @@ async function loadPathIntoEditor(editorThis, filePath) {
         editorThis.toast('Could not open file.', 'error')
     }
 }
-
-
-import { version } from '../../package.json';
-
-import classNames from 'classnames';
 
 // Watches for container resize and calls onResize, replacing react-sizeme
 function ResizeTrigger({ onResize, children }) {

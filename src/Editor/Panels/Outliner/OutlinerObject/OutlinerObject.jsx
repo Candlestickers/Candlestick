@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 
+import classNames from 'classnames';
 import '../_outliner.scss';
 
 import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
@@ -32,8 +33,6 @@ let icons = {layer: layerIcon, frame: frameIcon, path: pathIcon, button: buttonI
 
 let images = {layer: layerImage, frame: frameImage, path: pathImage, button: buttonImage, 
   clip: clipImage, text: textImage, image: imageImage};
-
-import classNames from 'classnames';
 
 export const OutlinerObject = ({clearSelection, selectObjects, 
   editScript, playhead, depth, maxDepth, display, highlighted, 
