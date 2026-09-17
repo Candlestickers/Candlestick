@@ -1,6 +1,6 @@
 {
-  "short_name": "Wick Editor",
-  "name": "Wick Editor",
+  "short_name": "Candlestick",
+  "name": "Candlestick",
   "icons": [
     {
       "src": "favicon.png",
@@ -10,6 +10,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#ffc600",
+  "background_color": "#ffc600"
 }

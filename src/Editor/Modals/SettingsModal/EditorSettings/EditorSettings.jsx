@@ -36,7 +36,13 @@ class EditorSettings extends Component {
 
     this.state = {
       clipboardMode: localStorage.getItem('CandleClipboardMode') || 'wick',
-      frameSizeMode: localStorage.getItem('wickEditorFrameSizeMode') || 'normal',
+      frameSizeValue: (() => {
+        const stored = localStorage.getItem('wickEditorFrameSizeValue');
+        if (stored !== null) return parseInt(stored);
+        // migrate old string value (scale: 0=xsmall, 50=small, 100=normal, 150=large)
+        const legacy = localStorage.getItem('wickEditorFrameSizeMode');
+        return legacy === 'small' ? 50 : legacy === 'large' ? 150 : 100;
+      })(),
       fillGapsMethod: localStorage.getItem('wickEditorFillGapsMethod') || 'auto_extend',
     }
   }
@@ -126,38 +132,58 @@ class EditorSettings extends Component {
           <label className="editor-settings-group-title">Timeline</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img alt="" src={
-              this.state.frameSizeMode === 'small' ? iconFramesSmall :
-              this.state.frameSizeMode === 'large' ? iconFramesLarge :
-              iconFramesNormal
+              this.state.frameSizeValue >= 125 ? iconFramesLarge :
+              this.state.frameSizeValue >= 75  ? iconFramesNormal :
+              iconFramesSmall
             } style={{ height: '18px' }}/>
             Frame Size:
           </div>
-          <WickInput
-            type="select"
-            value={this.state.frameSizeMode}
-            options={[
-              { label: 'Small',  value: 'small'  },
-              { label: 'Normal', value: 'normal' },
-              { label: 'Large',  value: 'large'  },
-            ]}
-            onChange={(val) => {
-              const mode = val.value;
-              this.setState({ frameSizeMode: mode });
-              localStorage.setItem('wickEditorFrameSizeMode', mode);
-              if (window.Wick && window.Wick.GUIElement) {
-                if (mode === 'small') {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
-                } else if (mode === 'large') {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
-                } else {
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH  = window.Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-                  window.Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = window.Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+          <div style={{ padding: '4px 2px 0' }}>
+            <input
+              type="range"
+              min="0"
+              max="150"
+              step="1"
+              value={this.state.frameSizeValue}
+              style={{ width: '100%', cursor: 'pointer' }}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                this.setState({ frameSizeValue: v });
+                localStorage.setItem('wickEditorFrameSizeValue', v);
+                if (window.Wick && window.Wick.GUIElement) {
+                  const G = window.Wick.GUIElement;
+                  // anchors: 0=xsmall(8,16), 50=small(22,32), 100=normal(38,42), 150=large(62,52)
+                  const XSW = 8, XSH = 16;
+                  let w, h;
+                  if (v <= 50) {
+                    const t = v / 50;
+                    w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH  - XSW));
+                    // below value 30, height stops shrinking (freeze at v=25 height)
+                    const ht = Math.max(v, 30) / 50;
+                    h = Math.round(XSH + ht * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+                  } else if (v <= 100) {
+                    const t = (v - 50) / 50;
+                    w = Math.round(G.GRID_SMALL_CELL_WIDTH  + t * (G.GRID_NORMAL_CELL_WIDTH  - G.GRID_SMALL_CELL_WIDTH));
+                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+                  } else {
+                    const t = (v - 100) / 50;
+                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH  + t * (G.GRID_LARGE_CELL_WIDTH  - G.GRID_NORMAL_CELL_WIDTH));
+                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+                  }
+                  G.GRID_DEFAULT_CELL_WIDTH  = w;
+                  G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30); // min height keeps layer buttons from overflowing
+                  // below value 15, hide the content dots
+                  G.HIDE_CONTENT_DOTS = v < 15;
                 }
-              }
-            }}
-          />
+              }}
+            />
+            {/* icons pinned at their proportional track positions: small=50/150=33%, normal=100/150=67%, large=150/150=100% */}
+            <div style={{ position: 'relative', height: '20px', marginTop: '2px' }}>
+              <img alt="Small"  src={iconFramesSmall}  style={{ position: 'absolute', left: 'calc(33.3% - 8px)',  height: '16px', opacity: 0.6 }} />
+              <img alt="Normal" src={iconFramesNormal} style={{ position: 'absolute', left: 'calc(66.7% - 8px)',  height: '16px', opacity: 0.6 }} />
+              <img alt="Large"  src={iconFramesLarge}  style={{ position: 'absolute', left: 'calc(100% - 16px)', height: '16px', opacity: 0.6 }} />
+            </div>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
             <img alt="" src={
               this.state.fillGapsMethod === 'blank_frames'

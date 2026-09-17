@@ -350,6 +350,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 			(this.hitResult.item.data.parentItem
 				&& this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop')
 			|| this.hitResult.item.data.handleType === 'gradient-point'
+			|| this.hitResult.item.data.handleType === 'pivot'
 		) {
 			return this.CURSOR_GRAD;
 		} else if (this.hitResult.item.data.isSelectionBoxGUI) {
