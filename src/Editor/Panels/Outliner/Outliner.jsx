@@ -6,7 +6,7 @@ import OutlinerDisplay from './OutlinerRow/OutlinerRowTypes/OutlinerDisplay'
 
 import './_outliner.scss';
 
-import classNames from 'classnames';
+var classNames = require('classnames');
 
 class Outliner extends Component {
   constructor(props) {

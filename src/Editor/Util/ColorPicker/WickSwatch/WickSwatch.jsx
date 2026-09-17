@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Swatch } from '../ColorPickerComponents/ColorPickerComponents';
-import tinycolor from "tinycolor2";
+var tinycolor = require("tinycolor2");
 
 class WickSwatch extends Component {
     constructor (props) {

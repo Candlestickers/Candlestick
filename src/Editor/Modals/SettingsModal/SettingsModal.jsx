@@ -26,7 +26,7 @@ import KeyboardShortcuts from './KeyboardShortcuts/KeyboardShortcuts';
 
 import './_settingsmodal.scss';
 
-import classNames from 'classnames';
+var classNames = require("classnames");
 
 class SettingsModal extends Component {
   renderProjectSettings = () => {
