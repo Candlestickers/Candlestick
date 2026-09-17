@@ -81,13 +81,13 @@ Then create a production build of the project:
 ```
 npm run build
 ```
-<sup>^ This command is not always needed while testing, you'll need it most prior to deploying your code because it's basically just an optimisation command you don't need to use much</sup>
+<sup>^ This command is not always needed while testing, you'll need it most prior to deploying your code</sup>
 
 And lastly, to run your project in development:
 ```
 npm start
 ```
-<sup>While working on the engine it's easier to test by running npm run engine-quickrun</sup>
+<sup>While working on the engine, you may run both the `build-engine` and `start` command at once by running `npm run engine-quickrun`</sup>
 
 If it worked, you should see something like this in the terminal.
 ```
@@ -116,10 +116,11 @@ Candlestick is under the GNU v3 Public License. See the [LICENSE](LICENSE.md) fo
 
 Wick Editor was created by Luca Damasco and Zach Rispoli. See more credits on the Wick Editor [About Page](https://www.wickeditor.com/#/about/) and [Credits](https://github.com/Wicklets/wick-editor/blob/master/CREDITS.md).
 
-Candlestick was created and is maintained by [Hamzah Alani](https://forum.wickeditor.com/u/hamzah_alani/summary), [Baron](https://forum.wickeditor.com/u/baronawc/summary), and [Jovanny Rodriguez](https://forum.wickeditor.com/u/jovanny/summary).
+Candlestick was created and is maintained by [Hamzah Alani](https://hamzah.page/), [Baron](https://forum.wickeditor.com/u/baronawc/summary), and [Jovanny Rodriguez](https://forum.wickeditor.com/u/jovanny/summary).
 
 Active contributors:
 - [StickmanRed](https://forum.wickeditor.com/u/stickmanred/summary) also found at (https://github.com/StickmanRed)
+- [hobbsythe6th](https://github.com/hobbsythe6th)
 
 Additional, indirect contributors:
 - [pumpkinhead](https://forum.wickeditor.com/u/pumpkinhead/summary) also found at [pkhead](https://github.com/pkhead)
