@@ -110,7 +110,7 @@ function CanvasDrop(props) {
         if (name.endsWith('.wick')) {
           // Wick Project (.wick file)
           p.importProjectAsWickFile(file);
-        } else if (file.type === 'video/mp4' || name.endsWith('.mp4') ||
+        } else if (file.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi|3gp|ogv|m4v|wmv)$/i.test(name) ||
                    file.type === 'application/pdf' || name.endsWith('.pdf')) {
           // MP4/PDF → open as new project
           p.openProjectFile(file);

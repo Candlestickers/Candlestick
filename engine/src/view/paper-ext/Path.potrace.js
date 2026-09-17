@@ -34,6 +34,8 @@ paper.Path.inject({
 
         var finalRasterResolution = paper.view.resolution*args.resolution/window.devicePixelRatio;
         var raster = this.rasterize(finalRasterResolution);
+        // Fixes issues with browser zoom
+        var zoomFactor = args.resolution * raster.bounds.width / raster.width;
         raster.remove();
         var rasterDataURL = raster.toDataURL();
 
@@ -51,6 +53,7 @@ paper.Path.inject({
             potracePath.remove();
             potracePath.closed = true;
             potracePath.children[0].closed = true;
+            potracePath.children[0].scale(zoomFactor);
             args.done(potracePath.children[0]);
         }
         img.src = rasterDataURL;
