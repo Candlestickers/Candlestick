@@ -1,5 +1,5 @@
-@use 'Editor/_wickbrand.scss' as *;
-@use '../CanvasTransforms/canvastransforms' as *;
+@import 'Editor/_wickbrand.scss';
+@import '../CanvasTransforms/canvastransforms';
 
 .delete-copy-paste-widget {
     position: absolute;
