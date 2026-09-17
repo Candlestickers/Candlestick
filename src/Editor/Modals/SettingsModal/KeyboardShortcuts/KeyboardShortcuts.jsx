@@ -24,7 +24,7 @@ import HotKeyInterface from 'Editor/hotKeyMap.js';
 
 import './_keyboardshortcuts.scss';
 
-import classNames from 'classnames'; 
+var classNames = require('classnames'); 
 
 class KeyboardShortcuts extends Component {
   constructor () {

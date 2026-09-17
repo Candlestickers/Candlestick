@@ -17,19 +17,18 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@use "sass:math";
-@use 'Editor/_editor.scss' as *;
+@import 'Editor/_editor.scss';
 
 .timeline {
   background-color: $flame-dark;
 }
 
 #animation-timeline-container {
-  height: math.floor(100%);
+  height: floor(100%);
 }
 
 #animation-timeline {
-  width: math.floor(100%);
+  width: floor(100%);
   height: 100%;
   border-left: $editor-outline-padding solid $editor-primary-outline;
   border-bottom: $editor-outline-padding solid $editor-primary-outline;

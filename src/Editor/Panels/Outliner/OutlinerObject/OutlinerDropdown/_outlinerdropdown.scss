@@ -1,5 +1,5 @@
-@use 'Editor/_wickbrand.scss' as *;
-@use '../../outliner' as *;
+@import 'Editor/_wickbrand.scss';
+@import '../../outliner';
 
 $outliner-dropdown-size: 15px;
 

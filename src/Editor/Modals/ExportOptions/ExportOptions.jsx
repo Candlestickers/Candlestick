@@ -26,7 +26,7 @@ import TabbedInterface from 'Editor/Util/TabbedInterface/TabbedInterface';
 
 import './_exportoptions.scss';
 
-import classNames from "classnames";
+let classNames = require("classnames");
 
 class ExportOptions extends Component {
   constructor(props) {
