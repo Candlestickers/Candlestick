@@ -91,12 +91,11 @@ npm start
 
 If it worked, you should see something like this in the terminal.
 ```
-Compiled successfully!
+VITE v8.1.5  ready in 450 ms
 
-You can now view Candlestick in the browser.
-
-  Local:            http://localhost:3000/
-  On Your Network:  http://###.###.#.###:3000/
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
 ```
 If you go to your browser and open up [http://localhost:3000/](http://localhost:3000/) you should find the project there. You can also test on your mobile devices by going to the network `http://###.###.#.###:3000/` link on another device *connected to the same network* (it should work, but if it doesn't, it could be due to certain network restrictions).
 
