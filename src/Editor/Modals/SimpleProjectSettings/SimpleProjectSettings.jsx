@@ -6,10 +6,10 @@ import './_simpleprojectsettings.scss';
 import ActionButton from '../../Util/ActionButton/ActionButton';
 
 export default function SimpleProjectSettings(props) {
-  const [newProjectName, setNewProjectName] = useState(props.project.name);
-  const [newProjectFrameRate, setNewProjectFrameRate] = useState(props.project.framerate);
-  const [newWidth, setNewWidth] = useState(props.project.width);
-  const [newHeight, setNewHeight] = useState(props.project.height);
+  const [newProjectName, setNewProjectName] = useState(props.project?.name || "My Project");
+  const [newProjectFrameRate, setNewProjectFrameRate] = useState(props.project?.framerate || 12);
+  const [newWidth, setNewWidth] = useState(props.project?.width || 720);
+  const [newHeight, setNewHeight] = useState(props.project?.height || 480);
 
   useEffect(() => {
     resetProjectDetails();
@@ -17,10 +17,10 @@ export default function SimpleProjectSettings(props) {
   }, [props.open]);
 
   function resetProjectDetails() {
-    setNewProjectName(props.project.name);
-    setNewProjectFrameRate(props.project.framerate);
-    setNewWidth(props.project.width);
-    setNewHeight(props.project.height);
+    setNewProjectName(props.project?.name || "My Project");
+    setNewProjectFrameRate(props.project?.framerate || 12);
+    setNewWidth(props.project?.width || 720);
+    setNewHeight(props.project?.height || 480);
   }
 
   function updateProjectSettings() {

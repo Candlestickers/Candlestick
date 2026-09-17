@@ -26,7 +26,7 @@ Wick.View.Selection = class extends Wick.View {
 
         this.layer = new this.paper.Layer();
 
-        this._widget = new paper.SelectionWidget({
+        this._widget = new this.paper.SelectionWidget({
             layer: this.layer,
         });
         this.paper.project.selectionWidget = this._widget;
