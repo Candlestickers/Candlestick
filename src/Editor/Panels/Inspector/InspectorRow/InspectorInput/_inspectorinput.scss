@@ -18,7 +18,7 @@
  */
 
 @use 'Editor/_wickbrand.scss' as *;
-@import '../_inspectorrow.scss';
+@use '../_inspectorrow.scss' as *;
 
 .inspector-input-container {
   display: flex;

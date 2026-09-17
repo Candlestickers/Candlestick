@@ -18,7 +18,7 @@
  */
 
  @use 'Editor/_wickbrand.scss' as *;
- @import '../_outliner.scss';
+ @use '../_outliner.scss' as *;
 
  $outliner-title-height: 36px;
  $outliner-padding: 10px;

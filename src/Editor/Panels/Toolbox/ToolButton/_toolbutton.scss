@@ -18,7 +18,7 @@
  */
 
 @use 'Editor/_wickbrand.scss' as *;
-@import '../_toolbox.scss';
+@use '../_toolbox.scss' as *;
 
 $tool-button-container-width: $toolbox-max-button-size;
 $tool-button-container-height: $toolbox-max-button-size;

@@ -1,5 +1,5 @@
 @use 'Editor/_wickbrand.scss' as *;
-@import '../toolbox.scss';
+@use '../toolbox.scss' as *;
 
 $setting-splitter-height: 2px;
 $settings-container-width: 70px;

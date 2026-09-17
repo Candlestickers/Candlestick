@@ -18,7 +18,7 @@
  */
 
 @use 'Editor/_wickbrand.scss' as *;
-@import '../_mobileinspector.scss';
+@use '../_mobileinspector.scss' as *;
 
 $inspector-element-padding: 1.5%;
 $row-identifier-width: 28%;
