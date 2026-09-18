@@ -17,6 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import classNames from 'classnames';
 import React, { useState, useRef, useEffect } from 'react';
 import { ReflexContainer, ReflexSplitter, ReflexElement } from 'react-reflex'
 import WickInput from 'Editor/Util/WickInput/WickInput';
@@ -63,7 +64,6 @@ const editorThemes = [
     label: 'Github',
   }]
 
-let classNames = require('classnames');
 let thValue = 'monokai';
 export default function WickCodeEditor(props) {
 

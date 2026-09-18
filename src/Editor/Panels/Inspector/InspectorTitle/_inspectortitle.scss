@@ -17,8 +17,8 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@import 'Editor/_wickbrand.scss';
-@import '../_inspector.scss';
+@use 'Editor/_wickbrand.scss' as *;
+@use '../_inspector.scss' as *;
 
 .inspector-title {
   height: $inspector-title-height;

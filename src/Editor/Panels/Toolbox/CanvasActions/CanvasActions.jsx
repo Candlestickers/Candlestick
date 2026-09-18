@@ -4,7 +4,7 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 import './_canvasactions.scss';
 
-var classNames = require("classnames");
+import classNames from 'classnames';
 
 class CanvasActions extends Component {
   renderActionButton(action) {
