@@ -161,7 +161,7 @@ class Editor extends EditorCore {
         // "Live" editor states
         this.project = null;
         this.paper = null;
-        this.editorVersion = version + '';
+        this.editorVersion = packageJSON.version + '';
 
         // GUI state
         this.state = {
