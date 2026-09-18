@@ -62,7 +62,7 @@ class Canvas extends Component {
 
     this.currentAttachedProject = project;
 
-    project.view.canvasBGColor = '#6A6A6A';
+    project.view.canvasBGColor = '#6A6A6A'; // styles.editorCanvasBorder
     project.view.canvasContainer = this.canvasContainer.current;
     project.view.resize();
 
