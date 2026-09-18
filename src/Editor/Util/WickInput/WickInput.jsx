@@ -214,7 +214,7 @@ class WickInput extends Component {
         option: (provided, state) => {
           let style = {
             ...provided,
-            color: "black", 
+            color: "black",
             fontSize: "16px",
             height: "26px",
             paddingTop: "0px",
@@ -224,10 +224,17 @@ class WickInput extends Component {
             style.fontFamily = state.label;
           }
           return style;
-        }, 
+        },
         control: (provided, state) => {
           return {};
-        }
+        },
+        // react-select's portal defaults to z-index: 1, which sits below plenty of
+        // other UI (e.g. the little delete "x" badges on brush preset/shape tiles),
+        // letting them render on top of the open dropdown. Force it above everything.
+        menuPortal: (provided) => ({
+          ...provided,
+          zIndex: 9999,
+        }),
         }}
         isSearchable={false}
       />
