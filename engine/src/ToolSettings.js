@@ -130,14 +130,14 @@ Wick.ToolSettings = class {
         }, {
             type: "number",
             name: 'brushScatterAmount',
-            default: 0.3,
+            default: 0,
             min: 0,
             max: 1.0,
             step: 0.01,
         }, {
             type: "choice",
             name: 'brushRotationMode',
-            default: 'path',
+            default: 'fixed',
             options: ['fixed', 'path', 'random'],
         }, {
             type: "number",
