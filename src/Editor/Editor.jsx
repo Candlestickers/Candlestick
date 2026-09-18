@@ -23,7 +23,7 @@ import './_editor.scss';
 import './styles/default_theme.css';
 import './styles/default_styles.css';
 
-import version from '../../package.json';
+import packageJSON from '../../package.json';
 import classNames from 'classnames';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
