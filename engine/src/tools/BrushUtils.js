@@ -40,10 +40,12 @@ Wick.Tools.BrushUtils = {
                 break;
             }
             case 'square':
-                ctx.fillRect(tlcX, tlcY, size, size);
+                ctx.rect(tlcX, tlcY, size, size);
+                ctx.fill();
                 break;
             case 'rect':
-                ctx.fillRect(tlcX, tlcY + Math.round(size * 0.3), size, Math.round(size * 0.4));
+                ctx.rect(tlcX, tlcY + Math.round(size * 0.3), size, Math.round(size * 0.4));
+                ctx.fill();
                 break;
             case 'chisel': {
                 ctx.save();
@@ -132,17 +134,19 @@ Wick.Tools.BrushUtils = {
                     [0.50,0.50,0.16],[0.25,0.28,0.12],[0.74,0.24,0.10],
                     [0.22,0.72,0.12],[0.74,0.73,0.10],[0.76,0.50,0.08]
                 ];
+                ctx.beginPath();
                 dots.forEach(function(d) {
-                    ctx.beginPath();
+                    ctx.moveTo(tlcX + (d[0]+d[2]) * size, d[1] * size);
                     ctx.arc(tlcX + d[0]*size, tlcY + d[1]*size, d[2]*size, 0, PI2);
-                    ctx.fill();
                 });
+                ctx.fill();
                 break;
             }
             case 'cross': {
                 var t = size * 0.28;
-                ctx.fillRect(centerX - t / 2, tlcY, t, size);
-                ctx.fillRect(tlcX, centerY - t / 2, size, t);
+                ctx.rect(centerX - t / 2, tlcY, t, size);
+                ctx.rect(tlcX, centerY - t / 2, size, t);
+                ctx.fill();
                 break;
             }
             case 'crescent': {
