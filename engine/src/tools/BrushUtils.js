@@ -146,12 +146,14 @@ Wick.Tools.BrushUtils = {
                 break;
             }
             case 'crescent': {
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, PI2);
+                /*ctx.arc(centerX, centerY, r, 0, PI2);
                 ctx.fill();
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath();
-                ctx.arc(centerX + r * 0.35, centerY, r * 0.78, 0, PI2);
+                ctx.arc(centerX + r * 0.35, centerY, r * 0.78, 0, PI2);*/
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r, 0.745971992938, -0.745971992938);
+                ctx.arc(centerX + r * 0.35, centerY, r * 0.78, -1.0554259599, 1.0554259599, true);
                 ctx.fill();
                 break;
             }
