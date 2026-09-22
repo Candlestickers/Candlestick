@@ -15,19 +15,19 @@ Wick.Tools.BrushUtils = {
             } else if (args.fallback === 'polycircle') {
                 var curveSegs = args.curveSegs || 24, startAngle = 0;
                 ctx.beginPath();
-                for (let i = 0; i <= curveSegs; i++) {
+                for (var i = 0; i <= curveSegs; i++) {
                     const a = startAngle + (i / curveSegs) * PI2;
-                    const px = Math.cos(a) * r, py = Math.sin(a) * r;
+                    const px = centerX + Math.cos(a) * r, py = centerY + Math.sin(a) * r;
                     i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
                 }
                 ctx.closePath();
                 applyStyles();
             }
         }
-        var centerX = 0, centerY = 0, r = size / 2 - 1;
-        var tlcX = centerX - size/2, tlcY = centerY - size/2,
+        const PI2 = Math.PI * 2;
+        var centerX = 0, centerY = 0, r = size / 2 - 1,
+            tlcX = centerX - size/2, tlcY = centerY - size/2,
             brcX = tlcX + size, brcY = tlcY + size;
-        var PI2 = Math.PI * 2;
         
         if (!shape || shape === 'circle') {
             fallback();
@@ -37,12 +37,11 @@ Wick.Tools.BrushUtils = {
         if (shape && shape.startsWith('custom_')) {
             var customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
             if (customData && customData.pathD) {
-                // Custom brush shapes have dimensions 28x28; scale these
-                var to64 = size / 28;
-                var totalScale = to64 * customData.scale;
+                // Custom brush shapes have dimensions 28x28
+                var scale = size / 28, totalScale = scale * customData.scale;
                 ctx.save();
                 ctx.translate(-size / 2, -size / 2);
-                ctx.scale(to64, to64);
+                ctx.scale(scale, scale);
                 ctx.translate(customData.tx, customData.ty);
                 ctx.scale(customData.scale, customData.scale);
                 applyStyles(new Path2D(customData.pathD), totalScale);
@@ -73,7 +72,7 @@ Wick.Tools.BrushUtils = {
                 break;
             case 'chisel': {
                 ctx.save();
-                ctx.translate(centerX, centerY); // we won't need this!
+                ctx.translate(centerX, centerY);
                 ctx.rotate(Math.PI / 4);
                 ctx.scale(1, 0.15);
                 ctx.beginPath();
@@ -171,6 +170,7 @@ Wick.Tools.BrushUtils = {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath();
                 ctx.arc(centerX + r * 0.35, centerY, r * 0.78, 0, PI2);*/
+                // Angles of the circles' intersection points
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r, 0.745971992938, -0.745971992938);
                 ctx.arc(centerX + r * 0.35, centerY, r * 0.78, -1.0554259599, 1.0554259599, true);

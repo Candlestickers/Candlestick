@@ -385,17 +385,17 @@ Wick.Tools.Brush = class extends Wick.Tool {
     }
 
     _createShapedCursor (color, size, transparent, shape) {
-        // Use same coordinate system as _buildBrushTipCanvas (S = canvas dim)
-        var S = Math.max(Math.round(size) + 4, 10);
+        // Use same coordinate system as _buildBrushTipCanvas
+        var canvasSize = Math.max(Math.round(size) + 4, 10);
         var canvas = document.createElement('canvas');
-        canvas.width = S; canvas.height = S;
+        canvas.width = canvasSize; canvas.height = canvasSize;
         var ctx = canvas.getContext('2d');
         var fillColor = color + '88';
         var strokeColor = invert(color);
 
         ctx.save();
-        ctx.translate(S / 2, S / 2);
-        Wick.Tools.BrushUtils.drawBrushShape(ctx, S - 4, shape, (fill, stroke, pathScale) => {
+        ctx.translate(canvasSize / 2, canvasSize / 2);
+        Wick.Tools.BrushUtils.drawBrushShape(ctx, canvasSize - 4, shape, (fill, stroke, pathScale) => {
             if (transparent) {
                 ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 1.5 / pathScale;
@@ -412,7 +412,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
             }
         }, { fallback: 'circle' });
         
-        var hotspot = Math.round(S / 2);
+        var hotspot = Math.round(canvasSize / 2);
         return 'url(' + canvas.toDataURL() + ') ' + hotspot + ' ' + hotspot + ', default';
     }
 
