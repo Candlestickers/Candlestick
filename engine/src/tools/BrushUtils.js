@@ -1,33 +1,45 @@
 Wick.Tools.BrushUtils = {
-    drawBrushShape (ctx, size, shape, args) {
-        // buildBrushTipCanvas: creates canvas, coordinates 0 to 64, returns canvas
-        // createShapedCursor: creates canvas, coordinates 0 to size, returns canvas
-        // drawBrushStamp: receives ctx, coordinates -size/2 to size/2, approx circle
-        if (!shape || shape === 'circle') return null;
-
+    drawBrushShape (ctx, size, shape, style, args) {
+        function applyStyles (path, pathScale=1) {
+            if (path)
+                style(() => ctx.fill(path), () => ctx.stroke(path), pathScale);
+            else
+                style(() => ctx.fill(), () => ctx.stroke(), 1);
+        }
+        function fallback () {
+            if (args && args.fallback === 'circle') {
+                ctx.arc(centerX, centerY, size / 2, 0, PI2);
+                applyStyles();
+            }
+        }
         var centerX = 0, centerY = 0, r = size / 2 - 1;
         var tlcX = centerX - size/2, tlcY = centerY - size/2,
             brcX = tlcX + size, brcY = tlcY + size;
         var PI2 = Math.PI * 2;
-
+        
+        if (!shape || shape === 'circle') {
+            fallback();
+            return null;
+        }
         // Custom canvas-derived shapes registered via window.wickCustomBrushShapes
         if (shape && shape.startsWith('custom_')) {
             var customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
             if (customData && customData.pathD) {
                 // Custom brush shapes have dimensions 28x28; scale these
                 var to64 = size / 28;
+                var totalScale = to64 * customData.scale;
                 ctx.save();
                 ctx.translate(-size / 2, -size / 2);
                 ctx.scale(to64, to64);
                 ctx.translate(customData.tx, customData.ty);
                 ctx.scale(customData.scale, customData.scale);
-                ctx.fill(new Path2D(customData.pathD));
+                applyStyles(new Path2D(customData.pathD), totalScale);
                 ctx.restore();
                 return true;
             }
+            fallback();
             return null;
         }
-
         switch (shape) {
             case 'softcircle': {
                 var g = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, r);
@@ -41,11 +53,9 @@ Wick.Tools.BrushUtils = {
             }
             case 'square':
                 ctx.rect(tlcX, tlcY, size, size);
-                ctx.fill();
                 break;
             case 'rect':
                 ctx.rect(tlcX, tlcY + Math.round(size * 0.3), size, Math.round(size * 0.4));
-                ctx.fill();
                 break;
             case 'chisel': {
                 ctx.save();
@@ -54,7 +64,6 @@ Wick.Tools.BrushUtils = {
                 ctx.scale(1, 0.15);
                 ctx.beginPath();
                 ctx.arc(0, 0, r, 0, PI2);
-                ctx.fill();
                 ctx.restore();
                 break;
             }
@@ -65,7 +74,6 @@ Wick.Tools.BrushUtils = {
                 ctx.lineTo(centerX, brcY);
                 ctx.lineTo(tlcX, centerY);
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'triangle': {
@@ -75,7 +83,6 @@ Wick.Tools.BrushUtils = {
                 ctx.lineTo(brcX, brcY);
                 ctx.lineTo(tlcX, brcY);
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'star': {
@@ -89,7 +96,6 @@ Wick.Tools.BrushUtils = {
                     i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
                 }
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'sparkle': {
@@ -103,7 +109,6 @@ Wick.Tools.BrushUtils = {
                     i2 === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
                 }
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'leaf': {
@@ -112,7 +117,6 @@ Wick.Tools.BrushUtils = {
                 ctx.quadraticCurveTo(brcX, centerY, centerX, brcY);
                 ctx.quadraticCurveTo(tlcX, centerY, centerX, tlcY);
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'rough': {
@@ -126,7 +130,6 @@ Wick.Tools.BrushUtils = {
                 for (var j = 1; j < pts.length; j++)
                     ctx.lineTo(tlcX + pts[j][0]*size, tlcY + pts[j][1]*size);
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             case 'scatter': {
@@ -136,17 +139,15 @@ Wick.Tools.BrushUtils = {
                 ];
                 ctx.beginPath();
                 dots.forEach(function(d) {
-                    ctx.moveTo(tlcX + (d[0]+d[2]) * size, d[1] * size);
+                    ctx.moveTo(tlcX + (d[0]+d[2]) * size, tlcY + d[1] * size);
                     ctx.arc(tlcX + d[0]*size, tlcY + d[1]*size, d[2]*size, 0, PI2);
                 });
-                ctx.fill();
                 break;
             }
             case 'cross': {
                 var t = size * 0.28;
                 ctx.rect(centerX - t / 2, tlcY, t, size);
                 ctx.rect(tlcX, centerY - t / 2, size, t);
-                ctx.fill();
                 break;
             }
             case 'crescent': {
@@ -158,7 +159,6 @@ Wick.Tools.BrushUtils = {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r, 0.745971992938, -0.745971992938);
                 ctx.arc(centerX + r * 0.35, centerY, r * 0.78, -1.0554259599, 1.0554259599, true);
-                ctx.fill();
                 break;
             }
             case 'hexagon': {
@@ -170,13 +170,14 @@ Wick.Tools.BrushUtils = {
                     k === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
                 }
                 ctx.closePath();
-                ctx.fill();
                 break;
             }
             default:
+                fallback();
                 return null;
         }
 
+        applyStyles();
         return true;
     }
 }
