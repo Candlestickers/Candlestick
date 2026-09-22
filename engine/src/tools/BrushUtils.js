@@ -7,8 +7,20 @@ Wick.Tools.BrushUtils = {
                 style(() => ctx.fill(), () => ctx.stroke(), 1);
         }
         function fallback () {
-            if (args && args.fallback === 'circle') {
+            if (!args) return;
+            if (args.fallback === 'circle') {
+                ctx.beginPath();
                 ctx.arc(centerX, centerY, size / 2, 0, PI2);
+                applyStyles();
+            } else if (args.fallback === 'polycircle') {
+                var curveSegs = args.curveSegs || 24, startAngle = 0;
+                ctx.beginPath();
+                for (let i = 0; i <= curveSegs; i++) {
+                    const a = startAngle + (i / curveSegs) * PI2;
+                    const px = Math.cos(a) * r, py = Math.sin(a) * r;
+                    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                }
+                ctx.closePath();
                 applyStyles();
             }
         }
@@ -52,9 +64,11 @@ Wick.Tools.BrushUtils = {
                 break;
             }
             case 'square':
+                ctx.beginPath();
                 ctx.rect(tlcX, tlcY, size, size);
                 break;
             case 'rect':
+                ctx.beginPath();
                 ctx.rect(tlcX, tlcY + Math.round(size * 0.3), size, Math.round(size * 0.4));
                 break;
             case 'chisel': {
@@ -146,6 +160,7 @@ Wick.Tools.BrushUtils = {
             }
             case 'cross': {
                 var t = size * 0.28;
+                ctx.beginPath();
                 ctx.rect(centerX - t / 2, tlcY, t, size);
                 ctx.rect(tlcX, centerY - t / 2, size, t);
                 break;

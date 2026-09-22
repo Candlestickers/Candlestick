@@ -435,113 +435,13 @@ class Inspector extends Component {
   }
 
   _drawBrushStamp = (ctx, x, y, size, shape, rotation, color, curveSegs = 24) => {
-    const r = size / 2;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
     ctx.fillStyle = color || '#5a9fd4';
-
-    // Helper: draw a circle/ellipse as a polygon with curveSegs sides.
-    // rx, ry = radii; pre-rotate by startAngle.
-    const polyArc = (rx, ry, startAngle = 0) => {
-      for (let i = 0; i <= curveSegs; i++) {
-        const a = startAngle + (i / curveSegs) * Math.PI * 2;
-        const px = Math.cos(a) * rx, py = Math.sin(a) * ry;
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-    };
-
-    if (shape === 'chisel') {
-      // Ellipse rotated 45°, approximated with curveSegs points
-      ctx.beginPath();
-      for (let i = 0; i <= curveSegs; i++) {
-        const a  = (i / curveSegs) * Math.PI * 2;
-        const ex = Math.cos(a) * r, ey = Math.sin(a) * r * 0.25;
-        const rx = ex * Math.cos(Math.PI/4) - ey * Math.sin(Math.PI/4);
-        const ry = ex * Math.sin(Math.PI/4) + ey * Math.cos(Math.PI/4);
-        i === 0 ? ctx.moveTo(rx, ry) : ctx.lineTo(rx, ry);
-      }
-      ctx.closePath(); ctx.fill();
-      ctx.restore(); return;
-    }
-    if (shape === 'softcircle') {
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-      const c0 = color || 'rgba(90,159,212,1)';
-      const toAlpha = (rgba, a) => rgba.replace(/[\d.]+\)$/, `${a})`);
-      g.addColorStop(0,   toAlpha(c0, 1));
-      g.addColorStop(0.5, toAlpha(c0, 0.55));
-      g.addColorStop(1,   toAlpha(c0, 0));
-      ctx.beginPath(); polyArc(r, r);
-      ctx.fillStyle = g; ctx.fill();
-      ctx.restore(); return;
-    }
-    if (shape === 'scatter') {
-      [[0,0,0.4],[-0.6,-0.5,0.3],[0.6,-0.5,0.25],[-0.6,0.5,0.3],[0.6,0.5,0.25]].forEach(([px,py,pr]) => {
-        ctx.beginPath(); ctx.arc(px*r, py*r, pr*r, 0, Math.PI*2); ctx.fill();
-      });
-      ctx.restore(); return;
-    }
-    if (shape === 'cross') {
-      ctx.fillRect(-r*0.28, -r, r*0.56, size);
-      ctx.fillRect(-r, -r*0.28, size, r*0.56);
-      ctx.restore(); return;
-    }
-
-    // Custom shapes in preview mode
-    if (shape && shape.startsWith('custom_')) {
-      const customData = window.wickCustomBrushShapes && window.wickCustomBrushShapes[shape];
-      if (customData && customData.pathD) {
-        ctx.save();
-        ctx.translate(-size / 2, -size / 2); // center the 28×28 box at origin
-        const toLocal = size / 28;
-        ctx.scale(toLocal, toLocal);
-        ctx.translate(customData.tx, customData.ty);
-        ctx.scale(customData.scale, customData.scale);
-        ctx.fill(new Path2D(customData.pathD));
-        ctx.restore();
-      } else {
-        // fallback circle in case something's wrong with the shapes ;-;
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore(); return;
-    }
-
-    // Standard path shapes
-    ctx.beginPath();
-    switch (shape) {
-      case 'circle':    polyArc(r, r); break;
-      case 'square':    ctx.rect(-r, -r, size, size); break;
-      case 'rect':      ctx.rect(-r, -r*0.35, size, size*0.35); break;
-      case 'diamond':
-        ctx.moveTo(0,-r); ctx.lineTo(r,0); ctx.lineTo(0,r); ctx.lineTo(-r,0); ctx.closePath(); break;
-      case 'triangle':
-        ctx.moveTo(0,-r); ctx.lineTo(r,r); ctx.lineTo(-r,r); ctx.closePath(); break;
-      case 'star':
-        for (let i=0;i<10;i++){const a=(i*Math.PI)/5-Math.PI/2,rad=i%2?r*0.4:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
-        ctx.closePath(); break;
-      case 'sparkle':
-        for (let i=0;i<8;i++){const a=(i*Math.PI)/4-Math.PI/2,rad=i%2?r*0.12:r;i?ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad);}
-        ctx.closePath(); break;
-      case 'leaf':
-        ctx.moveTo(0,-r); ctx.quadraticCurveTo(r*1.2,0,0,r); ctx.quadraticCurveTo(-r*1.2,0,0,-r); break;
-      case 'rough':
-        ctx.moveTo(0,-r);
-        ctx.bezierCurveTo(r*0.7,-r*1.2, r*1.4,r*0.2, r*0.8,r*0.7);
-        ctx.bezierCurveTo(r*0.3,r*1.2, -r*0.8,r*1.1, -r*0.9,r*0.5);
-        ctx.bezierCurveTo(-r*1.3,-r*0.1, -r*0.6,-r*1.1, 0,-r); break;
-      case 'crescent':
-        ctx.arc(0,0,r,Math.PI*0.8,Math.PI*2.2);
-        ctx.arc(r*0.35,0,r*0.72,Math.PI*2.2,Math.PI*0.8,true); break;
-      case 'hexagon':
-        for (let i=0;i<6;i++){const a=(i*Math.PI)/3-Math.PI/6;i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);}
-        ctx.closePath(); break;
-      default: // circle fallback
-        polyArc(r, r);
-    }
-    ctx.fill();
+    window.Wick && window.Wick.Tools.BrushUtils.drawBrushShape(ctx, size, shape, fill => {
+      fill();
+    }, { fallback: 'polycircle', curveSegs });
     ctx.restore();
   }
 
