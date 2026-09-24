@@ -571,6 +571,19 @@ class Inspector extends Component {
   }
 
   /**
+   * Renders an inspector row allowing viewing and editing of the selection's shear.
+   */
+  renderShear = () => {
+    return (
+      <InspectorNumericInput
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -600,6 +613,7 @@ class Inspector extends Component {
             {this.renderSize()}
             {this.renderScale()}
             {this.renderRotation()}
+            {this.renderShear()}
             {this.renderOpacity()}
           </>
         )}

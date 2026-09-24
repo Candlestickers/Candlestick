@@ -12,6 +12,7 @@
 /build
 /dist
 /public/corelibs/wick-engine/
+/public/corelibs/ffmpeg/
 /engine/dist/
 
 # package-lock
