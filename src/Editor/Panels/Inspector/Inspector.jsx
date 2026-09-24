@@ -31,13 +31,13 @@ import InspectorDualNumericInput from './InspectorRow/InspectorRowTypes/Inspecto
 import InspectorSelector from './InspectorRow/InspectorRowTypes/InspectorSelector';
 import InspectorColorNumericInput from './InspectorRow/InspectorRowTypes/InspectorColorNumericInput';
 import InspectorActionButton from './InspectorActionButton/InspectorActionButton';
+import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import InspectorImagePreview from './InspectorPreview/InspectorPreviewTypes/InspectorImagePreview';
 import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/InspectorSoundPreview';
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
 import { Console, Hook, Unhook } from 'console-feed';
-// import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
 
@@ -46,7 +46,13 @@ class Inspector extends Component {
     super(props);
 
     this.state = {
-      logs: []
+      logs: [],
+      tabs: {
+        actions: true,
+        canvas: true,
+        scripts: true,
+        animationSettings: true,
+      },
     };
 
     this.handleConsoleLog = (log) => {
@@ -136,6 +142,11 @@ class Inspector extends Component {
     }
   }
 
+  toggleTab = (tabName) => {
+    this.setState((prevState) => ({
+      tabs: {...prevState.tabs, [tabName]: !prevState.tabs[tabName]}
+    }))
+  }
 
   /**
    * Returns the value of a requested selection attribute.
@@ -581,14 +592,19 @@ class Inspector extends Component {
   renderSelectionTransformProperties = () => {
     return (
       <div className="inspector-item">
-        {this.renderPosition()}
-        {this.renderOrigin()}
-        {this.renderSize()}
-        {this.renderScale()}
-        {this.renderRotation()}
-        {this.renderOpacity()}
+        <ActionButton action={() => this.toggleTab('canvas')} text="Canvas" tooltip="Canvas" color="gray" id="inspector-canvas-toggle"/>
+        {this.state.tabs.canvas && (
+          <>
+            {this.renderPosition()}
+            {this.renderOrigin()}
+            {this.renderSize()}
+            {this.renderScale()}
+            {this.renderRotation()}
+            {this.renderOpacity()}
+          </>
+        )}
       </div>
-    )
+    );
   }
 
   /**
@@ -871,7 +887,8 @@ class Inspector extends Component {
   renderAnimationSetting = () => {
     return (
       <div className="inspector-content">
-        {this.renderAnimationType()}
+        <ActionButton action={() => this.toggleTab('animationSettings')} text="Settings" tooltip="Animation Settings" color="gray" id="inspector-animation-settings-toggle"/>
+        {this.state.tabs.animationSettings && this.renderAnimationType()}
       </div>
     );
   }
@@ -1004,9 +1021,11 @@ class Inspector extends Component {
 
     return(
       <div className="inspector-content">
-        {actions.map((action, i) => {
+        <ActionButton action={() => this.toggleTab('actions')} text="Actions" tooltip="Actions" color="gray" id="inspector-actions-toggle"/>
+        {this.state.tabs.actions &&
+        actions.map((action, i) => {
             return this.renderActionButton(this.props.editorActions[action], i);
-          })}
+        })}
       </div>
     )
   }
@@ -1018,12 +1037,14 @@ class Inspector extends Component {
   renderScripts = () => {
     return (
       <div className="inspector-item">
+        <ActionButton action={() => this.toggleTab('scripts')} text="Scripts" tooltip="Scripts" color="gray" id="inspector-scripts-toggle"/>
+        {this.state.tabs.scripts &&
         <InspectorScriptWindow
           script={this.props.script}
           deleteScript={this.props.deleteScript}
           editScript={this.props.editScript}
           scriptInfoInterface={this.props.scriptInfoInterface}
-        />
+        />}
       </div>
     );
   }
@@ -1051,7 +1072,7 @@ class Inspector extends Component {
         {this.renderTitle(selectionType)}
         <div className="inspector-body">
           {this.renderDisplay(selectionType)}
-          {this.renderActions()}
+          {selectionType !== 'unknown' && this.renderActions()}
           {this.props.selectionIsScriptable() && this.renderScripts()}
           {selectionType === 'clip' && this.renderAnimationSetting()}
         </div>
