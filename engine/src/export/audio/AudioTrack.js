@@ -219,9 +219,10 @@ Wick.AudioTrack = class {
         let copyfrom = 0;
 
         if (offsetSeconds < 0) {
-            copyto = (-1 * offsetSeconds) * ctx.sampleRate;
+            // Fixes floating point errors
+            copyto = Math.round((-1 * offsetSeconds) * ctx.sampleRate);
         } else {
-            copyfrom = offsetSeconds * ctx.sampleRate;
+            copyfrom = Math.round(offsetSeconds * ctx.sampleRate);
         }
 
         // Copy buffer information.
