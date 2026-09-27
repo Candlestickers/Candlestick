@@ -29,6 +29,7 @@ import { Console } from 'console-feed'
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-javascript';
 import 'ace-builds/src-noconflict/ext-searchbox';
+import 'ace-builds/src-noconflict/ext-language_tools';
 
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/theme-cobalt';
@@ -62,6 +63,25 @@ const editorThemes = [
     value: 'github',
     label: 'Github',
   }]
+
+function createWickRefCompleters(referenceItems) {
+  // convert wick reference to completions
+  const completions = Object.entries(referenceItems).flatMap(([category, items]) =>
+    items.map(item => ({
+      caption: item.name,
+      value: item.snippet,
+      meta: 'reference',
+      completerId: 'wickRefCompleter',
+    }))
+  );
+
+  return {
+    id: 'wickRefCompleter',
+    getCompletions(editor, session, position, prefix, callback) {
+      callback(null, completions);
+    },
+  };
+}
 
 let classNames = require('classnames');
 let thValue = 'monokai';
@@ -336,9 +356,16 @@ export default function WickCodeEditor(props) {
             name="wick-ace-editor"
             focus={true}
             editorProps={{ $blockScrolling: Infinity }}
-            setOptions={{ useWorker: false }}
+            setOptions={{
+              useWorker: false,
+              enableBasicAutocompletion: true,
+              enableLiveAutocompletion: true,
+            }}
             onChange={scriptOnChange}
-            onLoad={(editor) => setAceEditor(editor)}
+            onLoad={(editor) => {              
+              editor.completers.push(createWickRefCompleters(props.scriptInfoInterface.referenceItems));
+              setAceEditor(editor);
+            }}
             markers={mapErrorToMarkers(props.error)}
             annotations={mapErrorToAnnotations(props.error)}
             readOnly={!props.script}
