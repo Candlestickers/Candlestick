@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import TWEEN from '@tweenjs/tween.js';
+
 /**
  * Class representing a tween.
  */
