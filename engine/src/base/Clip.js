@@ -17,6 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import hull from 'hull.js';
 
 /**
  * A class representing a Wick Clip.
