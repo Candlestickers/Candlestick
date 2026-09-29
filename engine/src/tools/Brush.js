@@ -18,6 +18,7 @@
  */
 
 // import potrace from 'potrace';
+// import Croquis from 'croquis.js';
 
 Wick.Tools.Brush = class extends Wick.Tool {
     static get CROQUIS_WAIT_AMT_MS () {
