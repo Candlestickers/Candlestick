@@ -18,6 +18,7 @@
  */
 
 // import SCWF from 'soundcloud-waveform';
+// import { Howl } from 'howler';
 
 Wick.SoundAsset = class extends Wick.FileAsset {
     /**
