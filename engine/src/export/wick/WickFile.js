@@ -18,6 +18,7 @@
  */
 
 // import platform from 'platform';
+// import JSZip from 'jszip';
 
 /**
  * Utility class for creating and parsing wick files.
