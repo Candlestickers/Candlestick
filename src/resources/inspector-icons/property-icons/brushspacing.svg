@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Faint guide curve -->
+  <path d="M56 370 C 140 180 370 340 456 150" stroke="white" stroke-width="10" fill="none" opacity="0.3"/>
+  <!-- Stamp dots placed along the curve with visible gaps between them -->
+  <circle cx="56"  cy="370" r="40" fill="white"/>
+  <circle cx="142" cy="282" r="40" fill="white"/>
+  <circle cx="255" cy="260" r="40" fill="white"/>
+  <circle cx="369" cy="238" r="40" fill="white"/>
+  <circle cx="456" cy="150" r="40" fill="white"/>
+</svg>

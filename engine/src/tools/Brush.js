@@ -34,11 +34,16 @@ Wick.Tools.Brush = class extends Wick.Tool {
 
         this.name = 'brush';
 
-        this.BRUSH_POINT_SPACING = 0.2;
         this.BRUSH_STABILIZER_LEVEL = 3;
-        this.POTRACE_RESOLUTION = 1.0;
+        this.POTRACE_RESOLUTION = 1.0; // kept for reference; runtime value comes from getSetting('brushPotraceDetail')
 
         this.MIN_PRESSURE = 0.14;
+
+        this.TARGET_BRUSH_SIZE = 50;
+        this.MAX_RESOLUTION_FACTOR = 2;
+        this.resolutionFactor = 1;
+        this.canvasScaleFactor = 1; // Resolution: Greater or equal to 1
+        this.imageScaleFactor = 1; // Resolution: Lesser or equal to 1
 
         this.croquis = null;
         this.croquisDOMElement = null;
@@ -119,6 +124,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.croquisDOMElement.style.height = '100%';
             this.croquisDOMElement.style.display = 'block';
             this.croquisDOMElement.style.pointerEvents = 'none';
+
+            this.croquisDOMElement.querySelectorAll('canvas').forEach(canvasElement => {
+                canvasElement.style.width = '100%';
+                canvasElement.style.height = '100%';
+            });
         }
 
         this._isInProgress = false;
@@ -178,12 +188,27 @@ Wick.Tools.Brush = class extends Wick.Tool {
         clearTimeout(this._croquisStartTimeout);
         this._isInProgress = true;
 
+        var t = this.getSetting('brushResolution');
+        var smoothnessFactor = 0.05 + (Math.pow(t, 5) + 0.1*t*(1-t)) * 0.95;
+        this.resolutionFactor = this.TARGET_BRUSH_SIZE/this._getRealBrushSize() * smoothnessFactor;
+        this.resolutionFactor = Math.min(Math.max(this.resolutionFactor, smoothnessFactor), this.MAX_RESOLUTION_FACTOR);
+        this.canvasScaleFactor = (this.resolutionFactor > 1) ? this.resolutionFactor : 1;
+        this.imageScaleFactor = (this.resolutionFactor < 1) ? this.resolutionFactor : 1;
         this._updateCanvasAttributes();
 
         // Update croquis params
-        this.croquisBrush.setSize(this._getRealBrushSize());
+        this.croquisBrush.setSize(this._getRealBrushSize() * this.canvasScaleFactor);
         this.croquisBrush.setColor(this.getSetting('fillColor').hex);
-        this.croquisBrush.setSpacing(this.BRUSH_POINT_SPACING);
+        this.croquisBrush.setSpacing(this.getSetting('brushSpacing'));
+        var brushShape = this.getSetting('brushShape');
+        this.croquisBrush.setImage(this._buildBrushTipCanvas(brushShape));
+        var rotationMode = this.getSetting('brushRotationMode');
+        this.croquisBrush.setRotateToDirection(rotationMode === 'path');
+        this.croquisBrush.setRandomAngle(rotationMode === 'random');
+        this.croquisBrush.setAngle(rotationMode === 'random' ? 0 : this.getSetting('brushRotationOffset'));
+        var scatterAmount = this.getSetting('brushScatterAmount') * 2.8;
+        this.croquisBrush.setNormalSpread(scatterAmount);
+        this.croquisBrush.setTangentSpread(scatterAmount);
         this.croquis.setToolStabilizeLevel(this.BRUSH_STABILIZER_LEVEL);
         this.croquis.setToolStabilizeWeight((this.getSetting('brushStabilizerWeight') / 100.0) + 0.3);
         this.croquis.setToolStabilizeInterval(1);
@@ -349,17 +374,51 @@ Wick.Tools.Brush = class extends Wick.Tool {
         this._potraceCroquisCanvas(this._lastMousePoint);
     }
 
-    /* Generate a new circle cursor based on the brush size. */
+    /* Generate a cursor that matches the active brush shape. */
     _regenCursor () {
-        var size = (this._getRealBrushSize());
+        var size = this._getRealBrushSize();
         var color = this.getSetting('fillColor').hex;
-        this.cachedCursor = this.createDynamicCursor(color, size, this.getSetting('pressureEnabled'));
+        var transparent = this.getSetting('pressureEnabled');
+        var shape = this.getSetting('brushShape') || 'circle';
+        this.cachedCursor = this._createShapedCursor(color, size, transparent, shape);
         this.setCursor(this.cachedCursor);
+    }
+
+    _createShapedCursor (color, size, transparent, shape) {
+        // Use same coordinate system as _buildBrushTipCanvas
+        var canvasSize = Math.max(Math.round(size) + 4, 10);
+        var canvas = document.createElement('canvas');
+        canvas.width = canvasSize; canvas.height = canvasSize;
+        var ctx = canvas.getContext('2d');
+        var fillColor = color + '88';
+        var strokeColor = invert(color);
+
+        ctx.save();
+        ctx.translate(canvasSize / 2, canvasSize / 2);
+        Wick.Tools.BrushUtils.drawBrushShape(ctx, canvasSize - 4, shape, (fill, stroke, pathScale) => {
+            if (transparent) {
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1.5 / pathScale;
+                stroke();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 0.75 / pathScale;
+                stroke();
+            } else {
+                ctx.fillStyle = fillColor;
+                fill();
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1.5 / pathScale;
+                stroke();
+            }
+        }, { fallback: 'circle' });
+        
+        var hotspot = Math.round(canvasSize / 2);
+        return 'url(' + canvas.toDataURL() + ') ' + hotspot + ' ' + hotspot + ', default';
     }
 
     /* Get the actual pixel size of the brush to send to Croquis. */
     _getRealBrushSize () {
-        var size = this.getSetting('brushSize') + 1;
+        var size = this.getSetting('brushSize');
         if(!this.getSetting('relativeBrushSize')) {
             size *= this.paper.view.zoom;
         }
@@ -378,12 +437,21 @@ Wick.Tools.Brush = class extends Wick.Tool {
             this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
         }
 
-        // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
-        var targetW = Math.round(this.paper.view.viewSize.width);
-        var targetH = Math.round(this.paper.view.viewSize.height);
+        // Scale the croquis canvas up by canvasScaleFactor so that brush coordinates map to
+        // the correct CSS position on screen
+        // the CSS display stays at 100:100% so the larger canvas is downsampled visually muhehe -H.A.
+        var targetW = Math.round(this.paper.view.viewSize.width * this.canvasScaleFactor);
+        var targetH = Math.round(this.paper.view.viewSize.height * this.canvasScaleFactor);
         if(this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
             this.croquis.setCanvasSize(targetW, targetH);
+            // setCanvasSize may recreate canvas elements — re-apply CSS so display stays at viewport size
+            this.croquisDOMElement.querySelectorAll('canvas').forEach(canvasElement => {
+                canvasElement.style.width = '100%';
+                canvasElement.style.height = '100%';
+            });
         }
+        this.croquisDOMElement.style.width = '100%';
+        this.croquisDOMElement.style.height = '100%';
 
         // Fake brush opacity in croquis by changing the opacity of the croquis canvas
         this.croquisDOMElement.style.opacity = this.getSetting('fillColor').a;
@@ -392,7 +460,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
     /* Convert a point in Croquis' canvas space to paper.js's canvas space. */
     _croquisToPaperPoint (croquisPoint) {
         var paperPoint = this.paper.view.projectToView(croquisPoint.x, croquisPoint.y);
-        return paperPoint;
+        return paperPoint.multiply(this.canvasScaleFactor);
     }
 
     /* Used for calculating the crop amount for potrace. */
@@ -414,8 +482,14 @@ Wick.Tools.Brush = class extends Wick.Tool {
     _calculateStrokeBounds (point) {
         // Forward mouse event to croquis canvas
         this._updateStrokeBounds(point);
-        // This prevents cropping out edges of the brush stroke
-        this.strokeBounds = this.strokeBounds.expand(this._getRealBrushSize());
+        // This prevents cropping out edges of the brush stroke.
+        // When scatter is enabled, stamps are displaced by up to
+        // scatterAmount * 1.4 * brushSize * canvasScaleFactor pixels beyond
+        // the raw mouse path, so we expand by that extra amount too.
+        var expand = this._getRealBrushSize();
+        var scatterAmount = this.getSetting('brushScatterAmount');
+        expand += scatterAmount * 1.4 * this._getRealBrushSize() * this.canvasScaleFactor;
+        this.strokeBounds = this.strokeBounds.expand(expand);
     }
 
     /* Create a paper.js path by potracing the croquis canvas, and add the resulting path to the project. */
@@ -459,8 +533,8 @@ Wick.Tools.Brush = class extends Wick.Tool {
             // (and crop out empty space using strokeBounds - this massively speeds up potrace)
             var croppedCanvas = document.createElement("canvas");
             var croppedCanvasCtx = croppedCanvas.getContext("2d");
-            croppedCanvas.width = strokeBounds.width;
-            croppedCanvas.height = strokeBounds.height;
+            croppedCanvas.width = strokeBounds.width * this.imageScaleFactor;
+            croppedCanvas.height = strokeBounds.height * this.imageScaleFactor;
             if(strokeBounds.x < 0) strokeBounds.x = 0;
             if(strokeBounds.y < 0) strokeBounds.y = 0;
             croppedCanvasCtx.drawImage(
@@ -470,7 +544,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
               0, 0, croppedCanvas.width, croppedCanvas.height);
 
             // Run potrace and add the resulting path to the project
-            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.POTRACE_RESOLUTION/this.paper.view.zoom);
+            var svg = potrace.fromImage(croppedCanvas).toSVG(1/this.paper.view.zoom);
             var potracePath = this.paper.project.importSVG(svg);
 
             potracePath.fillColor = this.getSetting('fillColor').rgba;
@@ -478,6 +552,7 @@ Wick.Tools.Brush = class extends Wick.Tool {
             potracePath.position.y += this.paper.view.bounds.y;
             potracePath.position.x += strokeBounds.x / this.paper.view.zoom;
             potracePath.position.y += strokeBounds.y / this.paper.view.zoom;
+            potracePath.scale(1 / this.resolutionFactor, this.paper.view.bounds.topLeft);
             potracePath.remove();
             potracePath.closed = true;
             potracePath.children[0].closed = true;
@@ -548,5 +623,26 @@ Wick.Tools.Brush = class extends Wick.Tool {
         result = result[booleanOpName](mask);
         result.remove();
         return result;
+    }
+
+    /**
+     * Build a canvas stamp for a given brush shape name.
+     * Returns null for 'circle' so Croquis uses its built-in drawCircle.
+     */
+    _buildBrushTipCanvas (shape) {
+        var canvasSize = 64;
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas.height = canvasSize;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+
+        ctx.save();
+        ctx.translate(canvasSize / 2, canvasSize / 2);
+        var shapeWasDrawn = Wick.Tools.BrushUtils.drawBrushShape(ctx, canvasSize, shape, fill => {
+            fill();
+        });
+        ctx.restore();
+
+        return shapeWasDrawn ? canvas : null;
     }
 }
