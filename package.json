@@ -68,7 +68,12 @@
     "master-deploy": "npm run check-branch-prod && gh-pages -d build -b gh-pages -m \"deploy prod\"",
     "test-deploy": "PUBLIC_URL=/test/ npm run build:nocname && gh-pages -d build -b gh-pages --dest test --add -m \"deploy test\"",
     "phonegap-deploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app && git add . && git commit -m 'update phonegap build' && git push --force",
-    "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app"
+    "phonegap-predeploy": "npm run build && cd ../wick-editor-phonegap && npm run prepare-dir && cd ../wick-editor && shx cp -r build/* ../wick-editor-phonegap/www && cd ../wick-editor-phonegap && npm run prepare-app",
+    "ios:init": "node scripts/ios.cjs init",
+    "ios:dev": "node scripts/ios.cjs dev",
+    "build:ios": "node scripts/ios.cjs build",
+    "ios:frontend": "node scripts/ios.cjs frontend",
+    "ios:frontend:dev": "node scripts/ios.cjs frontend-dev"
   },
   "eslintConfig": {
     "extends": "react-app"
