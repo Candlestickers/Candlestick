@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "ios-documents",
+  "description": "Save iPad and iPhone exports to the app Documents folder visible in Files.",
+  "platforms": ["iOS"],
+  "windows": ["*"],
+  "permissions": [
+    "fs:allow-document-write-recursive",
+    "fs:allow-document-meta-recursive"
+  ]
+}

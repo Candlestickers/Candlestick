@@ -1,0 +1,12 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "build": {
+    "beforeDevCommand": "npm run ios:frontend:dev",
+    "beforeBuildCommand": "npm run ios:frontend"
+  },
+  "bundle": {
+    "iOS": {
+      "minimumSystemVersion": "15.0"
+    }
+  }
+}
