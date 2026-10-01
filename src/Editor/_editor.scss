@@ -216,7 +216,6 @@ body {
   background-color: $splitter-highlight-color;
   transition: all .1s ease; }
 
-// splitter on a docked PanelWrapper: same look as the reflex splitters above
 .panel-resize-handle {
   box-sizing: border-box;
   background-color: $splitter-color;

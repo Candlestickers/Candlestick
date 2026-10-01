@@ -23,8 +23,10 @@ import DockedPanel from '../DockedPanel/DockedPanel';
 function PanelWrapper(props) {
 
   const [pos, setPos] = useState({ x: props.x || 0, y: props.y || 0 });
+  const nativeDragging = useRef(false);
   const posRef = useRef(pos);
-  posRef.current = pos;
+  // while dragging, the mousemove handler drives posRef, so a re-render from the parent must not reset it
+  if (!nativeDragging.current) posRef.current = pos;
 
   // which edge of the window we're docked to, and our width (only used when a width prop is given)
   const [dockEdge, setDockEdge] = useState(props.initialEdge || 'top');
@@ -46,7 +48,13 @@ function PanelWrapper(props) {
 
   // native drag bookkeeping (mouse)
   const panelRef = useRef(null);
-  const nativeDragging = useRef(false);
+  // a drag never goes through React state: the handlers write the panel and preview positions straight to the DOM
+  // and React only renders once, on release
+  const wrapperRef = useRef(null);
+  const overlayRef = useRef(null);
+  const dragSize = useRef({ width: 0, height: 0 });
+  const offsetRef = useRef({ x: xOffset, y: yOffset });
+  offsetRef.current = { x: xOffset, y: yOffset };
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: pos.x, y: pos.y });
 
@@ -105,29 +113,30 @@ function PanelWrapper(props) {
   const getSnapTargetRef = useRef(getSnapTarget);
   getSnapTargetRef.current = getSnapTarget;
 
-  // outline of the landing spot, shown while dragging (null when not dragging)
-  const [snapPreview, setSnapPreview] = useState(null);
-
   const onWindowMouseMove = useCallback(e => {
     if (!nativeDragging.current) return;
 
-    const dx = e.clientX - startMouse.current.x;
-    const dy = e.clientY - startMouse.current.y;
-    let newX = startPos.current.x + dx;
-    let newY = startPos.current.y + dy;
+    posRef.current = {
+      x: startPos.current.x + e.clientX - startMouse.current.x,
+      y: startPos.current.y + e.clientY - startMouse.current.y
+    };
 
-    // immediate state update on each mousemove for constant rendering
-    setPos({ x: newX, y: newY });
+    if (!wrapperRef.current || !overlayRef.current) return;
 
-    // posRef only updates on render, so give the preview the position we just computed
-    posRef.current = { x: newX, y: newY };
+    const { x, y } = posRef.current;
+    const offset = offsetRef.current;
     const target = getSnapTargetRef.current();
-    setSnapPreview({
-      x: target.x,
-      y: target.y,
-      width: panelRef.current ? panelRef.current.offsetWidth : 0,
-      height: panelRef.current ? panelRef.current.offsetHeight : 0
-    });
+
+    // above everything while dragged, with the landing-spot outline just below it
+    wrapperRef.current.style.left = (x + offset.x) + 'px';
+    wrapperRef.current.style.top = (y + offset.y) + 'px';
+    wrapperRef.current.style.zIndex = 902;
+
+    overlayRef.current.style.left = (target.x + offset.x) + 'px';
+    overlayRef.current.style.top = (target.y + offset.y) + 'px';
+    overlayRef.current.style.width = dragSize.current.width + 'px';
+    overlayRef.current.style.height = dragSize.current.height + 'px';
+    overlayRef.current.style.display = 'block';
   }, []);
 
   const onWindowMouseUp = useCallback(() => {
@@ -139,9 +148,16 @@ function PanelWrapper(props) {
 
     document.body.style.userSelect = '';
 
-    setSnapPreview(null);
-
     const { x: snappedX, y: snappedY, dock } = getSnapTargetRef.current();
+
+    // React skips DOM writes for values that match its last render (e.g. dropping back where the drag began),
+    // so undo what the drag wrote by hand
+    if (overlayRef.current) overlayRef.current.style.display = 'none';
+    if (wrapperRef.current) {
+      wrapperRef.current.style.left = (snappedX + offsetRef.current.x) + 'px';
+      wrapperRef.current.style.top = (snappedY + offsetRef.current.y) + 'px';
+      wrapperRef.current.style.zIndex = 10;
+    }
 
     setPos({ x: snappedX, y: snappedY });
 
@@ -154,16 +170,13 @@ function PanelWrapper(props) {
   // report the starting dock once mounted (top edge by default, or right edge if asked)
   useEffect(() => {
     if (!panelRef.current) return;
-    
-    if (props.initialEdge === 'right') {
-      const panelWidth = panelRef.current.offsetWidth;
 
-      setPos(p => ({ x: window.innerWidth - panelWidth - xOffset, y: p.y }));
+    const edge = props.initialEdge === 'right' || props.initialEdge === 'bottom' ? props.initialEdge : 'top';
+    const size = edge === 'right' ? panelRef.current.offsetWidth : panelRef.current.offsetHeight;
 
-      if (props.id && props.onDock) props.onDock(props.id, { edge: 'right', size: panelWidth });
-    } else if (props.initialEdge === 'bottom' && props.id && props.onDock) {
-      props.onDock(props.id, { edge: 'bottom', size: panelRef.current.offsetHeight });
-    } else if (props.id && props.onDock) props.onDock(props.id, { edge: 'top', size: panelRef.current.offsetHeight });
+    if (edge === 'right') setPos(p => ({ x: window.innerWidth - size - xOffset, y: p.y }));
+
+    if (id && onDock) onDock(id, { edge, size });
 
     // stay attached to the right/bottom edge when the window is resized (e.g. opening the dev console)
     const onWindowResize = () => stickToEdgeRef.current();
@@ -174,7 +187,7 @@ function PanelWrapper(props) {
       window.removeEventListener('resize', onWindowResize);
 
       // the panel is gone (e.g. hidden at small sizes), so stop reserving space for it
-      if (props.id && props.onDock) props.onDock(props.id, null);
+      if (id && onDock) onDock(id, null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -273,6 +286,10 @@ function PanelWrapper(props) {
     }
 
     nativeDragging.current = true;
+    dragSize.current = {
+      width: panelRef.current ? panelRef.current.offsetWidth : 0,
+      height: panelRef.current ? panelRef.current.offsetHeight : 0
+    };
     startMouse.current = { x: e.clientX, y: e.clientY };
     startPos.current = { x: posRef.current.x, y: posRef.current.y };
 
@@ -296,8 +313,8 @@ function PanelWrapper(props) {
     top: pos.y + yOffset,
     cursor: (props.dragHandle || props.canStartDrag) ? 'default' : 'move',
 
-    // while being dragged, the panel goes above every other panel (and the snap preview, which is just below it)
-    zIndex: snapPreview ? 902 : 10,
+    // raised to 902 by the drag handlers while being dragged
+    zIndex: 10,
 
     // optional fixed size, needed by panels that lay out their children with 100% heights (e.g. reflex containers)
     ...(shownWidth !== undefined && { width: shownWidth }),
@@ -364,21 +381,19 @@ function PanelWrapper(props) {
     </div>
   );
 
-  // translucent outline of where the panel will land, shown while dragging (below the panel itself)
-  const snapOverlay = snapPreview && (
+  // translucent outline of where the panel will land; always mounted and hidden, positioned by the drag handlers
+  const snapOverlay = (
     <div
+      ref={overlayRef}
       className="panel-snap-preview"
       style={{
         position: 'fixed',
-        left: snapPreview.x + xOffset,
-        top: snapPreview.y + yOffset,
-        width: snapPreview.width,
-        height: snapPreview.height,
+        display: 'none',
         boxSizing: 'border-box',
         border: '2px dashed #FF7867',
         background: 'rgba(255, 119, 101, 0.38)',
         pointerEvents: 'none',
-        zIndex: 900 // above the other panels, below the dragged panel (901) and below modals
+        zIndex: 900 // above the other panels, below the code editor pop-outs (901) and the dragged panel (902)
       }}
     />
   );
@@ -387,6 +402,7 @@ function PanelWrapper(props) {
     <>
       {snapOverlay}
       <div
+        ref={wrapperRef}
         className="panel-drag-handle"
         style={wrapperStyle}
         onMouseDownCapture={onHandleMouseDownCapture}
