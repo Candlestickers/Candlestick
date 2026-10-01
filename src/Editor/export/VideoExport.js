@@ -1,4 +1,5 @@
 import AudioExport from './AudioExport'
+import { isIOSApp } from '../../tauri-ios'
 
 var b64toBuff = require('base64-arraybuffer')
 
@@ -9,10 +10,10 @@ var EXPORT_VIDEO_START = 70
 
 const isAndroid = () => /Android/i.test(navigator.userAgent)
 
-// On Android, system ffmpeg is not available so we skip the native path and use
-// the web ffmpeg (WASM) path instead, which runs fine inside the Tauri WebView.
+// Mobile builds cannot use the desktop system ffmpeg command.
+// Use the existing web ffmpeg (WASM) path on Android and iOS.
 const isTauri = () =>
-  !!(window.__TAURI__ && !isAndroid() && (window.__TAURI__.invoke || (window.__TAURI__.tauri && window.__TAURI__.tauri.invoke)))
+  !!(window.__TAURI__ && !isAndroid() && !isIOSApp() && (window.__TAURI__.invoke || (window.__TAURI__.tauri && window.__TAURI__.tauri.invoke)))
 
 
 class VideoExport {

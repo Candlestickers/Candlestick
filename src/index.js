@@ -24,10 +24,12 @@ import Editor from './Editor/Editor';
 import * as serviceWorker from './serviceWorker';
 import initializeDefaultFileHandlers from './files/filehandler';
 import { initAndroidPlatform } from './tauri-android';
+import { initIOSPlatform } from './tauri-ios';
 
-// Android-specific overrides must run before the default file handlers,
+// Platform-specific overrides must run before the default file handlers,
 // so filehandler.js sees window.saveFileFromWick already set and wraps it.
 initAndroidPlatform();
+initIOSPlatform();
 
 // Creates file handlers in the window.
 initializeDefaultFileHandlers();
