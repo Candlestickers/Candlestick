@@ -29,7 +29,7 @@ import nightImageShort from 'resources/splash-screens/cool_field3.png'; //'resou
 
 import coolField from 'resources/splash-screens/cool_field3.png'
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 class WelcomeModal extends Component {
     constructor() {
