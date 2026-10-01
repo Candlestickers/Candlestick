@@ -1122,6 +1122,12 @@ class Editor extends EditorCore {
      */
     setPanelDock = (id, dock) => {
         this.setState(prev => {
+            const current = prev.panelDocks[id];
+
+            // returning null skips the re-render of this very large component when nothing actually changed
+            if (!dock && !current) return null;
+            if (dock && current && current.edge === dock.edge && current.size === dock.size) return null;
+
             const panelDocks = { ...prev.panelDocks };
             if (dock) panelDocks[id] = dock;
             else delete panelDocks[id]; // panel removed
