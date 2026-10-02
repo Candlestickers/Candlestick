@@ -276,8 +276,8 @@ class Editor extends EditorCore {
         this._onEyedropperPickedColor = (color) => { };
 
         // Resizable panels
-        this.RESIZE_THROTTLE_AMOUNT_MS = 100;
-        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 300;
+        this.RESIZE_THROTTLE_AMOUNT_MS = 20;
+        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 20;
         this.resizeProps = {
             onStopResize: throttle(this.onStopResize, this.RESIZE_THROTTLE_AMOUNT_MS),
             onStopPopoutOutlinerResize: throttle(this.onStopPopoutOutlinerResize, this.RESIZE_THROTTLE_AMOUNT_MS),
