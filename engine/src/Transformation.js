@@ -66,14 +66,14 @@ Wick.Transformation = class {
         // https://github.com/paperjs/paper.js/blob/92775f5279c05fb7f0a743e9e7fa02cd40ec1e70/src/basic/Matrix.js#L687
         const { x, y, scaleX, scaleY, rotation } = this;
         const degrees = 180 / Math.PI,
-            rotateRad = rotation / degrees,
+            rotateRad = (rotation % 360) / degrees,
             skewRad = this.scaledSkew / degrees;
         let a, b, c, d;
         let r = scaleX, r2 = r * r,
             det = scaleY * r,
             at = Math.tan(skewRad) * r2;
         a = Math.cos(rotateRad) * r;
-        b = Math.sqrt(r2 - a * a) * (rotateRad > 0 ? 1 : -1);
+        b = Math.sqrt(r2 - a * a) * (rotateRad <= Math.PI ? 1 : -1);
         d = (b * at + a * det) / r2;
         c = (a * at - b * det) / r2;
         return [a, b, c, d, x, y];
