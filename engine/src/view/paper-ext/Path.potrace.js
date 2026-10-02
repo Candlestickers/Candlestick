@@ -17,6 +17,8 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import potrace from 'potrace';
+
 /*
     paper-potrace.js
     Adds a potrace() method to paper Items that runs potrace on a rasterized

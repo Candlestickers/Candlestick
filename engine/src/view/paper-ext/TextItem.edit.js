@@ -17,6 +17,8 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import $ from 'jquery';
+
 (function () {
     var editElem = $('<textarea style="resize: none;">');
     editElem.css('position', 'absolute');

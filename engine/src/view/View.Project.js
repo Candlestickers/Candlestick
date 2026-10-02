@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import $ from 'jquery';
+
 Wick.View.Project = class extends Wick.View {
     static get DEFAULT_CANVAS_BG_COLOR() {
         return 'rgb(187, 187, 187)';
