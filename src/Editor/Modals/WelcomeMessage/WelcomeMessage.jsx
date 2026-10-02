@@ -36,10 +36,13 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
-            "Updated MP4 Exporter",
-            // "PDF Import and Export",
-            // "Pasting Images from Clipboard",
-            // "Various Bug/Crash Fixes"
+            "Clip Shearing",
+            "Movable Pivot",
+            "Improved Frame Resizing",
+            "Autosaved Settings",
+            "Improved MP4 Export",
+            "Fixed Vcam",
+            "Minor Bug Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
