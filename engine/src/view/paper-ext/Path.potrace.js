@@ -27,6 +27,8 @@
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
 
+// import paper from 'paper';
+
 paper.Path.inject({
     potrace: function(args) {
         var self = this;

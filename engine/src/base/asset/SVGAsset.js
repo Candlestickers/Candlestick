@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.SVGAsset = class extends Wick.FileAsset {
     /**
      * Returns all valid MIME types for files which can be converted to SVGAssets.

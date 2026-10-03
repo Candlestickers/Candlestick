@@ -18,6 +18,7 @@
  */
 
 // import $ from 'jquery';
+// import paper from 'paper';
 
 paper.View.inject({
   pressure: 1,

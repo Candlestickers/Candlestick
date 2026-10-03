@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 /**
  * Global utility class for creating instances of builtin assets.
  */

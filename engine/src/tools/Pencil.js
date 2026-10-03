@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.Tools.Pencil = class extends Wick.Tool {
     static get MIN_ADD_POINT_MOVEMENT () {
         return 2;

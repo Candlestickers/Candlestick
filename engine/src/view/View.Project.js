@@ -18,6 +18,7 @@
  */
 
 // import $ from 'jquery';
+// import paper from 'paper';
 
 Wick.View.Project = class extends Wick.View {
     static get DEFAULT_CANVAS_BG_COLOR() {

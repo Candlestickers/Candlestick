@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.View.Clip = class extends Wick.View {
     static get BORDER_STROKE_WIDTH () {
         return 2;

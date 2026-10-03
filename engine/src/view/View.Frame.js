@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.View.Frame = class extends Wick.View {
     /**
      * A multiplier for the resolution for the rasterization process.

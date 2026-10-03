@@ -18,6 +18,7 @@
  */
 
 // import invert from 'invert-color';
+// import paper from 'paper';
 
 Wick.Tool = class {
     static get DOUBLE_CLICK_TIME () {

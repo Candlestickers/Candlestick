@@ -18,6 +18,7 @@
  */
 
 // import hull from 'hull.js';
+// import paper from 'paper';
 
 /**
  * A class representing a Wick Clip.

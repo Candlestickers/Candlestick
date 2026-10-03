@@ -17,8 +17,6 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import potrace from 'potrace';
-
 /*
     paper-hole.js
     Adds hole() to the paper Layer class which finds the shape of the hole
@@ -27,6 +25,9 @@
     Adapted from the FillBucket tool from old Wick
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
+
+// import potrace from 'potrace';
+// import paper from 'paper';
 
 (function () {
 
