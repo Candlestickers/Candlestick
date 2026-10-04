@@ -73,6 +73,7 @@ import iconSymbol from 'resources/tool-icons/symbol.svg';
 import iconLeaveUp from 'resources/tool-icons/leaveUp.svg';
 import iconBreakApart from 'resources/tool-icons/breakApart.svg';
 import iconBreakApartDark from 'resources/tool-icons/breakApart-dark.svg';
+import iconExportWickobj from 'resources/tool-icons/exportWickobj.png';
 import iconClose from 'resources/tool-icons/close.svg';
 import iconRecenter from 'resources/tool-icons/recenter.svg';
 import iconAdd from 'resources/asset-library-icons/add.svg';
@@ -227,6 +228,7 @@ const icons = {
   "action": iconAction,
   "breakApart": iconBreakApart,
   "breakApart-dark": iconBreakApartDark,
+  "exportWickobj": iconExportWickobj,
   "brushsmoothness": iconBrushSmoothness,
   "brushpressure": iconBrushPressure,
   "brushrelativesize": iconRelativeBrushSize,
