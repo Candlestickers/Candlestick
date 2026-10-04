@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.9.9.10.37.27";
+var WICK_ENGINE_BUILD_VERSION = "2026.10.4.12.0.29";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46777,7 +46777,7 @@ Wick.Transformation = class {
       rotation
     } = this;
     const degrees = 180 / Math.PI,
-      rotateRad = rotation / degrees,
+      rotateRad = rotation % 360 / degrees,
       skewRad = this.scaledSkew / degrees;
     let a, b, c, d;
     let r = scaleX,
@@ -46785,7 +46785,7 @@ Wick.Transformation = class {
       det = scaleY * r,
       at = Math.tan(skewRad) * r2;
     a = Math.cos(rotateRad) * r;
-    b = Math.sqrt(r2 - a * a) * (rotateRad > 0 ? 1 : -1);
+    b = Math.sqrt(r2 - a * a) * (rotateRad <= Math.PI ? 1 : -1);
     d = (b * at + a * det) / r2;
     c = (a * at - b * det) / r2;
     return [a, b, c, d, x, y];
@@ -47793,9 +47793,10 @@ Wick.AudioTrack = class {
     let copyto = 0;
     let copyfrom = 0;
     if (offsetSeconds < 0) {
-      copyto = -1 * offsetSeconds * ctx.sampleRate;
+      // Fixes floating point errors
+      copyto = Math.round(-1 * offsetSeconds * ctx.sampleRate);
     } else {
-      copyfrom = offsetSeconds * ctx.sampleRate;
+      copyfrom = Math.round(offsetSeconds * ctx.sampleRate);
     }
 
     // Copy buffer information.
@@ -47882,7 +47883,7 @@ Wick.AudioTrack = class {
 
     let lengthOfDelay = ctx.sampleRate * delaySeconds;
     let lengthOfOriginalSound = ctx.sampleRate * originalBuffer.duration;
-    var delayedBuffer = ctx.createBuffer(originalBuffer.numberOfChannels, lengthOfDelay + lengthOfOriginalSound, ctx.sampleRate);
+    var delayedBuffer = ctx.createBuffer(originalBuffer.numberOfChannels, Math.round(lengthOfDelay + lengthOfOriginalSound), ctx.sampleRate);
 
     // For each channel in the audiobuffer...
     for (var srcChannel = 0; srcChannel < originalBuffer.numberOfChannels; srcChannel++) {
@@ -56887,15 +56888,18 @@ Wick.Clip = class extends Wick.Tickable {
   breakApart() {
     var leftovers = [];
     this.timeline.activeFrames.forEach(frame => {
-      frame.clips.forEach(clip => {
-        clip.transformation.x += this.transformation.x;
-        clip.transformation.y += this.transformation.y;
+      frame.clips.forEach(originalClip => {
+        // Keep original objects in case of undo
+        const clip = originalClip.copy();
+        clip.transformation.x += this.transformation.x - this.pivot[0];
+        clip.transformation.y += this.transformation.y - this.pivot[1];
         this.parentTimeline.activeFrame.addClip(clip);
         leftovers.push(clip);
       });
-      frame.paths.forEach(path => {
-        path.x += this.transformation.x;
-        path.y += this.transformation.y;
+      frame.paths.forEach(originalPath => {
+        const path = originalPath.copy();
+        path.x += this.transformation.x - this.pivot[0];
+        path.y += this.transformation.y - this.pivot[1];
         this.parentTimeline.activeFrame.addPath(path);
         leftovers.push(path);
       });
@@ -65881,14 +65885,11 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       var soundLengthMS = sound.duration * 1000;
       var frameLengthMS = 1 / framerate * this.model.length * 1000;
       var frameLengthPx = this.model.length * this.gridCellWidth;
+      var startPx = this.model.soundStart / soundLengthMS * 1200;
       var cropPx = frameLengthMS / soundLengthMS * 1200; // base waveform image size: 1200px
 
-      // Determining Pxls/milliseconds to shift waveform.
-      var msPerFrame = 1000 / framerate;
-      var pxPerMS = msPerFrame / this.gridCellWidth;
-      var shiftSoundStart = -(this.model.soundStart * (1 / pxPerMS));
       var volumeCropAmt = waveform.height / 2 * (1 - 1 / this.model.soundVolume);
-      ctx.drawImage(waveform, 0, volumeCropAmt, cropPx, waveform.height - volumeCropAmt * 2, shiftSoundStart, 0, frameLengthPx, this.gridCellHeight);
+      ctx.drawImage(waveform, startPx, volumeCropAmt, cropPx, waveform.height - volumeCropAmt * 2, 0, 0, frameLengthPx, this.gridCellHeight);
     } else if (this.model.tweens.length > 0) {
       // Tweens
 
