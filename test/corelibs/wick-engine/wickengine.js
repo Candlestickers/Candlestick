@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.10.4.12.0.29";
+var WICK_ENGINE_BUILD_VERSION = "2026.10.4.16.22.8";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46777,7 +46777,7 @@ Wick.Transformation = class {
       rotation
     } = this;
     const degrees = 180 / Math.PI,
-      rotateRad = rotation % 360 / degrees,
+      rotateRad = (rotation % 360 + 360) % 360 / degrees,
       skewRad = this.scaledSkew / degrees;
     let a, b, c, d;
     let r = scaleX,
