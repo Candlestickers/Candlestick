@@ -12,7 +12,11 @@
 /build
 /dist
 /public/corelibs/wick-engine/
+/public/corelibs/ffmpeg/
 /engine/dist/
+
+# package-lock
+package-lock.json
 
 # misc
 .DS_Store
