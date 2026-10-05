@@ -49,6 +49,8 @@ import actionIconActive from 'resources/mobile-inspector-icons/action-icon-activ
 
 import xIcon from 'resources/mobile-inspector-icons/x-icon.svg';
 import yIcon from 'resources/mobile-inspector-icons/y-icon.svg';
+import pivotXIcon from 'resources/mobile-inspector-icons/pivot-x-icon.svg';
+import pivotYIcon from 'resources/mobile-inspector-icons/pivot-y-icon.svg';
 import wIcon from 'resources/mobile-inspector-icons/w-icon.svg';
 import hIcon from 'resources/mobile-inspector-icons/h-icon.svg';
 import scaleWIcon from 'resources/mobile-inspector-icons/scaleW-icon.svg';
@@ -587,10 +589,10 @@ class MobileInspector extends Component {
       <MobileInspectorDualNumericInput
         tooltip1="Pivot X"
         tooltip2="Pivot Y"
-        icon1={xIcon}
-        iconAlt1="x Icon"
-        icon2={yIcon}
-        iconAlt2="Y Icon"
+        icon1={pivotXIcon}
+        iconAlt1="Pivot X Icon"
+        icon2={pivotYIcon}
+        iconAlt2="Pivot Y Icon"
         val1={x}
         val2={y}
         onChange1={(val) => this.setSelectionAttribute('relativePivot', {x: val, y})}
