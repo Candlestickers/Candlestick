@@ -127,6 +127,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
                 else if (name.endsWith('.png')) mimeType = 'image/png'
                 else if (name.endsWith('.jpeg') || name.endsWith('.jpg')) mimeType = 'image/jpeg'
                 else if (name.endsWith('.gif')) mimeType = 'image/gif'
+                else if (name.endsWith('.webp')) mimeType = 'image/webp'
 
                 const blob = new Blob([bytes], { type: mimeType })
                 const file = new File([blob], name, { type: mimeType })
@@ -276,17 +277,17 @@ class Editor extends EditorCore {
         this._onEyedropperPickedColor = (color) => { };
 
         // Resizable panels
-        this.RESIZE_THROTTLE_AMOUNT_MS = 100;
-        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 300;
+        this.RESIZE_THROTTLE_AMOUNT_MS = 20;
+        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 20;
         this.resizeProps = {
-            onStopResize: throttle(this.onStopResize, this.resizeThrottleAmount),
-            onStopPopoutOutlinerResize: throttle(this.onStopPopoutOutlinerResize, this.resizeThrottleAmount),
-            onStopInspectorResize: throttle(this.onStopInspectorResize, this.resizeThrottleAmount),
-            onStopAssetLibraryResize: throttle(this.onStopAssetLibraryResize, this.resizeThrottleAmount),
-            onStopTimelineResize: throttle(this.onStopTimelineResize, this.resizeThrottleAmount),
-            onStopCodeEditorResize: throttle(this.onStopCodeEditorResize, this.resizeThrottleAmount),
-            onResize: throttle(this.onResize, this.resizeThrottleAmount),
-            onWindowResize: throttle(this.onWindowResize, this.windowResizeThrottleAmount),
+            onStopResize: throttle(this.onStopResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopPopoutOutlinerResize: throttle(this.onStopPopoutOutlinerResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopInspectorResize: throttle(this.onStopInspectorResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopAssetLibraryResize: throttle(this.onStopAssetLibraryResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopTimelineResize: throttle(this.onStopTimelineResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopCodeEditorResize: throttle(this.onStopCodeEditorResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onResize: throttle(this.onResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onWindowResize: throttle(this.onWindowResize, this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS),
         };
         window.addEventListener("resize", this.resizeProps.onWindowResize);
 
@@ -509,7 +510,33 @@ class Editor extends EditorCore {
      * Resets the editor in preparation for a project load.
      */
     resetEditorForLoad = () => {
-
+        // Re-apply saved frame size so HIDE_CONTENT_DOTS and cell dims are correct after every project load
+        if (window.Wick && window.Wick.GUIElement) {
+            const G = window.Wick.GUIElement;
+            const stored = localStorage.getItem('wickEditorFrameSizeValue');
+            if (stored !== null) {
+                const v = parseInt(stored);
+                const XSW = 8, XSH = 16;
+                let w, h;
+                if (v <= 50) {
+                    const t = v / 50;
+                    w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH - XSW));
+                    const ht = Math.max(v, 25) / 50;
+                    h = Math.round(XSH + ht * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+                } else if (v <= 100) {
+                    const t = (v - 50) / 50;
+                    w = Math.round(G.GRID_SMALL_CELL_WIDTH + t * (G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH));
+                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+                } else {
+                    const t = (v - 100) / 50;
+                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
+                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+                }
+                G.GRID_DEFAULT_CELL_WIDTH = w;
+                G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
+                G.HIDE_CONTENT_DOTS = v < 15;
+            }
+        }
     }
 
     /**

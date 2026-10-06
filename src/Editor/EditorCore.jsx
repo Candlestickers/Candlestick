@@ -1130,6 +1130,7 @@ class EditorCore extends Component {
         }
 
         let createCallback = (asset) => {
+            if (!asset) return;
             if (options.create) this.createImageFromAsset(asset.uuid, options.location.x || 0, options.location.y || 0);
         }
 
@@ -2380,12 +2381,14 @@ class EditorCore extends Component {
 
     extendFrame = () => {
         var frames = this.project.selection.getSelectedObjects('Frame');
+        if (frames.length === 0) frames = this.project.activeTimeline.activeFrames;
         this.project.extendFrames(frames);
         this.project.guiElement.draw();
     }
 
     shrinkFrame = () => {
         var frames = this.project.selection.getSelectedObjects('Frame');
+        if (frames.length === 0) frames = this.project.activeTimeline.activeFrames;
         this.project.shrinkFrames(frames);
         this.project.guiElement.draw();
     }
