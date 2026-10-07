@@ -17,9 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import View from './View';
 
-Wick.View.Frame = class extends Wick.View {
+export default class Frame extends View {
     /**
      * A multiplier for the resolution for the rasterization process.
      * E.g. a multiplier of 2 will make a path 100 pixels wide rasterize into an image 200 pixels wide.
@@ -29,7 +31,7 @@ Wick.View.Frame = class extends Wick.View {
     }
 
     static get RASTERIZE_RESOLUTION_MODIFIER_FOR_DEVICE() {
-        return Wick.View.Frame.RASTERIZE_RESOLUTION_MODIFIER / window.devicePixelRatio;
+        return Frame.RASTERIZE_RESOLUTION_MODIFIER / window.devicePixelRatio;
     }
 
     /**

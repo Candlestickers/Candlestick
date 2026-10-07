@@ -17,9 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
 
-Wick.View = class {
+export default class View {
     /**
      * The paper.js scope that all Wick.View subclasses will use to render to.
      */
@@ -64,7 +64,7 @@ Wick.View = class {
      *
      */
     get paper () {
-        return Wick.View.paperScope;
+        return View.paperScope;
     }
 
     /**

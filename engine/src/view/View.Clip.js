@@ -17,9 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import View from './View';
 
-Wick.View.Clip = class extends Wick.View {
+export default class Clip extends View {
     static get BORDER_STROKE_WIDTH () {
         return 2;
     }
@@ -187,18 +188,18 @@ Wick.View.Clip = class extends Wick.View {
         var bounds = this.bounds;
 
         // Change border colors based on if the Clip caused an error
-        var strokeColor = Wick.View.Clip.BORDER_STROKE_COLOR_NORMAL;
+        var strokeColor = Clip.BORDER_STROKE_COLOR_NORMAL;
         if(this.model.project.error && this.model.project.error.uuid === this.model.uuid) {
-            strokeColor = Wick.View.Clip.BORDER_STROKE_COLOR_HAS_CODE_ERROR;
+            strokeColor = Clip.BORDER_STROKE_COLOR_HAS_CODE_ERROR;
         } else if(this.model.hasContentfulScripts) {
-            strokeColor = Wick.View.Clip.BORDER_STROKE_COLOR_HAS_CODE;
+            strokeColor = Clip.BORDER_STROKE_COLOR_HAS_CODE;
         }
 
         var border = new paper.Path.Rectangle({
             name: 'border',
             from: bounds.topLeft,
             to: bounds.bottomRight,
-            strokeWidth: Wick.View.Clip.BORDER_STROKE_WIDTH / this.paper.view.zoom,
+            strokeWidth: Clip.BORDER_STROKE_WIDTH / this.paper.view.zoom,
             strokeColor: strokeColor,
             insert: false,
         });

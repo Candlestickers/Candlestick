@@ -116,7 +116,26 @@ import 'view/paper-ext/View.gestures.js';
 import 'view/paper-ext/View.pressure.js';
 import 'view/paper-ext/View.scrollToZoom.js';
 
+import View from 'view/View';
+import ViewProject from 'view/View.Project';
+import ViewSelection from 'view/View.Selection';
+import ViewClip from 'view/View.Clip';
+import ViewButton from 'view/View.Button';
+import ViewTimeline from 'view/View.Timeline';
+import ViewLayer from 'view/View.Layer';
+import ViewFrame from 'view/View.Frame';
+import ViewPath from 'view/View.Path';
+
 jQueryMousewheel(jQuery);
+
+View.Project = ViewProject;
+View.Selection = ViewSelection;
+View.Clip = ViewClip;
+View.Button = ViewButton;
+View.Timeline = ViewTimeline;
+View.Layer = ViewLayer;
+View.Frame = ViewFrame;
+View.Path = ViewPath;
 
 window.WickSound = WickSound;
 
@@ -132,6 +151,7 @@ const Wick = {
     Tool, Tools: {
         Brush, Cursor, Ellipse, Eraser, Eyedropper, FillBucket, Interact, Line, None, Pan, PathCursor, Pencil, Rectangle, Text, Zoom
     },
+    View,
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',
