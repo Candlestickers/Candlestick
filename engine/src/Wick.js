@@ -17,6 +17,35 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import 'lib/base64-arraybuffer.js';
+import 'lib/convert-range.js';
+import 'lib/croquis.js';
+import 'lib/currentTransform.js';
+import 'lib/esprima.js';
+import 'lib/floodfill.min.js';
+import 'lib/howler.js';
+import 'lib/hull.js';
+import 'lib/invert.min.js';
+import 'lib/is-var-name.js';
+import jQuery from 'lib/jquery-3.3.1.min.js';
+import jQueryMousewheel from 'lib/jquery.mousewheel.js';
+import 'lib/jquery.pressure.js';
+import 'lib/jszip.js';
+import 'lib/lerp.js';
+import 'lib/localforage.min.js';
+import 'lib/paper.js';
+import 'lib/platform.js';
+import 'lib/potrace.js';
+import 'lib/quadtree.min.js';
+import 'lib/reserved-words.js';
+import 'lib/roundRect.js';
+import 'lib/timestamp.js';
+import 'lib/soundcloud-waveform.js';
+import 'lib/Tween.js';
+import 'lib/uuid.js';
+
+jQueryMousewheel(jQuery);
+
 /**
  * This object creates a Wick namespace for wick-engine functionality and utilities.
  */

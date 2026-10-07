@@ -4,7 +4,7 @@
  * @license is-var-name | ISC (c) Shinnosuke Watanabe
  * https://github.com/shinnn/is-var-name
 */
-function isVarName(str) {
+export default function isVarName(str) {
 	if (typeof str !== 'string') {
 		return false;
 	}

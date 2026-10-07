@@ -136,3 +136,4 @@ var SCWF = function () {
 
 	return SoundCloudWaveform;
 }
+export default SCWF;
