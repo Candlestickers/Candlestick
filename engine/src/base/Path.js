@@ -17,12 +17,14 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Base from './Base';
 
 /**
  * Represents a Wick Path.
  */
-Wick.Path = class extends Wick.Base {
+export default class Path extends Base {
     /**
      * Create a Wick Path.
      * @param {array} json - Path data exported from paper.js using exportJSON({asString:false}).

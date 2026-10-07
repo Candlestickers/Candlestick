@@ -17,13 +17,15 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import hull from 'hull.js';
-// import paper from 'paper';
+import hull from 'lib/hull.js';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tickable from './Tickable';
 
 /**
  * A class representing a Wick Clip.
  */
-Wick.Clip = class extends Wick.Tickable {
+export default class Clip extends Tickable {
     /**
      * Returns a list of all possible animation types for this object.
      * @type {Object} - An object containing keys that represent the animation type a a key and a human-readable version of the animation type as a value.

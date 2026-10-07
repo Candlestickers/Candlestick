@@ -55,7 +55,22 @@ import ToolSettings from './ToolSettings';
 
 import BuiltinAssets from 'src/builtinassets/BuiltinAssets';
 
+import Base from 'base/Base';
+import Button from 'base/Button';
+import Clip from 'base/Clip';
+import Frame from 'base/Frame';
+import Layer from 'base/Layer';
+import Path from 'base/Path';
+import Project from 'base/Project';
+import Selection from 'base/Selection';
+import Tickable from 'base/Tickable';
+import Timeline from 'base/Timeline';
+import Tween from 'base/Tween';
+import WickSound from 'base/WickSound';
+
 jQueryMousewheel(jQuery);
+
+window.WickSound = WickSound;
 
 /**
  * This object creates a Wick namespace for wick-engine functionality and utilities.
@@ -63,6 +78,7 @@ jQueryMousewheel(jQuery);
 const Wick = {
     Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree, ToolSettings, Transformation,
     BuiltinAssets: new BuiltinAssets(),
+    Base, Button, Clip, Frame, Layer, Path, Project, Selection, Tickable, Timeline, Tween,
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',

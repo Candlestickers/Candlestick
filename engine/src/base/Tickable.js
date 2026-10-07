@@ -17,12 +17,15 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import esprima from 'esprima';
+import esprima from 'lib/esprima.js';
+import Wick from 'src/Wick';
+import GlobalAPI from 'src/GlobalAPI';
+import Base from './Base';
 
 /**
  * A class that is extended by any wick object that ticks.
  */
-Wick.Tickable = class extends Wick.Base {
+export default class Tickable extends Base {
     /**
      * Debugging feature. Logs errors as they happen
      */

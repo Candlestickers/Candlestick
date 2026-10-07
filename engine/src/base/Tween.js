@@ -17,13 +17,15 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import TWEEN from '@tweenjs/tween.js';
-// import lerp from 'lerp';
+import TWEEN from 'lib/Tween.js';
+import lerp from 'lib/lerp.js';
+import Wick from 'src/Wick';
+import Base from './Base';
 
 /**
  * Class representing a tween.
  */
-Wick.Tween = class extends Wick.Base {
+export default class Tween extends Base {
     static get VALID_EASING_TYPES () {
         return ['none', 'in', 'out', 'in-out',
             'in-cubic', 'out-cubic', 'in-out-cubic',
