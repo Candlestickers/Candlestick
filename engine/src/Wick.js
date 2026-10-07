@@ -53,6 +53,8 @@ import WickObjectCache from './ObjectCache';
 import Transformation from './Transformation';
 import ToolSettings from './ToolSettings';
 
+import BuiltinAssets from 'src/builtinassets/BuiltinAssets';
+
 jQueryMousewheel(jQuery);
 
 /**
@@ -60,6 +62,7 @@ jQueryMousewheel(jQuery);
  */
 const Wick = {
     Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree, ToolSettings, Transformation,
+    BuiltinAssets: new BuiltinAssets(),
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',

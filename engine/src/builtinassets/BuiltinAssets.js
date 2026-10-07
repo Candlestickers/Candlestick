@@ -17,12 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
 
 /**
  * Global utility class for creating instances of builtin assets.
  */
-BuiltinAssets = class {
+export default class BuiltinAssets {
     generateVcam () {
         var vcam = new Wick.Clip();
 
@@ -140,5 +141,3 @@ BuiltinAssets = class {
         return vcam;
     }
 }
-
-Wick.BuiltinAssets = new BuiltinAssets();
