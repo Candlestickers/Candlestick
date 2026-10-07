@@ -17,9 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
 
-Wick.Tools.Rectangle = class extends Wick.Tool {
+export default class Rectangle extends Tool {
     /**
      *
      */

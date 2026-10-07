@@ -88,6 +88,23 @@ import SvgFile from 'export/svg/SvgFile';
 import ImageSequence from 'export/image/imageSequence';
 import ZIPExport from 'export/zip/ZIPExport';
 
+import Tool from 'tools/Tool';
+import Brush from 'tools/Brush';
+import Cursor from 'tools/Cursor';
+import Ellipse from 'tools/Ellipse';
+import Eraser from 'tools/Eraser';
+import Eyedropper from 'tools/Eyedropper';
+import FillBucket from 'tools/FillBucket';
+import Interact from 'tools/Interact';
+import Line from 'tools/Line';
+import None from 'tools/None';
+import Pan from 'tools/Pan';
+import PathCursor from 'tools/PathCursor';
+import Pencil from 'tools/Pencil';
+import Rectangle from 'tools/Rectangle';
+import Text from 'tools/Text';
+import Zoom from 'tools/Zoom';
+
 jQueryMousewheel(jQuery);
 
 window.WickSound = WickSound;
@@ -101,6 +118,9 @@ const Wick = {
     Base, Button, Clip, Frame, Layer, Path, Project, Selection, Tickable, Timeline, Tween,
     Asset, ClipAsset, FileAsset, FontAsset, GIFAsset, ImageAsset, SoundAsset, SVGAsset,
     ExportUtils, AudioTrack, AutoSave, HTMLExport, HTMLPreview, ImageSequence, SvgFile, WickFile, WickObjectFile, ZIPExport,
+    Tool, Tools: {
+        Brush, Cursor, Ellipse, Eraser, Eyedropper, FillBucket, Interact, Line, None, Pan, PathCursor, Pencil, Rectangle, Text, Zoom
+    },
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',

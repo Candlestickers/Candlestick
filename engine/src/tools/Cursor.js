@@ -17,9 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
 
-Wick.Tools.Cursor = class extends Wick.Tool {
+export default class Cursor extends Tool {
 	/**
 	 * Creates a cursor tool.
 	 */
@@ -43,7 +45,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
 		this.CURSOR_MOVE = 'cursors/move.png';
 		this.CURSOR_GRAD = 'cursors/gradMove.png';
 		this.hitResult = new this.paper.HitResult();
-		this.selectionBox = new this.paper.SelectionBox(paper);
+		this.selectionBox = new this.paper.SelectionBox(this.paper);
 		this.selectedItems = [];
 		this.currentCursorIcon = '';
 	}
