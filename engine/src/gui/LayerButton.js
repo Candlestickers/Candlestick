@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.LayerButton = class extends Wick.GUIElement.Button {
+import Wick from 'src/Wick';
+import Button from './Button';
+
+export default class LayerButton extends Button {
     constructor (model, args) {
         super(model, args);
 

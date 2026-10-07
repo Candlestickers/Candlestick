@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.LayersContainer = class extends Wick.GUIElement {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+
+export default class LayersContainer extends GUIElement {
     constructor (model) {
         super(model);
 

@@ -17,12 +17,14 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import $ from 'jquery';
+import $ from 'jquery';
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
 
 /**
  * The Project GUIElement handles the creation of the canvas and drawing the rest of the GUIElements.
  */
-Wick.GUIElement.Project = class extends Wick.GUIElement {
+export default class Project extends GUIElement {
     /**
      * Create a new GUIElement and build the canvas.
      */

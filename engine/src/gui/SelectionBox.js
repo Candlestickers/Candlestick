@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.SelectionBox = class extends Wick.GUIElement.Ghost {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+import Ghost from './Ghost';
+
+export default class SelectionBox extends Ghost {
     constructor (model) {
         super(model);
     }

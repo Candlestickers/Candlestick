@@ -17,7 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.Icons = class {
+import Wick from 'src/Wick';
+
+export default class Icons {
     static get dummyIcon () {
         if(!this._dummyIcon) {
             this._dummyIcon = new Image();

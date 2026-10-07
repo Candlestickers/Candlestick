@@ -126,6 +126,35 @@ import ViewLayer from 'view/View.Layer';
 import ViewFrame from 'view/View.Frame';
 import ViewPath from 'view/View.Path';
 
+import GUIElement from 'gui/GUIElement';
+import GUIButton from 'gui/Button';
+import GUIGhost from 'gui/Ghost';
+import GUIIcons from 'gui/Icons';
+import GUIActionButton from 'gui/ActionButton';
+import GUIActionButtonsContainer from 'gui/ActionButtonsContainer';
+import GUIBreadcrumbs from 'gui/Breadcrumbs';
+import GUIBreadcrumbsButton from 'gui/BreadcrumbsButton';
+import GUIFrame from 'gui/Frame';
+import GUIFrameEdgeGhost from 'gui/FrameEdgeGhost';
+import GUIFrameGhost from 'gui/FrameGhost';
+import GUIFramesContainer from 'gui/FramesContainer';
+import GUILayer from 'gui/Layer';
+import GUILayerButton from 'gui/LayerButton';
+import GUILayerCreateLabel from 'gui/LayerCreateLabel';
+import GUILayersContainer from 'gui/LayersContainer';
+import GUINumberLine from 'gui/NumberLine';
+import GUIOnionSkinRange from 'gui/OnionSkinRange';
+import GUIPlayhead from 'gui/Playhead';
+import GUIPopupMenu from 'gui/PopupMenu';
+import GUIProject from 'gui/Project';
+import GUIScrollbar from 'gui/Scrollbar';
+import GUIScrollbarGrabber from 'gui/ScrollbarGrabber';
+import GUISelectionBox from 'gui/SelectionBox';
+import GUITimeline from 'gui/Timeline';
+import GUITooltip from 'gui/Tooltip';
+import GUITween from 'gui/Tween';
+import GUITweenGhost from 'gui/TweenGhost';
+
 jQueryMousewheel(jQuery);
 
 View.Project = ViewProject;
@@ -136,6 +165,34 @@ View.Timeline = ViewTimeline;
 View.Layer = ViewLayer;
 View.Frame = ViewFrame;
 View.Path = ViewPath;
+
+GUIElement.Button = GUIButton;
+GUIElement.Ghost = GUIGhost;
+GUIElement.Icons = GUIIcons;
+GUIElement.ActionButton = GUIActionButton;
+GUIElement.ActionButtonsContainer = GUIActionButtonsContainer;
+GUIElement.Breadcrumbs = GUIBreadcrumbs;
+GUIElement.BreadcrumbsButton = GUIBreadcrumbsButton;
+GUIElement.Frame = GUIFrame;
+GUIElement.FrameEdgeGhost = GUIFrameEdgeGhost;
+GUIElement.FrameGhost = GUIFrameGhost;
+GUIElement.FramesContainer = GUIFramesContainer;
+GUIElement.Layer = GUILayer;
+GUIElement.LayerButton = GUILayerButton;
+GUIElement.LayerCreateLabel = GUILayerCreateLabel;
+GUIElement.LayersContainer = GUILayersContainer;
+GUIElement.NumberLine = GUINumberLine;
+GUIElement.OnionSkinRange = GUIOnionSkinRange;
+GUIElement.Playhead = GUIPlayhead;
+GUIElement.PopupMenu = GUIPopupMenu;
+GUIElement.Project = GUIProject;
+GUIElement.Scrollbar = GUIScrollbar;
+GUIElement.ScrollbarGrabber = GUIScrollbarGrabber;
+GUIElement.SelectionBox = GUISelectionBox;
+GUIElement.Timeline = GUITimeline;
+GUIElement.Tooltip = GUITooltip;
+GUIElement.Tween = GUITween;
+GUIElement.TweenGhost = GUITweenGhost;
 
 window.WickSound = WickSound;
 
@@ -152,6 +209,7 @@ const Wick = {
         Brush, Cursor, Ellipse, Eraser, Eyedropper, FillBucket, Interact, Line, None, Pan, PathCursor, Pencil, Rectangle, Text, Zoom
     },
     View,
+    GUIElement,
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',
