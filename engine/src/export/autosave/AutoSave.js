@@ -17,12 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import localforage from 'localforage';
+import localforage from 'lib/localforage.min.js';
+import Wick from 'src/Wick';
 
 /**
  * Utility class for autosaving projects.
  */
-Wick.AutoSave = class {
+export default class AutoSave {
     /**
      * The key used to store the list of autosaved projects.
      * @type {string}
@@ -44,14 +45,14 @@ Wick.AutoSave = class {
      * @param {Wick.Project} project - the project to store in the AutoSave system.
      */
     static save (project, callback) {
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.time('serialize step')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.time('serialize step')
         var autosaveData = this.generateAutosaveData(project);
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('serialize step')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('serialize step')
 
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.time('localforage step')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.time('localforage step')
         this.addAutosaveToList(autosaveData, () => {
             this.writeAutosaveData(autosaveData, () => {
-                if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('localforage step')
+                if(AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('localforage step')
                 callback();
             })
         });
@@ -88,16 +89,16 @@ Wick.AutoSave = class {
      * @param {Wick.Project} project - The project to generate data for.
      */
     static generateAutosaveData (project) {
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.time('generate objects list')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.time('generate objects list')
         var objects = Wick.ObjectCache.getActiveObjects(project);
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('generate objects list')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('generate objects list')
 
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.time('serialize objects list')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.time('serialize objects list')
         var projectData = project.serialize();
         var objectsData = objects.map(object => {
             return object.serialize();
         });
-        if(Wick.AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('serialize objects list')
+        if(AutoSave.ENABLE_PERF_TIMERS) console.timeEnd('serialize objects list')
         var lastModified = projectData.metadata.lastModified;
 
         return {
@@ -221,4 +222,4 @@ Wick.AutoSave = class {
     }
 }
 
-Wick.AutoSave.ENABLE_PERF_TIMERS = false;
+AutoSave.ENABLE_PERF_TIMERS = false;

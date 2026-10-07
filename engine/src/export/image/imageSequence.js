@@ -17,12 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import JSZip from 'jszip';
+import JSZip from 'lib/jszip.js';
+import Wick from 'src/Wick';
 
 /**
  * Utility class for generating image sequences.
  */
-Wick.ImageSequence = class {
+export default class ImageSequence {
     /**
      * Create a png sequence from a project.
      * @param {Wick.Project} project - the project to create a png sequence from

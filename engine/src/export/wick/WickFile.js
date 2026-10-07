@@ -17,13 +17,15 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import platform from 'platform';
-// import JSZip from 'jszip';
+import platform from 'lib/platform.js';
+import JSZip from 'lib/jszip.js';
+import Wick from 'src/Wick';
+import WickFileAlpha from './WickFile.Alpha.js';
 
 /**
  * Utility class for creating and parsing wick files.
  */
-Wick.WickFile = class {
+export default class WickFile {
     /**
      * Generate some metadata for debugging wick projects.
      * @returns {object}
@@ -75,7 +77,7 @@ Wick.WickFile = class {
                     if (!projectData.objects) {
                         // No metadata! This is a pre 1.0.9a project. Convert it.
                         console.log('Wick.WickFile: Converting old project format.');
-                        projectData = Wick.WickFile.Alpha.convertJsonProject(projectData);
+                        projectData = WickFileAlpha.convertJsonProject(projectData);
                     }
 
                     projectData.assets = [];
@@ -254,3 +256,5 @@ Wick.WickFile = class {
         });
     }
 }
+
+WickFile.Alpha = WickFileAlpha;

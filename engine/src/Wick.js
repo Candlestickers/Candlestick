@@ -77,6 +77,17 @@ import ImageAsset from 'base/asset/ImageAsset';
 import SoundAsset from 'base/asset/SoundAsset';
 import SVGAsset from 'base/asset/SVGAsset';
 
+import ExportUtils from 'export/ExportUtils';
+import AudioTrack from 'export/audio/AudioTrack';
+import AutoSave from 'export/autosave/AutoSave';
+import WickFile from 'export/wick/WickFile';
+import WickObjectFile from 'export/wickobj/WickObjectFile';
+import HTMLExport from 'export/html/HTMLExport';
+import HTMLPreview from 'export/html/HTMLPreview';
+import SvgFile from 'export/svg/SvgFile'; 
+import ImageSequence from 'export/image/imageSequence';
+import ZIPExport from 'export/zip/ZIPExport';
+
 jQueryMousewheel(jQuery);
 
 window.WickSound = WickSound;
@@ -89,6 +100,7 @@ const Wick = {
     BuiltinAssets: new BuiltinAssets(),
     Base, Button, Clip, Frame, Layer, Path, Project, Selection, Tickable, Timeline, Tween,
     Asset, ClipAsset, FileAsset, FontAsset, GIFAsset, ImageAsset, SoundAsset, SVGAsset,
+    ExportUtils, AudioTrack, AutoSave, HTMLExport, HTMLPreview, ImageSequence, SvgFile, WickFile, WickObjectFile, ZIPExport,
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',

@@ -17,15 +17,16 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import JSZip from 'jszip';
+import JSZip from 'lib/jszip.js';
+import Wick from 'src/Wick';
 
 /**
  * Utility class for bundling Wick projects inside ZIP files.
  */
-Wick.ZIPExport = class {
+export default class ZIPExport {
     static bundleProject (project, done) {
         this._downloadDependenciesFiles(items => {
-            window.Wick.WickFile.toWickFile(project, wickFile => {
+            Wick.WickFile.toWickFile(project, wickFile => {
                 this._bundleFilesIntoZip(wickFile, items, done);
             });
         });

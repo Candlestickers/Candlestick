@@ -17,10 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+
 /**
  * Utility class for creating and parsing wickobject files.
  */
-Wick.WickObjectFile = class {
+export default class WickObjectFile {
     /**
      * Create a project from a wick file.
      * @param {Blob | string} wickObjectFile - WickObject file containing object data (can be a Blob or a dataURL string)

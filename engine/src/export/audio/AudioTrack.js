@@ -17,9 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import Base64ArrayBuffer from 'base64-arraybuffer';
+import Base64ArrayBuffer from 'lib/base64-arraybuffer.js';
 
-Wick.AudioTrack = class {
+export default class AudioTrack {
     /**
      * @type {Wick.Project}
      */
@@ -58,7 +58,7 @@ Wick.AudioTrack = class {
                 return;
             }
 
-            Wick.AudioTrack.generateProjectAudioBuffer(audioInfo, audioArraybuffer => {
+            AudioTrack.generateProjectAudioBuffer(audioInfo, audioArraybuffer => {
                 args.callback(audioArraybuffer);
             },
             args.onProgress);
