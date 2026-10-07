@@ -17,9 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import FileAsset from './FileAsset';
 
-Wick.ImageAsset = class extends Wick.FileAsset {
+export default class ImageAsset extends FileAsset {
     /**
      * Valid MIME types for image assets.
      * @returns {string[]} Array of strings representing MIME types in the form image/filetype.

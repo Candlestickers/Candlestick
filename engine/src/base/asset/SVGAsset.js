@@ -17,9 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import FileAsset from './FileAsset';
 
-Wick.SVGAsset = class extends Wick.FileAsset {
+export default class SVGAsset extends FileAsset {
     /**
      * Returns all valid MIME types for files which can be converted to SVGAssets.
      * @return {string[]} Array of strings of MIME types in the form MediaType/Subtype.

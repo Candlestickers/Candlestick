@@ -68,6 +68,15 @@ import Timeline from 'base/Timeline';
 import Tween from 'base/Tween';
 import WickSound from 'base/WickSound';
 
+import Asset from 'base/asset/Asset';
+import ClipAsset from 'base/asset/ClipAsset';
+import FileAsset from 'base/asset/FileAsset';
+import FontAsset from 'base/asset/FontAsset';
+import GIFAsset from 'base/asset/GIFAsset';
+import ImageAsset from 'base/asset/ImageAsset';
+import SoundAsset from 'base/asset/SoundAsset';
+import SVGAsset from 'base/asset/SVGAsset';
+
 jQueryMousewheel(jQuery);
 
 window.WickSound = WickSound;
@@ -79,6 +88,7 @@ const Wick = {
     Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree, ToolSettings, Transformation,
     BuiltinAssets: new BuiltinAssets(),
     Base, Button, Clip, Frame, Layer, Path, Project, Selection, Tickable, Timeline, Tween,
+    Asset, ClipAsset, FileAsset, FontAsset, GIFAsset, ImageAsset, SoundAsset, SVGAsset,
 
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',
