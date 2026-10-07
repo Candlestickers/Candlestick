@@ -17,12 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import { v4 as uuidv4 } from 'uuid';
+import uuidv4 from 'lib/uuid.js';
+import Wick from './Wick';
 
 /**
  * A clipboard utility class for copy/paste functionality.
  */
-Wick.Clipboard = class {
+export default class Clipboard {
     static get LOCALSTORAGE_KEY () {
         return 'wick_engine_clipboard';
     }

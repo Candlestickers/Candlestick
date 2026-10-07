@@ -18,7 +18,7 @@
  */
 
 /** Class representing a transformation. */
-Wick.Transformation = class {
+export default class Transformation {
     /**
      * Creates a Transformation.
      * @param {number} x - The translation on the x-axis
@@ -84,6 +84,6 @@ Wick.Transformation = class {
      * @returns {Wick.Transformation} the copied transformation.
      */
     copy () {
-        return new Wick.Transformation(this.values);
+        return new Transformation(this.values);
     }
 }

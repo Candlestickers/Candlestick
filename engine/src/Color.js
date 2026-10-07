@@ -17,13 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
 
 /* Small utility class for colors. */
-Wick.Color = class {
+export default class Color {
     /**
      * Creates a Transformation.
-     * @param {string} color - (Optional) Hex or Rgba color to create a Wick.Color from.
+     * @param {string} color - (Optional) Hex or Rgba color to create a Color from.
      */
     constructor (color) {
         if(color) {
@@ -98,11 +98,11 @@ Wick.Color = class {
 
     /**
      * Adds together the r, g, and b values of both colors and produces a new color.
-     * @param {Wick.Color} color - the color to add to this color
-     * @returns {Wick.Color} the resulting color
+     * @param {Color} color - the color to add to this color
+     * @returns {Color} the resulting color
      */
     add (color) {
-        var newColor = new Wick.Color();
+        var newColor = new Color();
         newColor.r = this.r + color.r;
         newColor.g = this.g + color.g;
         newColor.b = this.b + color.b;
@@ -111,11 +111,11 @@ Wick.Color = class {
 
     /**
      * Multiplies the r, g, and b values of both colors to produce a new color.
-     * @param {Wick.Color} color - the color to multiply with this color
-     * @returns {Wick.Color} the resulting color
+     * @param {Color} color - the color to multiply with this color
+     * @returns {Color} the resulting color
      */
     multiply (n) {
-        var newColor = new Wick.Color();
+        var newColor = new Color();
         newColor.r = this.r * n;
         newColor.g = this.g * n;
         newColor.b = this.b * n;
@@ -124,9 +124,9 @@ Wick.Color = class {
 
     /**
      * Averages the r, g, and b values of two colors.
-     * @param {Wick.Color} colorA - a color to average with another color (order does not matter)
-     * @param {Wick.Color} colorB - a color to average with another color (order does not matter)
-     * @returns {Wick.Color} The resulting averaged color.
+     * @param {Color} colorA - a color to average with another color (order does not matter)
+     * @param {Color} colorB - a color to average with another color (order does not matter)
+     * @returns {Color} The resulting averaged color.
      */
     static average (colorA, colorB) {
         return colorA.multiply(0.5).add(colorB.multiply(0.5));

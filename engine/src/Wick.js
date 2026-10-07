@@ -44,12 +44,23 @@ import 'lib/soundcloud-waveform.js';
 import 'lib/Tween.js';
 import 'lib/uuid.js';
 
+import Clipboard from './Clipboard';
+import Quadtree from './Quadtree';
+import Color from './Color';
+import FileCache from './FileCache';
+import History from './History';
+import WickObjectCache from './ObjectCache';
+import Transformation from './Transformation';
+import ToolSettings from './ToolSettings';
+
 jQueryMousewheel(jQuery);
 
 /**
  * This object creates a Wick namespace for wick-engine functionality and utilities.
  */
 const Wick = {
+    Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree, ToolSettings, Transformation,
+
     version: window.WICK_ENGINE_BUILD_VERSION || "dev",
     resourcepath: '../dist/',
     _originals: {}, // Eventually store a single instance of each type of Wick.Base object (see Wick.Base constructor).

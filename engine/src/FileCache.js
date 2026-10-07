@@ -17,12 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import localforage from 'localforage';
+import localforage from 'lib/localforage.min.js';
 
 /**
  * Global utility class for storing and retrieving large file data.
  */
-Wick.FileCache = class {
+export default class FileCache {
     /**
      * A prefix to use in localforage so we can identify which items in localforage are files.
      * @type {string}
@@ -123,4 +123,4 @@ Wick.FileCache = class {
     }
 }
 
-Wick.FileCache._files = {};
+FileCache._files = {};

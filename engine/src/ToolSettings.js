@@ -17,9 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import localforage from 'localforage';
+import localforage from 'lib/localforage.min.js';
+import Wick from 'src/Wick';
 
-Wick.ToolSettings = class {
+export default class ToolSettings {
     static get DEFAULT_SETTINGS () {
         return [{
             type: 'color',
@@ -259,11 +260,11 @@ Wick.ToolSettings = class {
      * Load settings from localstorage if they exist.
      */
     loadSettingsFromLocalstorage () {
-        Wick.ToolSettings.DEFAULT_SETTINGS.forEach(setting => {
+        ToolSettings.DEFAULT_SETTINGS.forEach(setting => {
             // Get stored tool setting if it exists.
             localforage.getItem(this.getStorageKey(setting.name)).then( (value) => {
                 if (value !== null && value !== undefined) {
-                    this._settings[setting.name].value = setting.type === 'color' ? new window.Wick.Color(value) : value;
+                    this._settings[setting.name].value = setting.type === 'color' ? new Wick.Color(value) : value;
                 }
             });
         });

@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-GlobalAPI = class {
+export default class GlobalAPI {
     /**
      * Defines all api members such as functions and properties.
      * @type {string[]}
