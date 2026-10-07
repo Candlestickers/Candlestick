@@ -17,7 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
 
 class SelectionWidget {
     /**
@@ -25,8 +26,9 @@ class SelectionWidget {
      */
     constructor(args) {
         if (!args) args = {};
-        if (!args.layer) args.layer = paper.project.activeLayer;
+        if (!args.layer) args.layer = Wick.View.paperScope.project.activeLayer;
 
+        this.paper = args.layer.project;
         this._layer = args.layer;
         this._item = new paper.Group({ insert:false });
 
@@ -379,7 +381,7 @@ class SelectionWidget {
                 let matrix = (new paper.Matrix()).translate(this.pivot).rotate(this.boxRotation).shear(this.boxShear, 0).translate(-this.pivot.x, -this.pivot.y);
                 for (let snapPoint of snapPoints) {
                     snapPoint = matrix.transform(snapPoint);
-                    if (snapPoint.getDistance(e.point) <= SelectionWidget.PIVOT_SNAP_THRESHOLD / paper.view.zoom) {
+                    if (snapPoint.getDistance(e.point) <= SelectionWidget.PIVOT_SNAP_THRESHOLD / this.paper.view.zoom) {
                         initialDelta = snapPoint.subtract(item.position);
                         break;
                     }
@@ -576,7 +578,7 @@ class SelectionWidget {
             name: 'border',
             from: this.boundingBox.topLeft,
             to: this.boundingBox.bottomRight,
-            strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
+            strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / this.paper.view.zoom,
             strokeColor: SelectionWidget.BOX_STROKE_COLOR,
             insert: false,
         });
@@ -592,7 +594,7 @@ class SelectionWidget {
             var border = new paper.Path.Rectangle({
                 from: bounds.topLeft,
                 to: bounds.bottomRight,
-                strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / paper.view.zoom,
+                strokeWidth: SelectionWidget.BOX_STROKE_WIDTH / this.paper.view.zoom,
                 strokeColor: SelectionWidget.BOX_STROKE_COLOR,
             });
             //border.rotate(-this.boxRotation, this._center);
@@ -636,8 +638,8 @@ class SelectionWidget {
 
         var circle = new paper.Path.Circle({
             center: args.center,
-            radius: SelectionWidget.HANDLE_RADIUS / paper.view.zoom,
-            strokeWidth: SelectionWidget.HANDLE_STROKE_WIDTH / paper.view.zoom,
+            radius: SelectionWidget.HANDLE_RADIUS / this.paper.view.zoom,
+            strokeWidth: SelectionWidget.HANDLE_STROKE_WIDTH / this.paper.view.zoom,
             strokeColor: args.strokeColor,
             fillColor: args.fillColor,
             insert: false,
@@ -651,7 +653,7 @@ class SelectionWidget {
 
     _buildRotationHotspot(cornerName) {
         // Build the not-yet-rotated hotspot
-        var r = SelectionWidget.ROTATION_HOTSPOT_RADIUS / paper.view.zoom;
+        var r = SelectionWidget.ROTATION_HOTSPOT_RADIUS / this.paper.view.zoom;
         var angle = (Math.atan(this.boxShear) + Math.PI/2) % Math.PI - Math.PI/2;
         if (angle === -Math.PI/2) angle = Math.sign(this.boxShear) * 1.57; // Just under pi/2
         if (cornerName === 'topLeft' || cornerName === 'bottomRight') angle *= -1;
@@ -690,14 +692,14 @@ class SelectionWidget {
             outline.remove();
             outline.fillColor = 'rgba(0,0,0,0)';
             outline.strokeColor = SelectionWidget.GHOST_STROKE_COLOR;
-            outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2 / paper.view.zoom;
+            outline.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH * 2 / this.paper.view.zoom;
             ghost.addChild(outline);
 
             var outline2 = outline.clone();
             outline2.remove();
             outline2.fillColor = 'rgba(0,0,0,0)';
             outline2.strokeColor = '#ffffff';
-            outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom;
+            outline2.strokeWidth = SelectionWidget.GHOST_STROKE_WIDTH / this.paper.view.zoom;
             ghost.addChild(outline2);
         });
 
@@ -706,7 +708,7 @@ class SelectionWidget {
             to: this.boundingBox.bottomRight,
             fillColor: 'rgba(0,0,0,0)',
             strokeColor: SelectionWidget.GHOST_STROKE_COLOR,
-            strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom,
+            strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / this.paper.view.zoom,
             applyMatrix: false,
         });
         boundsOutline.shear(this.boxShear, 0, this._center).rotate(this.boxRotation, this._center);
@@ -799,7 +801,7 @@ class SelectionWidget {
         this._gradientGUI.linePath.segments[1].point.x = length;
 
         // Scale the GUI to appear the same size
-        const scaling = 1 / paper.view.zoom;
+        const scaling = 1 / this.paper.view.zoom;
         this._gradientGUI.startPath.scaling = scaling;
         this._gradientGUI.endPath.scaling = scaling;
 
@@ -946,7 +948,7 @@ class SelectionWidget {
             stopObj.data.selected = selected;
         }
         stopObj.data.setScaling = () => {
-            const scaling = 1 / paper.view.zoom;
+            const scaling = 1 / this.paper.view.zoom;
             stopObj.scaling = scaling;
             stopObj.position.y = -SelectionWidget.ENDPOINT_RADIUS * scaling;
         }
@@ -1140,7 +1142,7 @@ class SelectionWidget {
     }
     _calculateValidOffset (point) {
         let distance = -this._calculateDistanceFromLine(point);
-        if (distance < 0 || distance > (SelectionWidget.COLOR_STOP_CREATION_DISTANCE / paper.view.zoom)) {
+        if (distance < 0 || distance > (SelectionWidget.COLOR_STOP_CREATION_DISTANCE / this.paper.view.zoom)) {
             return null;
         }
         let offset = this._calculateOffset(point);

@@ -105,6 +105,17 @@ import Rectangle from 'tools/Rectangle';
 import Text from 'tools/Text';
 import Zoom from 'tools/Zoom';
 
+import 'view/paper-ext/Layer.erase.js';
+import 'view/paper-ext/Paper.hole.js';
+import 'view/paper-ext/Paper.OrderingUtils.js';
+import 'view/paper-ext/Paper.SelectionBox.js';
+import 'view/paper-ext/Paper.SelectionWidget.js';
+import 'view/paper-ext/Path.potrace.js';
+import 'view/paper-ext/TextItem.edit.js';
+import 'view/paper-ext/View.gestures.js';
+import 'view/paper-ext/View.pressure.js';
+import 'view/paper-ext/View.scrollToZoom.js';
+
 jQueryMousewheel(jQuery);
 
 window.WickSound = WickSound;

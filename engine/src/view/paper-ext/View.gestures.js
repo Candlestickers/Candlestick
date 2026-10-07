@@ -17,7 +17,7 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
 
 paper.View.inject({
   enableGestures: function(args) {

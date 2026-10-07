@@ -17,8 +17,6 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import potrace from 'potrace';
-
 /*
     paper-potrace.js
     Adds a potrace() method to paper Items that runs potrace on a rasterized
@@ -27,7 +25,9 @@
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
 
-// import paper from 'paper';
+import potrace from 'lib/potrace.js';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
 
 paper.Path.inject({
     potrace: function(args) {
@@ -36,7 +36,7 @@ paper.Path.inject({
         if(!args.resolution) throw new Error('Path.potrace: args.resolution is required.');
         if(!args.done) throw new Error('Path.potrace: args.done is required.');
 
-        var finalRasterResolution = paper.view.resolution*args.resolution/window.devicePixelRatio;
+        var finalRasterResolution = Wick.View.paperScope.view.resolution*args.resolution/window.devicePixelRatio;
         var raster = this.rasterize(finalRasterResolution);
         // Fixes issues with browser zoom
         var zoomFactor = args.resolution * raster.bounds.width / raster.width;
@@ -51,7 +51,7 @@ paper.Path.inject({
         var img = new Image();
         img.onload = function() {
             var svg = potrace.fromImage(img).toSVG(1/args.resolution);
-            var potracePath = paper.project.importSVG(svg);
+            var potracePath = Wick.View.paperScope.project.importSVG(svg);
             potracePath.position.x = self.position.x;
             potracePath.position.y = self.position.y;
             potracePath.remove();

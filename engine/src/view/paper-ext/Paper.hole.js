@@ -26,8 +26,9 @@
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
 
-// import potrace from 'potrace';
-// import paper from 'paper';
+import potrace from 'lib/potrace.js';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
 
 (function () {
 
@@ -81,7 +82,7 @@
             return;
         }
 
-        var rasterResolution = paper.view.resolution * RASTER_BASE_RESOLUTION / window.devicePixelRatio;
+        var rasterResolution = Wick.View.paperScope.view.resolution * RASTER_BASE_RESOLUTION / window.devicePixelRatio;
         var layerPathsRaster = layerGroup.rasterize(rasterResolution, {insert:false});
         // Fixes issues with browser zoom
         var zoomFactor = RASTER_BASE_RESOLUTION * layerPathsRaster.bounds.width / layerPathsRaster.width;
@@ -150,7 +151,7 @@
             var xmlString = svgString
               , parser = new DOMParser()
               , doc = parser.parseFromString(xmlString, "text/xml");
-            var resultHolePath = paper.project.importSVG(doc, {insert:true});
+            var resultHolePath = Wick.View.paperScope.project.importSVG(doc, {insert:true});
             resultHolePath.remove();
             resultHolePath = resultHolePath.children[0];
 

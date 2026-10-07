@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// import paper from 'paper';
+import paper from 'lib/paper.js';
 
 class PaperJSOrderingUtils {
     /**
