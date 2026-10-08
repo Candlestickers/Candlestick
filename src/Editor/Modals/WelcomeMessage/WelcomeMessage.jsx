@@ -42,7 +42,7 @@ class WelcomeModal extends Component {
             "Autosaved Settings",
             "Improved Video Import/Export",
             "Fixed Vcam",
-            "Bug Fixes"
+            "Other Changes and Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
