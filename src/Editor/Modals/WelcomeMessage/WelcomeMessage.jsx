@@ -40,9 +40,9 @@ class WelcomeModal extends Component {
             "Movable Pivot",
             "Improved Frame Resizing",
             "Autosaved Settings",
-            "Improved MP4 Export",
+            "Improved Video Import/Export",
             "Fixed Vcam",
-            "Minor Bug Fixes"
+            "Bug Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
