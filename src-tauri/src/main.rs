@@ -51,6 +51,26 @@ struct Frame {
     data: Vec<u8>,
 }
 
+/// Validates a user-supplied output base name (no extension) for use in a
+/// filesystem path. Rejects (rather than silently rewriting) any input that
+/// is empty or contains characters outside `[A-Za-z0-9_-]`, so inputs like
+/// "../../etc/passwd" are refused outright instead of being transformed
+/// into something unexpectedly different (e.g. "../../foo" -> "foo").
+/// Closes CWE-22 (path traversal) for the `name` parameter that feeds
+/// `output_path` in `render_video_ffmpeg`.
+fn validate_output_name(name: &str) -> Result<&str, String> {
+    if name.is_empty() {
+        return Err("output name must not be empty".to_string());
+    }
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        return Err(format!(
+            "invalid output name {:?}: only ASCII letters, digits, '-' and '_' are allowed",
+            name
+        ));
+    }
+    Ok(name)
+}
+
 #[tauri::command]
 async fn render_video_ffmpeg(
     frames: Vec<Frame>,
@@ -82,7 +102,12 @@ async fn render_video_ffmpeg(
         ).map_err(|e| e.to_string())?;
     }
 
-    let output_path = temp_dir.join(format!("{}.mp4", name));
+    // Reject (rather than silently rewrite) an output name that could cause
+    // path traversal or otherwise place the rendered file outside the
+    // intended temp directory. See `validate_output_name` for the allow-list.
+    let safe_name = validate_output_name(&name)?;
+
+    let output_path = temp_dir.join(format!("{}.mp4", safe_name));
 
     let mut cmd = Command::new("ffmpeg");
     cmd.current_dir(&temp_dir)
@@ -231,5 +256,33 @@ fn handle_file_open(app_handle: &AppHandle, path: String) {
 
         let pending = app_handle.state::<PendingFiles>();
         pending.0.lock().unwrap().insert(label, path);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_output_name;
+
+    #[test]
+    fn accepts_valid_names_unchanged() {
+        for valid in ["output", "my-video_01", "AbC123", "a", "___", "---"] {
+            assert_eq!(validate_output_name(valid), Ok(valid));
+        }
+    }
+
+    #[test]
+    fn rejects_empty_name() {
+        assert!(validate_output_name("").is_err());
+    }
+
+    #[test]
+    fn rejects_path_traversal_and_separators() {
+        let bad_inputs = [
+            "../secret", "../../etc/passwd", "/etc/passwd", "a/../../b",
+            "a\\..\\b", "..\\..\\windows", "foo/bar", "foo\\bar", "..", "foo..bar",
+        ];
+        for input in bad_inputs {
+            assert!(validate_output_name(input).is_err(), "expected {:?} to be rejected", input);
+        }
     }
 }
