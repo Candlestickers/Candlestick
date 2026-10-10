@@ -164,7 +164,7 @@ Wick.Timeline = class extends Wick.Base {
         return frames;
     }
 
-    /*
+    /**
      * exports the project as an SVG file
      * @onError {function(message)}
      * @returns {string} - the SVG for the current view in string form (maybe this should be base64 or a blob or something)
@@ -173,13 +173,13 @@ Wick.Timeline = class extends Wick.Base {
 
             var svgOutput = paper.project.exportSVG({ asString: true, matchShapes: true, embedImages: true });
             return svgOutput;
-        }
+    }
         //this.project.paper.
         //paperGroup = new paper.Group
-        /**
-         * The active frame, determined by the playhead position.
-         * @type {Wick.Frame}
-         */
+    /**
+     * The active frame, determined by the playhead position.
+     * @type {Wick.Frame}
+     */
     get activeFrame() {
         return this.activeLayer && this.activeLayer.activeFrame;
     }

@@ -40,7 +40,7 @@ class BuiltinLibrary extends Component {
     if (window.__TAURI__) {
       return 'builtinlibrary/'; // resources folder will be flattened
     }
-    return process.env.PUBLIC_URL + '/builtinlibrary/';
+    return import.meta.env.VITE_PUBLIC_URL + 'builtinlibrary/';
   }
 
   render() {
