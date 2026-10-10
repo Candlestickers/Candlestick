@@ -17,9 +17,9 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { Component } from 'react';
+import React, { Component, useRef, useEffect } from 'react';
 
-import { DropTarget } from 'react-dnd';
+import { useDrop } from 'react-dnd';
 import DragDropTypes from 'Editor/DragDropTypes.js';
 
 import './_timeline.scss';
@@ -52,6 +52,42 @@ class Timeline extends Component {
   componentDidMount () {
     let canvasContainerElem = this.canvasContainer.current;
     this.props.project.guiElement.canvasContainer = canvasContainerElem;
+    this.props.project.guiElement.draw();
+    canvasContainerElem.addEventListener('wickFrameSizeScroll', this._onFrameSizeScroll);
+  }
+
+  componentWillUnmount () {
+    if (this.canvasContainer.current) {
+      this.canvasContainer.current.removeEventListener('wickFrameSizeScroll', this._onFrameSizeScroll);
+    }
+  }
+
+  _onFrameSizeScroll = (e) => {
+    const step = e.detail.delta > 0 ? 3 : -3;
+    const current = parseInt(localStorage.getItem('wickEditorFrameSizeValue') || '100');
+    const v = Math.max(0, Math.min(150, current + step));
+    localStorage.setItem('wickEditorFrameSizeValue', v);
+    if (window.Wick && window.Wick.GUIElement) {
+      const G = window.Wick.GUIElement;
+      const XSW = 8, XSH = 16;
+      let w, h;
+      if (v <= 50) {
+        const t = v / 50;
+        w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH - XSW));
+        h = Math.round(XSH + t * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+      } else if (v <= 100) {
+        const t = (v - 50) / 50;
+        w = Math.round(G.GRID_SMALL_CELL_WIDTH + t * (G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH));
+        h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+      } else {
+        const t = (v - 100) / 50;
+        w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
+        h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+      }
+      G.GRID_DEFAULT_CELL_WIDTH = w;
+      G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
+      G.HIDE_CONTENT_DOTS = v < 15;
+    }
     this.props.project.guiElement.draw();
   }
 
@@ -96,14 +132,14 @@ class Timeline extends Component {
   }
 
   render() {
-    const { connectDropTarget, isOver } = this.props;
+    const { dropRef, isOver } = this.props;
 
-    return connectDropTarget (
-      <div id="animation-timeline-container" aria-label="Timeline">
+    return (
+      <div id="animation-timeline-container" aria-label="Timeline" ref={dropRef}>
         { isOver && <div className="drag-drop-overlay" /> }
         <div id="animation-timeline" ref={this.canvasContainer} />
       </div>
-    )
+    );
   }
 
   onProjectModified = () => {
@@ -115,25 +151,26 @@ class Timeline extends Component {
   }
 }
 
-// react-dnd drag and drop target params
-const timelineTarget = {
-  drop(props, monitor) {
-    const dropLocation = monitor.getClientOffset();
-    let draggedItem = monitor.getItem();
-    props.dragSoundOntoTimeline(draggedItem.uuid, dropLocation.x, dropLocation.y, true);
-  },
-  hover(props, monitor, component) {
-    const dropLocation = monitor.getClientOffset();
-    let draggedItem = monitor.getItem();
-    props.dragSoundOntoTimeline(draggedItem.uuid, dropLocation.x, dropLocation.y, false);
-  }
+function TimelineDrop(props) {
+  const propsRef = useRef(props);
+  useEffect(() => { propsRef.current = props; });
+
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: DragDropTypes.TIMELINE,
+    drop(item, monitor) {
+      const p = propsRef.current;
+      const dropLocation = monitor.getClientOffset();
+      p.dragSoundOntoTimeline(item.uuid, dropLocation.x, dropLocation.y, true);
+    },
+    hover(item, monitor) {
+      const p = propsRef.current;
+      const dropLocation = monitor.getClientOffset();
+      p.dragSoundOntoTimeline(item.uuid, dropLocation.x, dropLocation.y, false);
+    },
+    collect: monitor => ({ isOver: monitor.isOver() }),
+  }));
+
+  return <Timeline {...props} isOver={isOver} dropRef={drop} />;
 }
 
-function collect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-  };
-}
-
-export default DropTarget(DragDropTypes.TIMELINE, timelineTarget, collect)(Timeline)
+export default TimelineDrop;

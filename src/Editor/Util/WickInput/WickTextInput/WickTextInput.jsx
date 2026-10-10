@@ -25,6 +25,7 @@ export default function WickTextInput (props) {
         if (fullIsValid(val)) { val = internalCleanup(val) }
 
         setDisplayValue(val);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.value])
 
     function wrappedOnChange (val) {

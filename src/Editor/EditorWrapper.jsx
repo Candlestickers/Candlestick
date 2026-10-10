@@ -37,6 +37,7 @@ export default function EditorWrapper(props) {
     useEffect(() => {
         Hook(window.console, log => {props.editor.setConsoleLogs([...props.editor.state.consoleLogs, log])}, false)
         return () => Unhook(window.console)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
 
@@ -53,9 +54,10 @@ export default function EditorWrapper(props) {
                 newestOnTop={false}
                 closeOnClick
                 rtl={false}
-                pauseOnVisibilityChange
+                pauseOnFocusLoss
                 draggable
-                pauseOnHover />
+                pauseOnHover
+                icon={false} />
             <GlobalHotKeys
                 allowChanges={true}
                 keyMap={props.editor.getKeyMap()}

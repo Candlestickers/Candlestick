@@ -13,6 +13,7 @@ export default function SimpleProjectSettings(props) {
 
   useEffect(() => {
     resetProjectDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.open]);
 
   function resetProjectDetails() {

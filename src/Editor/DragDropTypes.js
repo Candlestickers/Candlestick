@@ -1,6 +1,6 @@
 import { NativeTypes } from 'react-dnd-html5-backend';
 
-export default {
+const DragDropTypes = {
   GET_ASSET_TYPE: (props) => {
     if (props.asset) return props.asset.classname;
     return 'Asset'
@@ -30,3 +30,4 @@ export default {
     }
   }
 }
+export default DragDropTypes

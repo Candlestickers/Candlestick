@@ -32,7 +32,7 @@ Wick.Timeline = class extends Wick.Base {
 
         this._playing = true;
 
-        this._fillGapsMethod = "auto_extend";
+        this._fillGapsMethod = localStorage.getItem('wickEditorFillGapsMethod') || "auto_extend";
         this._frameForced = false;
     }
 
