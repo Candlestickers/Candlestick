@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.7.5.16.35.24";
+var WICK_ENGINE_BUILD_VERSION = "2026.10.9.18.21.28";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -46742,7 +46742,11 @@ Wick.Transformation = class {
     this.scaleX = args.scaleX === undefined ? 1 : args.scaleX;
     this.scaleY = args.scaleY === undefined ? 1 : args.scaleY;
     this.rotation = args.rotation === undefined ? 0 : args.rotation;
+    this.shear = args.shear === undefined ? 0 : args.shear;
     this.opacity = args.opacity === undefined ? 1 : args.opacity;
+  }
+  get scaledSkew() {
+    return Math.atan(this.shear * this.scaleY / this.scaleX) * 180 / Math.PI;
   }
 
   /**
@@ -46755,8 +46759,36 @@ Wick.Transformation = class {
       scaleX: this.scaleX,
       scaleY: this.scaleY,
       rotation: this.rotation,
+      shear: this.shear,
       opacity: this.opacity
     };
+  }
+
+  /**
+   * An array containing the matrix values of this transformation.
+   */
+  get matrix() {
+    // https://github.com/paperjs/paper.js/blob/92775f5279c05fb7f0a743e9e7fa02cd40ec1e70/src/basic/Matrix.js#L687
+    const {
+      x,
+      y,
+      scaleX,
+      scaleY,
+      rotation
+    } = this;
+    const degrees = 180 / Math.PI,
+      rotateRad = (rotation % 360 + 360) % 360 / degrees,
+      skewRad = this.scaledSkew / degrees;
+    let a, b, c, d;
+    let r = scaleX,
+      r2 = r * r,
+      det = scaleY * r,
+      at = Math.tan(skewRad) * r2;
+    a = Math.cos(rotateRad) * r;
+    b = Math.sqrt(r2 - a * a) * (rotateRad <= Math.PI ? 1 : -1);
+    d = (b * at + a * det) / r2;
+    c = (a * at - b * det) / r2;
+    return [a, b, c, d, x, y];
   }
 
   /**
@@ -47017,18 +47049,9 @@ Wick.ToolSettings = class {
   loadSettingsFromLocalstorage() {
     Wick.ToolSettings.DEFAULT_SETTINGS.forEach(setting => {
       // Get stored tool setting if it exists.
-      localforage.getItem(this.getStorageKey(name)).then(value => {
-        if (value) {
-          this._settings[args.name] = {
-            type: args.type,
-            name: args.name,
-            value: type === 'color' ? new window.Wick.Color(value) : value,
-            default: args.default,
-            min: args.min,
-            max: args.max,
-            step: args.step,
-            options: args.options
-          };
+      localforage.getItem(this.getStorageKey(setting.name)).then(value => {
+        if (value !== null && value !== undefined) {
+          this._settings[setting.name].value = setting.type === 'color' ? new window.Wick.Color(value) : value;
         }
       });
     });
@@ -47770,9 +47793,10 @@ Wick.AudioTrack = class {
     let copyto = 0;
     let copyfrom = 0;
     if (offsetSeconds < 0) {
-      copyto = -1 * offsetSeconds * ctx.sampleRate;
+      // Fixes floating point errors
+      copyto = Math.round(-1 * offsetSeconds * ctx.sampleRate);
     } else {
-      copyfrom = offsetSeconds * ctx.sampleRate;
+      copyfrom = Math.round(offsetSeconds * ctx.sampleRate);
     }
 
     // Copy buffer information.
@@ -47859,7 +47883,7 @@ Wick.AudioTrack = class {
 
     let lengthOfDelay = ctx.sampleRate * delaySeconds;
     let lengthOfOriginalSound = ctx.sampleRate * originalBuffer.duration;
-    var delayedBuffer = ctx.createBuffer(originalBuffer.numberOfChannels, lengthOfDelay + lengthOfOriginalSound, ctx.sampleRate);
+    var delayedBuffer = ctx.createBuffer(originalBuffer.numberOfChannels, Math.round(lengthOfDelay + lengthOfOriginalSound), ctx.sampleRate);
 
     // For each channel in the audiobuffer...
     for (var srcChannel = 0; srcChannel < originalBuffer.numberOfChannels; srcChannel++) {
@@ -50748,7 +50772,7 @@ Wick.Project = class extends Wick.Base {
    */
   tryToAutoCreateTween() {
     var frame = this.activeFrame;
-    if (frame.tweens.length > 0 && !frame.getTweenAtPosition(frame.getRelativePlayheadPosition())) {
+    if (frame && frame.tweens.length > 0 && !frame.getTweenAtPosition(frame.getRelativePlayheadPosition())) {
       frame.createTween();
     }
   }
@@ -51521,8 +51545,9 @@ Wick.Project = class extends Wick.Base {
       x: 0,
       y: 0
     };
-
-    // renderCopy.tick();
+    renderCopy.view.render();
+    this.resetSoundsPlayed();
+    renderCopy.tick();
 
     // We need full control over when paper.js renders, if we leave autoUpdate on, it's possible to lose frames if paper.js doesnt automatically render as fast as we are generating the images.
     // (See paper.js docs for info about autoUpdate)
@@ -51556,7 +51581,6 @@ Wick.Project = class extends Wick.Base {
       renderCopy.view.paper.view.update();
       frameImage.src = renderCopy.view.canvas.toDataURL(args.imageType);
     };
-    this.resetSoundsPlayed();
     renderFrame();
   }
   resetSoundsPlayed() {
@@ -51747,6 +51771,7 @@ Wick.Selection = class extends Wick.Base {
     super(args);
     this._selectedObjectsUUIDs = args.selectedObjects || [];
     this._widgetRotation = args.widgetRotation || 0;
+    this._widgetShear = args.widgetShear || 0;
     this._pivotPoint = {
       x: 0,
       y: 0
@@ -51760,6 +51785,7 @@ Wick.Selection = class extends Wick.Base {
     var data = super._serialize(args);
     data.selectedObjects = Array.from(this._selectedObjectsUUIDs);
     data.widgetRotation = this._widgetRotation;
+    data.widgetShear = this._widgetShear;
     data.pivotPoint = {
       x: this._pivotPoint.x,
       y: this._pivotPoint.y
@@ -51772,6 +51798,7 @@ Wick.Selection = class extends Wick.Base {
     super._deserialize(data);
     this._selectedObjectsUUIDs = data.selectedObjects || [];
     this._widgetRotation = data.widgetRotation;
+    this._widgetShear = data.widgetShear;
     this._pivotPoint = {
       x: data.pivotPoint.x,
       y: data.pivotPoint.y
@@ -51788,7 +51815,7 @@ Wick.Selection = class extends Wick.Base {
    * @type {string[]}
    */
   get allAttributeNames() {
-    return ["strokeWidth", "fillColor", "strokeColor", "name", "filename", "fontSize", "fontFamily", "fontWeight", "fontStyle", "src", "frameLength", "x", "y", "originX", "originY", "width", "height", "rotation", "opacity", "sound", "soundVolume", "soundStart", "identifier", "easingType", "fullRotations", "scaleX", "scaleY", "animationType", "singleFrameNumber", "isSynced"];
+    return ["strokeWidth", "fillColor", "strokeColor", "name", "filename", "fontSize", "fontFamily", "fontWeight", "fontStyle", "src", "frameLength", "x", "y", "originX", "originY", "width", "height", "rotation", "shear", "relativePivot", "opacity", "sound", "soundVolume", "soundStart", "identifier", "easingType", "fullRotations", "scaleX", "scaleY", "animationType", "singleFrameNumber", "isSynced"];
   }
 
   /**
@@ -52067,6 +52094,17 @@ Wick.Selection = class extends Wick.Base {
   }
 
   /**
+   * The shear of the selection (used for canvas selections)
+   * @type {number}
+   */
+  get widgetShear() {
+    return this._widgetShear;
+  }
+  set widgetShear(widgetShear) {
+    this._widgetShear = widgetShear;
+  }
+
+  /**
    * The point that transformations to the selection will be based around.
    * @type {object}
    */
@@ -52220,6 +52258,75 @@ Wick.Selection = class extends Wick.Base {
   set rotation(rotation) {
     this.project.tryToAutoCreateTween();
     this.view.rotation = rotation;
+  }
+
+  /**
+   * The horizontal shear of the selection.
+   * @type {number}
+   */
+  get shear() {
+    return this.view.shear;
+  }
+  set shear(shear) {
+    this.project.tryToAutoCreateTween();
+    this.view.shear = shear;
+  }
+
+  /** 
+   * The pivot location relative to the selection transform.
+   * @type {}
+   */
+  get relativePivot() {
+    var selectedObject = this.getSelectedObject();
+    if (selectedObject instanceof Wick.Clip) {
+      return {
+        x: selectedObject.pivot[0],
+        y: selectedObject.pivot[1]
+      };
+    } else {
+      var invScaleX = 1 / this.scaleX,
+        invScaleY = 1 / this.scaleY;
+      if (isNaN(invScaleX) || invScaleX === 0) invScaleX = 1;
+      if (isNaN(invScaleY) || invScaleY === 0) invScaleY = 1;
+      var center = this.view._getSelectedObjectsBounds().center;
+      var globalToLocal = new paper.Matrix().scale(invScaleX, invScaleY).shear(-this.shear, 0).rotate(-this.rotation);
+      var relativePivot = globalToLocal.transform(new paper.Point(this._pivotPoint).subtract(center));
+      return {
+        x: relativePivot.x,
+        y: relativePivot.y
+      };
+    }
+  }
+  set relativePivot(relativePivot) {
+    this.project.tryToAutoCreateTween();
+    var selectedObject = this.getSelectedObject();
+    if (selectedObject instanceof Wick.Clip) {
+      var transformation = selectedObject.transformation;
+      var matrix = new paper.Matrix(transformation.matrix);
+
+      // Move the clip opposite the pivot so it appears stationary
+      var pivot = matrix.transform(new paper.Point(relativePivot).subtract(selectedObject.pivot));
+      selectedObject.pivot = [relativePivot.x, relativePivot.y];
+      transformation.x = pivot.x;
+      transformation.y = pivot.y;
+      selectedObject.transformation = transformation;
+      this.pivotPoint = {
+        x: pivot.x,
+        y: pivot.y
+      };
+    } else {
+      var scaleX = this.scaleX,
+        scaleY = this.scaleY;
+      if (isNaN(scaleX) || scaleX === 0) scaleX = 1;
+      if (isNaN(scaleY) || scaleY === 0) scaleY = 1;
+      var center = this.view._getSelectedObjectsBounds().center;
+      var localToGlobal = new paper.Matrix().rotate(this.rotation).shear(this.shear, 0).scale(scaleX, scaleY);
+      var pivot = localToGlobal.transform(relativePivot).add(center);
+      this.pivotPoint = {
+        x: pivot.x,
+        y: pivot.y
+      };
+    }
   }
 
   /**
@@ -52608,6 +52715,7 @@ Wick.Selection = class extends Wick.Base {
     if (selectedObject instanceof Wick.Clip) {
       // Single clip selected: Use that Clip's transformation for the pivot point and rotation
       this._widgetRotation = selectedObject.transformation.rotation;
+      this._widgetShear = selectedObject.transformation.shear;
       this._pivotPoint = {
         x: selectedObject.transformation.x,
         y: selectedObject.transformation.y
@@ -52615,6 +52723,7 @@ Wick.Selection = class extends Wick.Base {
     } else {
       // Path selected or multiple objects selected: Reset rotation and use center for pivot point
       this._widgetRotation = 0;
+      this._widgetShear = 0;
       var boundsCenter = this.view._getSelectedObjectsBounds().center;
       this._pivotPoint = {
         x: boundsCenter.x,
@@ -52737,7 +52846,7 @@ Wick.Timeline = class extends Wick.Base {
     this._playheadPosition = 1;
     this._activeLayerIndex = 0;
     this._playing = true;
-    this._fillGapsMethod = "auto_extend";
+    this._fillGapsMethod = localStorage.getItem('wickEditorFillGapsMethod') || "auto_extend";
     this._frameForced = false;
   }
   _serialize(args) {
@@ -53252,7 +53361,7 @@ Wick.Tween = class extends Wick.Base {
     var t = Wick.Tween._calculateTimeValue(tweenA, tweenB, playheadPosition);
 
     // Interpolate every transformation attribute using the t value
-    ["x", "y", "scaleX", "scaleY", "rotation", "opacity"].forEach(propName => {
+    ["x", "y", "scaleX", "scaleY", "rotation", "shear", "opacity"].forEach(propName => {
       var tweenFn = tweenA._getTweenFunction();
       var tt = tweenFn(t);
       var valA = tweenA.transformation[propName];
@@ -54227,7 +54336,8 @@ Wick.ImageAsset = class extends Wick.FileAsset {
   static getValidMIMETypes() {
     let jpgTypes = ['image/jpeg'];
     let pngTypes = ['image/png'];
-    return jpgTypes.concat(pngTypes);
+    let webpTypes = ['image/webp'];
+    return jpgTypes.concat(pngTypes).concat(webpTypes);
   }
 
   /**
@@ -54235,7 +54345,7 @@ Wick.ImageAsset = class extends Wick.FileAsset {
    * @returns {string[]} Array of strings representing extensions.
    */
   static getValidExtensions() {
-    return ['.jpeg', '.jpg', '.png'];
+    return ['.jpeg', '.jpg', '.png', '.webp'];
   }
 
   /**
@@ -54537,6 +54647,7 @@ Wick.GIFAsset = class extends Wick.ClipAsset {
         // Check if all images have been created
         imagesCreatedCount++;
         if (imagesCreatedCount === images.length) {
+          clip._isSynced = true;
           Wick.ClipAsset.fromClip(clip, project, clipAsset => {
             // Attach a reference to the resulting clip to all images
             images.forEach(image => {
@@ -56499,6 +56610,7 @@ Wick.Clip = class extends Wick.Tickable {
     this._playedOnce = false;
     this._isSynced = false;
     this._transformation = args.transformation || new Wick.Transformation();
+    this._pivot = args.pivot || [0, 0];
     this.cursor = 'default';
     this._isClone = false;
     this._sourceClipUUID = null;
@@ -56513,6 +56625,7 @@ Wick.Clip = class extends Wick.Tickable {
   _serialize(args) {
     var data = super._serialize(args);
     data.transformation = this.transformation.values;
+    data.pivot = this._pivot;
     data.timeline = this._timeline;
     data.animationType = this._animationType;
     data.singleFrameNumber = this._singleFrameNumber;
@@ -56523,6 +56636,7 @@ Wick.Clip = class extends Wick.Tickable {
   _deserialize(data) {
     super._deserialize(data);
     this.transformation = new Wick.Transformation(data.transformation);
+    this.pivot = data.pivot;
     this._timeline = data.timeline;
     this._animationType = data.animationType || 'loop';
     this._singleFrameNumber = data.singleFrameNumber || 1;
@@ -56831,15 +56945,18 @@ Wick.Clip = class extends Wick.Tickable {
   breakApart() {
     var leftovers = [];
     this.timeline.activeFrames.forEach(frame => {
-      frame.clips.forEach(clip => {
-        clip.transformation.x += this.transformation.x;
-        clip.transformation.y += this.transformation.y;
+      frame.clips.forEach(originalClip => {
+        // Keep original objects in case of undo
+        const clip = originalClip.copy();
+        clip.transformation.x += this.transformation.x - this.pivot[0];
+        clip.transformation.y += this.transformation.y - this.pivot[1];
         this.parentTimeline.activeFrame.addClip(clip);
         leftovers.push(clip);
       });
-      frame.paths.forEach(path => {
-        path.x += this.transformation.x;
-        path.y += this.transformation.y;
+      frame.paths.forEach(originalPath => {
+        const path = originalPath.copy();
+        path.x += this.transformation.x - this.pivot[0];
+        path.y += this.transformation.y - this.pivot[1];
         this.parentTimeline.activeFrame.addPath(path);
         leftovers.push(path);
       });
@@ -56959,6 +57076,17 @@ Wick.Clip = class extends Wick.Tickable {
         tween.transformation = this._transformation.copy();
       }
     }
+  }
+
+  /**
+   * The pivot point of the clip.
+   * @type {Array}
+   */
+  get pivot() {
+    return this._pivot;
+  }
+  set pivot(pivot) {
+    this._pivot = pivot;
   }
 
   /**
@@ -57650,6 +57778,17 @@ Wick.Clip = class extends Wick.Tickable {
   }
   set rotation(rotation) {
     this.transformation.rotation = rotation;
+    this._onDirtyTransform();
+  }
+  /**
+  * The shear of the clip.
+  * @type {number}
+  */
+  get shear() {
+    return this.transformation.shear;
+  }
+  set shear(shear) {
+    this.transformation.shear = shear;
     this._onDirtyTransform();
   }
 
@@ -58687,9 +58826,11 @@ Wick.Tools.Brush = class extends Wick.Tool {
       this.paper.view._element.parentElement.appendChild(this.croquisDOMElement);
     }
 
-    // Update croquis element canvas size
-    if (this.croquis.getCanvasWidth() !== this.paper.view._element.width || this.croquis.getCanvasHeight() !== this.paper.view._element.height) {
-      this.croquis.setCanvasSize(this.paper.view._element.width, this.paper.view._element.height);
+    // use the CSS pixels size (viewSize) rather than trying to predict with device pixels (element.width) — they change when browser zoom ≠ 100% -H.A.
+    var targetW = Math.round(this.paper.view.viewSize.width);
+    var targetH = Math.round(this.paper.view.viewSize.height);
+    if (this.croquis.getCanvasWidth() !== targetW || this.croquis.getCanvasHeight() !== targetH) {
+      this.croquis.setCanvasSize(targetW, targetH);
     }
 
     // Fake brush opacity in croquis by changing the opacity of the croquis canvas
@@ -59146,7 +59287,7 @@ Wick.Tools.Cursor = class extends Wick.Tool {
   _getCursor() {
     if (!this.hitResult.item) {
       return this.CURSOR_DEFAULT;
-    } else if (this.hitResult.item.data.parentItem && this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop' || this.hitResult.item.data.handleType === 'gradient-point') {
+    } else if (this.hitResult.item.data.parentItem && this.hitResult.item.data.parentItem.data.handleType === 'gradient-stop' || this.hitResult.item.data.handleType === 'gradient-point' || this.hitResult.item.data.handleType === 'pivot') {
       return this.CURSOR_GRAD;
     } else if (this.hitResult.item.data.isSelectionBoxGUI) {
       // Don't show any custom cursor if the mouse is over the border, the border does nothing
@@ -60020,15 +60161,16 @@ Wick.Tools.Line = class extends Wick.Tool {
       const dy = Math.abs(this.startPoint.y - e.point.y);
       const dx = Math.abs(this.startPoint.x - e.point.x);
 
-      // diagnol
-      if (dy && dx && dy / dx > 0.5 && dx / dy > 0.5) {
+      // diagnol (tan(22.5) = 0.41421356237309503)
+      if (dy && dx && dy / dx > 0.41421356237309503 && dx / dy > 0.41421356237309503) {
         const diff = {
           x: this.endPoint.x - this.startPoint.x,
           y: this.endPoint.y - this.startPoint.y
         };
+        const length = (Math.abs(diff.y) + Math.abs(diff.x)) / 2;
         this.endPoint = {
-          x: this.startPoint.x + (dy + dx) / 2 * diff.x / Math.abs(diff.x),
-          y: this.startPoint.y + (dy + dx) / 2 * diff.y / Math.abs(diff.y)
+          x: this.startPoint.x + length * diff.x / Math.abs(diff.x),
+          y: this.startPoint.y + length * diff.y / Math.abs(diff.y)
         };
       } else if (dy > dx)
         // straight vertical
@@ -60896,11 +61038,18 @@ Wick.Tools.Text = class extends Wick.Tool {
     if (window.Wick && Wick.gesture && Wick.gesture.active) {
       return;
     }
+    let oldTargetOnClick = e.event.target.onclick;
+    const targetOnClick = targetEvent => {
+      oldTargetOnClick && oldTargetOnClick(targetEvent);
+      e.event.target.onclick = oldTargetOnClick;
+      this.editingText.focus();
+    };
     if (this.editingText) {
       this.finishEditingText();
     } else if (this.hoveredOverText) {
       this.editingText = this.hoveredOverText;
       e.item.edit(this.project.view.paper);
+      e.event.target.onclick = targetOnClick;
     } else {
       var text = new this.paper.PointText(e.point);
       text.justification = 'left';
@@ -60920,6 +61069,7 @@ Wick.Tools.Text = class extends Wick.Tool {
       this.project.view.render();
       this.editingText = wickText.view.item;
       this.editingText.edit(this.project.view.paper);
+      e.event.target.onclick = targetOnClick;
 
       //this.fireEvent('canvasModified');
     }
@@ -61122,6 +61272,7 @@ Wick.Tools.Zoom = class extends Wick.Tool {
       return resolvedHoles.indexOf(hole) === -1;
     }).forEach(hole => {
       hole.clockwise = !hole.clockwise;
+      hole.fillColor = compoundPath.fillColor;
       paper.project.activeLayer.addChild(hole);
     });
     compoundPath.remove();
@@ -61317,6 +61468,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     var layerPathsRaster = layerGroup.rasterize(rasterResolution, {
       insert: false
     });
+    // Fixes issues with browser zoom
+    var zoomFactor = RASTER_BASE_RESOLUTION * layerPathsRaster.bounds.width / layerPathsRaster.width;
     var rasterCanvas = layerPathsRaster.canvas;
     var rasterCtx = rasterCanvas.getContext('2d');
     var layerPathsImageData = rasterCtx.getImageData(0, 0, layerPathsRaster.width, layerPathsRaster.height);
@@ -61332,8 +61485,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
     rasterCtx.putImageData(layerPathsImageData, 0, 0);
     layerPathsImageData = rasterCtx.getImageData(0, 0, layerPathsRaster.width, layerPathsRaster.height);
     var rasterPosition = layerPathsRaster.bounds.topLeft;
-    var x = (floodFillX - rasterPosition.x) * RASTER_BASE_RESOLUTION;
-    var y = (floodFillY - rasterPosition.y) * RASTER_BASE_RESOLUTION;
+    var x = (floodFillX - rasterPosition.x) * RASTER_BASE_RESOLUTION / zoomFactor;
+    var y = (floodFillY - rasterPosition.y) * RASTER_BASE_RESOLUTION / zoomFactor;
     x = Math.round(x);
     y = Math.round(y);
     var floodFillCanvas = document.createElement('canvas');
@@ -61391,6 +61544,8 @@ Wick.Tools.Zoom = class extends Wick.Tool {
         }
       }
       expandHole(resultHolePath);
+      // Fixes issues with browser zoom
+      resultHolePath.scale(zoomFactor, layerPathsRaster.bounds.topLeft);
       callback(resultHolePath);
     };
     floodFillProcessedImage.src = floodFillCanvas.toDataURL();
@@ -61659,6 +61814,11 @@ class SelectionWidget {
       lineVector: new paper.Point(0, 0)
     };
   }
+  _shearPoint = (point, shearX, shearY, pivot) => {
+    if (!pivot) pivot = new paper.Point(0, 0);
+    let d = point.subtract(pivot);
+    return pivot.add(d.add(d.y * shearX, d.x * shearY));
+  };
 
   /**
    * The item containing the widget GUI
@@ -61688,6 +61848,16 @@ class SelectionWidget {
   }
 
   /**
+   * The horizontal shear of the selection box GUI.
+   */
+  get boxShear() {
+    return this._boxShear;
+  }
+  set boxShear(boxShear) {
+    this._boxShear = boxShear;
+  }
+
+  /**
    * The items currently inside the selection widget
    */
   get itemsInSelection() {
@@ -61708,7 +61878,7 @@ class SelectionWidget {
    * The position of the top left corner of the selection box.
    */
   get position() {
-    return this._boundingBox.topLeft.rotate(this.rotation, this.pivot);
+    return this._shearPoint(this._boundingBox.topLeft, this.shear, 0, this.pivot).rotate(this.rotation, this.pivot);
   }
   set position(position) {
     var d = position.subtract(this.position);
@@ -61750,6 +61920,17 @@ class SelectionWidget {
   }
 
   /**
+   * The horizontal shear of the selection.
+   */
+  get shear() {
+    return this._boxShear;
+  }
+  set shear(shear) {
+    var d = shear - this.shear;
+    this.transformSelection(new paper.Matrix().shear(d, 0));
+  }
+
+  /**
    * Flip the selected items horizontally.
    */
   flipHorizontally() {
@@ -61778,7 +61959,7 @@ class SelectionWidget {
     return this._currentTransformation;
   }
   set currentTransformation(currentTransformation) {
-    if (['translate', 'scale', 'rotate', 'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
+    if (['translate', 'scale-edge', 'scale-corner', 'rotate', 'move-pivot', 'gradient-stop', 'gradient-point', 'gradient-none'].indexOf(currentTransformation) === -1) {
       console.error('Paper.SelectionWidget: Invalid transformation type: ' + currentTransformation);
       currentTransformation = null;
     } else {
@@ -61796,10 +61977,12 @@ class SelectionWidget {
   build(args) {
     if (!args) args = {};
     if (!args.boxRotation) args.boxRotation = 0;
+    if (!args.boxShear) args.boxShear = 0;
     if (!args.items) args.items = [];
     if (!args.pivot) args.pivot = new paper.Point();
     this._itemsInSelection = args.items;
     this._boxRotation = args.boxRotation;
+    this._boxShear = args.boxShear;
     this._pivot = args.pivot;
     this._useGradientGUI = args.useGradientGUI;
     this._boundingBox = this._calculateBoundingBox();
@@ -61819,6 +62002,7 @@ class SelectionWidget {
         this._buildGUI();
       }
       this.layer.addChild(this.item);
+      this._pivotPointHandle.bringToFront();
     }
   }
 
@@ -61831,152 +62015,162 @@ class SelectionWidget {
     }
     this._ghost = this._buildGhost();
     this._layer.addChild(this._ghost);
-    if (item.data.handleType === 'rotation') {
+    if (item.data.handleType === 'pivot') {
+      this.currentTransformation = 'move-pivot';
+      this._newPivot = this.pivot;
+      this._ghost.remove();
+    } else if (item.data.handleType === 'rotation') {
       this.currentTransformation = 'rotate';
     } else if (item.data.handleType === 'scale') {
-      this.currentTransformation = 'scale';
+      if (item.data.handleEdge.includes('Center')) {
+        this.currentTransformation = 'scale-edge';
+      } else {
+        this.currentTransformation = 'scale-corner';
+      }
     } else {
       this.currentTransformation = 'translate';
     }
-    this._ghost.data.initialPosition = this._ghost.position;
+    this._initialPoint = e.point;
+    this._truePivot = this.pivot;
+    this._ghost.data.offset = new paper.Point(0, 0);
     this._ghost.data.scale = new paper.Point(1, 1);
+    this._ghost.data.transform = new paper.Matrix();
   }
 
   /**
    *
    */
   updateTransformation(item, e) {
-    if (this.currentTransformation.substring(0, 8) === 'gradient') {
+    if (this.currentTransformation && this.currentTransformation.substring(0, 8) === 'gradient') {
       return this.updateGradientTransformation(item, e);
     }
-    if (!this.mod || !this.mod.initiated) {
-      this.mod = {
-        initiated: true
-      };
-      this.mod.onePoint = new paper.Point(1, 1);
-      this.mod.initialPoint = e.point;
-      this.mod.truePivot = this.pivot;
-      if (this.currentTransformation === 'translate') {
-        this.mod.action = 'translate';
-        this.mod.initialPosition = this._ghost.position;
-      } else if (this.currentTransformation === 'rotate') {
-        this.mod.action = 'rotate';
-        this.mod.rotateDelta = 0;
-        this.mod.initialAngle = this.mod.initialPoint.subtract(this.pivot).angle;
-        this.mod.initialBoxRotation = this.boxRotation || 0;
-      } else if (item.data.handleEdge.includes('Center')) {
-        this.mod.action = 'move-edge';
-        this.mod.topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
-        this.mod.vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
-        this.mod.transformMatrix = new paper.Matrix();
-      } else {
-        this.mod.action = 'move-corner';
-        this.mod.scaleFactor = this.mod.onePoint;
-      }
-    }
-    this.mod.modifiers = {
+    var modifiers = {
       skew: e.modifiers.command,
       // Skew when Ctrl/Cmd pressed
       center: !e.modifiers.alt,
       // Always scale from center unless Alt pressed
-      freescale: !e.modifiers.shift // Never retain proportions unless Shift pressed
+      constrain: e.modifiers.shift // Never retain proportions unless Shift pressed
     };
-    if (this.mod.action === 'translate') {
-      var initialDelta = e.point.subtract(this.mod.initialPoint);
-      if (!this.mod.modifiers.freescale) {
-        var angle = initialDelta.angle;
-        angle = Math.round(Math.round(angle / 45) * 45) * Math.PI / 180;
-        var angleVector = new paper.Point(Math.cos(angle), Math.sin(angle));
-        initialDelta = initialDelta.project(angleVector);
+    var topLeft = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'leftCenter';
+    var vertical = item.data.handleEdge === 'topCenter' || item.data.handleEdge === 'bottomCenter';
+    this._ghost.matrix.reset();
+    this._ghost.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
+    let unrotatedBounds = this._ghost.bounds.clone();
+    if (modifiers.center) {
+      this._truePivot = this.pivot;
+    } else if (this.currentTransformation === 'scale-edge') {
+      this._truePivot = topLeft ? this._ghost.bounds.bottomRight : this._ghost.bounds.topLeft;
+    } else {
+      let bounds = this._ghost.bounds;
+      switch (item.data.handleEdge) {
+        case 'topRight':
+          this._truePivot = bounds.bottomLeft;
+          break;
+        case 'topLeft':
+          this._truePivot = bounds.bottomRight;
+          break;
+        case 'bottomRight':
+          this._truePivot = bounds.topLeft;
+          break;
+        case 'bottomLeft':
+          this._truePivot = bounds.topRight;
+          break;
       }
-      this.mod.offset = initialDelta;
-      this._ghost.position = this.mod.initialPosition.add(initialDelta);
-    } else if (this.mod.action === 'rotate') {
-      this._ghost.rotate(-this.mod.rotateDelta, this.pivot);
-      var rotateDelta = e.point.subtract(this.pivot).angle - this.mod.initialAngle;
-      if (!this.mod.modifiers.freescale) {
-        rotateDelta = Math.round(Math.round(rotateDelta / 45) * 45);
-      }
-      this.mod.rotateDelta = rotateDelta;
-      this.boxRotation = this.mod.initialBoxRotation + rotateDelta;
-      this._ghost.rotate(this.mod.rotateDelta, this.pivot);
-    } else if (this.mod.action === 'move-corner') {
-      this._ghost.rotate(-this.boxRotation, this.pivot);
-      this._ghost.scale(this.mod.onePoint.divide(this.mod.scaleFactor), this.mod.truePivot);
-      if (this.mod.modifiers.center) {
-        this.mod.truePivot = this.pivot;
-      } else {
-        let bounds = this._ghost.bounds;
-        switch (item.data.handleEdge) {
-          case 'topRight':
-            this.mod.truePivot = bounds.bottomLeft;
+    }
+    let unrotatedPivot = this._truePivot;
+    this._truePivot = this._shearPoint(this._truePivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
+    if (this.currentTransformation === 'move-pivot') {
+      item.matrix.reset();
+      var initialDelta = e.point.subtract(this._initialPoint);
+      if (modifiers.constrain) {
+        var direction = new paper.Point({
+          length: 1,
+          angle: Math.round(initialDelta.angle / 45) * 45
+        });
+        initialDelta = initialDelta.project(direction);
+      } else if (modifiers.center) {
+        let {
+          topLeft,
+          bottomLeft,
+          bottomRight,
+          topRight,
+          topCenter,
+          leftCenter,
+          bottomCenter,
+          rightCenter,
+          center
+        } = unrotatedBounds;
+        let snapPoints = [topLeft, bottomLeft, bottomRight, topRight, topCenter, leftCenter, bottomCenter, rightCenter, center];
+        let matrix = new paper.Matrix().translate(this.pivot).rotate(this.boxRotation).shear(this.boxShear, 0).translate(-this.pivot.x, -this.pivot.y);
+        for (let snapPoint of snapPoints) {
+          snapPoint = matrix.transform(snapPoint);
+          if (snapPoint.getDistance(e.point) <= SelectionWidget.PIVOT_SNAP_THRESHOLD / paper.view.zoom) {
+            initialDelta = snapPoint.subtract(item.position);
             break;
-          case 'topLeft':
-            this.mod.truePivot = bounds.bottomRight;
-            break;
-          case 'bottomRight':
-            this.mod.truePivot = bounds.topLeft;
-            break;
-          case 'bottomLeft':
-            this.mod.truePivot = bounds.topRight;
-            break;
+          }
         }
       }
-      var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot).subtract(this.mod.truePivot);
-      var initialPointRelative = this.mod.initialPoint.rotate(-this.boxRotation, this.pivot).subtract(this.mod.truePivot);
-      var scaleFactor = currentPointRelative.divide(initialPointRelative);
-      if (!this.mod.modifiers.freescale) {
+      item.translate(initialDelta);
+      this._newPivot = item.position;
+    } else if (this.currentTransformation === 'translate') {
+      this._ghost.matrix.reset();
+      var initialDelta = e.point.subtract(this._initialPoint);
+      if (modifiers.constrain) {
+        var direction = new paper.Point({
+          length: 1,
+          angle: Math.round(initialDelta.angle / 45) * 45
+        });
+        initialDelta = initialDelta.project(direction);
+      }
+      this._ghost.data.offset = initialDelta;
+      this._ghost.translate(initialDelta);
+    } else if (this.currentTransformation === 'rotate') {
+      this._ghost.matrix.reset();
+      var rotateDelta = e.point.subtract(this._truePivot).angle - this._initialPoint.subtract(this._truePivot).angle;
+      if (modifiers.constrain) {
+        rotateDelta = Math.round(rotateDelta / 45) * 45;
+      }
+      this._ghost.rotate(rotateDelta, this._truePivot);
+    } else if (this.currentTransformation === 'scale-corner') {
+      var deltaLocal = this._shearPoint(e.point.subtract(this._initialPoint).rotate(-this.boxRotation), -this.boxShear, 0),
+        cornerLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
+        distCorner = cornerLocal.subtract(unrotatedPivot),
+        distMovedCorner = distCorner.add(deltaLocal);
+      var scaleFactor = distMovedCorner.divide(distCorner);
+      if (modifiers.constrain) {
         if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
           scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
         } else {
           scaleFactor.y = Math.sign(scaleFactor.y) * Math.abs(scaleFactor.x);
         }
       }
-      this.mod.scaleFactor = scaleFactor;
-      this._ghost.scale(this.mod.scaleFactor, this.mod.truePivot);
-      this._ghost.rotate(this.boxRotation, this.pivot);
+      this._ghost.data.scale = scaleFactor;
+      this._ghost.scale(scaleFactor, unrotatedPivot);
+      this._ghost.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     } else {
-      this._ghost.rotate(-this.boxRotation, this.pivot);
-      this._ghost.translate(this.mod.truePivot.multiply(-1)).transform(this.mod.transformMatrix.inverted()).translate(this.mod.truePivot);
-      if (this.mod.modifiers.center) {
-        this.mod.truePivot = this.pivot;
-      } else {
-        if (this.mod.topLeft) {
-          this.mod.truePivot = this._ghost.bounds.bottomRight;
-        } else {
-          this.mod.truePivot = this._ghost.bounds.topLeft;
-        }
+      var deltaLocal = this._shearPoint(e.point.subtract(this._initialPoint).rotate(-this.boxRotation), -this.boxShear, 0),
+        edgeLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
+        distEdge = edgeLocal.subtract(unrotatedPivot),
+        distMovedEdge = distEdge.add(deltaLocal);
+      this._ghost.data.transform.reset();
+      if (!modifiers.skew || modifiers.skew && e.modifiers.shift) {
+        var scaleFactor = distMovedEdge.divide(distEdge);
+        if (vertical) scaleFactor.x = 1;else scaleFactor.y = 1;
+        this._ghost.data.transform.scale(scaleFactor);
       }
-      this.mod.transformMatrix.reset();
-      var currentPointRelative = e.point.rotate(-this.boxRotation, this.pivot);
-      var initialPointRelative = this.mod.initialPoint.rotate(-this.boxRotation, this.pivot);
-      if (!this.mod.modifiers.skew || this.mod.modifiers.skew && e.modifiers.shift) {
-        var scaleFactor = currentPointRelative.subtract(this.mod.truePivot).divide(initialPointRelative.subtract(this.mod.truePivot));
-        if (this.mod.vertical) {
-          scaleFactor.x = 1;
-        } else {
-          scaleFactor.y = 1;
-        }
-        this.mod.transformMatrix.scale(scaleFactor);
-      }
-      if (this.mod.modifiers.skew) {
-        var shearFactor = currentPointRelative.subtract(initialPointRelative).divide(this._ghost.bounds.height, this._ghost.bounds.width);
-        if (this.mod.vertical) {
+      if (modifiers.skew) {
+        var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
+        if (vertical) {
           shearFactor.y = 0;
+          shearFactor.x *= this._ghost.bounds.height / distEdge.y;
         } else {
           shearFactor.x = 0;
+          shearFactor.y *= this._ghost.bounds.width / distEdge.x;
         }
-        if (this.mod.modifiers.center) {
-          shearFactor = shearFactor.multiply(2);
-        }
-        if (this.mod.topLeft) {
-          shearFactor = shearFactor.multiply(-1);
-        }
-        ;
-        this.mod.transformMatrix.shear(shearFactor.transform(this.mod.transformMatrix.inverted()));
+        this._ghost.data.transform.shear(shearFactor);
       }
-      this._ghost.translate(this.mod.truePivot.multiply(-1)).transform(this.mod.transformMatrix).translate(this.mod.truePivot);
-      this._ghost.rotate(this.boxRotation, this.pivot);
+      this._ghost.translate(unrotatedPivot.multiply(-1)).transform(this._ghost.data.transform).translate(unrotatedPivot);
+      this._ghost.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     }
   }
 
@@ -61989,17 +62183,26 @@ class SelectionWidget {
       return this.finishGradientTransformation();
     }
     this._ghost.remove();
-    if (this.mod.action === 'translate') {
-      this.translateSelection(this.mod.offset);
-    } else if (this.mod.action === 'rotate') {
-      this.rotateSelection(this._ghost.rotation);
-    } else if (this.mod.action === 'move-corner') {
-      this.scaleSelection(this.mod.scaleFactor, this.mod.truePivot);
+    if (this.currentTransformation === 'move-pivot') {
+      if (this._newPivot) this.pivot = this._newPivot;
+      if (this._itemsInSelection.length === 1 && this._itemsInSelection[0] instanceof paper.Group) this._itemsInSelection[0].pivot = this._itemsInSelection[0].globalToLocal(this._newPivot);
+    } else if (this.currentTransformation === 'translate') {
+      this.translateSelection(this._ghost.data.offset);
+    } else if (this.currentTransformation === 'rotate') {
+      this.boxRotation += this._ghost.rotation;
+      this.rotateSelection(this._ghost.rotation, this._truePivot);
+    } else if (this.currentTransformation === 'scale-corner') {
+      this.scaleSelection(this._ghost.data.scale, this._truePivot);
     } else {
-      this.transformSelection(this.mod.transformMatrix, this.mod.truePivot);
+      this.transformSelection(this._ghost.data.transform, this._truePivot);
+
+      // Paper.js matrix transforms are reversed.
+      var mat = new paper.Matrix().rotate(this.boxRotation).shear(this.boxShear, 0).append(this._ghost.data.transform);
+      var adj = mat.decompose();
+      this.boxRotation = adj.rotation;
+      this.boxShear = Math.tan(adj.skewing.x * Math.PI / 180) * adj.scaling.x / adj.scaling.y;
     }
     this._currentTransformation = null;
-    this.mod.initiated = false;
   }
 
   /**
@@ -62015,39 +62218,39 @@ class SelectionWidget {
   /**
    *
    */
-  rotateSelection(angle) {
+  rotateSelection(angle, pivot = this.pivot) {
     this._itemsInSelection.forEach(item => {
-      item.rotate(angle, this.pivot);
+      item.rotate(angle, pivot);
     });
+    this.pivot = this.pivot.rotate(angle, pivot);
   }
 
   /**
    *
    */
   scaleSelection(scale, pivot = this.pivot) {
+    let unrotatedPivot = this._shearPoint(pivot.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot);
     this._itemsInSelection.forEach(item => {
-      item.rotate(-this.boxRotation, this.pivot);
-      item.scale(scale, pivot);
-      item.rotate(this.boxRotation, this.pivot);
+      item.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
+      item.scale(scale, unrotatedPivot);
+      item.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     });
-    var newPivot = pivot.add(this.pivot.subtract(pivot).multiply(scale));
-    this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
+    var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).multiply(scale));
+    this.pivot = this._shearPoint(newPivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
   }
 
   /**
    *
    */
   transformSelection(matrix, pivot = this.pivot) {
+    let unrotatedPivot = this._shearPoint(pivot.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot);
     this._itemsInSelection.forEach(item => {
-      item.rotate(-this.boxRotation, this.pivot);
-      item.translate(pivot.multiply(-1)).transform(matrix).translate(pivot);
-      item.rotate(this.boxRotation, this.pivot);
+      item.rotate(-this.boxRotation, this.pivot).shear(-this.boxShear, 0, this.pivot);
+      item.translate(unrotatedPivot.multiply(-1)).transform(matrix).translate(unrotatedPivot);
+      item.shear(this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
     });
-
-    // Note that the GUI won't show this pivot as the center because it doesn't account for skew.
-    // The pivot point after the skew will look a bit off.
-    var newPivot = pivot.add(this.pivot.subtract(pivot).transform(matrix));
-    this.pivot = newPivot.rotate(this.boxRotation, this.pivot);
+    var newPivot = unrotatedPivot.add(this.pivot.subtract(unrotatedPivot).transform(matrix));
+    this.pivot = this._shearPoint(newPivot, this.boxShear, 0, this.pivot).rotate(this.boxRotation, this.pivot);
   }
   _buildGUI() {
     this.item.addChild(this._buildBorder());
@@ -62070,7 +62273,7 @@ class SelectionWidget {
     this.item.addChildren(guiElements);
     this._pivotPointHandle = this._buildPivotPointHandle();
     this.layer.addChild(this._pivotPointHandle);
-    this.item.rotate(this.boxRotation, this._center);
+    this.item.shear(this.boxShear, 0, this._center).rotate(this.boxRotation, this._center);
     this.item.children.forEach(child => {
       child.data.isSelectionBoxGUI = true;
     });
@@ -62092,7 +62295,7 @@ class SelectionWidget {
       var clone = item.clone({
         insert: false
       });
-      clone.rotate(-this.boxRotation, this._center);
+      clone.rotate(-this.boxRotation, this._center).shear(-this.boxShear, 0, this._center);
       var bounds = clone.bounds;
       var border = new paper.Path.Rectangle({
         from: bounds.topLeft,
@@ -62113,6 +62316,7 @@ class SelectionWidget {
       fillColor: SelectionWidget.HANDLE_FILL_COLOR,
       strokeColor: SelectionWidget.HANDLE_STROKE_COLOR
     });
+    handle.shear(-this.boxShear, 0);
     return handle;
   }
   _buildPivotPointHandle() {
@@ -62123,7 +62327,8 @@ class SelectionWidget {
       fillColor: SelectionWidget.PIVOT_FILL_COLOR,
       strokeColor: SelectionWidget.PIVOT_STROKE_COLOR
     });
-    handle.locked = true;
+    // Lock handle if it interferes with dragging the selection
+    handle.locked = this.boundingBox.width <= 4 * handle.bounds.width && this.boundingBox.height <= 4 * handle.bounds.height;
     return handle;
   }
   _buildHandle(args) {
@@ -62148,29 +62353,26 @@ class SelectionWidget {
     return circle;
   }
   _buildRotationHotspot(cornerName) {
-    // Build the not-yet-rotated hotspot, which starts out like this:
-
-    //       |
-    //       +---+
-    //       |   |
-    // ---+--+   |---
-    //    |      |
-    //    +------+
-    //       |
-
+    // Build the not-yet-rotated hotspot
     var r = SelectionWidget.ROTATION_HOTSPOT_RADIUS / paper.view.zoom;
-    var hotspot = new paper.Path([new paper.Point(0, 0), new paper.Point(0, r), new paper.Point(r, r), new paper.Point(r, -r), new paper.Point(-r, -r), new paper.Point(-r, 0)]);
+    var angle = (Math.atan(this.boxShear) + Math.PI / 2) % Math.PI - Math.PI / 2;
+    if (angle === -Math.PI / 2) angle = Math.sign(this.boxShear) * 1.57; // Just under pi/2
+    if (cornerName === 'topLeft' || cornerName === 'bottomRight') angle *= -1;
+    var hotspot = new paper.Path.Arc({
+      from: [r * Math.sin(angle), r * Math.cos(angle)],
+      through: [0, -r],
+      to: [-r, 0],
+      pivot: [0, 0]
+    });
+    hotspot.firstSegment.handleIn = [0, 0];
+    hotspot.lastSegment.handleOut = [0, 0];
+    hotspot.add([0, 0]);
     hotspot.fillColor = SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR;
-    hotspot.position.x = this.boundingBox[cornerName].x;
-    hotspot.position.y = this.boundingBox[cornerName].y;
+    hotspot.position = this.boundingBox[cornerName];
 
     // Orient the rotation handles in the correct direction, even if the selection is flipped
-    hotspot.rotate({
-      'topRight': 0,
-      'bottomRight': 90,
-      'bottomLeft': 180,
-      'topLeft': 270
-    }[cornerName]);
+    hotspot.scale(cornerName === 'topLeft' || cornerName === 'bottomLeft' ? -1 : 1, cornerName === 'bottomRight' || cornerName === 'bottomLeft' ? -1 : 1);
+    hotspot.shear(-this.boxShear, 0);
 
     // Some metadata.
     hotspot.data.handleType = 'rotation';
@@ -62204,7 +62406,7 @@ class SelectionWidget {
       strokeWidth: SelectionWidget.GHOST_STROKE_WIDTH / paper.view.zoom,
       applyMatrix: false
     });
-    boundsOutline.rotate(this.boxRotation, this._center);
+    boundsOutline.shear(this.boxShear, 0, this._center).rotate(this.boxRotation, this._center);
     ghost.addChild(boundsOutline);
     ghost.opacity = 0.5;
     return ghost;
@@ -62216,7 +62418,7 @@ class SelectionWidget {
     var center = this._calculateBoundingBoxOfItems(this._itemsInSelection).center;
     var itemsForBoundsCalc = this._itemsInSelection.map(item => {
       var clone = item.clone();
-      clone.rotate(-this.boxRotation, center);
+      clone.rotate(-this.boxRotation, center).shear(-this.boxShear, 0, center);
       clone.remove();
       return clone;
     });
@@ -62649,6 +62851,7 @@ SelectionWidget.PIVOT_STROKE_WIDTH = SelectionWidget.BOX_STROKE_WIDTH;
 SelectionWidget.PIVOT_FILL_COLOR = 'rgba(255,255,255,0.5)';
 SelectionWidget.PIVOT_STROKE_COLOR = 'rgba(0,0,0,1)';
 SelectionWidget.PIVOT_RADIUS = SelectionWidget.HANDLE_RADIUS;
+SelectionWidget.PIVOT_SNAP_THRESHOLD = SelectionWidget.PIVOT_RADIUS;
 SelectionWidget.ROTATION_HOTSPOT_RADIUS = 20;
 SelectionWidget.ROTATION_HOTSPOT_FILLCOLOR = 'rgba(100,150,255,0.5)';
 SelectionWidget.GHOST_STROKE_COLOR = 'rgba(0, 0, 0, 1.0)';
@@ -62847,6 +63050,8 @@ paper.Path.inject({
     if (!args.done) throw new Error('Path.potrace: args.done is required.');
     var finalRasterResolution = paper.view.resolution * args.resolution / window.devicePixelRatio;
     var raster = this.rasterize(finalRasterResolution);
+    // Fixes issues with browser zoom
+    var zoomFactor = args.resolution * raster.bounds.width / raster.width;
     raster.remove();
     var rasterDataURL = raster.toDataURL();
     if (rasterDataURL === 'data:,') {
@@ -62863,6 +63068,7 @@ paper.Path.inject({
       potracePath.remove();
       potracePath.closed = true;
       potracePath.children[0].closed = true;
+      potracePath.children[0].scale(zoomFactor);
       args.done(potracePath.children[0]);
     };
     img.src = rasterDataURL;
@@ -62946,6 +63152,9 @@ paper.Path.inject({
         self.content = editElem[0].value;
         self.attachTextArea(paper);
       };
+    },
+    focus: function () {
+      editElem[0].focus();
     },
     finishEditing: function () {
       editElem.remove();
@@ -63946,6 +64155,7 @@ Wick.View.Selection = class extends Wick.View {
    */
   applyChanges() {
     this.model.widgetRotation = this.widget.rotation;
+    this.model.widgetShear = this.widget.shear;
     this.model.pivotPoint = {
       x: this.widget.pivot.x,
       y: this.widget.pivot.y
@@ -64011,6 +64221,18 @@ Wick.View.Selection = class extends Wick.View {
   /**
    *
    */
+  get shear() {
+    return this.widget.shear;
+  }
+  set shear(shear) {
+    this.widget.shear = shear;
+    this.model.project.view.applyChanges();
+    this.model.widgetShear = shear;
+  }
+
+  /**
+   *
+   */
   flipHorizontally() {
     this.widget.flipHorizontally();
     this.model.project.view.applyChanges();
@@ -64058,6 +64280,7 @@ Wick.View.Selection = class extends Wick.View {
   render() {
     this._widget.build({
       boxRotation: this.model.widgetRotation,
+      boxShear: this.model.widgetShear,
       items: this._getSelectedObjectViews(),
       pivot: new paper.Point(this.model.pivotPoint.x, this.model.pivotPoint.y),
       useGradientGUI: this.model.useGradientGUI,
@@ -64244,12 +64467,8 @@ Wick.View.Clip = class extends Wick.View {
 
     //this._radius = null;
 
-    this.group.pivot = new this.paper.Point(0, 0);
-    this.group.position.x = this.model.transformation.x;
-    this.group.position.y = this.model.transformation.y;
-    this.group.scaling.x = this.model.transformation.scaleX;
-    this.group.scaling.y = this.model.transformation.scaleY;
-    this.group.rotation = this.model.transformation.rotation;
+    this.group.pivot = this.model.pivot || new this.paper.Point(0, 0);
+    this.group.matrix.translate(this.group.pivot.multiply(-1)).prepend(new paper.Matrix(this.model.transformation.matrix));
     this.group.opacity = this.model.transformation.opacity;
   }
   generateBorder() {
@@ -64276,12 +64495,8 @@ Wick.View.Clip = class extends Wick.View {
       insert: false
     });
     group.addChild(border);
-    group.pivot = new this.paper.Point(0, 0);
-    group.position.x = this.model.transformation.x;
-    group.position.y = this.model.transformation.y;
-    group.scaling.x = this.model.transformation.scaleX;
-    group.scaling.y = this.model.transformation.scaleY;
-    group.rotation = this.model.transformation.rotation;
+    group.pivot = this.model.pivot || new this.paper.Point(0, 0);
+    group.matrix.translate(this.group.pivot.multiply(-1)).prepend(new paper.Matrix(this.model.transformation.matrix));
     return group;
   }
 };
@@ -64544,14 +64759,17 @@ Wick.View.Frame = class extends Wick.View {
     }).forEach(child => {
       if (child instanceof paper.Group || child instanceof Wick.Clip) {
         var wickClip = Wick.ObjectCache.getObjectByUUID(child.data.wickUUID);
+        var values = child.matrix.decompose();
         wickClip.transformation = new Wick.Transformation({
           x: child.position.x,
           y: child.position.y,
-          scaleX: child.scaling.x,
-          scaleY: child.scaling.y,
-          rotation: child.rotation,
+          scaleX: values.scaling.x,
+          scaleY: values.scaling.y,
+          rotation: values.rotation,
+          shear: Math.tan(values.skewing.x * Math.PI / 180) * values.scaling.x / values.scaling.y,
           opacity: child.opacity
         });
+        wickClip.pivot = [child.pivot.x, child.pivot.y];
       }
     });
 
@@ -64965,6 +65183,48 @@ if (isTablet) {
 } else {
   Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
   Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+}
+// Restore saved frame size preference (overrides tablet/desktop default)
+const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
+if (_savedFrameSizeValue !== null) {
+  const _v = parseInt(_savedFrameSizeValue);
+  const _G = Wick.GUIElement;
+  const _XSW = 8,
+    _XSH = 16;
+  let _w, _h;
+  if (_v <= 50) {
+    const _t = _v / 50;
+    _w = Math.round(_XSW + _t * (_G.GRID_SMALL_CELL_WIDTH - _XSW));
+    const _ht = Math.max(_v, 25) / 50;
+    _h = Math.round(_XSH + _ht * (_G.GRID_SMALL_CELL_HEIGHT - _XSH));
+  } else if (_v <= 100) {
+    const _t = (_v - 50) / 50;
+    _w = Math.round(_G.GRID_SMALL_CELL_WIDTH + _t * (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH));
+    _h = Math.round(_G.GRID_SMALL_CELL_HEIGHT + _t * (_G.GRID_NORMAL_CELL_HEIGHT - _G.GRID_SMALL_CELL_HEIGHT));
+  } else {
+    const _t = (_v - 100) / 50;
+    _w = Math.round(_G.GRID_NORMAL_CELL_WIDTH + _t * (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH));
+    _h = Math.round(_G.GRID_NORMAL_CELL_HEIGHT + _t * (_G.GRID_LARGE_CELL_HEIGHT - _G.GRID_NORMAL_CELL_HEIGHT));
+  }
+  _G.GRID_DEFAULT_CELL_WIDTH = _w;
+  _G.GRID_DEFAULT_CELL_HEIGHT = Math.max(_h, 30);
+  _G.HIDE_CONTENT_DOTS = _v < 15;
+} else {
+  const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
+  if (_savedFrameSize) switch (_savedFrameSize) {
+    case 'small':
+      Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
+      Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+      break;
+    case 'large':
+      Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+      Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+      break;
+    case 'normal':
+    default:
+      Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
+      Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+  }
 }
 Wick.GUIElement.GRID_MARGIN = 1;
 Wick.GUIElement.TIMELINE_BACKGROUND_COLOR = '#2A2E30';
@@ -65652,11 +65912,17 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       this.cursor = 'grab';
     }
 
+    // Dot scale shared by script indicator and content dot
+    var _dcw = this.gridCellWidth;
+    var _dG = Wick.GUIElement;
+    var _dotScale;
+    if (_dcw <= _dG.GRID_SMALL_CELL_WIDTH) _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);else if (_dcw <= _dG.GRID_NORMAL_CELL_WIDTH) _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));else _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
+
     // Frame scripts dot
     if (this.model.hasContentfulScripts) {
       ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
       ctx.beginPath();
-      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * 1.3, 0, Math.PI);
+      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
       ctx.fill();
     }
 
@@ -65671,7 +65937,9 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       ctx.fillText(this.model.identifier, 0, 12);
       ctx.restore();
     }
-    if (this.model.tweens.length === 0 && !this.model.sound) {
+    var _hideDot = this.model.identifier // avoid overlapping name label
+    || Wick.GUIElement.HIDE_CONTENT_DOTS && !this.model.contentful; // at xsmall, only hide empty-frame dots
+    if (this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
       // Frame contentful dot
 
       ctx.fillStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
@@ -65681,12 +65949,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         ctx.strokeStyle = '#aaa';
       }
       ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
-      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS;
-      if (this.project.frameSizeMode === 'small') {
-        r *= 0.75;
-      } else if (this.project.frameSizeMode === 'large') {
-        r *= 1.25;
-      }
+      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
       ctx.beginPath();
       ctx.arc(this.gridCellWidth / 2, this.gridCellHeight / 2, r, 0, 2 * Math.PI);
       if (this.model.contentful) {
@@ -65702,14 +65965,11 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       var soundLengthMS = sound.duration * 1000;
       var frameLengthMS = 1 / framerate * this.model.length * 1000;
       var frameLengthPx = this.model.length * this.gridCellWidth;
+      var startPx = this.model.soundStart / soundLengthMS * 1200;
       var cropPx = frameLengthMS / soundLengthMS * 1200; // base waveform image size: 1200px
 
-      // Determining Pxls/milliseconds to shift waveform.
-      var msPerFrame = 1000 / framerate;
-      var pxPerMS = msPerFrame / this.gridCellWidth;
-      var shiftSoundStart = -(this.model.soundStart * (1 / pxPerMS));
       var volumeCropAmt = waveform.height / 2 * (1 - 1 / this.model.soundVolume);
-      ctx.drawImage(waveform, 0, volumeCropAmt, cropPx, waveform.height - volumeCropAmt * 2, shiftSoundStart, 0, frameLengthPx, this.gridCellHeight);
+      ctx.drawImage(waveform, startPx, volumeCropAmt, cropPx, waveform.height - volumeCropAmt * 2, 0, 0, frameLengthPx, this.gridCellHeight);
     } else if (this.model.tweens.length > 0) {
       // Tweens
 
@@ -65775,8 +66035,13 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
   /* helper function for frame edge dragging */
   _mouseOverFrameEdge() {
     var widthPx = this.model.length * this.gridCellWidth;
-    var handlePx = Wick.GUIElement.FRAME_HANDLE_WIDTH;
-    if (this.project.frameSizeMode === 'small') handlePx *= 0.5;
+    // Scale handle hit-area proportionally to cell width (capped at 0.5× below small)
+    var _hcw = this.gridCellWidth;
+    var _hG = Wick.GUIElement;
+    // At very small cell widths, disable edge resize for unselected frames
+    if (_hcw <= 16 && !this.model.isSelected) return null;
+    var _hScale = Math.min(1, _hcw / _hG.GRID_NORMAL_CELL_WIDTH);
+    var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
     if (this.project._isDragging || !this.mouseInBounds()) {
       return null;
     } else if (this.localMouse.x < handlePx) {
@@ -66635,10 +66900,15 @@ Wick.GUIElement.NumberLine = class extends Wick.GUIElement {
   // Helper function for drawing each cell of the numberline (draws the border and the number)
   _drawCell(i) {
     var ctx = this.ctx;
-    var highlight = i === 0 || i % 5 === 4;
+    var cellW = this.gridCellWidth;
+    var smallW = Wick.GUIElement.GRID_SMALL_CELL_WIDTH; // 22
+    // show every 5th when below the 'small' preset width
+    // show only every 10th when very compact (below half small width)
+    var highlight = cellW < smallW * 0.5 ? i === 0 || i % 10 === 9 // frames 1, 10, 20, 30...
+    : i === 0 || i % 5 === 4; // frames 1, 5, 10, 15...
 
     // Draw cell number
-    if (this.project.frameSizeMode !== 'small' || highlight) {
+    if (cellW >= smallW || highlight) {
       var fontSize = i >= 99 ? 13 : 16;
       var fontFamily = Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_FAMILY;
       ctx.font = fontSize + "px " + fontFamily;
@@ -66730,7 +67000,9 @@ Wick.GUIElement.OnionSkinRange = class extends Wick.GUIElement {
     // Calculate positions of the handle
     var seek = this.direction === 'right' ? this.model.project.onionSkinSeekForwards : this.model.project.onionSkinSeekBackwards;
     var width = Math.max(seek * this.gridCellWidth, this.gridCellWidth / 2);
-    var edgeWidth = this.gridCellWidth - Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    var margin = Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    if (this.gridCellWidth < Wick.GUIElement.GRID_SMALL_CELL_WIDTH) margin *= (this.gridCellWidth - 8) / (Wick.GUIElement.GRID_SMALL_CELL_WIDTH - 8);
+    var edgeWidth = this.gridCellWidth - margin;
     var height = Wick.GUIElement.NUMBER_LINE_HEIGHT * 0.9;
 
     // Draw handle
@@ -66804,14 +67076,12 @@ Wick.GUIElement.Playhead = class extends Wick.GUIElement {
   draw() {
     super.draw();
     var ctx = this.ctx;
-    var margin = 0;
-    if (this.project.frameSizeMode === 'small') {
-      margin = 2;
-    } else if (this.project.frameSizeMode === 'normal') {
-      margin = 8;
-    } else if (this.project.frameSizeMode === 'large') {
-      margin = 20;
-    }
+
+    // Interpolate margin xsmall(8) >> 0; small(22) >> 2; normal(38) >> 8; large(62) >> 20
+    var _cw = this.gridCellWidth;
+    var _G = Wick.GUIElement;
+    var margin;
+    if (_cw <= _G.GRID_SMALL_CELL_WIDTH) margin = Math.round(_cw / _G.GRID_SMALL_CELL_WIDTH * 2);else if (_cw <= _G.GRID_NORMAL_CELL_WIDTH) margin = Math.round(2 + (_cw - _G.GRID_SMALL_CELL_WIDTH) / (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH) * 6);else margin = Math.round(8 + (_cw - _G.GRID_NORMAL_CELL_WIDTH) / (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH) * 12);
     var height = Wick.GUIElement.NUMBER_LINE_HEIGHT - 2;
     var width = this.gridCellWidth - margin * 2;
     ctx.fillStyle = Wick.GUIElement.PLAYHEAD_FILL_COLOR;
@@ -66887,6 +67157,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       icon: 'gap_fill_extend_frames',
       clickFn: () => {
         this.project.model.activeTimeline.fillGapsMethod = 'auto_extend';
+        localStorage.setItem('wickEditorFillGapsMethod', 'auto_extend');
         this.projectWasModified();
       }
     });
@@ -66895,6 +67166,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       icon: 'gap_fill_empty_frames',
       clickFn: () => {
         this.project.model.activeTimeline.fillGapsMethod = 'blank_frames';
+        localStorage.setItem('wickEditorFillGapsMethod', 'blank_frames');
         this.projectWasModified();
       }
     });
@@ -66904,6 +67176,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+        Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+        localStorage.setItem('wickEditorFrameSizeMode', 'small');
+        localStorage.setItem('wickEditorFrameSizeValue', '50');
       }
     });
     this.normalFramesButton = new Wick.GUIElement.ActionButton(this.model, {
@@ -66912,6 +67187,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+        Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+        localStorage.setItem('wickEditorFrameSizeMode', 'normal');
+        localStorage.setItem('wickEditorFrameSizeValue', '100');
       }
     });
     this.largeFramesButton = new Wick.GUIElement.ActionButton(this.model, {
@@ -66920,6 +67198,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
       clickFn: () => {
         Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
         Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+        Wick.GUIElement.HIDE_CONTENT_DOTS = false;
+        localStorage.setItem('wickEditorFrameSizeMode', 'large');
+        localStorage.setItem('wickEditorFrameSizeValue', '150');
       }
     });
   }
@@ -67439,6 +67720,17 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
   _onMouseWheel(e) {
     e.preventDefault();
     if (!this.model.isPublished) {
+      // Modifier + scroll (zoom instead of scroll if ctrl/ cmmd/ alt keys)
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        var frameDelta = e.deltaY * e.deltaFactor;
+        this._canvas.dispatchEvent(new CustomEvent('wickFrameSizeScroll', {
+          detail: {
+            delta: frameDelta
+          },
+          bubbles: true
+        }));
+        return;
+      }
       var dx = e.deltaX * e.deltaFactor * 0.5;
       var dy = e.deltaY * e.deltaFactor * 0.5;
       this.scrollX += dx;
@@ -67938,9 +68230,9 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
     super.draw();
     var ctx = this.ctx;
     var r = Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
-    if (this.project.frameSizeMode === 'large') {
-      r *= 1.25;
-    }
+    var _tcw = this.gridCellWidth;
+    var _tG = Wick.GUIElement;
+    if (_tcw <= _tG.GRID_SMALL_CELL_WIDTH) r *= 0.5 + 0.25 * (_tcw / _tG.GRID_SMALL_CELL_WIDTH);else if (_tcw <= _tG.GRID_NORMAL_CELL_WIDTH) r *= 0.75 + 0.25 * ((_tcw - _tG.GRID_SMALL_CELL_WIDTH) / (_tG.GRID_NORMAL_CELL_WIDTH - _tG.GRID_SMALL_CELL_WIDTH));else r *= 1.0 + 0.25 * ((_tcw - _tG.GRID_NORMAL_CELL_WIDTH) / (_tG.GRID_LARGE_CELL_WIDTH - _tG.GRID_NORMAL_CELL_WIDTH));
 
     // Tween diamond
     ctx.save();
@@ -67993,24 +68285,27 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
       var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
       var arrowSize = 5;
 
-      // Line
-      ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
-      ctx.beginPath();
-      ctx.moveTo(linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding, 0);
-      ctx.stroke();
+      // Only draw if there's enough room
+      if (nextTweenPosition > linePadding * 2 + arrowSize) {
+        // Line
+        ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+        ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+        ctx.beginPath();
+        ctx.moveTo(linePadding, 0);
+        ctx.lineTo(nextTweenPosition - linePadding, 0);
+        ctx.stroke();
 
-      // Arrow head
-      ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
-      ctx.stroke();
+        // Arrow head
+        ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+        ctx.beginPath();
+        ctx.moveTo(nextTweenPosition - linePadding, 0);
+        ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(nextTweenPosition - linePadding, 0);
+        ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
+        ctx.stroke();
+      }
     } else if (this.model.playheadPosition !== this.model.parentFrame.length) {
       // There is no tween in front of this tween, so draw a dotted line to the end of the frame
 
