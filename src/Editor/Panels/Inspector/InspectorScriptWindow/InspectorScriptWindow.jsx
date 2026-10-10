@@ -37,9 +37,6 @@ class InspectorScriptWindow extends Component {
   render() {
     return(
       <div className="inspector-script-window-container">
-         <div className="inspector-script-window-header">
-          Scripts
-         </div>
          <div className="inspector-script-window-body">
            {this.props.script.scripts.map(this.renderScriptRow)}
            <div className="inspector-script-window-row-container">
