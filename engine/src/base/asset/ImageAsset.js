@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.ImageAsset = class extends Wick.FileAsset {
     /**
      * Valid MIME types for image assets.

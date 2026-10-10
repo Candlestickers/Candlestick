@@ -17,6 +17,8 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import potrace from 'potrace';
+
 /*
     paper-potrace.js
     Adds a potrace() method to paper Items that runs potrace on a rasterized
@@ -24,6 +26,8 @@
 
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
+
+// import paper from 'paper';
 
 paper.Path.inject({
     potrace: function(args) {

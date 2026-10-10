@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import platform from 'platform';
+// import JSZip from 'jszip';
 
 /**
  * Utility class for creating and parsing wick files.
