@@ -4,7 +4,7 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import './_outlinerexpandbutton.scss';
 
-var classNames = require("classnames");
+import classNames from 'classnames';
 
 class OutlinerExpandButton extends Component {
   render () {

@@ -20,7 +20,7 @@
 import React, { Component } from 'react';
 import capitalize from 'Editor/Util/DataFunctions/capitalize';
 
-let classNames = require('classnames');
+import classNames from 'classnames';
 
 class AddScriptPanel extends Component {
 

@@ -28,7 +28,7 @@ import './_welcomemessage.scss';
 import splash from 'resources/splash-screens/cs_fireball.png';
 import mobileSplash from 'resources/splash-screens/cs_fireball.png';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 class WelcomeModal extends Component {
     constructor() {
