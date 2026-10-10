@@ -317,6 +317,7 @@ class SelectionWidget {
 
         this._initialPoint = e.point;
         this._truePivot = this.pivot;
+        this._detectEdgeSkew = 'scale';
         this._ghost.data.offset = new paper.Point(0, 0);
         this._ghost.data.scale = new paper.Point(1, 1);
         this._ghost.data.transform = new paper.Matrix();
@@ -424,14 +425,29 @@ class SelectionWidget {
                 distEdge = edgeLocal.subtract(unrotatedPivot),
                 distMovedEdge = distEdge.add(deltaLocal);
             this._ghost.data.transform.reset();
-            if (!modifiers.skew || (modifiers.skew && e.modifiers.shift)) {
+            if (this._detectEdgeSkew) {
+                if (e.modifiers.command || e.modifiers.alt || e.modifiers.shift)
+                    this._detectEdgeSkew = false;
+                else {
+                    const SKEW_SWITCH_DISTANCE = 10 / paper.view.zoom;
+                    let tangent = vertical ? new paper.Point(1,0) : new paper.Point(0,1);
+                    tangent = this._shearPoint(tangent, this.boxShear, 0).rotate(this.boxRotation).normalize();
+                    let initialDelta = e.point.subtract(this._initialPoint);
+                    let skewComp = initialDelta.project(tangent), scaleComp = initialDelta.project([tangent.y, -tangent.x]);
+                    if (this._detectEdgeSkew === 'scale' && scaleComp.length <= SKEW_SWITCH_DISTANCE && skewComp.length >= SKEW_SWITCH_DISTANCE)
+                        this._detectEdgeSkew = 'skew';
+                    else if (this._detectEdgeSkew === 'skew' && scaleComp.length >= SKEW_SWITCH_DISTANCE)
+                        this._detectEdgeSkew = 'scale';
+                }
+            }
+            if ((!modifiers.skew || (modifiers.skew && e.modifiers.shift)) && this._detectEdgeSkew !== 'skew') {
                 var scaleFactor = distMovedEdge.divide(distEdge);
                 if (vertical) scaleFactor.x = 1;
                 else scaleFactor.y = 1;
                 
                 this._ghost.data.transform.scale(scaleFactor);
             }
-            if (modifiers.skew) {
+            if (modifiers.skew || this._detectEdgeSkew === 'skew') {
                 var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
                 if (vertical) {
                     shearFactor.y = 0;
