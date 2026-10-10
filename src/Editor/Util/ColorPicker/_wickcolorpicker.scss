@@ -2,7 +2,7 @@
  * Copyright I don't know
  */
 
-@use 'Editor/_wickbrand.scss' as *;
+@import 'Editor/_wickbrand.scss';
 
 $color-picker-width: 250px;
 $color-picker-bar-height: 25px;

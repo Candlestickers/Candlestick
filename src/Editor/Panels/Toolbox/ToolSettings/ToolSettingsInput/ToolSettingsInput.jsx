@@ -25,7 +25,7 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import './_toolsettingsinput.scss';
 
-import classNames from 'classnames';
+var classNames = require("classnames");
 
 class ToolSettingsInput extends Component {
   renderNumericInput = () => {

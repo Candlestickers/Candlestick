@@ -1,8 +1,6 @@
-import React from 'react';
-
 import './_savedprojectitem.scss';
 
-import classNames from 'classnames';
+let classNames = require('classnames');
 
 export default function SavedProjectItem(props) {
    return (

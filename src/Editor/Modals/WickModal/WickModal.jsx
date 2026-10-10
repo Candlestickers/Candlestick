@@ -24,7 +24,7 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import './_wickmodal.scss';
 
-import classNames from 'classnames';
+var classNames = require('classnames');
 
 class WickModal extends Component {
   renderIcon () {

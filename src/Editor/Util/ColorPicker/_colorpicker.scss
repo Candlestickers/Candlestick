@@ -17,7 +17,9 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@use 'Editor/_wickbrand.scss' as *;
+@import 'Editor/_wickbrand.scss';
+
+$color-picker-button-stroke-width: 4px;
 
 .btn-color-picker {
   display: flex;
@@ -26,7 +28,7 @@
   width: 100%;
   height: 100%;
   border-radius: 16px;
-  border: 4px solid $editor-secondary-text;
+  border: $color-picker-button-stroke-width solid $editor-secondary-text;
   box-sizing: border-box;
   overflow: hidden;
   padding: 0;
@@ -45,10 +47,11 @@
 }
 .btn-color-picker-stroke .btn-color-picker-background-opaque {
   flex-basis: unset;
+  width: calc(100% + 2 * $color-picker-button-stroke-width);
   height: 100%;
   // percent-based margin is calculated based on width of an element
   // therefore, pill-shaped buttons (e.g. in inspector) need a workaround
-  margin: 0 -4px;
+  margin: 0 (-$color-picker-button-stroke-width);
   transform: translateY(50%); // cover bottom half
 }
 
