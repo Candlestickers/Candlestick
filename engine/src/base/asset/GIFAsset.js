@@ -55,6 +55,7 @@ Wick.GIFAsset = class extends Wick.ClipAsset {
                 // Check if all images have been created
                 imagesCreatedCount++;
                 if(imagesCreatedCount === images.length) {
+                    clip._isSynced = true;
                     Wick.ClipAsset.fromClip(clip, project, clipAsset => {
                         // Attach a reference to the resulting clip to all images
                         images.forEach(image => {

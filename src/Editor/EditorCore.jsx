@@ -1121,6 +1121,7 @@ class EditorCore extends Component {
         }
 
         let createCallback = (asset) => {
+            if (!asset) return;
             if (options.create) this.createImageFromAsset(asset.uuid, options.location.x || 0, options.location.y || 0);
         }
 
