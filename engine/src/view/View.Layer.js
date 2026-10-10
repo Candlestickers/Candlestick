@@ -41,7 +41,7 @@ Wick.View.Layer = class extends Wick.View {
             this.activeFrameLayers.push(frame.view.objectsLayer);
 
             frame.view.objectsLayer.locked = false;
-            frame.view.objectsLayer.opacity = 1.0;
+            frame.view.objectsLayer.opacity = this.model._opacity;
         }
 
         // Disable mouse events on layers if they are locked.
@@ -97,6 +97,6 @@ Wick.View.Layer = class extends Wick.View {
         var opacity = onionMult * Wick.View.Layer.BASE_ONION_OPACITY;
 
         frame.view.objectsLayer.locked = true;
-        frame.view.objectsLayer.opacity = opacity;
+        frame.view.objectsLayer.opacity = opacity * this.model._opacity;
     }
 }

@@ -21,15 +21,38 @@
 
 .btn-color-picker {
   display: flex;
+  flex-direction: column-reverse;
   background: none;
   width: 100%;
   height: 100%;
   border-radius: 16px;
   border: 4px solid $editor-secondary-text;
   box-sizing: border-box;
+  overflow: hidden;
+  padding: 0;
+}
+.btn-color-picker-background-opaque {
+  flex-basis: 50%;
+}
+.btn-color-picker-stroke {
+  overflow: visible;
+  background-origin: border-box, border-box;
+  background-clip: border-box, border-box;
+  border-color: transparent;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.btn-color-picker-stroke .btn-color-picker-background-opaque {
+  flex-basis: unset;
+  height: 100%;
+  // percent-based margin is calculated based on width of an element
+  // therefore, pill-shaped buttons (e.g. in inspector) need a workaround
+  margin: 0 -4px;
+  transform: translateY(50%); // cover bottom half
 }
 
 .color-picker-control-div {
   display: flex;
   flex-direction: row;
+  align-items: stretch;
 }

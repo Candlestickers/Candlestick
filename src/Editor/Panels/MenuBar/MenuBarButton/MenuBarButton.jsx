@@ -28,6 +28,7 @@ class MenuBarButton extends Component {
         <ActionButton
           text={this.props.text}
           action={this.props.action}
+          useClickEvent={this.props.useClickEvent}
           color={'menu ' + (this.props.color ? this.props.color : '')}>
         </ActionButton>
       </div>

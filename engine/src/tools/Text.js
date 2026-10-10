@@ -70,6 +70,12 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
+
+        // Ignore clicks during two-finger gesture
+        if (window.Wick && Wick.gesture && Wick.gesture.active) {
+            return;
+        }
+
         if (this.editingText) {
             this.finishEditingText();
         } else if(this.hoveredOverText) {
@@ -82,7 +88,11 @@ Wick.Tools.Text = class extends Wick.Tool {
             text.content = 'Text';
             text.fontSize = 24;
 
-            var wickText = new Wick.Path({json: text.exportJSON({asString:false})})
+            var wickText = new Wick.Path({json: text.exportJSON({asString:false})});
+            if(!this.project.activeFrame) {
+                // Automatically add a frame is there isn't one
+                this.project.insertBlankFrame();
+            }
             this.project.activeFrame.addPath(wickText);
 
             this.project.view.render();
@@ -95,7 +105,7 @@ Wick.Tools.Text = class extends Wick.Tool {
     }
 
     onMouseDrag (e) {
-
+        if (window.Wick && Wick.gesture && Wick.gesture.active) return;
     }
 
     onMouseUp (e) {

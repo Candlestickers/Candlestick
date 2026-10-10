@@ -34,6 +34,7 @@ export default function DeleteCopyPaste (props) {
                 color="tool"
                 action={props.editorActions.paste.action}
                 icon="paste"
+                useClickEvent={true}
                 className={classNames("canvas-transform-button", "canvas-transform-item")}
                 buttonClassName={"canvas-transform-wick-button"}
                 iconClassName="canvas-transform-icon"

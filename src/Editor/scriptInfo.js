@@ -244,23 +244,66 @@ class ScriptInfoInterface extends Object {
                     description: 'A conditional that can be used to check if two objects collide.',
                     param: [{name: 'that', type: 'object'}],
                 },
-                /*{
-                    name: 'hitTest',
-                    snippet: 'this.hitTest(that)',
-                    description: 'Determines if the hitboxes of two objects overlap.',
-                    param: [{ name: 'that', type: '{string}' }],
-                    returns: [{ type: 'bool', description: 'Returns true if the given object intersects this object.' }],
-                    deprecated: true,
-                },
                 {
-                    name: 'if (hitTest)',
-                    snippet: 'if (this.hitTest(that)) {\n // Add your code here! \n}\n',
-                    description: 'Runs some custom code when the two objects tested are hitting each other.',
-                    param: [{ name: 'that', type: '{string}' }],
-                    returns: [{ type: 'bool', description: 'Returns true if the given object intersects this object.' }],
-                    deprecated: true,
-                },*/
-
+                    name: 'depth',
+                    snippet: 'this.depth',
+                    description: 'Index among siblings in the parent frame/layer (0 = back; higher = front).'
+                  },
+                  {
+                    name: 'sendToBack',
+                    snippet: 'this.sendToBack()',
+                    description: 'Moves this object behind all siblings in its current layer.'
+                  },
+                  {
+                    name: 'sendToAbsoluteBack',
+                    snippet: 'this.sendToAbsoluteBack()',
+                    description: 'Moves this object to the bottom layer and to the back of that layer.'
+                  },
+                  {
+                    name: 'sendToFront',
+                    snippet: 'this.sendToFront()',
+                    description: 'Moves this object in front of all siblings in its current layer.'
+                  },
+                  {
+                    name: 'sendToAbsoluteFront',
+                    snippet: 'this.sendToAbsoluteFront()',
+                    description: 'Moves this object to the top layer and to the very front.'
+                  },
+                  {
+                    name: 'sendForward',
+                    snippet: 'this.sendForward(1)',
+                    description: 'Brings this object forward by N steps in its current layer (default 1).',
+                    param: [{ name: 'num', type: 'number' }]
+                  },
+                  {
+                    name: 'sendBackward',
+                    snippet: 'this.sendBackward(1)',
+                    description: 'Sends this object backward by N steps in its current layer (default 1).',
+                    param: [{ name: 'num', type: 'number' }]
+                  },
+                  {
+                    name: 'swapDepth',
+                    snippet: 'this.swapDepth(otherClip)',
+                    description: 'Swaps draw order with another sibling clip.',
+                    param: [{ name: 'otherClip', type: 'object' }]
+                  },
+                  {
+                    name: 'layer',
+                    snippet: 'this.layer',
+                    description: 'Layer index of this object within its parent timeline (setting this moves layers).'
+                  },
+                  {
+                    name: 'getLayerNumber',
+                    snippet: 'this.getLayerNumber()',
+                    description: 'Returns the current layer index.',
+                    returns: [{ type: 'number' }]
+                  },
+                  {
+                    name: 'moveToLayer',
+                    snippet: 'this.moveToLayer(n)',
+                    description: 'Moves this object to another layer at the current playhead position.',
+                    param: [{ name: 'n', type: 'number' }]
+                  }
             ]
         );
     }
@@ -278,6 +321,106 @@ class ScriptInfoInterface extends Object {
                     snippet: 'stopAllSounds()',
                     description: 'Stops all currently playing sounds.',
                 },
+                {
+                    name: 'WickSound (constructor)',
+                    snippet: 'let sound = new WickSound("sound.mp3")',
+                    description: 'Creates a controllable sound from an asset in the library.'
+                },
+                {
+                    name: 'play',
+                    snippet: 'sound.play()',
+                    description: 'Starts playback; resumes from the last paused/seeked position if already started.'
+                },
+                {
+                    name: 'pause',
+                    snippet: 'sound.pause()',
+                    description: 'Pauses playback and remembers the current position.'
+                },
+                {
+                    name: 'stop',
+                    snippet: 'sound.stop()',
+                    description: 'Stops playback and resets the position to the beginning (0s).'
+                },
+                {
+                    name: 'volume',
+                    snippet: 'sound.volume(0.5)',
+                    description: 'Sets (0–1) or gets the volume when called without arguments.',
+                    param: [{ name: 'value', type: 'number (optional)' }],
+                    returns: [{ type: 'number', description: 'Current volume when no value is provided.' }]
+                },
+                {
+                    name: 'rate',
+                    snippet: 'sound.rate(1.25)',
+                    description: 'Sets playback speed (clamped ~0.01 to 10) or gets it when called without arguments.',
+                    param: [{ name: 'value', type: 'number (optional)' }],
+                    returns: [{ type: 'number', description: 'Current rate when no value is provided.' }]
+                },
+                {
+                    name: 'stereo (pan)',
+                    snippet: 'sound.stereo(-0.4)',
+                    description: 'Sets pan (-1 left … +1 right) or gets it when called without arguments.',
+                    param: [{ name: 'value', type: 'number (optional)' }],
+                    returns: [{ type: 'number', description: 'Current pan when no value is provided.' }]
+                },
+                {
+                    name: 'seek',
+                    snippet: 'sound.seek(2.0)',
+                    description: 'Sets or gets the current playback position in seconds (clamped 0–duration).',
+                    param: [{ name: 'seconds', type: 'number (optional)' }],
+                    returns: [{ type: 'number', description: 'Current position when no value is provided.' }]
+                },
+                {
+                    name: 'currently',
+                    snippet: 'sound.currently()',
+                    description: 'Returns the current playback position in seconds.',
+                    returns: [{ type: 'number' }]
+                },
+                {
+                    name: 'duration',
+                    snippet: 'sound.duration()',
+                    description: 'Returns the total duration of the sound in seconds.',
+                    returns: [{ type: 'number' }]
+                },
+                {
+                    name: 'loop',
+                    snippet: 'sound.loop(true)',
+                    description: 'Enable/disable looping. Returns current loop state when called without arguments.',
+                    param: [{ name: 'loop', type: 'boolean (optional)' }],
+                    returns: [{ type: 'boolean', description: 'Current loop state when no value is provided.' }]
+                },
+                {
+                    name: 'setLoopRange',
+                    snippet: 'sound.setLoopRange(1.0, 3.5)',
+                    description: 'Sets a custom loop segment in seconds; use with updateLoop() while playing.',
+                    param: [{ name: 'low', type: 'number' }, { name: 'high', type: 'number' }]
+                },
+                {
+                    name: 'updateLoop',
+                    snippet: 'sound.updateLoop()',
+                    description: 'Keeps playback within the custom loop range (call regularly if a custom range is set).'
+                },
+                {
+                    name: 'mute',
+                    snippet: 'sound.mute()',
+                    description: 'Mutes the sound (remembers previous volume).'
+                },
+                {
+                    name: 'unmute',
+                    snippet: 'sound.unmute()',
+                    description: 'Restores the volume saved by mute().'
+                },
+                {
+                    name: 'isPlaying',
+                    snippet: 'sound.isPlaying()',
+                    description: 'Returns true if the sound is currently playing.',
+                    returns: [{ type: 'boolean' }]
+                },
+                {
+                    name: 'getHowl',
+                    snippet: 'sound.getHowl()',
+                    description: 'Returns the underlying Howl instance for advanced control.',
+                    returns: [{ type: 'object', description: 'Howl' }]
+                }
             ]
         )
     }

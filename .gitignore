@@ -10,9 +10,9 @@
 
 # production
 /build
-/build-ios/WebViewExample/local_html
-/build-electron
 /dist
+/public/corelibs/wick-engine/
+/engine/dist/
 
 # misc
 .DS_Store
@@ -28,3 +28,6 @@ yarn-error.log*
 
 # docs
 engine/docs/*
+src-tauri/binaries/*
+src-tauri/gen/*
+*.keystore

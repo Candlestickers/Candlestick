@@ -14,12 +14,12 @@ $canvas-action-size: 35px;
 
 .actions-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); // 4 buttons per row
-  flex-wrap: wrap;
-  flex-direction: row;
+  grid-template-columns: repeat(auto-fit, minmax(35px, 1fr));
+  grid-gap: 5px;
+  justify-items: center;
   align-items: center;
-  width: 140px;     // 4 × (32 + 4) = 144px
-  overflow: visible;
+  width: auto;
+  max-width: 140px;
 }
 
 // .actions-container.vertical {

@@ -1,4 +1,4 @@
-describe('Wick.History', function() {
+describe('Wick.History', function () {
     it('should save and recover frame contents', function () {
         Wick.ObjectCache.clear();
 
@@ -101,11 +101,11 @@ describe('Wick.History', function() {
         var project = new Wick.Project();
         var cursor = project.tools.cursor;
 
-        var pathJson1 = ["Path",{"segments":[[0,0],[50,0],[50,50],[0,50]],"closed":true,"fillColor":[1,0,0]}];
-        var pathJson2 = ["Path",{"segments":[[50,100],[50,50],[100,50],[100,100]],"closed":true,"fillColor":[1,0,0]}];
+        var pathJson1 = ["Path", { "segments": [[0, 0], [50, 0], [50, 50], [0, 50]], "closed": true, "fillColor": [1, 0, 0] }];
+        var pathJson2 = ["Path", { "segments": [[50, 100], [50, 50], [100, 50], [100, 100]], "closed": true, "fillColor": [1, 0, 0] }];
 
-        var path1 = new Wick.Path({json: pathJson1});
-        var path2 = new Wick.Path({json: pathJson2});
+        var path1 = new Wick.Path({ json: pathJson1 });
+        var path2 = new Wick.Path({ json: pathJson2 });
         project.activeFrame.addPath(path1);
         project.activeFrame.addPath(path2);
         project.selection.select(path1);
@@ -125,8 +125,8 @@ describe('Wick.History', function() {
 
     it('should save and recover focus', function () {
         var project = new Wick.Project();
-        var main = new Wick.Clip({identifier: 'main'});
-        var other = new Wick.Clip({identifier: 'other'});
+        var main = new Wick.Clip({ identifier: 'main' });
+        var other = new Wick.Clip({ identifier: 'other' });
 
         project.activeFrame.addClip(main);
         project.activeFrame.addClip(other);
@@ -157,13 +157,13 @@ describe('Wick.History', function() {
 
         var project = new Wick.Project();
 
-        var pathJson1 = ["Path",{"segments":[[0,0],[50,0],[50,50],[0,50]],"closed":true,"fillColor":[1,0,0]}];
-        var pathJson2 = ["Path",{"segments":[[0,0],[50,0],[50,50],[0,50]],"closed":true,"fillColor":[0,1,0]}];
-        var pathJson3 = ["Path",{"segments":[[0,0],[50,0],[50,50],[0,50]],"closed":true,"fillColor":[0,0,1]}];
+        var pathJson1 = ["Path", { "segments": [[0, 0], [50, 0], [50, 50], [0, 50]], "closed": true, "fillColor": [1, 0, 0] }];
+        var pathJson2 = ["Path", { "segments": [[0, 0], [50, 0], [50, 50], [0, 50]], "closed": true, "fillColor": [0, 1, 0] }];
+        var pathJson3 = ["Path", { "segments": [[0, 0], [50, 0], [50, 50], [0, 50]], "closed": true, "fillColor": [0, 0, 1] }];
 
-        var path1 = new Wick.Path({json: pathJson1});
-        var path2 = new Wick.Path({json: pathJson2});
-        var path3 = new Wick.Path({json: pathJson3});
+        var path1 = new Wick.Path({ json: pathJson1 });
+        var path2 = new Wick.Path({ json: pathJson2 });
+        var path3 = new Wick.Path({ json: pathJson3 });
 
         project.activeFrame.addPath(path1);
         project.view.render();
@@ -201,7 +201,7 @@ describe('Wick.History', function() {
         Wick.ObjectCache.clear();
 
         var project = new Wick.Project();
-        var inactiveFrame = new Wick.Frame({start:2});
+        var inactiveFrame = new Wick.Frame({ start: 2 });
         var inactiveClip = new Wick.Clip();
         inactiveFrame.addClip(inactiveClip);
         project.activeLayer.addFrame(inactiveFrame);
@@ -228,22 +228,22 @@ describe('Wick.History', function() {
 
         project.activeFrame.addPath(TestUtils.paperToWickPath(new paper.Path.Ellipse({
             fillColor: 'red',
-            point: [50,50],
-            radius: [50,50],
+            point: [50, 50],
+            radius: [50, 50],
         })));
         project.history.pushState();
 
         project.activeFrame.addPath(TestUtils.paperToWickPath(new paper.Path.Ellipse({
             fillColor: 'green',
-            point: [50,50],
-            radius: [50,50],
+            point: [50, 50],
+            radius: [50, 50],
         })));
         project.history.pushState();
 
         project.activeFrame.addPath(TestUtils.paperToWickPath(new paper.Path.Ellipse({
             fillColor: 'blue',
-            point: [50,50],
-            radius: [50,50],
+            point: [50, 50],
+            radius: [50, 50],
         })));
         project.history.pushState();
 
@@ -260,8 +260,8 @@ describe('Wick.History', function() {
 
         project.activeFrame.addPath(TestUtils.paperToWickPath(new paper.Path.Ellipse({
             fillColor: 'yellow',
-            point: [50,50],
-            radius: [50,50],
+            point: [50, 50],
+            radius: [50, 50],
         })));
         project.history.pushState();
 
@@ -294,6 +294,18 @@ describe('Wick.History', function() {
         expect(project.history.numRedoStates).to.equal(2);
         project.undo();
         expect(project.history.numRedoStates).to.equal(3);
+    });
+
+    it('should not crash when undoing and redoing multiple times', function () {
+        var project = new Wick.Project();
+
+        project.history.pushState();
+        project.history.pushState();
+        project.history.pushState();
+        project.undo();
+        project.redo();
+        project.undo();
+        project.redo();
     });
 
     it('undo() should cancel in-progress brush strokes', function () {

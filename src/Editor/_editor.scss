@@ -214,7 +214,7 @@ body {
 .reflex-container > .reflex-splitter.active,
 .reflex-container > .reflex-splitter:hover {
   background-color: $splitter-highlight-color;
-  transition: all 1s ease; }
+  transition: all .1s ease; }
 
 .horizontal > .reflex-splitter {
   border-bottom: $splitter-width solid $splitter-color !important;

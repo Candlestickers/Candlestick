@@ -258,20 +258,20 @@ body.hasHover .action-button-yellow:hover {
 
 body.hasHover .action-button-tool:hover {
   //background-color: $wick-green-light;
-  border: 2px solid #29F1A3;
+  border: 2px solid $wick-cs-tool-border-hover;
   color: black;
 }
 
 .action-button-tool:active {
   //background-color: $wick-green-dark;
-  border: 2px solid #01C094;
+  border: 2px solid $wick-cs-tool-border-active;
   background-color: $editor-secondary;
   color: black;
 }
 
 .action-button-tool.active-button {
   //background-color: $wick-green-dark;
-  border: 2px solid #01C094;
+  border: 2px solid $wick-cs-tool-border-active;
   color: black;
 }
 
@@ -304,8 +304,8 @@ body.hasHover .action-button-menu:hover {
   transition-duration: $action-button-transition-duration;
 
   background-color: $editor-primary;
-  color: $wick-green;
-  border: 1.5px solid $wick-green;
+  color: $wick-cs-save-button;
+  border: 1.5px solid $wick-cs-save-button;
 
   padding: 0 5px 0 5px;
 }
@@ -350,7 +350,7 @@ body.hasHover .action-button-tool-settings:hover {
 body.hasHover .action-button-upload:hover {
   //background-color: $wick-green-light;
   color: $wick-green-dark;
-  border: 1.5px solid $wick-green-light;
+  border: 1.5px solid $wick-cs-yellow;
 }
 
 .action-button-upload:active {
@@ -596,7 +596,7 @@ body.hasHover .action-button-flame:hover {
   transition-duration: $action-button-transition-duration;
 
   background-color: transparent;
-  border: 2px solid $patreon-orange;
+  border: 2px solid $discord-color;
   color: #e0e0e0;
 
   padding: 2px 6px 2px 6px;

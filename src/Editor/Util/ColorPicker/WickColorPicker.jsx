@@ -1,72 +1,153 @@
 import React, { Component } from 'react'
 
-import  ActionButton  from 'Editor/Util/ActionButton/ActionButton';
+import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import './_wickcolorpicker.scss';
-import { CustomPicker } from 'react-color';
-import WickSwatch from 'Editor/Util/ColorPicker/WickSwatch/WickSwatch'
+import WickGradient from 'Editor/Util/ColorPicker/ColorPickerComponents/WickGradient';
+import WickSpectrum from 'Editor/Util/ColorPicker/ColorPickerComponents/WickSpectrum';
 
-var { Saturation, Hue, Alpha, Checkboard, Swatch } = require('react-color/lib/components/common');
-var { SketchFields } = require('react-color/lib/components/sketch/SketchFields');
+class WickGradientColorPicker extends Component {
+    constructor (props) {
+        super(props);
 
-class WickColorPicker extends Component {
-    renderSwatchColumn = (colorList, i) => {
-        return (
-            <div key={"swatch-color-column-" + i} className="wick-swatch-picker-column">
-                {colorList.map((color,i) => {
-                    return (
-                        <WickSwatch
-                            color={color}
-                            onChangeComplete={this.props.onChangeComplete}
-                            selectedColor={this.props.color}
-                            key={"swatch-color-"+color+"-"+i} />
-                    );
-                })}
-            </div>
-        );
+        this.state = {
+            colorOnDrag: null
+        };
+        this.editLastColors = false;
+        // Used to preserve color when switching solid/gradient
+        this.lastReceivedColor = null;
+        this.outOfSync = false;
+    }
+    componentWillUnmount () {
+        this.outOfSync = false;
+        this.props.onDesyncedChange(this.props.color);
     }
 
-    renderSwatchbook = (colors) => {
-        return (
-            <div className="wick-swatch-picker-book">
-                {colors.map((colorList, i) => {
-                    return (this.renderSwatchColumn(colorList, i));
-                })}
-            </div>
-        );
+    onChangeIntermediate = (color) => {
+        this.props.onChangeIntermediate && this.props.onChangeIntermediate(color);
+        this.setState({ colorOnDrag: color });
+    }
+    onColorChange = (color) => {
+        this.props.onChangeComplete(color);
+        if (this.props.updateLastColors) {
+            this.props.updateLastColors(color, this.editLastColors);
+            this.editLastColors = true;
+        }
+        this.setState({ colorOnDrag: null });
+    }
+    onGradientChange = (color, args) => {
+        // Set null gradient stops to black
+        for(let stop of color.stops) {
+            if(!stop.color) stop.color = '#000000';
+        }
+
+        // Sort color stops, keep the selected stop
+        let index;
+        if (args && typeof args.stopIndex === 'number') {
+            index = args.stopIndex;
+        }
+        else {
+            index = this.props.getSelectedStopIndex();
+        }
+        let selectedStop = color.stops[index];
+        color.stops.sort((stop1, stop2) => stop1.offset - stop2.offset);
+        let newIndex = color.stops.indexOf(selectedStop);
+        if (newIndex < 0) newIndex = 0;
+
+        this.props.setSelectedStopIndex(newIndex);
+        this.props.onChangeComplete(color);
+
+        if (args && args.stopColor) {
+            this.props.updateLastColors(args.stopColor, this.editLastColors);
+            this.editLastColors = true;
+        }
+        this.setState({
+            colorOnDrag: null
+        });
+    }
+    switchSolid = (color) => {
+        // Exit if color isn't a gradient
+        if (!color.stops) return;
+        this.props.onDesyncedChange(color.stops[0].color);
+        this.outOfSync = true;
+    }
+    switchGradient = (color) => {
+        // Exit if color is a gradient
+        if (color.stops) return;
+        if (this.props.color.stops || (this.props.color.gradient && this.props.color.gradient.stops)) {
+            // If props.color is already a gradient, use that color
+            this.outOfSync = false;
+            this.props.onDesyncedChange(this.props.color);
+            return;
+        }
+
+        let x = 0, topY = 0, bottomY = 500;
+        if (this.props.selectedObjectsBounds) {
+            x = this.props.selectedObjectsBounds.centerX;
+            topY = this.props.selectedObjectsBounds.top;
+            bottomY = this.props.selectedObjectsBounds.bottom;
+        }
+
+        this.props.onDesyncedChange({
+            origin: {x, y: topY},
+            destination: {x, y: bottomY},
+            stops: [{color, offset: 0}, {color, offset: 1}],
+            radial: false
+        });
+        this.outOfSync = true;
     }
 
-    renderSwatches = () => {
-        let colors = [
-            ["#ff0000","#ffcccc","#ff9999","#ff4d4d","#cc0000","#800000"],
-            ["#ff8000","#ffe6cc","#ffcc99","#ffa64d","#cc6600","#804000"],
-            ["#ffff00","#ffffcc","#ffff99","#ffff4d","#cccc00","#808000"],
-            ["#00ff00","#ccffcc","#99ff99","#4dff4d","#00cc00","#008000"],
-            ["#00ff80","#ccffe6","#99ffcc","#4dffa6","#00cc66","#008040"],
-            ["#00ffff","#ccffff","#99ffff","#4dffff","#00cccc","#008080"],
-            ["#0080ff","#cce6ff","#99ccff","#4da6ff","#0066cc","#004080"],
-            ["#0000ff","#ccccff","#9999ff","#4d4dff","#0000cc","#000080"],
-            ["#8000ff","#e6ccff","#cc99ff","#a64dff","#6600cc","#400080"],
-            ["#ff00ff","#ffccff","#ff99ff","#ff4dff","#cc00cc","#800080"],
-            ["#ff0080","#ffcce6","#ff99cc","#ff4da6","#cc0066","#800040"],
-            ["#000000","#ffffff","#cccccc","#999999","#666666","#333333"]
-        ]
+    // Convert paper objects to plain objects that hold the same data
+    reducePaperColor (color) {
+        if (!(color instanceof window.paper.Color)) return color;
 
+        if (!color.gradient) return color.toCSS();
+
+        let stops = color.gradient.stops.map((stop, index, stops) => {
+            let color = stop.color.toCSS();
+            let offset = stop.offset;
+            if (typeof offset !== 'number') {
+                offset = index / (stops.length - 1);
+            }
+            return { color, offset };
+        });
+        let { origin, destination } = color;
+        origin = { x: origin.x, y: origin.y };
+        destination = { x: destination.x, y: destination.y };
+        return { stops, origin, destination, radial: color.gradient.radial };
+    }
+    reducePaperBounds (bounds) {
+        if (!(bounds instanceof window.paper.Rectangle)) return bounds;
+
+        let { width, height, left, right, top, bottom } = bounds;
+        return { width, height, left, right, top, bottom };
+    }
+
+    renderGradientHeader (color) {
         return (
-            <div className="wick-color-picker">
-                {this.renderHeader()}
-                <div className="wick-swatch-color-picker-body">
-                    {this.renderSwatchbook(colors)}
+            <>
+                <div>
+                    <ActionButton
+                        color="tool"
+                        id="color-picker-solid-button"
+                        action={() => this.switchSolid(color)}
+                        isActive={ () => !color.stops }
+                        text="Solid" />
                 </div>
-            </div>
+                <div>
+                    <ActionButton
+                        color="tool"
+                        id="color-picker-gradient-button"
+                        action={() => this.switchGradient(color)}
+                        isActive={ () => !!color.stops }
+                        text="Gradient" />
+                </div>
+            </>
         );
     }
-
-
-
-    renderHeader () {
+    renderColorHeader () {
         return (
-            <div className="wick-color-picker-header">
+            <>
                 <div className="wick-color-picker-action-button">
                     <ActionButton
                         color="tool"
@@ -85,95 +166,77 @@ class WickColorPicker extends Component {
                         isActive={ () => this.props.colorPickerType === "spectrum" }
                         icon="spectrum" />
                 </div>
+            </>
+        );
+    }
+    renderHeader (color) {
+        return (
+            <div className="wick-color-picker-header">
+                {this.props.enableGradient ? this.renderGradientHeader(color) : this.renderColorHeader()}
                 <div className="color-picker-control-div">
                     <div id="btn-color-picker-close">
-                        <ActionButton color="tool" icon="closemodal" action={this.props.toggle}/>
+                        <ActionButton color="tool" icon="closemodal" action={this.props.toggle} />
                     </div>
                 </div>
-            </div>
-        );
-    }
-
-
-    renderSwatchContainer = (colors) => {
-        return (
-            <div className="wick-color-picker-swatches-container">
-                {colors.map((color, i) => {
-                    return (
-                        <div
-                            key={"color-swatch-" + color + "-" + i}
-                            className="wick-color-picker-small-swatch">
-                            <Swatch
-                                color={color}
-                                style={{default: {}, ":focus": {outline: "2px solid white"}}}
-                                onClick={(color) => {this.props.onChangeComplete(color)}}  />
-                        </div>
-                    );
-                })}
-            </div>
-        );
-    }
-
-    renderSpectrum = () => {
-        let styles = {
-            activeColor: {
-                position:'absolute',
-                width: "100%",
-                height: "100%",
-                backgroundColor: this.props.color,
-            }
-        }
-        
-        let colors = ['#D0021B', '#F8E71C', '#7ED321', '#4A90E2', '#000000', '#4A4A4A', '#FFFFFF', '#FFFFFF00']
-        let lastUsedColorsDefaults = ["#000000","#000000","#000000","#000000","#000000","#000000","#000000","#000000"]
-        let lastColors = this.props.lastColorsUsed || lastUsedColorsDefaults;
-        return (
-            <div className="wick-color-picker">
-                {this.renderHeader()}
-                <div className="wick-color-picker-saturation">
-                    <Saturation {...this.props}/>
-                </div>
-                <div className="wick-color-picker-control-body">
-                    <div id="btn-color-picker-dropper">
-                        <ActionButton
-                            icon="eyedropper"
-                            id="color-picker-eyedropper"
-                            tooltip="Eyedropper"
-                            color="tool"
-                            action={this.openEyedropper}/>
-                    </div>
-                    <div id="wick-color-picker-bar-container">
-                        <div className="wick-color-picker-control-bar">
-                            <Hue {...this.props} height={11}/>
-                        </div>
-                        <div className="wick-color-picker-control-bar">
-                            <Alpha {...this.props} />
-                        </div>
-                    </div>
-                    <div className="wick-color-picker-color-block-container">
-                        <Checkboard />
-                        <div style={styles.activeColor} />
-                    </div>
-                </div>
-                <SketchFields {...this.props} aria-label="color options"/>
-                {this.renderSwatchContainer(colors)}
-                {this.renderSwatchContainer(lastColors)}
             </div>
         );
     }
 
     render () {
-        if (this.props.colorPickerType === "swatches" || !this.props.colorPickerType) {
-            return this.renderSwatches();
-        } else if (this.props.colorPickerType === "spectrum") {
-            return this.renderSpectrum();
-        };
-    }
+        if (this.props.color !== this.lastReceivedColor) {
+            this.lastReceivedColor = this.props.color;
+            this.outOfSync = false;
+        }
+        let color = this.outOfSync ? this.props.desyncedColor : this.props.color;
+        let index = 0;
+        if (this.state.colorOnDrag !== null) {
+            color = this.state.colorOnDrag;
+        }
+        else {
+            color = this.reducePaperColor(color);
+        }
+        if (color.stops) {
+            index = this.props.getSelectedStopIndex();
+            index = Math.min(index, color.stops.length - 1);
+        }
+        let bounds = this.reducePaperBounds(this.props.selectedObjectsBounds);
 
-    openEyedropper = () => {
-        window.editor.setActiveTool('eyedropper');
-        window.editor._onEyedropperPickedColor = this.props.onChange;
+        // Fixes bug where canvas gradient tool disappears on undo
+        if (color.stops) {
+            this.props.setGradientActive(index);
+        }
+        return (
+            <div className="wick-color-picker">
+                {this.renderHeader(color)}
+                {color.stops ?
+                <WickGradient {...this.props}
+                    colorHeader={
+                        <div className="wick-color-picker-header">
+                            {this.renderColorHeader()}
+                        </div>
+                    }
+                    selectedControlStopIndex={index}
+                    onMount={this.props.setGradientActive}
+                    onUnmount={this.props.setGradientInactive}
+                    onChangeIntermediate={this.onChangeIntermediate}
+                    onChangeComplete={this.onGradientChange}
+                    color={color}
+                    bounds={bounds} /> :
+                <>
+                    {this.props.enableGradient &&
+                    <div className="wick-color-picker-header">
+                        {this.renderColorHeader()}
+                    </div>
+                    }
+                    <WickSpectrum {...this.props}
+                        onChangeIntermediate={this.onChangeIntermediate}
+                        onChangeComplete={this.onColorChange}
+                        color={color} />
+                </>
+                }
+            </div>
+        );
     }
 }
 
-export default CustomPicker(WickColorPicker);
+export default WickGradientColorPicker;

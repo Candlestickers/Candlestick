@@ -36,12 +36,12 @@ class MenuBar extends Component {
             icon="mascotmark"
             />
 
-          {/* <MenuBarSupportButton
+          {<MenuBarSupportButton
             icon="redheart"
-            text="support us"
+            text="Discord! "
             id="support-us-button"
-            action={() => this.props.openModal('SupportUs')}
-            /> */}
+            action={() => window.open("https://discord.gg/5esxxWxd7Z")}
+            /> }
           </div>
 
         <div className="menu-bar-project-name" role="button" onClick={() => this.props.openModal("SimpleProjectSettings")}>
@@ -58,6 +58,7 @@ class MenuBar extends Component {
           <MenuBarButton
             text="open"
             action={this.props.openProjectFileDialog}
+            useClickEvent={true}
           />
 
           <MenuBarButton
@@ -90,7 +91,7 @@ class MenuBar extends Component {
         <MenuBarSupportButton
           icon="redheart"
           id="support-us-button"
-          action={() => this.props.openModal('SupportUs')}
+          action={() => window.open("https://discord.gg/5esxxWxd7Z")}
         />
         
         <div role="button" onClick={() => this.props.openModal("SimpleProjectSettings")} className="menu-bar-project-name-mobile">

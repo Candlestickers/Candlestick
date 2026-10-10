@@ -39,11 +39,12 @@ export default function WickButton(props) {
     }
   }
 
+  const useTouchStart = isMobile && !props.useClickEvent;
   return (
     <button
       {...props.buttonProps}
-      onTouchStart={isMobile ? handleClick : undefined}
-      onClick={isMobile ? undefined : handleClick}
+      onTouchStart={useTouchStart ? handleClick : undefined}
+      onClick={useTouchStart ? undefined : handleClick}
       className={classNames("wick-button ", props.className)}>
       {props.children}
     </button>

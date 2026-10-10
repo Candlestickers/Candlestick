@@ -94,6 +94,7 @@ export default function ActionButton (props) {
         className={finalColorClassName}
         type="button"
         secondaryAction={props.secondaryAction}
+        useClickEvent={props.useClickEvent}
         onClick={runAction}
         onTouch={runAction}>
           {renderContent()}

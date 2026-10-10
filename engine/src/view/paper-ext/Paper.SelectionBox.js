@@ -96,7 +96,7 @@ paper.SelectionBox = class {
         this._box = new this.paper.Path.Rectangle({
             from: this._start,
             to: this._end,
-            strokeWidth: 1,
+            strokeWidth: 1 / this.paper.view.zoom,
             strokeColor: 'black',
         });
     }

@@ -46,7 +46,7 @@ export default function initializeDefaultFileHandlers() {
      * @param {function} failureCallback Callback to be called if save is unsuccessful.
      */
     window.saveFileFromWick = (file, name, extension, successCallback, failureCallback) => {
-      const filename = name + timeStamp() + extension; // name + timeStamp() + extension; // --HA
+      const filename = name + extension; // name + timeStamp() + extension; // --HA
       saveAs(file, filename);
       successCallback && successCallback() // Unfortunately, we can't check for success or failure from  browser...
     }
@@ -98,12 +98,14 @@ export default function initializeDefaultFileHandlers() {
     window.createFileInput = (args) => {
       let onChange = args.onChange || (() => { console.log("Updating Chosen Element") });
       let input = document.createElement('input');
+      input.className = "wick-editor-hidden-file-input";
       input.type = 'file';
       input.style.display = 'none';
-      args.accept && (input.accept = args.accept);
-      input.onchange = onChange;
+      let isIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i);
+      args.accept && !isIOS && (input.accept = args.accept);
       args.multiple && (input.multiple = "multiple");
-      input.className = "wick-editor-hidden-file-input";
+      document.body.appendChild(input);
+      input.addEventListener('change', onChange);
 
       function clickInput() {
         input.click();
@@ -149,9 +151,9 @@ export default function initializeDefaultFileHandlers() {
    * Animation, Interactive, Sound, Image
    */
   if (!window.allowedExportTypes) {
-    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images'];
+    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images','PDF'];
   } else if (window.allowedExportTypes.length === 0) {
-    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images'];
+    window.allowedExportTypes = ['Animation', 'Interactive', 'Audio', 'Images','PDF'];
   }
 
   /**

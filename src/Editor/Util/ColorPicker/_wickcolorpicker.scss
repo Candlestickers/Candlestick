@@ -1,169 +1,44 @@
-/*
- * Copyright 2020 WICKLETS LLC
- *
- * This file is part of Wick Editor.
- *
- * Wick Editor is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Wick Editor is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
+/* 
+ * Copyright I don't know
  */
 
- @import 'Editor/_wickbrand.scss';
+@import 'Editor/_wickbrand.scss';
 
- $color-picker-width: 220px;
- $color-picker-height: 300px;
- $color-picker-padding: 10px;
- $color-picker-bar-height: 25px;
- $color-picker-block-margin: 5px;
+$color-picker-width: 250px;
+$color-picker-bar-height: 25px;
+$color-picker-block-margin: 5px;
 
- .wick-color-picker {
-     background-color: $editor-primary;
-     width: $color-picker-width;
-     height: $color-picker-height;
-     padding: 10px 10px 0px;
-     border-radius: 4px;
- }
-
- .wick-color-picker-header {
-    height: $color-picker-bar-height;
+.wick-color-picker {
+    background-color: $editor-primary;
+    width: $color-picker-width;
+    height: fit-content;
     display: flex;
- }
-
- .wick-color-picker-saturation {
-    width: 100%;
-    height: 115px;
-    position: relative;
-    margin-top: $color-picker-block-margin;
-    border-radius: 2px;
-    overflow: hidden;
- }
-
-#btn-color-picker-close {
-    margin-left: auto;
-    width:$color-picker-bar-height;
-    height:$color-picker-bar-height;
-}
-
-#btn-color-picker-dropper {
-    width:$color-picker-bar-height;
-    height:$color-picker-bar-height;
-    margin-right: $color-picker-block-margin;
+    flex-direction: column;
+    gap: $color-picker-block-margin;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: 'Nunito Sans';
 }
 
 .wick-color-picker-action-button {
-    width:30px;
-    height:$color-picker-bar-height;
-    margin-right: 4px
+    width: 30px;
+    margin-right: 4px;
 }
 
 .wick-color-picker-action-button.spacer {
     margin-right: auto;
 }
-
-.wick-color-picker-control-body {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    margin-top: $color-picker-block-margin;
+.color-picker-control-div {
+    margin-left: auto;
 }
 
-.wick-color-picker-control-bar {
-    width: calc(#{$color-picker-width} - 2 * #{$color-picker-padding} - 2 * #{$color-picker-bar-height} - 2 * #{$color-picker-block-margin});
-    height: 45%;
-    position: relative;
-    margin-bottom: 2.5%;
-    background-color: white;
-}
-
-.wick-color-picker-color-block-container {
-    position: relative;
-    width: $color-picker-bar-height;
+.wick-color-picker-header {
     height: $color-picker-bar-height;
-    margin-left: $color-picker-block-margin;
-    background-color: white;
-    border-radius: 2px;
-}
-
-.wick-color-picker-swatches-container {
-    height: 25px;
     display: flex;
-    margin-top: $color-picker-block-margin;
-    flex-wrap: wrap;
-    border-top: 1px solid rgba(0,0,0,.1);
-    padding-top: 8px;
-    margin: $color-picker-block-margin -10px;
-    padding: 5px 0px 0px 10px;
+    align-items: stretch;
 }
 
-.wick-color-picker-small-swatch {
-    width: 16px;
-    min-width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid #222;
-    margin: 0px 10px 10px 0px;
-    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==");
-    background-size: 15px 15px;
-}
-
-//Swatchbook styling
-.column-swatch {
-    width: 30px;
-    height: 20px;
-}
-
-.column-swatch:first-child {
-    margin-bottom: 2px;
-}
-
-.wick-swatch-picker-column {
-    display: flex;
-    flex-direction: column;
-    margin: 0px 4px 4px 0px;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.wick-swatch-picker-book {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: $color-picker-block-margin -10px;
-    padding: 5px 0px 0px 10px;
-}
-
-.wick-swatch-color-picker-body {
-    display: flex;
-    flex-direction: column;
-}
-
-// Fix the styling for the Sketch Inputs.
-.wick-color-picker .flexbox-fix {
-    margin-top: calc(#{$color-picker-block-margin} + 4px) !important;
-    padding-top: 0px !important;
-}
-
-.wick-color-picker input {
-    width: 100% !important;
-    border-radius: 4px;
-    background-color: $editor-primary !important;
-    border: $editor-input-border-width solid $editor-primary-outline !important;
-    color: $editor-primary-property-text !important;
-    box-shadow: none !important;
-    padding: 0px 0px 0px 2px !important;
-}
-
+// Style color picker inputs like the inspector.
 .wick-color-picker span {
-    padding-bottom: 0px !important;
-    color: $editor-primary-property-text !important;
+    color: $editor-primary-property-text;
 }

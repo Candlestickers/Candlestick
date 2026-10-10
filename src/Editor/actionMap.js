@@ -176,7 +176,7 @@ class ActionMapInterface extends Object {
       paste: {
         icon: 'paste',
         tooltip: 'Paste',
-        action: this.editor.pasteFromClipboard,
+        action: this.editor.pasteWickClipboard,
         id: 'action-paste-from-clipboard',
       },
       delete: {
@@ -186,10 +186,28 @@ class ActionMapInterface extends Object {
         id: 'action-delete-selected-objects',
       },
       showMoreCanvasActions: {
-        icon: 'moreactions',
-        tooltip: 'Canvas Actions',
+        icon: 'flipHorizontal',
+        tooltip: 'Flip',
         action: this.editor.toggleCanvasActions,
         id: 'action-show-more-canvas-options',
+      },
+      showBooleanCanvasActions: {
+        icon: 'intersect',
+        tooltip: 'Boolean',
+        action: this.editor.toggleBooleanCanvasActions,
+        id: 'action-show-boolean-canvas-options',
+      },
+      showLayersCanvasActions: {
+        icon: 'layersDropdown',
+        tooltip: 'Layer Actions',
+        action: this.editor.toggleLayersCanvasActions,
+        id: 'action-show-layers-canvas-options',
+      },
+      showAlignmentCanvasActions: {
+        icon: 'alignLeft',
+        tooltip: 'Align Shapes',
+        action: this.editor.toggleAlignmentCanvasActions,
+        id: 'action-show-alignment-canvas-options',
       },
       convertSelectionToButton: {
         icon: 'button-object-dark',
@@ -204,13 +222,6 @@ class ActionMapInterface extends Object {
         action: this.editor.createClipFromSelection,
         id: 'action-convert-selection-to-clip',
         color: 'active-blue'
-      },
-      fillGradient: {
-        icon: 'fillbucket',
-        tooltip: 'Fill Gradient',
-        action: this.editor.fillGradientColor,
-        id: 'action-fill-gradient-color',
-        color: 'active-yellow'
       },
       addAssetToCanvas: {
         icon: 'add',

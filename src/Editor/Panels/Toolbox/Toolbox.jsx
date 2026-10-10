@@ -147,10 +147,29 @@ class Toolbox extends Component {
       <div className="toolbox-actions-right-container">
         <div className="toolbox-actions-right">
 
+
+          <div id="alignment-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showAlignmentCanvasActions)}
+
+          </div>
+
+          <div id="layers-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showLayersCanvasActions)}
+            
+          </div>
+
+          <div id="boolean-canvas-actions-popover-button">
+            {this.renderToolButtonFromAction(this.props.editorActions.showBooleanCanvasActions)}
+          
+          </div>
+
           <div id="more-canvas-actions-popover-button">
             {this.renderToolButtonFromAction(this.props.editorActions.showMoreCanvasActions)}
-            <CanvasActions {...this.props} />
           </div>
+
+          <CanvasActions {...this.props} />
+        
+        <ToolboxBreak/>
 
         {this.renderToolButtonFromAction(this.props.editorActions.delete)}
         {this.renderToolButtonFromAction(this.props.editorActions.copy)}
@@ -180,6 +199,9 @@ class Toolbox extends Component {
           getToolSettingRestrictions={this.props.getToolSettingRestrictions}
           toggleBrushModes={this.props.toggleBrushModes}
           showCanvasActions={this.props.showCanvasActions}
+          showBooleanCanvasActions={this.showBooleanCanvasActions}
+          showLayersCanvasActions={this.showLayersCanvasActions}
+          showAlignmentCanvasActions={this.showAlignmentCanvasActions}
           showBrushModes={this.props.showBrushModes}
         />
 
@@ -206,6 +228,9 @@ class Toolbox extends Component {
             getToolSettingRestrictions={this.props.getToolSettingRestrictions}
             toggleBrushModes={this.props.toggleBrushModes}
             showCanvasActions={this.props.showCanvasActions}
+            showBooleanCanvasActions={this.showBooleanCanvasActions}
+            showLayersCanvasActions={this.showLayersCanvasActions}
+            showAlignmentCanvasActions={this.showAlignmentCanvasActions}
             showBrushModes={this.props.showBrushModes}/>
             {this.renderCanvasActions()}
         </div>
@@ -233,6 +258,9 @@ class Toolbox extends Component {
             getToolSettingRestrictions={this.props.getToolSettingRestrictions}
             toggleBrushModes={this.props.toggleBrushModes}
             showCanvasActions={this.props.showCanvasActions}
+            showBooleanCanvasActions={this.showBooleanCanvasActions}
+            showLayersCanvasActions={this.showLayersCanvasActions}
+            showAlignmentCanvasActions={this.showAlignmentCanvasActions}
             showBrushModes={this.props.showBrushModes}/>
         </div>
 
@@ -303,20 +331,40 @@ class Toolbox extends Component {
     }
   }
 
-  renderCanvasActionsMobile = () => {
-    return (
-      <div className="toolbox-actions-right-container">
-        <div className="toolbox-actions-right">
-        {this.renderToolButtonFromAction(this.props.editorActions.undo)}
-        {this.renderToolButtonFromAction(this.props.editorActions.redo)}
+renderCanvasActionsMobile = () => {
+  return (
+    <div className="toolbox-actions-right-container">
+      <div className="toolbox-actions-right">
+        
+
+        <div id="alignment-canvas-actions-popover-button">
+          {this.renderToolButtonFromAction(this.props.editorActions.showAlignmentCanvasActions)}
+        </div>
+
+        <div id="layers-canvas-actions-popover-button">
+          {this.renderToolButtonFromAction(this.props.editorActions.showLayersCanvasActions)}
+        </div>
+
+        <div id="boolean-canvas-actions-popover-button">
+          {this.renderToolButtonFromAction(this.props.editorActions.showBooleanCanvasActions)}
+        </div>
+
         <div id="more-canvas-actions-popover-button">
           {this.renderToolButtonFromAction(this.props.editorActions.showMoreCanvasActions)}
-          <CanvasActions {...this.props} />
         </div>
+
+        <ToolboxBreak className="mobile" />
+        
+        {this.renderToolButtonFromAction(this.props.editorActions.undo)}
+        {this.renderToolButtonFromAction(this.props.editorActions.redo)}
+
+        <CanvasActions {...this.props} />
       </div>
     </div>
-    )
-  }
+  )
+}
+
+
 
   render() {
     this.toolButtonProps.className = classNames("toolbox-item", {mobile: this.props.renderSize === "small"});

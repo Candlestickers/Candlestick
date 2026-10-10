@@ -99,26 +99,53 @@
     }
 
     function eraseStroke (path, eraserPath) {
-        var res = path.subtract(eraserPath, {
-            insert: false,
-            trace: false,
-        });
-        if(res.children) {
-            // Since the path is only strokes, it's trivial to split it into individual paths
+        if(path.children) {
+            // ungroup compound path of strokes because Paper cannot erase compound strokes
             var children = [];
-            res.children.forEach(function (child) {
+            path.children.forEach(function (child) {
                 child.data = {};
                 children.push(child);
                 child.name = null;
             });
+            // move each child up, then erase individually
             children.forEach(function (child) {
                 child.insertAbove(path);
+                child.style = path.style;
+                eraseStroke(child, eraserPath);
             });
-            res.remove();
         } else {
-            res.remove();
-            if(res.segments.length > 0)
-                res.insertAbove(path);
+            // base case: erasing singular stroke
+            if (path instanceof paper.Path && path.closed && eraserPath.contains(path.firstSegment.point)) {
+                // Fixes bug with paper.js path subtract
+                // If eraserPath contains the first segment of a closed path, convert to an open path
+                var start = path.firstSegment,
+                    end = start.clone();
+                start.handleIn = [0,0];
+                end.handleOut = [0,0];
+                path.addSegment(end);
+                path.closed = false;
+            }
+            var res = path.subtract(eraserPath, {
+                insert: false,
+                trace: false,
+            });
+            if(res.children) {
+                // Since the path is only strokes, it's trivial to split it into individual paths
+                var children = [];
+                res.children.forEach(function (child) {
+                    child.data = {};
+                    children.push(child);
+                    child.name = null;
+                });
+                children.forEach(function (child) {
+                    child.insertAbove(path);
+                });
+                res.remove();
+            } else {
+                res.remove();
+                if(res.segments.length > 0)
+                    res.insertAbove(path);
+            }
         }
         path.remove();
     }

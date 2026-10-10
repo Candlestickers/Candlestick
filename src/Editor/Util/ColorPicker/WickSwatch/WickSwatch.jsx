@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
+import { Swatch } from '../ColorPickerComponents/ColorPickerComponents';
 var tinycolor = require("tinycolor2");
-var { Swatch } = require('react-color/lib/components/common');
 
 class WickSwatch extends Component {
     constructor (props) {
@@ -20,14 +20,9 @@ class WickSwatch extends Component {
     render () {
         let colorInfo = tinycolor(this.props.color);
         let selectedColorInfo = tinycolor(this.props.selectedColor);
-        let contrastColor = '#CCCCCC'
+        let contrastColor = colorInfo.isLight() ? '#333333' : '#CCCCCC';
 
-        let selected = this.props.color === ("#" + selectedColorInfo.toHex()); // TODO clean this check.
-
-        if (colorInfo.isLight()) {
-            contrastColor = "#333333"
-        }
-
+        let selected = colorInfo.toHex() === selectedColorInfo.toHex();
         let selectedStyle = {
             border: '3px solid' + contrastColor
         }
@@ -54,7 +49,7 @@ class WickSwatch extends Component {
                 style={style}>
                 <Swatch
                     color={this.props.color}
-                    onClick={(color) => {this.props.onChangeComplete(color)}}  />
+                    onClick={() => {this.props.onChangeComplete(this.props.color)}} />
             </div>
         );
     }

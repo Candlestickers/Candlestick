@@ -34,6 +34,8 @@ Wick.Tool = class {
 
         // Attach onActivate event
         this.paperTool.onActivate = (e) => {
+            // const view = this.project && this.project.view;
+            // if (view && view.gestureActive) return;
             this.onActivate(e);
         }
 
@@ -49,6 +51,7 @@ Wick.Tool = class {
 
         // Attach mouse down + double click event
         this.paperTool.onMouseDown = (e) => {
+
             if(this.doubleClickEnabled &&
                this._lastMousedownTimestamp !== null &&
                e.timeStamp - this._lastMousedownTimestamp < Wick.Tool.DOUBLE_CLICK_TIME &&

@@ -115,8 +115,8 @@ kbd {
  }
 
  .hotkey-header-column:hover {
-  background-color: $editor-popout-secondary; 
-  color: $editor-modal-text-highlight; 
+  background-color: $wick-cs-orange-dark; 
+  color: $wick-cs-yellow; 
  }
 
  .hotkey-column {
@@ -125,7 +125,7 @@ kbd {
 
  .hotkey-column:hover {
    cursor: pointer;
-   background-color: $editor-popout-secondary;
+   background-color: $wick-cs-yellow;
  }
 
 .hotkey-column.header {

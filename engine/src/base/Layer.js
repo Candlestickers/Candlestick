@@ -32,6 +32,7 @@ Wick.Layer = class extends Wick.Base {
 
         this.locked = args.locked === undefined ? false : args.locked;
         this.hidden = args.hidden === undefined ? false : args.hidden;
+        this.opacity = args.opacity === undefined ? 1 : args.opacity;
         this.name = args.name || null;
     }
 
@@ -40,6 +41,7 @@ Wick.Layer = class extends Wick.Base {
 
         data.locked = this.locked;
         data.hidden = this.hidden;
+        data.opacity = this.opacity;
 
         return data;
     }
@@ -49,6 +51,7 @@ Wick.Layer = class extends Wick.Base {
 
         this.locked = data.locked;
         this.hidden = data.hidden;
+        this.opacity = data.opacity;
     }
 
     get classname () {
@@ -69,6 +72,20 @@ Wick.Layer = class extends Wick.Base {
      */
     get index () {
         return this.parent && this.parent.layers.indexOf(this);
+    }
+
+    /**
+     * The opacity of the layer.
+     * @type {number}
+     */
+    get opacity () {
+        return this._opacity;
+    }
+    set opacity (opacity) {
+        if (typeof opacity === 'number' && !isNaN(opacity)) {
+            this._opacity = Math.max(Math.min(opacity, 1), 0);
+        }
+        else this._opacity = 1;
     }
 
     /**

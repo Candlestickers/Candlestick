@@ -28,10 +28,10 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
         this.CURSOR_SEGMENT = 'cursors/segment.png';
         this.CURSOR_CURVE = 'cursors/curve.png';
         this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR = 'rgba(100,150,255,1.0)';
-        this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH = 1.5;
+        this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH = 3;
         this.HOVER_PREVIEW_SEGMENT_FILL_COLOR = '#ffffff';
         this.HOVER_PREVIEW_SEGMENT_RADIUS = 5;
-        this.HOVER_PREVIEW_CURVE_STROKE_WIDTH = 2;
+        this.HOVER_PREVIEW_CURVE_STROKE_WIDTH = 3;
         this.HOVER_PREVIEW_CURVE_STROKE_COLOR = this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR;
 
         this.hitResult = new this.paper.HitResult();
@@ -76,12 +76,12 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             // Hovering over a segment, draw a circle where the segment is
             this.hoverPreview = new this.paper.Path.Circle(this.hitResult.segment.point, this.HOVER_PREVIEW_SEGMENT_RADIUS/this.paper.view.zoom);
             this.hoverPreview.strokeColor = this.HOVER_PREVIEW_SEGMENT_STROKE_COLOR;
-            this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH;
+            this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_SEGMENT_STROKE_WIDTH / this.paper.view.zoom;
             this.hoverPreview.fillColor = this.HOVER_PREVIEW_SEGMENT_FILL_COLOR;
         } else if (this.hitResult.type === 'curve' && !this.hitResult.item.data.isSelectionBoxGUI) {
             // Hovering over a curve, render a copy of the curve that can be bent
             this.hoverPreview = new this.paper.Path();
-            this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_CURVE_STROKE_WIDTH;
+            this.hoverPreview.strokeWidth = this.HOVER_PREVIEW_CURVE_STROKE_WIDTH / this.paper.view.zoom;
             this.hoverPreview.strokeColor = this.HOVER_PREVIEW_CURVE_STROKE_COLOR;
             this.hoverPreview.add(new this.paper.Point(this.hitResult.location.curve.point1));
             this.hoverPreview.add(new this.paper.Point(this.hitResult.location.curve.point2));
@@ -261,7 +261,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             curves: true,
             segments: true,
             handles: this.detailedEditing !== null,
-            tolerance: this.SELECTION_TOLERANCE,
+            tolerance: this.SELECTION_TOLERANCE / this.paper.view.zoom,
             match: (result => {
                 return result.item !== this.hoverPreview
                     && !result.item.data.isBorder;
@@ -270,7 +270,12 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
         if(!newHitResult) newHitResult = new this.paper.HitResult();
 
         if (this.detailedEditing !== null) {
-            if (this._getWickUUID(newHitResult.item) !== this._getWickUUID(this.detailedEditing)) {
+            // Bugfix: newHitResult.item might be inside a CompoundPath
+            var targetItem = newHitResult.item;
+            if (targetItem && targetItem.parent.className === 'CompoundPath') {
+                targetItem = targetItem.parent;
+            }
+            if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
                 // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
                 return new this.paper.HitResult();
             }

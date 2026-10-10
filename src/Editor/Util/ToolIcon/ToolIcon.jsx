@@ -34,6 +34,8 @@ import iconFillBucket from 'resources/toolbar-icons/fillbucket.svg';
 import iconPathCursor from 'resources/toolbar-icons/pathcursor.svg';
 import iconSpectrum from 'resources/toolbar-icons/spectrum.svg';
 import iconSwatches from 'resources/toolbar-icons/swatches.svg';
+import iconLinear from 'resources/toolbar-icons/linear.svg';
+import iconRadial from 'resources/toolbar-icons/radial.svg';
 
 import iconDelete from 'resources/toolbar-icons/delete.svg';
 import iconUndo from 'resources/toolbar-icons/undo.svg';
@@ -81,13 +83,16 @@ import iconUnite from 'resources/tool-icons/unite.svg';
 import iconAddDark from 'resources/asset-library-icons/add-icon-dark.svg';
 import iconUploadDark from 'resources/asset-library-icons/upload-icon-dark.svg';
 
-// NEW Alignment Icons -H.A.
+// Alignment Icons -H.A.
 import iconAlignX from 'resources/tool-icons/alignX.png';
 import iconAlignY from 'resources/tool-icons/alignY.png';
 import iconAlignRight from 'resources/tool-icons/alignRight.png';
 import iconAlignLeft from 'resources/tool-icons/alignLeft.png';
 import iconAlignTop from 'resources/tool-icons/alignTop.png';
 import iconAlignBottom from 'resources/tool-icons/alignBottom.png';
+
+// Dropdown Icons -H.A.
+import layersDropdown from 'resources/tool-icons/layersDropdown.png';
 
 
 // Assets
@@ -173,10 +178,13 @@ import iconSplit from 'resources/tool-icons/split.svg';
 import iconLayerTween from 'resources/tool-icons/layerTween.svg';
 
 // Marks
-import mascotMarkWhite from 'resources/logo-icons/mascot-mark-white.svg';
-import mascotMarkDark from 'resources/logo-icons/mascot-mark-dark.svg';
-import mascotMark from 'resources/logo-icons/mascot-mark.svg';
-import mascot from 'resources/logo-icons/mascot.svg';
+// mascot-mark-white.svg
+// mascot-mark-dark.svg
+// mascot-mark.svg
+import mascotMarkWhite from 'resources/logo-icons/CSFlashy.png';
+import mascotMarkDark from 'resources/logo-icons/CSFlashy.png';
+import mascotMark from 'resources/logo-icons/CSFlashy.png';
+import mascot from 'resources/logo-icons/CSFlashy.png';
 
 // Code Editor
 import iconClear from 'resources/tool-icons/clear.svg';
@@ -290,6 +298,8 @@ const icons = {
   "alignTop": iconAlignTop,
   "alignBottom": iconAlignBottom,
 
+  "layersDropdown": layersDropdown,
+
   "lock": iconLock,
   "unlock": iconUnlock,
   "hidden": iconHidden,
@@ -299,6 +309,8 @@ const icons = {
   "layerTween": iconLayerTween,
   "spectrum": iconSpectrum,
   "swatches": iconSwatches,
+  "linear": iconLinear,
+  "radial": iconRadial,
   "group": iconGroup,
   "mascotmark": mascotMark,
   "mascotmarkdark": mascotMarkDark,
