@@ -44,7 +44,7 @@ Wick.WickObjectFile = class {
 
     /**
      * Create a wick file from the project.
-     * @param {Wick.Project} clip - the clip to create a wickobject file from
+     * @param {Wick.Clip} clip - the clip to create a wickobject file from
      * @param {string} format - Can be 'blob' or 'dataurl'.
      */
     static toWickObjectFile (clip, format, callback) {
@@ -53,7 +53,7 @@ Wick.WickObjectFile = class {
         var data = clip.export();
         var json = JSON.stringify(data);
         var blob = new Blob([json], {type: "application/json"});
-
+        
         if(format === 'blob') {
             callback(blob);
         } else if (format === 'dataurl') {
