@@ -17,6 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const Base64ArrayBuffer = require('base64-arraybuffer');
 Wick.AudioTrack = class {
     /**
      * @type {Wick.Project}

@@ -93,6 +93,7 @@ Wick.Project = class extends Wick.Base {
             pathcursor: new Wick.Tools.PathCursor(),
             pencil: new Wick.Tools.Pencil(),
             rectangle: new Wick.Tools.Rectangle(),
+            shape: new Wick.Tools.Shape(),
             text: new Wick.Tools.Text(),
             zoom: new Wick.Tools.Zoom(),
         };
@@ -451,6 +452,12 @@ Wick.Project = class extends Wick.Base {
         // Undo discards in-progress brush strokes.
         if (this._tools.brush.isInProgress()) {
             this._tools.brush.discard();
+            return true;
+        }
+
+        // discard in-progress shape tool shapes
+        if (this._tools.shape.isInProgress()) {
+            this._tools.shape.discard();
             return true;
         }
 

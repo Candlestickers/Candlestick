@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+const potrace = require('../../../lib/potrace.cjs');
 /*
     paper-hole.js
     Adds hole() to the paper Layer class which finds the shape of the hole
