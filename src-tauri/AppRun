@@ -1,11 +1,3 @@
-#!/bin/bash
-
-# Fix Steam Deck / Gamescope EGL crashes
-export WEBKIT_DISABLE_COMPOSITING_MODE=1
-export LIBGL_ALWAYS_SOFTWARE=1
-export GSK_RENDERER=gl
-
-export MESA_GL_VERSION_OVERRIDE=3.2
-export MESA_GLSL_VERSION_OVERRIDE=150
-
-exec "$APPDIR/usr/bin/candlestick" "$@"
+version https://git-lfs.github.com/spec/v1
+oid sha256:f39cbd546df5242cd72f2f5cecba196787110f495c66881f423085c4dd7430a2
+size 265

@@ -1,7 +1,7 @@
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.js";
+import * as pdfjsLib from "pdfjs-dist";
 
 const BASE = (process.env.PUBLIC_URL && process.env.PUBLIC_URL !== "/") ? process.env.PUBLIC_URL : "";
-pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `${BASE}/pdf.worker.min.mjs`;
 
 export async function importPDFAsSequence({ pdfFile, scale = 2, onProgress = () => { } }) {
     const buf = await pdfFile.arrayBuffer()
