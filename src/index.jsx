@@ -32,6 +32,8 @@ initAndroidPlatform();
 // Creates file handlers in the window.
 initializeDefaultFileHandlers();
 
+window.CandlestickVersion = '1.0.3';
+
 ReactDOM.render(<Editor />, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change

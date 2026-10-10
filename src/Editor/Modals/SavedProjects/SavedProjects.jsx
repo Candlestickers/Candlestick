@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import WickModal from '../WickModal/WickModal';
 import ActionButton from '../../Util/ActionButton/ActionButton';
