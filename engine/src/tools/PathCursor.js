@@ -275,7 +275,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             if (targetItem && targetItem.parent.className === 'CompoundPath') {
                 targetItem = targetItem.parent;
             }
-            if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
+            if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing) || !targetItem.fullySelected) {
                 // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
                 return new this.paper.HitResult();
             }
