@@ -66,7 +66,7 @@ const editorThemes = [
     label: 'Github',
   }]
 
-import classNames from 'classnames';
+let classNames = require('classnames');
 let thValue = 'monokai';
 export default function WickCodeEditor(props) {
 
@@ -339,6 +339,7 @@ export default function WickCodeEditor(props) {
             name="wick-ace-editor"
             focus={true}
             editorProps={{ $blockScrolling: Infinity }}
+            setOptions={{ useWorker: false }}
             onChange={scriptOnChange}
             onLoad={(editor) => setAceEditor(editor)}
             markers={mapErrorToMarkers(props.error)}

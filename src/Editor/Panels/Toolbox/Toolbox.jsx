@@ -28,7 +28,7 @@ import ToolSettings from './ToolSettings/ToolSettings';
 import CanvasActions from './CanvasActions/CanvasActions';
 import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
 
-import classNames from 'classnames';
+var classNames = require('classnames');
 
 class Toolbox extends Component {
   constructor(props) {

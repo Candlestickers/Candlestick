@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build-engine": "rolldown -c && node ./postbuild.mjs && shx cp -r ./dist/. ../public/corelibs/wick-engine/",
-    "generate-docs": "jsdoc -c jsdocs.json -r src/ -d docs/; cp -r docs/* ../../wick-editor-docs/; cd ../../wick-editor-docs;"
+    "generate-docs": "jsdoc -c jsdocs.json -r src/ -d docs/"
   },
   "repository": {
     "type": "git",

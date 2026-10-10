@@ -24,7 +24,7 @@ import DragDropTypes from 'Editor/DragDropTypes.js';
 import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
-import classNames from 'classnames';
+var classNames = require('classnames');
 
 function Asset(props) {
   const assetType = DragDropTypes.GET_ASSET_TYPE(props);

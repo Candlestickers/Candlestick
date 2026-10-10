@@ -73,7 +73,7 @@ Wick.Tween = class extends Wick.Base {
         var t = Wick.Tween._calculateTimeValue(tweenA, tweenB, playheadPosition);
 
         // Interpolate every transformation attribute using the t value
-        ["x", "y", "scaleX", "scaleY", "rotation", "opacity"].forEach(propName => {
+        ["x", "y", "scaleX", "scaleY", "rotation", "shear", "opacity"].forEach(propName => {
             var tweenFn = tweenA._getTweenFunction();
             var tt = tweenFn(t);
             var valA = tweenA.transformation[propName];

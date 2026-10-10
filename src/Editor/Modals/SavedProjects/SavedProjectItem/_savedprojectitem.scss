@@ -1,4 +1,4 @@
-@use 'Editor/_wickbrand.scss' as *;
+@import 'Editor/_wickbrand.scss';
 
 .saved-project-item {
     background-color: $editor-primary;

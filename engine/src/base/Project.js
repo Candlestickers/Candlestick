@@ -1087,7 +1087,7 @@ orderDynamicFrames() {
      */
     tryToAutoCreateTween() {
         var frame = this.activeFrame;
-        if (frame.tweens.length > 0 && !frame.getTweenAtPosition(frame.getRelativePlayheadPosition())) {
+        if (frame && frame.tweens.length > 0 && !frame.getTweenAtPosition(frame.getRelativePlayheadPosition())) {
             frame.createTween();
         }
     }
