@@ -1,0 +1,55 @@
+#preloader {
+  background-color: #343434;
+  background-image: linear-gradient(0deg, #FF0801, #FFD84B);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 1000000000;
+  top: 0px;
+  left: 0px;
+  transition: all 0.5s ease 0s;
+}
+
+.animated {
+    animation-iteration-count: infinite;
+}
+
+.flicker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-left: -64px;
+    margin-top: -64px;
+    animation: float .6s ease-in-out infinite alternate;
+}
+
+.flicker-shadow {
+    position: absolute;
+    top: calc(50% + 70px); 
+    left: 50%;
+    margin-left: -60px;
+    margin-top: -10.5px;
+    width: 120px;
+    height: 20px;
+    animation: pulse .6s ease-in-out infinite alternate;
+    z-index: -5;
+}
+
+.text {
+    position: absolute;
+    top: calc(50% + 150px);
+    left: 50%;
+    margin-left: -100px;
+    width: 200px;
+    animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+    0% {top: 48%;}
+    100% {top:50%;}
+}
+
+@keyframes pulse {
+    0% {transform: scale3d(.9, .9, .9);}
+    100% { transform: scale3d(1, 1, 1); }
+}
