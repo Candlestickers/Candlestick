@@ -17,35 +17,35 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import 'lib/base64-arraybuffer.js';
-import 'lib/convert-range.js';
-import 'lib/croquis.js';
+import Base64ArrayBuffer from 'lib/base64-arraybuffer.js';
+import convertRange from 'lib/convert-range.js';
+import Croquis from 'lib/croquis.js';
 import 'lib/currentTransform.js';
-import 'lib/esprima.js';
+import esprima from 'lib/esprima.js';
 import 'lib/floodfill.min.js';
-import 'lib/howler.js';
-import 'lib/hull.js';
-import 'lib/invert.min.js';
-import 'lib/is-var-name.js';
+import { Howl } from 'lib/howler.js';
+import hull from 'lib/hull.js';
+import invert from 'lib/invert.min.js';
+import isVarName from 'lib/is-var-name.js';
 import jQuery from 'lib/jquery-3.3.1.min.js';
 import jQueryMousewheel from 'lib/jquery.mousewheel.js';
 import 'lib/jquery.pressure.js';
-import 'lib/jszip.js';
-import 'lib/lerp.js';
-import 'lib/localforage.min.js';
-import 'lib/paper.js';
-import 'lib/platform.js';
-import 'lib/potrace.js';
-import 'lib/quadtree.min.js';
-import 'lib/reserved-words.js';
+import JSZip from 'lib/jszip.js';
+import lerp from 'lib/lerp.js';
+import localforage from 'lib/localforage.min.js';
+import paper from 'lib/paper.js';
+import platform from 'lib/platform.js';
+import potrace from 'lib/potrace.js';
+import Quadtree from 'lib/quadtree.min.js';
+import reserved from 'lib/reserved-words.js';
 import 'lib/roundRect.js';
-import 'lib/timestamp.js';
-import 'lib/soundcloud-waveform.js';
-import 'lib/Tween.js';
-import 'lib/uuid.js';
+import Timestamp from 'lib/timestamp.js';
+import SCWF from 'lib/soundcloud-waveform.js';
+import TWEEN from 'lib/Tween.js';
+import uuidv4 from 'lib/uuid.js';
 
 import Clipboard from './Clipboard';
-import Quadtree from './Quadtree';
+import WickQuadtree from './Quadtree';
 import Color from './Color';
 import FileCache from './FileCache';
 import History from './History';
@@ -156,6 +156,9 @@ import GUITween from 'gui/Tween';
 import GUITweenGhost from 'gui/TweenGhost';
 
 jQueryMousewheel(jQuery);
+Object.assign(window, {
+    Base64ArrayBuffer, convertRange, Croquis, esprima, Howl, hull, invert, isVarName, JSZip, lerp, localforage, paper, platform, potrace, Quadtree, reserved, Timestamp, SCWF, uuidv4, TWEEN
+});
 
 View.Project = ViewProject;
 View.Selection = ViewSelection;
@@ -200,7 +203,7 @@ window.WickSound = WickSound;
  * This object creates a Wick namespace for wick-engine functionality and utilities.
  */
 const Wick = {
-    Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree, ToolSettings, Transformation,
+    Clipboard, Color, FileCache, History, ObjectCache: new WickObjectCache(), Quadtree: WickQuadtree, ToolSettings, Transformation,
     BuiltinAssets: new BuiltinAssets(),
     Base, Button, Clip, Frame, Layer, Path, Project, Selection, Tickable, Timeline, Tween,
     Asset, ClipAsset, FileAsset, FontAsset, GIFAsset, ImageAsset, SoundAsset, SVGAsset,

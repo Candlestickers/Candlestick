@@ -1,6 +1,6 @@
 /* https://github.com/Idnan/soundcloud-waveform-generator */
 
-// import Base64ArrayBuffer from 'base64-arraybuffer';
+import Base64ArrayBuffer from './base64-arraybuffer';
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
