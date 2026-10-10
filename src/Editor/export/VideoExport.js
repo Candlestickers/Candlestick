@@ -9,6 +9,9 @@ var EXPORT_VIDEO_START = 70
 
 const isAndroid = () => /Android/i.test(navigator.userAgent)
 
+export const getFFmpegBaseURL = (publicURL, documentURL) =>
+  new URL(`${(publicURL || '.').replace(/\/+$/, '')}/corelibs/ffmpeg/`, documentURL).href
+
 // On Android, system ffmpeg is not available so we skip the native path and use
 // the web ffmpeg (WASM) path instead, which runs fine inside the Tauri WebView.
 const isTauri = () =>
@@ -118,8 +121,8 @@ class VideoExport {
   static _generateVideo = async ({ images, audio, args }) => {
     let { project, onProgress, onFinish } = args
 
-    // Respects PUBLIC_URL so the /test deploy loads from /test/corelibs/ffmpeg/
-    const baseURL = window.location.origin + (process.env.PUBLIC_URL || '').replace(/\/?$/, '')
+    // Resolve relative PUBLIC_URL values (including CRA's ".") as paths, not hostnames.
+    const baseURL = getFFmpegBaseURL(process.env.PUBLIC_URL, document.baseURI)
 
     // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
     // The ESM build creates a { type: 'module' } worker which disables importScripts(),
@@ -128,7 +131,7 @@ class VideoExport {
     if (!window.FFmpegWASM) {
       await new Promise((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = baseURL + '/corelibs/ffmpeg/ffmpeg.umd.js'
+        script.src = baseURL + 'ffmpeg.umd.js'
         script.onload = resolve
         script.onerror = () => reject(new Error('Failed to load ffmpeg.umd.js'))
         document.head.appendChild(script)
@@ -147,8 +150,8 @@ class VideoExport {
     onProgress && onProgress('Loading video encoder...', EXPORT_VIDEO_START)
 
     await ffmpeg.load({
-      coreURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.js',
-      wasmURL: baseURL + '/corelibs/ffmpeg/ffmpeg-core.wasm',
+      coreURL: baseURL + 'ffmpeg-core.js',
+      wasmURL: baseURL + 'ffmpeg-core.wasm',
     })
 
     onProgress && onProgress('Writing frames...', EXPORT_VIDEO_START + 3)
