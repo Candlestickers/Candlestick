@@ -127,6 +127,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
                 else if (name.endsWith('.png')) mimeType = 'image/png'
                 else if (name.endsWith('.jpeg') || name.endsWith('.jpg')) mimeType = 'image/jpeg'
                 else if (name.endsWith('.gif')) mimeType = 'image/gif'
+                else if (name.endsWith('.webp')) mimeType = 'image/webp'
 
                 const blob = new Blob([bytes], { type: mimeType })
                 const file = new File([blob], name, { type: mimeType })
@@ -277,17 +278,17 @@ class Editor extends EditorCore {
         this._onEyedropperPickedColor = (color) => { };
 
         // Resizable panels
-        this.RESIZE_THROTTLE_AMOUNT_MS = 100;
-        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 300;
+        this.RESIZE_THROTTLE_AMOUNT_MS = 20;
+        this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS = 20;
         this.resizeProps = {
-            onStopResize: throttle(this.onStopResize, this.resizeThrottleAmount),
-            onStopPopoutOutlinerResize: throttle(this.onStopPopoutOutlinerResize, this.resizeThrottleAmount),
-            onStopInspectorResize: throttle(this.onStopInspectorResize, this.resizeThrottleAmount),
-            onStopAssetLibraryResize: throttle(this.onStopAssetLibraryResize, this.resizeThrottleAmount),
-            onStopTimelineResize: throttle(this.onStopTimelineResize, this.resizeThrottleAmount),
-            onStopCodeEditorResize: throttle(this.onStopCodeEditorResize, this.resizeThrottleAmount),
-            onResize: throttle(this.onResize, this.resizeThrottleAmount),
-            onWindowResize: throttle(this.onWindowResize, this.windowResizeThrottleAmount),
+            onStopResize: throttle(this.onStopResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopPopoutOutlinerResize: throttle(this.onStopPopoutOutlinerResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopInspectorResize: throttle(this.onStopInspectorResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopAssetLibraryResize: throttle(this.onStopAssetLibraryResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopTimelineResize: throttle(this.onStopTimelineResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onStopCodeEditorResize: throttle(this.onStopCodeEditorResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onResize: throttle(this.onResize, this.RESIZE_THROTTLE_AMOUNT_MS),
+            onWindowResize: throttle(this.onWindowResize, this.WINDOW_RESIZE_THROTTLE_AMOUNT_MS),
         };
         window.addEventListener("resize", this.resizeProps.onWindowResize);
 

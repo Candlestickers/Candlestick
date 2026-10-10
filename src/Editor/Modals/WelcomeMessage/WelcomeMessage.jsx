@@ -24,10 +24,9 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import './_welcomemessage.scss';
 
-// import nightImage from 'resources/interface-images/blue_night.svg';
-import nightImageShort from 'resources/splash-screens/cool_field3.png'; //'resources/interface-images/blue_night_short.svg';
-
-import coolField from 'resources/splash-screens/cool_field3.png'
+// splash images
+import splash from 'resources/splash-screens/cs_fireball.png';
+import mobileSplash from 'resources/splash-screens/cs_fireball.png';
 
 var classNames = require('classnames');
 
@@ -36,10 +35,13 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
-            "Updated MP4 Exporter",
-            // "PDF Import and Export",
-            // "Pasting Images from Clipboard",
-            // "Various Bug/Crash Fixes"
+            "Clip Shearing",
+            "Movable Pivot",
+            "Improved Frame Resizing",
+            "Autosaved Settings",
+            "Improved Video Import/Export",
+            "Fixed Vcam",
+            "Other Changes and Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
@@ -79,7 +81,7 @@ class WelcomeModal extends Component {
                 {...modalProps}
                 className="modal-body welcome-modal-mobile-body">
                 <div className="welcome-modal-mobile-image-container">
-                    <img className="welcome-modal-mobile-image" alt="Night sky with mountains, clouds, a moon and stars" src={nightImageShort} />
+                    <img className="welcome-modal-mobile-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={mobileSplash} />
                 </div>
                 <div className="welcome-modal-mobile-content">
                     <div className="welcome-modal-title small-modal">Candlestick</div>
@@ -92,6 +94,7 @@ class WelcomeModal extends Component {
                         className="welcome-modal-button"
                         color='green'
                         action={this.props.toggle}
+                        useClickEvent={true}
                         text="Try it"
                     />
                 </div>
@@ -107,7 +110,7 @@ class WelcomeModal extends Component {
 
                 <div id="welcome-modal-interior-content">
                     <div id="welcome-image-container" className="welcome-modal-main-container">
-                        <img id="welcome-image" alt="Night sky with mountains, clouds, a moon and stars" src={coolField} />
+                        <img id="welcome-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={splash} />
                     </div>
                     <div id="welcome-message-container" className="modal-main-container">
                         <div id="welcome-modal-title" className="welcome-modal-item">Welcome To Candlestick!</div>
@@ -124,6 +127,7 @@ class WelcomeModal extends Component {
                                     className="welcome-modal-button"
                                     color='green'
                                     action={this.props.toggle}
+                                    useClickEvent={true}
                                     text="Try it"
                                 />
                             </div>
