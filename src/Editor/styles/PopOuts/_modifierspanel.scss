@@ -1,0 +1,128 @@
+/*
+ * Copyright 2026 Candlestickers
+ *
+ * This file is part of Candlestick.
+ *
+ * Candlestick is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Candlestick is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Candlestick.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+@use 'sass:color';
+@use 'Editor/_wickbrand.scss' as *;
+
+#cs-modifiers-panel-resizeable,
+#cs-modifiers-panel-resizeable-small {
+    --handle-height: 40px;
+    display: flex;
+    box-shadow: var(--wick-box-shadow);
+    border-radius: var(--border-radius-primary);
+}
+
+.cs-modifiers-panel-small {
+    --handle-height: 40px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.cs-modifiers-panel-drag-handle {
+    position: relative;
+    width: 100%;
+    height: var(--handle-height);
+    background-color: var(--wick-primary);
+    color: var(--wick-text-primary);
+    cursor: move;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-top-right-radius: var(--border-radius-primary);
+    border-top-left-radius: var(--border-radius-primary);
+}
+
+.cs-modifiers-panel-title {
+    padding-left: 8px;
+    color: white;
+    margin-right: auto;
+    white-space: nowrap;
+}
+
+.cs-modifiers-panel-title.small {
+    font-size: 20px;
+    font-weight: normal;
+    padding-left: 4px;
+}
+
+.cs-modifiers-panel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 8px;
+    color: white;
+}
+
+.cs-modifiers-close-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    margin-right: 4px;
+    margin-left: auto;
+}
+
+.cs-modifiers-panel-content {
+    background-color: var(--wick-secondary);
+    color: var(--wick-text-secondary);
+    width: 100%;
+    height: calc(100% - var(--handle-height));
+    flex: 1;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+}
+
+.cs-modifier-key-button {
+    display: inline-block;
+    min-width: 2.4em;
+    padding: 6px 10px;
+
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid #b4b4b4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .2), 0 2px 0 0 rgba(255, 255, 255, .7) inset;
+    color: #333;
+    font-size: 1.1em;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.cs-modifier-key-button:hover {
+    background-color: #e0e0e0;
+}
+
+.cs-modifier-key-button:active {
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .2) inset;
+}
+
+.cs-modifier-key-button.active {
+    background-color: $wick-cs-yellow;
+    border-color: color.adjust($wick-cs-yellow, $lightness: -10%);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .2) inset;
+}

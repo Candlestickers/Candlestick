@@ -62,6 +62,11 @@ class MenuBar extends Component {
           />
 
           <MenuBarButton
+            text="modifiers"
+            action={this.props.toggleModifiersPanel}
+          />
+
+          <MenuBarButton
             text="export"
             action={() => {this.props.exporting ? this.props.openExportMedia() : this.props.openExportOptions()}}
           />
@@ -99,6 +104,11 @@ class MenuBar extends Component {
         </div>
 
         <div className="menu-bar-actions-container">
+          <MenuBarButton
+            text="modifiers"
+            action={this.props.toggleModifiersPanel}
+          />
+
           <MenuBarButton
             text="save"
             action={this.props.exportProjectAsWickFile}

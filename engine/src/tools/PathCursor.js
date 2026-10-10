@@ -122,7 +122,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     onDoubleClick (e) {
         this.hitResult = this._updateHitResult(e);
 
-        if (this.detailedEditing == null) {
+        if (this.detailedEditing == null && this.hitResult.item) {
             // If detailed editing is off, turn it on for this path.
             this.detailedEditing = this.hitResult.item;
             this.detailedEditing.setFullySelected(true);

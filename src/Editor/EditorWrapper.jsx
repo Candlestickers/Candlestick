@@ -40,11 +40,29 @@ export default function EditorWrapper(props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    useEffect(() => {
+        let editorElem = document.getElementById('editor');
+
+        // Merge the virtual modifier-key state onto the real, trusted mousedown event
+        // instead of replacing it. ctrlKey/altKey/shiftKey are accessor properties
+        // inherited from MouseEvent.prototype, so Object.defineProperty is needed to define them on the instance.
+        let onMouseDownCapture = (e) => {
+            if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+            Object.defineProperty(e, 'ctrlKey', { value: e.ctrlKey || props.editor.modifierKeys.ctrlKey, configurable: true });
+            Object.defineProperty(e, 'altKey', { value: e.altKey || props.editor.modifierKeys.altKey, configurable: true });
+            Object.defineProperty(e, 'shiftKey', { value: e.shiftKey || props.editor.modifierKeys.shiftKey, configurable: true });
+        };
+
+        editorElem.addEventListener('mousedown', onMouseDownCapture, true);
+        return () => editorElem.removeEventListener('mousedown', onMouseDownCapture, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <ErrorBoundary
             fallback={ErrorPage}
-            processError={(error, errorInfo) => { props.editor.autoSaveProject(() => { "Project Autosaved" }) }}
+            processError={(_error, _errorInfo) => { props.editor.autoSaveProject(() => { "Project Autosaved" }) }}
         >
             <ToastContainer
                 transition={Slide}
