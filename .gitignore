@@ -25,6 +25,7 @@ package-lock.json
 .env.test.local
 .env.production.local
 .env
+CLAUDE.md
 
 npm-debug.log*
 yarn-debug.log*

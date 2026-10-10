@@ -34,6 +34,7 @@ Wick.Layer = class extends Wick.Base {
         this.hidden = args.hidden === undefined ? false : args.hidden;
         this.opacity = args.opacity === undefined ? 1 : args.opacity;
         this.name = args.name || null;
+        this._layerColor = args.layerColor || Wick.GUIElement.LAYER_LABEL_ACTIVE_FILL_COLOR
     }
 
     _serialize (args) {
@@ -86,6 +87,17 @@ Wick.Layer = class extends Wick.Base {
             this._opacity = Math.max(Math.min(opacity, 1), 0);
         }
         else this._opacity = 1;
+    }
+
+    /**
+     * The color of the layer on the timeline.
+     * @type {paper.color}
+     */
+    get layerColor(){
+        return this._layerColor
+    }
+    set layerColor(color){
+        this._layerColor = color
     }
 
     /**
