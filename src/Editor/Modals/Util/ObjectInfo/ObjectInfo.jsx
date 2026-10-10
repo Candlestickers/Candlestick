@@ -22,7 +22,7 @@ import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 
 import './_objectinfo.scss';
 
-import classNames from 'classnames'; 
+var classNames = require('classnames'); 
 
 class MakeAnimated extends Component {
 
