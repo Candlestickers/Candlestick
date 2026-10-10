@@ -81,7 +81,7 @@ Then create a production build of the project:
 ```
 npm run build
 ```
-<sup>^ This command is not always needed while testing, you'll need it most prior to deploying your code</sup>
+<sup>^ This command is not always needed while testing, you'll need it most prior to deploying your code because it's basically just an optimisation command you don't need to use much</sup>
 
 And lastly, to run your project in development:
 ```
