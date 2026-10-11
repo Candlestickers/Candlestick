@@ -2046,6 +2046,7 @@ orderDynamicFrames() {
             callback: callback,
             soundInfo: args.soundInfo ? args.soundInfo : undefined,
             onProgress: args.onProgress,
+            onError: args.onError,
         });
     }
 

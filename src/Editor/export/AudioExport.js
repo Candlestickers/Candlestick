@@ -11,7 +11,8 @@ class AudioExport {
             onProgress: onProgress,
         };
 
-        return new Promise (resolve => {
+        return new Promise ((resolve, reject) => {
+            audioArgs.onError = reject;
             project.generateAudioTrack(audioArgs, audioBuffer => {
                 if(!audioBuffer) {
                     resolve();
