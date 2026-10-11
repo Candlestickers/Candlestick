@@ -16,6 +16,11 @@ $outliner-dropdown-size: 15px;
   width: $outliner-dropdown-size;
   height: $outliner-dropdown-size;
   transition: background-color 150ms ease-in-out;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }
 .outliner-dropdown-icon:hover {
   background-color: rgba(255,255,255,0.2);

@@ -43,6 +43,9 @@ $welcome-modal-padding: 28px;
 
 #welcome-image {
   height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #welcome-message-container {
@@ -139,6 +142,9 @@ $welcome-modal-padding: 28px;
   height: 100%;        /* required so object-fit can crop */
   object-fit: cover;
   object-position: center; /* can be modified to change the crop position */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .welcome-modal-mobile-image-container {

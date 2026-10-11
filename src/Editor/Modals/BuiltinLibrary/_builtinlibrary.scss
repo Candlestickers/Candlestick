@@ -77,6 +77,9 @@ $margin: 3%;
   display: block;
   width: auto;
   height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 
