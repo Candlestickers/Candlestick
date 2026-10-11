@@ -308,11 +308,11 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
      * @type {string}
      */
     get frameSizeMode () {
-        if(Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH === Wick.GUIElement.GRID_SMALL_CELL_WIDTH) {
+        if(Wick.GUIElement.gridCellWidth === Wick.GUIElement.GRID_SMALL_CELL_WIDTH) {
             return 'small';
-        } else if(Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH === Wick.GUIElement.GRID_NORMAL_CELL_WIDTH) {
+        } else if(Wick.GUIElement.gridCellWidth === Wick.GUIElement.GRID_NORMAL_CELL_WIDTH) {
             return 'normal'
-        } else if(Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH === Wick.GUIElement.GRID_LARGE_CELL_WIDTH) {
+        } else if(Wick.GUIElement.gridCellWidth === Wick.GUIElement.GRID_LARGE_CELL_WIDTH) {
             return 'large';
         }
     }

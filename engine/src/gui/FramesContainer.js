@@ -62,7 +62,7 @@ Wick.GUIElement.FramesContainer = class extends Wick.GUIElement {
                 }
 
                 var width = this.canvas.width;
-                var height = Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT - 2;
+                var height = Wick.GUIElement.gridCellHeight - 2;
 
                 ctx.beginPath();
                 ctx.rect(this.project.scrollX, 0, width, height);

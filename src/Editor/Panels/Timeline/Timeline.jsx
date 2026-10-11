@@ -84,9 +84,8 @@ class Timeline extends Component {
         w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
         h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
       }
-      G.GRID_DEFAULT_CELL_WIDTH = w;
-      G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30);
-      G.HIDE_CONTENT_DOTS = v <= 16;
+      G.gridCellWidth = w;
+      G.gridCellHeight = Math.max(h, 30);
     }
     this.props.project.guiElement.draw();
   }
