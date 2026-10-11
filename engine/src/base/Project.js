@@ -1906,41 +1906,61 @@ orderDynamicFrames() {
 
         var frameImages = [];
         var numMaxFrameImages = renderCopy.focus.timeline.length;
+        var restored = false;
+        var restore = () => {
+            if (restored) return;
+            restored = true;
+            renderCopy.view.paper.view.autoUpdate = true;
+            this.view.canvasContainer = oldCanvasContainer;
+            this.view.resize();
+            this.history.loadSnapshot('before-gif-render');
+            this.publishedMode = false;
+            this.view.render();
+            window.document.body.removeChild(container);
+        };
+        var advance = () => {
+            var currentPos = renderCopy.focus.timeline.playheadPosition;
+            args.onProgress(currentPos, numMaxFrameImages);
+            if (currentPos >= numMaxFrameImages) {
+                restore();
+                args.onFinish(frameImages);
+            } else {
+                var oldPlayhead = renderCopy.activeTimeline.playheadPosition;
+                renderCopy.tick();
+                renderCopy.activeTimeline.playheadPosition = oldPlayhead + 1;
+                renderFrame();
+            }
+        };
+        var fail = error => {
+            restore();
+            if (args.onError) args.onError(error);
+            else console.error(error);
+        };
         var renderFrame = () => {
+            // Streaming consumers finish processing this compressed frame before
+            // the next canvas render. GIF/image callers keep the existing API.
+            if (args.onFrame) {
+                try {
+                    renderCopy.view.render();
+                    renderCopy.view.paper.view.update();
+                    renderCopy.view.canvas.toBlob(blob => {
+                        if (!blob) { fail(new Error('Failed to capture video frame')); return; }
+                        Promise.resolve().then(() => args.onFrame(blob)).then(advance).catch(fail);
+                    }, args.imageType);
+                } catch (error) {
+                    fail(error);
+                }
+                return;
+            }
             var frameImage = new Image();
-
             frameImage.onload = () => {
                 frameImages.push(frameImage);
-
-                var currentPos = renderCopy.focus.timeline.playheadPosition;
-                args.onProgress(currentPos, numMaxFrameImages);
-
-                if (currentPos >= numMaxFrameImages) {
-                    // reset autoUpdate back to normal
-                    renderCopy.view.paper.view.autoUpdate = true;
-
-                    this.view.canvasContainer = oldCanvasContainer;
-                    this.view.resize();
-
-                    this.history.loadSnapshot('before-gif-render');
-                    this.publishedMode = false;
-                    this.view.render();
-
-                    window.document.body.removeChild(container);
-
-                    args.onFinish(frameImages);
-                } else {
-                    var oldPlayhead = renderCopy.activeTimeline.playheadPosition
-                    renderCopy.tick();
-                    renderCopy.activeTimeline.playheadPosition = oldPlayhead + 1;
-                    renderFrame();
-                }
-            }
-
+                advance();
+            };
             renderCopy.view.render();
             renderCopy.view.paper.view.update();
             frameImage.src = renderCopy.view.canvas.toDataURL(args.imageType);
-        }
+        };
 
         renderFrame();
     }

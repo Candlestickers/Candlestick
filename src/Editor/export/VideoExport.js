@@ -1,7 +1,5 @@
 import AudioExport from './AudioExport'
 
-var b64toBuff = require('base64-arraybuffer')
-
 var ENABLE_LOGGING = false
 var EXPORT_IMAGE_START = 10
 var EXPORT_AUDIO_START = 40
@@ -21,15 +19,14 @@ const isTauri = () =>
 class VideoExport {
 
   static renderVideo = async (args) => {
-    let images = await VideoExport._generateProjectImages(args)
-    let soundInfo = [...args.project.soundsPlayed]
-    args.soundInfo = soundInfo
-    let audio = await VideoExport._generateAudioFile(args)
-
     if (isTauri()) {
+      const images = await VideoExport._generateProjectImages(args)
+      args.soundInfo = [...args.project.soundsPlayed]
+      const audio = await VideoExport._generateAudioFile(args)
       await VideoExport._exportNativeMP4({ images, audio, args })
     } else {
-      await VideoExport._generateVideo({ images: images, audio: audio, args })
+      // Render directly into the encoder instead of retaining all frames here.
+      await VideoExport._generateVideo({ args })
     }
   }
 
@@ -49,36 +46,25 @@ class VideoExport {
 
     onProgress && onProgress('Rendering Images', EXPORT_IMAGE_START)
 
-    return new Promise(resolve => {
-      let imageData = []
+    return new Promise((resolve, reject) => {
+      const imageData = []
       let frameNumber = 0
-
       project.generateImageSequence({
         imageType: 'image/jpeg',
         width: dimensions.width,
         height: dimensions.height,
-
         onProgress: (currentFrame, numTotalFrames) => {
-          let progress = EXPORT_IMAGE_START + (currentFrame / numTotalFrames) * 20
-          onProgress('Rendering Frame ' + currentFrame + '/' + numTotalFrames, progress)
+          const progress = EXPORT_IMAGE_START + (currentFrame / numTotalFrames) * 20
+          onProgress && onProgress('Rendering Frame ' + currentFrame + '/' + numTotalFrames, progress)
         },
-
-        onFinish: (images) => {
-          onProgress('Converting Frames', EXPORT_AUDIO_START)
-
-          images.forEach(image => {
-            let paddedNum = (frameNumber + '').padStart(12, '0')
-            let name = 'frame' + paddedNum + '.jpg'
-
-            let cleanBase64 = image.src.split(',')[1]
-            let buffer = b64toBuff.decode(cleanBase64)
-
-            imageData.push({ name: name, data: new Uint8Array(buffer) })
-            frameNumber += 1
-          })
-
-          resolve(imageData)
+        onFrame: async blob => {
+          const name = 'frame' + String(frameNumber++).padStart(12, '0') + '.jpg'
+          const frame = { name, data: new Uint8Array(await blob.arrayBuffer()) }
+          if (args.onFrame) await args.onFrame(frame)
+          else imageData.push(frame)
         },
+        onError: reject,
+        onFinish: () => resolve(imageData),
       })
     })
   }
@@ -148,19 +134,24 @@ class VideoExport {
         onProgress && onProgress('Encoding: ' + Math.round(progress * 100) + '%', Math.min(pct, 95))
       })
 
-      onProgress && onProgress('Loading video encoder...', EXPORT_VIDEO_START)
+      onProgress && onProgress('Loading video encoder...', images ? EXPORT_VIDEO_START : 0)
 
       await ffmpeg.load({
         coreURL: baseURL + 'ffmpeg-core.js',
         wasmURL: baseURL + 'ffmpeg-core.wasm',
       })
 
-      onProgress && onProgress('Writing frames...', EXPORT_VIDEO_START + 3)
-
-      for (const frame of images) // add frames to video
-        await ffmpeg.writeFile(frame.name, frame.data)
-      if(audio) // attach audio
-        await ffmpeg.writeFile('audio.wav', new Uint8Array(audio))
+      if (images) {
+        for (const frame of images) await ffmpeg.writeFile(frame.name, frame.data)
+      } else {
+        await VideoExport._generateProjectImages({
+          ...args,
+          onFrame: frame => ffmpeg.writeFile(frame.name, frame.data),
+        })
+        args.soundInfo = [...project.soundsPlayed]
+        audio = await VideoExport._generateAudioFile(args)
+      }
+      if (audio) await ffmpeg.writeFile('audio.wav', audio)
 
       let inputs = ['-i', 'frame%12d.jpg']
       if (audio) inputs = inputs.concat(['-i', 'audio.wav'])
