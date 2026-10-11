@@ -94,7 +94,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         // Dot scale shared by script indicator and content dot
         var _dcw = this.gridCellWidth;
         var _dG = Wick.GUIElement;
-        var _dotScale = Math.min(1, _dcw/_dG.GRID_NORMAL_CELL_WIDTH, 1)*0.9 + 0.1;
+        var _dotScale = Math.min(1, _dcw/_dG.GRID_NORMAL_CELL_WIDTH, 1)*0.95 + 0.05;
         
 
         // Frame scripts dot

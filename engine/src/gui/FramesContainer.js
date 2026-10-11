@@ -119,10 +119,11 @@ Wick.GUIElement.FramesContainer = class extends Wick.GUIElement {
             ctx.fill();
 
             // Plus sign
-            ctx.font = '30px bold Courier New';
+            let fontSize = Math.min(1, (this.gridCellWidth+4)/22) * 30;
+            ctx.font = `${Math.round(fontSize)}px bold Courier New`;
             ctx.fillStyle = Wick.GUIElement.ADD_FRAME_OVERLAY_PLUS_COLOR;
             ctx.globalAlpha = 0.5;
-            ctx.fillText('+', x + this.gridCellWidth / 2 - 8, y + this.gridCellHeight / 2 + 8);
+            ctx.fillText('+', x + this.gridCellWidth / 2 - 8*fontSize/30, y + this.gridCellHeight / 2 + 8*fontSize/30);
             ctx.globalAlpha = 1.0;
         } else {
             this.cursor = 'default';

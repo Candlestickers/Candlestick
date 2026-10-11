@@ -50,7 +50,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
                 ctx.globalAlpha = 0.3;
                 ctx.translate(this._mouseDiff.x, 0);
                 ctx.rotate(Math.PI / 4);
-                    var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.75 + 0.25;
+                    var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.7 + 0.3;
                     var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
                     ctx.fillStyle = Wick.GUIElement.FRAME_GHOST_COLOR;
                     ctx.beginPath();
@@ -64,7 +64,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
                 ctx.setLineDash([3, 3]);
                 ctx.translate(this.moveCols * this.gridCellWidth, 0);
                 ctx.rotate(Math.PI / 4);
-                    var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.75 + 0.25;
+                    var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.7 + 0.3;
                     var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
                     ctx.fillStyle = Wick.GUIElement.FRAME_GHOST_COLOR;
                     ctx.beginPath();
