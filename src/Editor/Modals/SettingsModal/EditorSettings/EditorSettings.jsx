@@ -172,8 +172,7 @@ class EditorSettings extends Component {
                   }
                   G.GRID_DEFAULT_CELL_WIDTH  = w;
                   G.GRID_DEFAULT_CELL_HEIGHT = Math.max(h, 30); // min height keeps layer buttons from overflowing
-                  // below value 15, hide the content dots
-                  G.HIDE_CONTENT_DOTS = v < 15;
+                  G.HIDE_CONTENT_DOTS = v <= 16;
                 }
               }}
             />
