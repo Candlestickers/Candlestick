@@ -1564,8 +1564,18 @@ class EditorCore extends Component {
             });
         }
 
-        let onError = (message) => {
-            console.error("Video Render had an error with message: ", message);
+        // stop the exporter 
+        let onError = (error) => {
+            console.error('Video export failed:', error);
+            const message = 'Video export failed. Please try again. Error details are in the browser console.';
+            this.hideWaitOverlay();
+            this.setState({
+                exporting: false,
+                renderProgress: 0,
+                renderStatusMessage: message,
+            });
+            if (this.state.activeModalName === 'ExportMedia') this.closeActiveModal();
+            this.updateToast(toastID, { type: 'error', text: message });
         }
 
         let onFinish = (message) => {
@@ -1581,20 +1591,16 @@ class EditorCore extends Component {
         }
 
         // this.showWaitOverlay('Rendering video...');
-        VideoExport.renderVideo({
+        return VideoExport.renderVideo({
             project: this.project,
             width: args.width,
             height: args.height,
             onProgress: onProgress,
-            onError: () => {
-                this.hideWaitOverlay();
-                onError();
-            },
             onFinish: () => {
                 this.hideWaitOverlay();
                 onFinish();
             },
-        });
+        }).catch(onError);
     }
     /**
    * Export the current project as a video.
