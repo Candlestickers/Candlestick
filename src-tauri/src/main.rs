@@ -104,7 +104,8 @@ async fn render_video_ffmpeg(
     ]);
 
     if has_audio {
-        cmd.args(["-c:a", "aac", "-shortest"]);
+        // Pad short audio with silence so the video determines the export length.
+        cmd.args(["-c:a", "aac", "-af", "apad", "-shortest"]);
     }
 
     cmd.arg(&output_path);
