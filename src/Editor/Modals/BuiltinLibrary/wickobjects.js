@@ -6,7 +6,7 @@ const wickObjects = {
     "icon": "icons/button.png",
   },{
     "file": "wickobjects/vcam.wickobj",
-    "name": "Vcam (v1.0)",
+    "name": "Vcam (v1.1)",
     "icon": "icons/vcam.png",
   },{
     "file": "wickobjects/multiframeclip.wickobj",

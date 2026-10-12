@@ -100,6 +100,7 @@ Wick.Selection = class extends Wick.Base {
             "height",
             "rotation",
             "shear",
+            "relativePivot",
             "opacity",
             "sound",
             "soundVolume",
@@ -588,6 +589,49 @@ Wick.Selection = class extends Wick.Base {
     set shear(shear) {
         this.project.tryToAutoCreateTween();
         this.view.shear = shear;
+    }
+
+    /** 
+     * The pivot location relative to the selection transform.
+     * @type {}
+     */
+    get relativePivot() {
+        var selectedObject = this.getSelectedObject();
+        if (selectedObject instanceof Wick.Clip) {
+            return { x: selectedObject.pivot[0], y: selectedObject.pivot[1] };
+        } else {
+            var invScaleX = 1 / this.scaleX, invScaleY = 1 / this.scaleY;
+            if (isNaN(invScaleX) || invScaleX === 0) invScaleX = 1;
+            if (isNaN(invScaleY) || invScaleY === 0) invScaleY = 1;
+            var center = this.view._getSelectedObjectsBounds().center;
+            var globalToLocal = (new paper.Matrix()).scale(invScaleX, invScaleY).shear(-this.shear, 0).rotate(-this.rotation);
+            var relativePivot = globalToLocal.transform((new paper.Point(this._pivotPoint)).subtract(center));
+            return { x: relativePivot.x, y: relativePivot.y };
+        }
+    }
+
+    set relativePivot(relativePivot) {
+        this.project.tryToAutoCreateTween();
+        var selectedObject = this.getSelectedObject();
+        if (selectedObject instanceof Wick.Clip) {
+            var transformation = selectedObject.transformation;
+            var matrix = new paper.Matrix(transformation.matrix);
+
+            // Move the clip opposite the pivot so it appears stationary
+            var pivot = matrix.transform((new paper.Point(relativePivot)).subtract(selectedObject.pivot));
+            selectedObject.pivot = [relativePivot.x, relativePivot.y];
+            transformation.x = pivot.x; transformation.y = pivot.y;
+            selectedObject.transformation = transformation;
+            this.pivotPoint = { x: pivot.x, y: pivot.y };
+        } else {
+            var scaleX = this.scaleX, scaleY = this.scaleY;
+            if (isNaN(scaleX) || scaleX === 0) scaleX = 1;
+            if (isNaN(scaleY) || scaleY === 0) scaleY = 1;
+            var center = this.view._getSelectedObjectsBounds().center;
+            var localToGlobal = (new paper.Matrix()).rotate(this.rotation).shear(this.shear, 0).scale(scaleX, scaleY);
+            var pivot = localToGlobal.transform(relativePivot).add(center);
+            this.pivotPoint = { x: pivot.x, y: pivot.y };
+        }
     }
 
     /**
