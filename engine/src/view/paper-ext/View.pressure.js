@@ -17,6 +17,9 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import $ from 'jquery';
+// import paper from 'paper';
+
 paper.View.inject({
   pressure: 1,
   enablePressure: function(args) {

@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import localforage from 'localforage';
+
 /**
  * Utility class for autosaving projects.
  */

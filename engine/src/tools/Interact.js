@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.Tools.Interact = class extends Wick.Tool {
     /**
      * Creates an Interact tool.

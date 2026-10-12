@@ -26,6 +26,9 @@
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
 
+// import potrace from 'potrace';
+// import paper from 'paper';
+
 (function () {
 
     var VERBOSE = false;

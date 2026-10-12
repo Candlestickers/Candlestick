@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import esprima from 'esprima';
+
 /**
  * A class that is extended by any wick object that ticks.
  */

@@ -17,6 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import invert from 'invert-color';
+// import paper from 'paper';
+
 Wick.Tool = class {
     static get DOUBLE_CLICK_TIME () {
         return 300;

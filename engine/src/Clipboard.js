@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import { v4 as uuidv4 } from 'uuid';
+
 /**
  * A clipboard utility class for copy/paste functionality.
  */

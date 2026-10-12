@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import paper from 'paper';
+
 Wick.Tools.Ellipse = class extends Wick.Tool {
     /**
      * Creates an instance of the ellipse tool.

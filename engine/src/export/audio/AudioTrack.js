@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import Base64ArrayBuffer from 'base64-arraybuffer';
+
 Wick.AudioTrack = class {
     /**
      * @type {Wick.Project}

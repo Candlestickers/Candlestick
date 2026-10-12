@@ -17,6 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import { v4 as uuidv4 } from 'uuid';
+// import reserved from 'reserved-words';
+// import isVarName from 'is-var-name';
+
 /**
  * The base class for all objects within the Wick Engine.
  */

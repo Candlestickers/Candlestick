@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import $ from 'jquery';
+
 /**
  * The Project GUIElement handles the creation of the canvas and drawing the rest of the GUIElements.
  */

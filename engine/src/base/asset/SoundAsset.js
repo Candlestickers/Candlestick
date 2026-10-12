@@ -17,6 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// import SCWF from 'soundcloud-waveform';
+// import { Howl } from 'howler';
+
 Wick.SoundAsset = class extends Wick.FileAsset {
     /**
      * Returns valid MIME types for a Sound Asset.
