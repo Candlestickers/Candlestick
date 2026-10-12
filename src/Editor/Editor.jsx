@@ -1312,6 +1312,9 @@ class Editor extends EditorCore {
                                                 <DockedPanel showOverlay={this.state.previewPlaying}>
                                                     {renderSize === "small"
                                                         && <MobileContainer
+                                                            activeTool={this.getActiveTool().name}
+                                                            setActiveTool={this.setActiveTool}
+                                                            getToolSettingRestrictions={this.getToolSettingRestrictions}
                                                             project={this.project}
                                                             projectDidChange={this.projectDidChange}
                                                             projectData={this.state.project}
