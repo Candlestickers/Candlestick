@@ -1,0 +1,179 @@
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Loading...</title>
+  </head>
+
+  <body>
+    <script>
+        window.addEventListener('load', function() {
+            // Download engine
+            fetch('wickengine.js')
+                .then(resp => resp.text())
+                .then(text => {
+                    // Inject engine
+                    var script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.text = text;
+                    document.getElementsByTagName('head')[0].appendChild(script);
+
+                    // Download project
+                    fetch('project.wick')
+                        .then(resp => resp.blob())
+                        .then(blob => {
+                            // Hide preloader
+                            document.getElementById('preloader').style.display = 'none';
+                            document.getElementById('preloader').remove();
+                            // Run project
+                            Wick.WickFile.fromWickFile(blob, project => {
+                                project.inject(document.getElementById('wick-canvas-container'));
+                            });
+                        })
+                        .catch((e) => {
+                            console.error('Could not download Wick project.')
+                            console.error(e);
+                        });
+                })
+                .catch((e) => {
+                    console.error('Could not download Wick project.')
+                    console.error(e);
+                });
+        }, false);
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body, html {
+            margin: 0px;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
+        }
+
+        #wick-canvas-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #preloader {
+            position: absolute;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+            background-color: #343434;
+            background-image: linear-gradient(0deg, #FF0801, #FFD84B);
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
+            transform-origin: 50% 50%;
+        }
+
+        /* Make Flashy slightly larger if the resolution of the screen is big enough */
+        @media (min-width: 1200px) {
+            #preloader {
+                transform: scale(1.5, 1.5);
+            }
+        }
+        @media (min-height: 1200px) {
+            #preloader {
+                transform: scale(2.0, 2.0);
+            }
+        }
+
+        #loading-bar {
+            text-align: center;
+            vertical-align: center;
+        }
+
+        .animated {
+            animation-iteration-count: infinite;
+        }
+
+        .flicker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -64px;
+            margin-top: -64px;
+            animation: float .6s ease-in-out infinite alternate;
+        }
+
+        .flicker-shadow {
+            position: absolute;
+            top: calc(50% + 70px); 
+            left: 50%;
+            margin-left: -60px;
+            margin-top: -10.5px;
+            width: 120px;
+            height: 20px;
+            animation: pulse .6s ease-in-out infinite alternate;
+            z-index: -5;
+        }
+
+        .text {
+            position: absolute;
+            top: calc(50% + 150px);
+            left: 50%;
+            margin-left: -100px;
+            width: 200px;
+            animation: pulse 1.2s ease-in-out infinite alternate;
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
+        }
+
+        @keyframes float {
+            0% {top: 48%;}
+            100% {top:50%;}
+        }
+
+        @keyframes pulse {
+            0% {transform: scale3d(.9, .9, .9);}
+            100% { transform: scale3d(1, 1, 1); }
+        }
+    </style>
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="flicker">
+            <svg width="128" height="128" viewBox="0 0 204 204" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M194 113C194 162.15 154.87 199 106 199C66.2579 199 32.174 176.276 21 140C15.3195 121.558 12.6584 98.8772 10.2208 71.4994C10.1069 70.2201 11.2125 69.1672 12.4848 69.3427L36.2445 72.6199C37.5987 72.8067 38.7371 71.6101 38.4829 70.2669L32.6979 39.689C32.4003 38.116 33.9794 36.8483 35.4509 37.479L64.1307 49.7703C65.4713 50.3449 66.9562 49.3374 66.9179 47.8794L66.0889 16.3781C66.0489 14.8582 67.6525 13.8513 69.0041 14.5476L96.7136 28.8222C97.8732 29.4195 99.285 28.7649 99.5783 27.4939L104.379 6.68939C104.685 5.36338 106.198 4.72365 107.359 5.43359C130.5 19.5846 152.492 35.5476 167 50C183.19 66.128 194 88.2712 194 113Z" fill="url(#paint0_radial_147_293)" stroke="#B73E0E" stroke-width="10" stroke-linejoin="round" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M131.318 115.026C112.52 116.097 97.6179 122.623 98.0075 129.636C98.3971 136.648 113.884 141.518 132.682 140.447C151.48 139.376 166.382 132.85 165.993 125.837C165.603 118.824 150.019 114.052 131.318 115.026Z" fill="#FF8F7B" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M119.533 116.194C119.533 119.896 117 123.012 113.786 123.012C110.669 123.012 108.04 119.993 108.04 116.194C108.04 112.396 110.572 109.376 113.786 109.376C117 109.474 119.533 112.493 119.533 116.194Z" fill="#231F20" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M156.837 113.37C156.837 118.24 153.72 122.136 149.922 122.136C146.123 122.136 143.006 118.24 143.006 113.37C143.006 108.5 146.123 104.604 149.922 104.604C153.818 104.604 156.837 108.5 156.837 113.37Z" fill="#231F20" />
+                <defs>
+                    <radialGradient id="paint0_radial_147_293" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(132.5 163) rotate(-118.921) scale(125.102 140.086)">
+                        <stop stop-color="#F9D133" />
+                        <stop offset="1" stop-color="#FF871E" />
+                    </radialGradient>
+                </defs>
+            </svg>
+        </div>
+        
+        <div class="flicker-shadow">
+            <svg viewBox="0 0 100 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <ellipse cx="50" cy="25" rx="40" ry="10" style="fill:#c30909;" />
+            </svg>
+        </div>
+        <div class="text">
+            <svg viewBox="0 0 200 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <style>
+                    .small {
+                        font: bold 26px Nunito, sans-serif;
+                        fill: rgb(255, 255, 255);
+                    }
+                </style>
+                <text x="100" y="22" text-anchor="middle" class="small">Loading...</text>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Wick project canvas container -->
+    <div id="wick-canvas-container"></div>
+  </body>
+</html>
