@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- S-curve representing a traced vector path -->
+  <path d="M90 422 C 90 268 256 268 256 256 C 256 244 422 244 422 90"
+        stroke="white" stroke-width="26" fill="none" stroke-linecap="round"/>
+  <!-- Hollow square anchor nodes (classic vector-node look) -->
+  <rect x="60" y="392" width="60" height="60" rx="6" fill="none" stroke="white" stroke-width="20"/>
+  <rect x="226" y="226" width="60" height="60" rx="6" fill="none" stroke="white" stroke-width="20"/>
+  <rect x="392" y="60"  width="60" height="60" rx="6" fill="none" stroke="white" stroke-width="20"/>
+</svg>
