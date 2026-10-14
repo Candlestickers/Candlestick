@@ -352,6 +352,7 @@ export default function WickCodeEditor(props) {
     return (
       <Rnd
         id="wick-code-editor-resizeable-small"
+        style={{ zIndex: 901 }}
         bounds="window"
         dragHandleClassName="wick-code-editor-drag-handle"
         width={window.innerWidth}
@@ -384,6 +385,7 @@ export default function WickCodeEditor(props) {
     return (
       <Rnd
         id="wick-code-editor-resizeable"
+        style={{ zIndex: 901 }}
         bounds="window"
         dragHandleClassName="wick-code-editor-drag-handle"
         minWidth={props.codeEditorWindowProperties.minWidth}

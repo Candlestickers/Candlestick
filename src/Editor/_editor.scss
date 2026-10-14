@@ -61,19 +61,19 @@ body {
 #editor {
   width: 100%;
   height: 100%;
-  background-color: red;
+  background-color: $interface-primary;
 }
 
 #menu-bar-container {
   width: 100%;
   height: $menu-bar-height;
-  background-color: green;
+  background-color: $interface-primary;
 }
 
 #editor-body {
   width: 100%;
   height: calc(100% - #{$menu-bar-height});
-  background-color: blue;
+  background-color: $interface-primary;
   overflow: hidden;
 }
 
@@ -215,6 +215,15 @@ body {
 .reflex-container > .reflex-splitter:hover {
   background-color: $splitter-highlight-color;
   transition: all .1s ease; }
+
+.panel-resize-handle {
+  box-sizing: border-box;
+  background-color: $splitter-color;
+  transition: all .1s ease; }
+
+.panel-resize-handle:hover,
+.panel-resize-handle.active {
+  background-color: $splitter-highlight-color; }
 
 .horizontal > .reflex-splitter {
   border-bottom: $splitter-width solid $splitter-color !important;
