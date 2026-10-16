@@ -307,6 +307,7 @@ class SelectionWidget {
         } else if (item.data.handleType === 'scale') {
             if (item.data.handleEdge.includes('Center')) {
                 this.currentTransformation = 'scale-edge';
+                this._strokeBoundingBox = this._calculateStrokeBoundingBox();
             }
             else {
                 this.currentTransformation = 'scale-corner';
@@ -407,6 +408,8 @@ class SelectionWidget {
                 distCorner = cornerLocal.subtract(unrotatedPivot),
                 distMovedCorner = distCorner.add(deltaLocal);
             var scaleFactor = distMovedCorner.divide(distCorner);
+            if (Math.abs(distCorner.x) < 1e-4) scaleFactor.x = modifiers.constrain ? Number.MIN_VALUE : 1;
+            if (Math.abs(distCorner.y) < 1e-4) scaleFactor.y = modifiers.constrain ? Number.MIN_VALUE : 1;
             if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
@@ -423,9 +426,17 @@ class SelectionWidget {
                 edgeLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
                 distEdge = edgeLocal.subtract(unrotatedPivot),
                 distMovedEdge = distEdge.add(deltaLocal);
+            var scaleFactor = distMovedEdge.divide(distEdge);
             this._ghost.data.transform.reset();
+            if (Math.abs(distEdge.x) < 1e-4) {
+                var distance = this._strokeBoundingBox[topLeft ? 'right' : 'left'] - this._strokeBoundingBox.center.x + this._ghost.bounds.center.x - unrotatedPivot.x;
+                scaleFactor.x = (distance + deltaLocal.x) / distance;
+            }
+            if (Math.abs(distEdge.y) < 1e-4) {
+                var distance = this._strokeBoundingBox[topLeft ? 'bottom' : 'top'] - this._strokeBoundingBox.center.y + this._ghost.bounds.center.y - unrotatedPivot.y;
+                scaleFactor.y = (distance + deltaLocal.y) / distance;
+            }
             if (!modifiers.skew || (modifiers.skew && e.modifiers.shift)) {
-                var scaleFactor = distMovedEdge.divide(distEdge);
                 if (vertical) scaleFactor.x = 1;
                 else scaleFactor.y = 1;
                 
@@ -736,6 +747,27 @@ class SelectionWidget {
         var bounds = null;
         items.forEach(item => {
             bounds = bounds ? bounds.unite(item.bounds) : item.bounds;
+        });
+        return bounds || new paper.Rectangle();
+    }
+
+    _calculateStrokeBoundingBox() {
+        if (this._itemsInSelection.length === 0) {
+            return new paper.Rectangle();
+        }
+
+        var center = this._calculateBoundingBoxOfItems(this._itemsInSelection).center;
+
+        var itemsForBoundsCalc = this._itemsInSelection.map(item => {
+            var clone = item.clone();
+            clone.rotate(-this.boxRotation, center).shear(-this.boxShear, 0, center);
+            clone.remove();
+            return clone;
+        });
+
+        var bounds = null;
+        itemsForBoundsCalc.forEach(item => {
+            bounds = bounds ? bounds.unite(item.strokeBounds) : item.strokeBounds;
         });
         return bounds || new paper.Rectangle();
     }
