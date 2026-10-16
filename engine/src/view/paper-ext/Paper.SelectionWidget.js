@@ -408,6 +408,8 @@ class SelectionWidget {
                 distCorner = cornerLocal.subtract(unrotatedPivot),
                 distMovedCorner = distCorner.add(deltaLocal);
             var scaleFactor = distMovedCorner.divide(distCorner);
+            if (Math.abs(distCorner.x) < 1e-4) scaleFactor.x = modifiers.constrain ? Number.MIN_VALUE : 1;
+            if (Math.abs(distCorner.y) < 1e-4) scaleFactor.y = modifiers.constrain ? Number.MIN_VALUE : 1;
             if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
