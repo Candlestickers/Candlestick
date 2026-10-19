@@ -28,7 +28,7 @@ class SelectionWidget {
         if (!args) args = {};
         if (!args.layer) args.layer = Wick.View.paperScope.project.activeLayer;
 
-        this.paper = args.layer.project;
+        this.paper = args.layer.project._scope; // TODO: Check if this can be changed to args.layer.scope after paper.js update
         this._layer = args.layer;
         this._item = new paper.Group({ insert:false });
 
