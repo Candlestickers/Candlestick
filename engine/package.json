@@ -36,7 +36,7 @@
     "url": "git+https://github.com/Wicklets/wick-engine.git"
   },
   "author": "zrispo",
-  "license": "TODO ADD LICENSE",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/Wicklets/wick-engine/issues"
   },
