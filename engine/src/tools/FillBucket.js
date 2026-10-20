@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.FillBucket = class extends Wick.Tool {
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
+
+export default class FillBucket extends Tool {
     /**
      *
      */

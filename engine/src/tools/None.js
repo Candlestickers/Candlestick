@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.None = class extends Wick.Tool {
+import Wick from 'src/Wick';
+import Tool from './Tool';
+
+export default class None extends Tool {
     /**
      * Creates a none tool.
      */

@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GIFAsset = class extends Wick.ClipAsset {
+import Wick from 'src/Wick';
+import ClipAsset from './ClipAsset';
+
+export default class GIFAsset extends ClipAsset {
     /**
      * Returns all valid MIME types for files which can be converted to GIFAssets.
      * @return {string[]} Array of strings of MIME types in the form MediaType/Subtype.

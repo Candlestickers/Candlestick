@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Layer = class extends Wick.View {
+import Wick from 'src/Wick';
+import View from './View';
+
+export default class Layer extends View {
     static get BASE_ONION_OPACITY() {
         return 0.35;
     }

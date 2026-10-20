@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Timeline = class extends Wick.View {
+import Wick from 'src/Wick';
+import View from './View';
+
+export default class Timeline extends View {
     constructor (wickTimeline) {
         super();
 

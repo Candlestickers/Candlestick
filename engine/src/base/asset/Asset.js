@@ -17,7 +17,9 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Asset = class extends Wick.Base {
+import Base from 'base/Base';
+
+export default class Asset extends Base {
 
     /**
      * Creates a new Wick Asset.
