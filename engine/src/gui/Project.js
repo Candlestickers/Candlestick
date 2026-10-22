@@ -494,9 +494,16 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
                 }));
                 return;
             }
-            var dx = e.deltaX * e.deltaFactor * 0.5;
-            var dy = e.deltaY * e.deltaFactor * 0.5;
+
+            // mouse delta, else touch delta if no mouse is found, else zero
+            let deltaX = e.deltaX || -e.movementX || 0;
+            let deltaY = -e.deltaY || -e.movementY || 0;
+            // make mouse less sensitive
+            let deltaFactor = e.deltaFactor/2 || 1;
+
             var dx = deltaX * deltaFactor;
+            var dy = deltaY * deltaFactor;
+
             this.scrollX += dx;
             this.scrollY += dy;
             this.draw();
