@@ -51,6 +51,7 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
         this._attachedDocumentEvents = [];
         this._attachedCanvasEvents = [];
 
+        this._mobileTouching = false;
     }
 
     /**
@@ -138,6 +139,7 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
 
             // Touch events
             this.createCanvasEvent('touchstart', e => {
+                this._mobileTouching = true;
                 e.buttons = 0;
                 e.clientX = e.touches[0].clientX;
                 e.clientY = e.touches[0].clientY;
@@ -145,11 +147,11 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
                 this._touchStartY = e.clientY;
                 e.movementX = e.touches[0].movementX;
                 e.movementY = e.touches[0].movementY;
-                this._onMouseMove(e);
-                this._timeline_onMouseDown(e);
             }, false);
 
             this.createDocumentEvent('touchmove', e => {
+                if(!this._mobileTouching) return;
+
                 e.buttons = 1;
                 e.clientX = e.touches[0].clientX;
                 e.clientY = e.touches[0].clientY;
@@ -157,11 +159,14 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
                 e.movementY = e.clientY - this._touchStartY;
                 this._touchStartX = e.clientX;
                 this._touchStartY = e.clientY;
-                this._onMouseMove(e);
+
+                this._onMouseWheel(e);
             }, false);
+            // TODO: on hold touch, allow dragging elements with this._onMouseMove(e);
 
             this.createDocumentEvent('touchend', e => {
                 this._onMouseUp(e);
+                this._mobileTouching = false;
             }, false);
 
             this._mouseEventsAttached = true;
@@ -491,8 +496,9 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
             }
             var dx = e.deltaX * e.deltaFactor * 0.5;
             var dy = e.deltaY * e.deltaFactor * 0.5;
+            var dx = deltaX * deltaFactor;
             this.scrollX += dx;
-            this.scrollY -= dy;
+            this.scrollY += dy;
             this.draw();
         }
     }
