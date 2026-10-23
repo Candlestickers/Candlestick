@@ -189,7 +189,7 @@ Wick.Clipboard = class {
             }
 
             // Wait to select objects.
-            objectsToSelect.push(object);
+            if(object.project) objectsToSelect.push(object);
         });
 
         // Select newly added objects.
