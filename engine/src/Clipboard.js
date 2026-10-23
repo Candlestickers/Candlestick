@@ -173,16 +173,13 @@ Wick.Clipboard = class {
             // Paste tweens at the position of the playhead
             if(object instanceof Wick.Tween) {
                 object._originalLayerIndex += layerIndicesMoved;
-                object.playheadPosition += project.focus.timeline.playheadPosition - 1;
+                // Tween playhead position is relative to its frame
+                var playheadPosition = project.activeFrame ? project.activeFrame.getRelativePlayheadPosition() : project.activeTimeline.playheadPosition;
+                object.playheadPosition += playheadPosition - 1;
             }
 
             project.addObject(object);
             object.identifier = object._getUniqueIdentifier(object.identifier);
-
-            // Tween playhead position is relative to its frame
-            if(object instanceof Wick.Tween && object.parentFrame) {
-                object.playheadPosition -= object.parentFrame.start - 1;
-            }
 
             // Add offset to Paths and Clips if pasteInPlace is NOT enabled.
             if(!pasteInPlace && (object instanceof Wick.Path || object instanceof Wick.Clip)) {
