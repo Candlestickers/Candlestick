@@ -179,6 +179,11 @@ Wick.Clipboard = class {
             project.addObject(object);
             object.identifier = object._getUniqueIdentifier(object.identifier);
 
+            // Tween playhead position is relative to its frame
+            if(object instanceof Wick.Tween && object.parentFrame) {
+                object.playheadPosition -= object.parentFrame.start - 1;
+            }
+
             // Add offset to Paths and Clips if pasteInPlace is NOT enabled.
             if(!pasteInPlace && (object instanceof Wick.Path || object instanceof Wick.Clip)) {
                 object.view.render();//This render call updates the json, I think... so without this call the path loses its data somehow :(
