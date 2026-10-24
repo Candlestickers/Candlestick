@@ -33,7 +33,7 @@ class InspectorTitle extends Component {
   render() {
     return(
       <div className="inspector-title">
-        <div className="inspector-title-name">{window.project.playing?"Console logs":"Inspector"}</div>
+        <div className="inspector-title-name">{window.project?.playing?"Console logs":"Inspector"}</div>
         {this.props.type && this.props.title && this.renderSelectionType()}
       </div>
     )
