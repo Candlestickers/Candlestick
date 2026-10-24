@@ -82,7 +82,7 @@ class ModalHandler extends Component {
           exportProjectAsImageSVG={this.props.exportProjectAsImageSVG}
           exportProjectAsPDF={this.props.exportProjectAsPDF}
           open={this.props.activeModalName === 'ExportOptions'}
-          projectName={this.props.project.name}
+          projectName={this.props.project?.name}
           project={this.props.project}
           />
         <GeneralWarning

@@ -24,7 +24,8 @@ import { ToastContainer } from 'react-toastify';
 import { GlobalHotKeys } from 'react-hotkeys';
 import ErrorPage from './Util/ErrorPage';
 import ModalHandler from './Modals/ModalHandler/ModalHandler';
-import { Hook, Unhook } from 'console-feed';
+import Hook from 'console-feed/lib/Hook/index.js';
+import Unhook from 'console-feed/lib/Unhook/index.js';
 
 /**
  * EditorWrapper
