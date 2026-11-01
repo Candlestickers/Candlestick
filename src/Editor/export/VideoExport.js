@@ -168,8 +168,8 @@ class VideoExport {
 
     let command = [
       '-r', '' + project.framerate,
-      '-s', dimensions.width + 'x' + dimensions.height,
       ...inputs,
+      '-s', dimensions.width + 'x' + dimensions.height,
       '-pix_fmt', 'yuv420p',
       '-q:v', '10',
       '-strict', '-2',
