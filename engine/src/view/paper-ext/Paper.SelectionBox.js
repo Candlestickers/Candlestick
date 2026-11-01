@@ -137,8 +137,15 @@ paper.SelectionBox = class {
             });
             return intersects;
         } else {
+            // Handle disconnected CompoundPaths
+            function rectContains (rect, pathItem) {
+                var doesContain = rect.contains(pathItem.bounds)
+                if (!doesContain && pathItem instanceof paper.CompoundPath)
+                    return pathItem.children.some(path => rectContains(rect, path));
+                return doesContain;
+            }
             var shapesDoIntersect = itemB.intersects(itemA);
-            var boundsContain = itemB.bounds.contains(itemA.bounds);
+            var boundsContain = rectContains(itemB.bounds, itemA);
             if(shapesDoIntersect || boundsContain) {
                 return true;
             }
