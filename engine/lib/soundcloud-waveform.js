@@ -1,4 +1,5 @@
 /* https://github.com/Idnan/soundcloud-waveform-generator */
+const Base64ArrayBuffer = require('base64-arraybuffer');
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
@@ -134,3 +135,5 @@ var SCWF = function () {
 
 	return SoundCloudWaveform;
 }
+
+module.exports = SCWF;

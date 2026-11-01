@@ -99,6 +99,8 @@ Wick.Project = class extends Wick.Base {
 
         this._quadtree = new Wick.Quadtree(this.width, this.height);
 
+        this.WickPM = new Wick.WickPM();
+
         for (var toolName in this._tools) {
             this._tools[toolName].project = this;
         }
@@ -227,6 +229,8 @@ Wick.Project = class extends Wick.Base {
         this.height = data.height;
         this.framerate = data.framerate;
         this.backgroundColor = new Wick.Color(data.backgroundColor);
+        this.WickPM.pkgs = (data.WickPM && data.WickPM.pkgs) || [];
+        this.WickPM.install();
 
         this._focus = data.focus;
 
@@ -249,6 +253,7 @@ Wick.Project = class extends Wick.Base {
         data.height = this.height;
         data.backgroundColor = this.backgroundColor.rgba;
         data.framerate = this.framerate;
+        data.WickPM = {pkgs: this.WickPM.pkgs, imports: {}};
 
         data.onionSkinEnabled = this.onionSkinEnabled
         data.onionSkinSeekForwards = this.onionSkinSeekForwards;

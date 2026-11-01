@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// uuid
+const { v4: uuidv4 } = require('uuid');
 /**
  * A clipboard utility class for copy/paste functionality.
  */

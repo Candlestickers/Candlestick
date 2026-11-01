@@ -35,11 +35,12 @@ GlobalAPI = class {
             'onEvent',
             'hideCursor','showCursor',
             'hitTestOptions',
+            'imports','WickPM','install','uninstall',
         ];
     }
 
     /**
-     * @param {object} scriptOwner The tickable object which owns the script being evaluated.
+     * @param {Wick.Tickable} scriptOwner The tickable object which owns the script being evaluated.
      */
     constructor (scriptOwner) {
         this.scriptOwner = scriptOwner;
@@ -316,12 +317,47 @@ GlobalAPI = class {
         if(!this.scriptOwner.project) return null;
         this.scriptOwner.project.hideCursor = false;
     }
+
+    /**
+     * Returns WickPM.
+     * @returns {Wick.WickPM}
+     */
+    get WickPM(){
+        if(!this.scriptOwner.project) return null;
+        return this.scriptOwner.project.WickPM;
+    }
+    
+    /**
+     * Returns WickPM's imports object.
+     * @returns {object}
+     */
+    get imports(){
+        if(!this.scriptOwner.project) return null;
+        return this.WickPM.imports;
+    }
+
+    /**
+     * WickPM's install()
+     * @param {string} pkg - The package to install
+     * @param {string} imports - The imports. Can be named or default
+     * @param {string} version - (OPTIONAL) The version of the package. Defaults to latest.
+     */
+    install(pkg, imports, version = 'latest'){
+        if (pkg == undefined) {this.WickPM.install(); return;}
+        this.WickPM.install(pkg, imports, version);
+    }
+
+    /**
+     * WickPM's uninstall()
+     * @param {string} pkg - The package to remove
+     */
+    uninstall(pkg){
+        this.WickPM.uninstall(pkg);
+    }
 }
 
 GlobalAPI.Random = class {
-    constructor () {
-
-    }
+    constructor () {}
 
     /**
      * Returns a random integer (whole number) between two given numbers, 0 and a given number, or 0 and 1. The random number is inclusive of the maximum range.
