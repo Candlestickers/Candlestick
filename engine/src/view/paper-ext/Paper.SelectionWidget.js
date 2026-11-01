@@ -408,8 +408,10 @@ class SelectionWidget {
                 distCorner = cornerLocal.subtract(unrotatedPivot),
                 distMovedCorner = distCorner.add(deltaLocal);
             var scaleFactor = distMovedCorner.divide(distCorner);
+            
             if (Math.abs(distCorner.x) < 1e-4) scaleFactor.x = modifiers.constrain ? Number.MIN_VALUE : 1;
             if (Math.abs(distCorner.y) < 1e-4) scaleFactor.y = modifiers.constrain ? Number.MIN_VALUE : 1;
+            
             if (modifiers.constrain) {
                 if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
                     scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
@@ -427,15 +429,22 @@ class SelectionWidget {
                 distEdge = edgeLocal.subtract(unrotatedPivot),
                 distMovedEdge = distEdge.add(deltaLocal);
             var scaleFactor = distMovedEdge.divide(distEdge);
+            var shearFactor = deltaLocal.divide(distEdge.y, distEdge.x);
             this._ghost.data.transform.reset();
+
             if (Math.abs(distEdge.x) < 1e-4) {
-                var distance = this._strokeBoundingBox[topLeft ? 'right' : 'left'] - this._strokeBoundingBox.center.x + this._ghost.bounds.center.x - unrotatedPivot.x;
-                scaleFactor.x = (distance + deltaLocal.x) / distance;
+                var distOpposite = this._strokeBoundingBox[topLeft ? 'right' : 'left'] - this._strokeBoundingBox.center.x + this._ghost.bounds.center.x - unrotatedPivot.x;
+                var distCenter = edgeLocal.x - this._ghost.bounds.center.x;
+                scaleFactor.x = (distOpposite + deltaLocal.x) / distOpposite;
+                shearFactor.y = (Math.abs(distCenter) < 1e-4) ? 0 : deltaLocal.y / distCenter;
             }
             if (Math.abs(distEdge.y) < 1e-4) {
-                var distance = this._strokeBoundingBox[topLeft ? 'bottom' : 'top'] - this._strokeBoundingBox.center.y + this._ghost.bounds.center.y - unrotatedPivot.y;
-                scaleFactor.y = (distance + deltaLocal.y) / distance;
+                var distOpposite = this._strokeBoundingBox[topLeft ? 'bottom' : 'top'] - this._strokeBoundingBox.center.y + this._ghost.bounds.center.y - unrotatedPivot.y;
+                var distCenter = edgeLocal.y - this._ghost.bounds.center.y;
+                scaleFactor.y = (distOpposite + deltaLocal.y) / distOpposite;
+                shearFactor.x = (Math.abs(distCenter) < 1e-4) ? 0 : deltaLocal.x / distCenter;
             }
+            
             if (!modifiers.skew || (modifiers.skew && e.modifiers.shift)) {
                 if (vertical) scaleFactor.x = 1;
                 else scaleFactor.y = 1;
@@ -443,14 +452,8 @@ class SelectionWidget {
                 this._ghost.data.transform.scale(scaleFactor);
             }
             if (modifiers.skew) {
-                var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
-                if (vertical) {
-                    shearFactor.y = 0;
-                    shearFactor.x *= this._ghost.bounds.height / distEdge.y;
-                } else {
-                    shearFactor.x = 0;
-                    shearFactor.y *= this._ghost.bounds.width / distEdge.x;
-                }
+                if (vertical) shearFactor.y = 0;
+                else shearFactor.x = 0;
 
                 this._ghost.data.transform.shear(shearFactor);
             }
