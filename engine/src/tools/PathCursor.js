@@ -126,7 +126,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             // If detailed editing is off, turn it on for this path.
             this.detailedEditing = this.hitResult.item;
             this.detailedEditing.setFullySelected(true);
-
+            this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
         } else if (!this.hitResult.item) {
             // If detailed editing is on for some path, but the user
             // double clicked somewhere else, turn it off.
