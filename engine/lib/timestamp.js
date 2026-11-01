@@ -36,3 +36,5 @@ function Timestamp() {
 // Return the formatted string
   return date.join("") + "-" + time.join(".") + "" + suffix;
 }
+
+module.exports = Timestamp;

@@ -209,3 +209,5 @@ var reserved = (() => {
 
     return exports;
 })();
+
+module.exports = reserved;
