@@ -88,8 +88,9 @@ Wick.Clip = class extends Wick.Tickable {
     _deserialize(data) {
         super._deserialize(data);
 
-        this.transformation = new Wick.Transformation(data.transformation);
-        this.pivot = data.pivot;
+        // Set _transformation directly: fixes dragged out-of-bounds tweens being removed on undo
+        this._transformation = new Wick.Transformation(data.transformation);
+        this._pivot = data.pivot;
         this._timeline = data.timeline;
         this._animationType = data.animationType || 'loop';
         this._singleFrameNumber = data.singleFrameNumber || 1;
