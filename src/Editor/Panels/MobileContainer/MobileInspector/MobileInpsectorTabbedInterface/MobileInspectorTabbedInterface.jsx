@@ -21,7 +21,7 @@ import React, { useState } from 'react';
 
 import './_mobileinspectortabbedinterface.scss';
 
-var classNames = require('classnames'); 
+import classNames from 'classnames'; 
 
 export default function MobileInspectorTabbedInterface (props) {
     const [selectedTab, setSelectedTab] = useState(props.tabs[0].label);

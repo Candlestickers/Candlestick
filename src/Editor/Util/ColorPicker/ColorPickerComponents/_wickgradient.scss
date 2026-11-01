@@ -2,7 +2,7 @@
  * Copyright I don't know
  */
 
-@import 'Editor/_wickbrand.scss';
+@use 'Editor/_wickbrand.scss' as *;
 
 .wick-color-picker-gradient-fields {
     display: flex;
