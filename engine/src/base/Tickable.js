@@ -17,6 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const esprima = require('esprima');
 /**
  * A class that is extended by any wick object that ticks.
  */
