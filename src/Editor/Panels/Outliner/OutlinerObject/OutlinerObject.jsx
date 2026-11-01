@@ -59,7 +59,7 @@ export const OutlinerObject = ({clearSelection, selectObjects,
         }
       }
 
-      return { uuid: data.uuid };
+      return { type: DragDropTypes.GET_OUTLINER_SOURCE({data}), uuid: data.uuid };
     },
     end: () => {
       setDragging(false);
