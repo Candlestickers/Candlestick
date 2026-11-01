@@ -270,6 +270,15 @@ Wick.History = class {
             })
         });
 
+        // Bugfix: Add all selected tweens to the visible objects list
+        if (this.project.selection.location === 'Timeline') {
+            this.project.selection.getSelectedObjects('Tween').forEach(tween => {
+                if (stateObjects.indexOf(tween) < 0) {
+                    stateObjects.push(tween);
+                }
+            });
+        }
+
         return stateObjects;
     }
 }
