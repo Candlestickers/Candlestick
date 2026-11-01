@@ -103,7 +103,7 @@ Wick.ToolSettings = class {
             type: 'color',
             name: 'forwardOnionSkinTint',
             default: new Wick.Color('rgba(0, 0, 255, .5)'),
-        },{
+        }, {
             type: "choice",
             name: 'brushMode',
             default: 'none',
