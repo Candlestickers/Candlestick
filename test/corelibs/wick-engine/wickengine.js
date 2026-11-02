@@ -1,5 +1,5 @@
 /*Wick Engine https://github.com/Wicklets/wick-engine*/
-var WICK_ENGINE_BUILD_VERSION = "2026.10.12.21.49.15";
+var WICK_ENGINE_BUILD_VERSION = "2026.11.1.18.32.16";
 /*!
  * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -45926,7 +45926,9 @@ Wick.Clipboard = class {
       // Paste tweens at the position of the playhead
       if (object instanceof Wick.Tween) {
         object._originalLayerIndex += layerIndicesMoved;
-        object.playheadPosition += project.focus.timeline.playheadPosition - 1;
+        // Tween playhead position is relative to its frame
+        var playheadPosition = project.activeFrame ? project.activeFrame.getRelativePlayheadPosition() : project.activeTimeline.playheadPosition;
+        object.playheadPosition += playheadPosition - 1;
       }
       project.addObject(object);
       object.identifier = object._getUniqueIdentifier(object.identifier);
@@ -45939,7 +45941,7 @@ Wick.Clipboard = class {
       }
 
       // Wait to select objects.
-      objectsToSelect.push(object);
+      if (object.project) objectsToSelect.push(object);
     });
 
     // Select newly added objects.
@@ -46490,6 +46492,15 @@ Wick.History = class {
         stateObjects.push(tween);
       });
     });
+
+    // Bugfix: Add all selected tweens to the visible objects list
+    if (this.project.selection.location === 'Timeline') {
+      this.project.selection.getSelectedObjects('Tween').forEach(tween => {
+        if (stateObjects.indexOf(tween) < 0) {
+          stateObjects.push(tween);
+        }
+      });
+    }
     return stateObjects;
   }
 };
@@ -49623,7 +49634,7 @@ Wick.Layer = class extends Wick.Base {
    * @param {Wick.Tween} tween - the tween to add
    */
   addTween(tween) {
-    this.activeFrame && this.activeFrame.addChild(tween);
+    this.activeFrame && this.activeFrame.addTween(tween);
   }
 
   /**
@@ -50907,6 +50918,9 @@ Wick.Project = class extends Wick.Base {
         objectsToAdd.push(clip);
       });
     });
+
+    // Switch to cursor tool so we can interact with the selection
+    this.activeTool = 'cursor';
     this.selection.selectMultipleObjects(objectsToAdd);
   }
 
@@ -56682,8 +56696,10 @@ Wick.Clip = class extends Wick.Tickable {
   }
   _deserialize(data) {
     super._deserialize(data);
-    this.transformation = new Wick.Transformation(data.transformation);
-    this.pivot = data.pivot;
+
+    // Set _transformation directly: fixes dragged out-of-bounds tweens being removed on undo
+    this._transformation = new Wick.Transformation(data.transformation);
+    this._pivot = data.pivot;
     this._timeline = data.timeline;
     this._animationType = data.animationType || 'loop';
     this._singleFrameNumber = data.singleFrameNumber || 1;
@@ -60864,8 +60880,14 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     this.hitResult = this._updateHitResult(e);
     if (this.detailedEditing == null) {
       // If detailed editing is off, turn it on for this path.
-      this.detailedEditing = this.hitResult.item;
-      this.detailedEditing.setFullySelected(true);
+      if (this.hitResult.item && (this.hitResult.item.className === 'Path' || this.hitResult.item.className === 'CompoundPath')) {
+        this.detailedEditing = this.hitResult.item;
+        this.detailedEditing.setFullySelected(true);
+        this.fireEvent({
+          eventName: 'canvasModified',
+          actionName: 'pathcursor'
+        });
+      }
     } else if (!this.hitResult.item) {
       // If detailed editing is on for some path, but the user
       // double clicked somewhere else, turn it off.
@@ -60958,7 +60980,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     }
   }
   onMouseUp(e) {
-    if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve') {
+    if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve' || this.hitResult.type && this.hitResult.type.startsWith('handle')) {
       this.fireEvent({
         eventName: 'canvasModified',
         actionName: 'pathcursor'
@@ -60987,12 +61009,12 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     });
     if (!newHitResult) newHitResult = new this.paper.HitResult();
     if (this.detailedEditing !== null) {
-      // Bugfix: newHitResult.item might be inside a CompoundPath
       var targetItem = newHitResult.item;
+      // newHitResult.item might be inside a CompoundPath
       if (targetItem && targetItem.parent.className === 'CompoundPath') {
         targetItem = targetItem.parent;
       }
-      if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
+      if (targetItem && (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing) || !targetItem.fullySelected)) {
         // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
         return new this.paper.HitResult();
       }
@@ -61034,6 +61056,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
       return this.CURSOR_CURVE;
     } else if (this.hitResult.type === 'segment') {
       return this.CURSOR_SEGMENT;
+    } else {
+      return this.CURSOR_DEFAULT;
     }
   }
   _setCursor(cursor) {
@@ -62371,6 +62395,7 @@ class SelectionWidget {
     } else if (item.data.handleType === 'scale') {
       if (item.data.handleEdge.includes('Center')) {
         this.currentTransformation = 'scale-edge';
+        this._strokeBoundingBox = this._calculateStrokeBoundingBox();
       } else {
         this.currentTransformation = 'scale-corner';
       }
@@ -62484,6 +62509,8 @@ class SelectionWidget {
         distCorner = cornerLocal.subtract(unrotatedPivot),
         distMovedCorner = distCorner.add(deltaLocal);
       var scaleFactor = distMovedCorner.divide(distCorner);
+      if (Math.abs(distCorner.x) < 1e-4) scaleFactor.x = modifiers.constrain ? Number.MIN_VALUE : 1;
+      if (Math.abs(distCorner.y) < 1e-4) scaleFactor.y = modifiers.constrain ? Number.MIN_VALUE : 1;
       if (modifiers.constrain) {
         if (Math.abs(scaleFactor.x) < Math.abs(scaleFactor.y)) {
           scaleFactor.x = Math.sign(scaleFactor.x) * Math.abs(scaleFactor.y);
@@ -62499,21 +62526,27 @@ class SelectionWidget {
         edgeLocal = this._shearPoint(item.position.rotate(-this.boxRotation, this.pivot), -this.boxShear, 0, this.pivot),
         distEdge = edgeLocal.subtract(unrotatedPivot),
         distMovedEdge = distEdge.add(deltaLocal);
+      var scaleFactor = distMovedEdge.divide(distEdge);
+      var shearFactor = deltaLocal.divide(distEdge.y, distEdge.x);
       this._ghost.data.transform.reset();
+      if (Math.abs(distEdge.x) < 1e-4) {
+        var distOpposite = this._strokeBoundingBox[topLeft ? 'right' : 'left'] - this._strokeBoundingBox.center.x + this._ghost.bounds.center.x - unrotatedPivot.x;
+        var distCenter = edgeLocal.x - this._ghost.bounds.center.x;
+        scaleFactor.x = (distOpposite + deltaLocal.x) / distOpposite;
+        shearFactor.y = Math.abs(distCenter) < 1e-4 ? 0 : deltaLocal.y / distCenter;
+      }
+      if (Math.abs(distEdge.y) < 1e-4) {
+        var distOpposite = this._strokeBoundingBox[topLeft ? 'bottom' : 'top'] - this._strokeBoundingBox.center.y + this._ghost.bounds.center.y - unrotatedPivot.y;
+        var distCenter = edgeLocal.y - this._ghost.bounds.center.y;
+        scaleFactor.y = (distOpposite + deltaLocal.y) / distOpposite;
+        shearFactor.x = Math.abs(distCenter) < 1e-4 ? 0 : deltaLocal.x / distCenter;
+      }
       if (!modifiers.skew || modifiers.skew && e.modifiers.shift) {
-        var scaleFactor = distMovedEdge.divide(distEdge);
         if (vertical) scaleFactor.x = 1;else scaleFactor.y = 1;
         this._ghost.data.transform.scale(scaleFactor);
       }
       if (modifiers.skew) {
-        var shearFactor = deltaLocal.divide(this._ghost.bounds.height, this._ghost.bounds.width);
-        if (vertical) {
-          shearFactor.y = 0;
-          shearFactor.x *= this._ghost.bounds.height / distEdge.y;
-        } else {
-          shearFactor.x = 0;
-          shearFactor.y *= this._ghost.bounds.width / distEdge.x;
-        }
+        if (vertical) shearFactor.y = 0;else shearFactor.x = 0;
         this._ghost.data.transform.shear(shearFactor);
       }
       this._ghost.translate(unrotatedPivot.multiply(-1)).transform(this._ghost.data.transform).translate(unrotatedPivot);
@@ -62775,6 +62808,23 @@ class SelectionWidget {
     var bounds = null;
     items.forEach(item => {
       bounds = bounds ? bounds.unite(item.bounds) : item.bounds;
+    });
+    return bounds || new paper.Rectangle();
+  }
+  _calculateStrokeBoundingBox() {
+    if (this._itemsInSelection.length === 0) {
+      return new paper.Rectangle();
+    }
+    var center = this._calculateBoundingBoxOfItems(this._itemsInSelection).center;
+    var itemsForBoundsCalc = this._itemsInSelection.map(item => {
+      var clone = item.clone();
+      clone.rotate(-this.boxRotation, center).shear(-this.boxShear, 0, center);
+      clone.remove();
+      return clone;
+    });
+    var bounds = null;
+    itemsForBoundsCalc.forEach(item => {
+      bounds = bounds ? bounds.unite(item.strokeBounds) : item.strokeBounds;
     });
     return bounds || new paper.Rectangle();
   }
@@ -63345,8 +63395,14 @@ paper.SelectionBox = class {
       });
       return intersects;
     } else {
+      // Handle disconnected CompoundPaths
+      function rectContains(rect, pathItem) {
+        var doesContain = rect.contains(pathItem.bounds);
+        if (!doesContain && pathItem instanceof paper.CompoundPath) return pathItem.children.some(path => rectContains(rect, path));
+        return doesContain;
+      }
       var shapesDoIntersect = itemB.intersects(itemA);
-      var boundsContain = itemB.bounds.contains(itemA.bounds);
+      var boundsContain = rectContains(itemB.bounds, itemA);
       if (shapesDoIntersect || boundsContain) {
         return true;
       }
@@ -65180,6 +65236,9 @@ Wick.View.Path = class extends Wick.View {
       return;
     }
     this.importJSON(this.model.json);
+    if (!(this.model.project && this.model.project._activeTool && this.model.project._activeTool.name === 'pathcursor')) {
+      this.item.fullySelected = false;
+    }
 
     // Apply onion skin style if Needed
     // (This is done here in the Path code because we actually change the style of the path
@@ -68789,6 +68848,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
   }
   finish() {
     var timeline = this._mainTween.project.activeTimeline;
+    var selection = this.model.project.selection;
     timeline.playheadPosition += this.moveCols;
 
     // Move all tweens by how much the mouse moved.
@@ -68802,6 +68862,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
     this._tweens.forEach(tween => {
       tween._originalFrame.addTween(tween);
       delete tween._originalFrame;
+      if (!tween.project) selection.deselect(tween);
     });
   }
 };
