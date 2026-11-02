@@ -127,6 +127,7 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             if(this.hitResult.item && (this.hitResult.item.className === 'Path' || this.hitResult.item.className === 'CompoundPath')) {
                 this.detailedEditing = this.hitResult.item;
                 this.detailedEditing.setFullySelected(true);
+                this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
             }
 
         } else if (!this.hitResult.item) {
@@ -241,7 +242,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
-        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve') {
+        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve' ||
+            (this.hitResult.type && this.hitResult.type.startsWith('handle'))) {
             this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
         }
     }
@@ -325,6 +327,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             return this.CURSOR_CURVE;
         } else if (this.hitResult.type === 'segment') {
             return this.CURSOR_SEGMENT;
+        } else {
+            return this.CURSOR_DEFAULT;
         }
     }
 

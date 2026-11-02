@@ -48,6 +48,9 @@ Wick.View.Path = class extends Wick.View {
         }
 
         this.importJSON(this.model.json);
+        if(!(this.model.project && this.model.project._activeTool && this.model.project._activeTool.name === 'pathcursor')) {
+            this.item.fullySelected = false;
+        }
 
         // Apply onion skin style if Needed
         // (This is done here in the Path code because we actually change the style of the path
