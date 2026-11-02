@@ -322,6 +322,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             return this.CURSOR_CURVE;
         } else if (this.hitResult.type === 'segment') {
             return this.CURSOR_SEGMENT;
+        } else {
+            return this.CURSOR_DEFAULT;
         }
     }
 
