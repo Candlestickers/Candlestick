@@ -17,10 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+
 /**
  * Utility class for bundling Wick projects inside HTML files.
  */
-Wick.HTMLExport = class {
+export default class HTMLExport {
     /**
      * Bundles a wick project into the standalone HTML player. This creates a single-file playable Wick project.
      * @param {Wick.Project} project - The project to bundle.

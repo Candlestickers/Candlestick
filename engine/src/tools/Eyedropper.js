@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.Eyedropper = class extends Wick.Tool {
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
+
+export default class Eyedropper extends Tool {
     /**
      *
      */
@@ -90,7 +94,7 @@ Wick.Tools.Eyedropper = class extends Wick.Tool {
 
         var offset = 10 / this.paper.view.zoom;
         var center = point.add(new paper.Point(offset+0.5, offset+0.5));
-        var radius = 10 / paper.view.zoom;
+        var radius = 10 / this.paper.view.zoom;
         var size = new paper.Size(radius, radius);
 
         this.colorPreview = new this.paper.Group();

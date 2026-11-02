@@ -17,10 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from './Wick';
+
 /**
  * History utility class for undo/redo functionality.
  */
-Wick.History = class {
+export default class History {
     /**
      *
      * @type {boolean}
@@ -149,7 +151,7 @@ Wick.History = class {
      * @param {number} filter - the filter to choose which objects to serialize. See Wick.History.StateType
      */
     saveSnapshot(name, filter) {
-        this._snapshots[name] = this._generateState(filter || Wick.History.StateType.ALL_OBJECTS_WITHOUT_PATHS);
+        this._snapshots[name] = this._generateState(filter || History.StateType.ALL_OBJECTS_WITHOUT_PATHS);
     }
 
     /**
@@ -181,21 +183,21 @@ Wick.History = class {
         var objects = [];
 
         if (stateType === undefined) {
-            stateType = Wick.History.StateType.ALL_OBJECTS;
+            stateType = History.StateType.ALL_OBJECTS;
         }
 
-        if (stateType === Wick.History.StateType.ALL_OBJECTS) {
+        if (stateType === History.StateType.ALL_OBJECTS) {
             objects = this._getAllObjects();
-        } else if (stateType === Wick.History.StateType.ALL_OBJECTS_WITHOUT_PATHS) {
+        } else if (stateType === History.StateType.ALL_OBJECTS_WITHOUT_PATHS) {
             objects = this._getAllObjectsWithoutPaths();
-        } else if (stateType === Wick.History.StateType.ONLY_VISIBLE_OBJECTS) {
+        } else if (stateType === History.StateType.ONLY_VISIBLE_OBJECTS) {
             objects = this._getVisibleObjects();
         } else {
             console.error('Wick.History._generateState: A valid stateType is required.');
             return;
         }
 
-        if (Wick.History.VERBOSE) {
+        if (History.VERBOSE) {
             console.log('Wick.History._generateState: Serializing ' + objects.length + ' objects using mode=' + stateType);
         }
 

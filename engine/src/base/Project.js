@@ -17,10 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+import Base from './Base';
+
 /**
  * Class representing a Wick Project.
  */
-Wick.Project = class extends Wick.Base {
+export default class Project extends Base {
     /**
      * Create a project.
      * @param {string} name - Project name. Default "My Project".

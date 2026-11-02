@@ -17,7 +17,14 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.Brush = class extends Wick.Tool {
+import potrace from 'lib/potrace.js';
+import Croquis from 'lib/croquis.js';
+import convertRange from 'lib/convert-range.js';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
+
+export default class Brush extends Tool {
     static get CROQUIS_WAIT_AMT_MS () {
         return 30;
     }

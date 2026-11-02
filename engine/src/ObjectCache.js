@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+
 // NOTE:
 // This should probably not be global, and instead, each Wick.Project should own an ObjectCache.
 // It's too hard to test if there's a shared ObjectCache between many projects.
@@ -24,7 +26,7 @@
 /**
  * Global utility class for storing and retrieving large file data.
  */
-WickObjectCache = class {
+export default class WickObjectCache {
     /**
      * Create a WickObjectCache.
      */
@@ -225,5 +227,3 @@ WickObjectCache = class {
         }
     }
 }
-
-Wick.ObjectCache = new WickObjectCache();

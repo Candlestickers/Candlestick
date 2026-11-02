@@ -17,10 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+import Tickable from './Tickable';
+
 /**
  * A class representing a frame.
  */
-Wick.Frame = class extends Wick.Tickable {
+export default class Frame extends Tickable {
     /**
      * Create a new frame.
      * @param {number} start - The start of the frame. Optional, defaults to 1.

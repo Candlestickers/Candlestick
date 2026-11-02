@@ -17,10 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+
 /**
  * Utility class for opening Wick projects inside popup windows.
  */
-Wick.HTMLPreview = class {
+export default class HTMLPreview {
     /**
      * Runs a project inside a popup window.
      * @param {Wick.Project} project - The project to run.

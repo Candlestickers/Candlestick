@@ -17,6 +17,8 @@
  * along with Paper.js-drawing-tools.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import paper from 'lib/paper.js';
+
 paper.SelectionBox = class {
     /*
      *

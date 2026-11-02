@@ -25,7 +25,10 @@
  * - Horizontal + Vertical Scrollbars
  * - Number Line
  */
-Wick.GUIElement.Timeline = class extends Wick.GUIElement {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+
+export default class Timeline extends GUIElement {
     /**
      * Create a new GUIElement
      */

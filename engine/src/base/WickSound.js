@@ -1,5 +1,5 @@
 // Class WickSound - Howl wrapper
-WickSound = class {
+export default class WickSound {
 	constructor(assetName) {
 		this.asset = project.project.getAssetByName(assetName);
 		this._pan         = 0;

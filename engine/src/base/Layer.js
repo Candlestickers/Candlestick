@@ -17,10 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+import Base from './Base';
+
 /**
  * Represents a Wick Layer.
  */
-Wick.Layer = class extends Wick.Base {
+export default class Layer extends Base {
     /**
      * Called when creating a Wick Layer.
      * @param {boolean} locked - Is the layer locked?
