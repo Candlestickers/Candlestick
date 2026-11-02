@@ -239,7 +239,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
-        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve') {
+        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve' ||
+            (this.hitResult.type && this.hitResult.type.startsWith('handle'))) {
             this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
         }
     }
