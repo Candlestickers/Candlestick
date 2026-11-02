@@ -133,6 +133,7 @@ class BuiltinLibrary extends Component {
             alt='Builtin Asset Icon'
             src={BuiltinLibrary.ROOT_ASSET_PATH + asset.icon}
             className='builtin-library-asset-icon'
+            draggable="false"
             />
         </div>
 

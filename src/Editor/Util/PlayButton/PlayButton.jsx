@@ -35,6 +35,7 @@ class PlayButton extends Component {
         alt={"playing button"}
         src={(this.props.playing ? iconPause : iconPlay)}
         onClick={this.props.action}
+        draggable={false}
         />
     )
   }

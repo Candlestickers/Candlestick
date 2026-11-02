@@ -26,6 +26,7 @@ import MobileInspectorNumericSlider from './MobileInspectorRow/MobileInspectorRo
 import MobileInspectorTextInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorTextInput';
 import MobileInspectorNumericInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorNumericInput';
 import MobileInspectorDualNumericInput from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorDualNumericInput';
+import MobileInspectorShearSlider from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorShearSlider';
 import MobileInspectorSelector from './MobileInspectorRow/MobileInspectorRowTypes/MobileInspectorSelector';
 import InspectorActionButton from '../../Inspector/InspectorActionButton/InspectorActionButton';
 import InspectorImagePreview from '../../Inspector/InspectorPreview/InspectorPreviewTypes/InspectorImagePreview';
@@ -48,11 +49,14 @@ import actionIconActive from 'resources/mobile-inspector-icons/action-icon-activ
 
 import xIcon from 'resources/mobile-inspector-icons/x-icon.svg';
 import yIcon from 'resources/mobile-inspector-icons/y-icon.svg';
+import pivotXIcon from 'resources/mobile-inspector-icons/pivot-x-icon.svg';
+import pivotYIcon from 'resources/mobile-inspector-icons/pivot-y-icon.svg';
 import wIcon from 'resources/mobile-inspector-icons/w-icon.svg';
 import hIcon from 'resources/mobile-inspector-icons/h-icon.svg';
 import scaleWIcon from 'resources/mobile-inspector-icons/scaleW-icon.svg';
 import scaleHIcon from 'resources/mobile-inspector-icons/scaleH-icon.svg';
 import rotateIcon from 'resources/mobile-inspector-icons/rotate-icon.svg';
+import shearIcon from 'resources/mobile-inspector-icons/shear-icon.svg';
 import strokeIcon from 'resources/mobile-inspector-icons/strokewidth-icon.svg';
 import opacityIcon from 'resources/mobile-inspector-icons/opacity-icon.svg';
 import fillOpacityIcon from 'resources/mobile-inspector-icons/fillopacity-icon.svg';
@@ -564,6 +568,40 @@ class MobileInspector extends Component {
   }
 
   /**
+   * Renders an inspector row for the shear.
+   */
+  renderShear = () => {
+    return (
+      <MobileInspectorNumericInput
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
+    )
+  }
+
+  /**
+   * Renders an inspector row allowing viewing and editing of the selection's pivot x y position.
+   */
+  renderPivot = () => {
+    var { x, y } = this.getSelectionAttribute('relativePivot');
+    return (
+      <MobileInspectorDualNumericInput
+        tooltip1="Pivot X"
+        tooltip2="Pivot Y"
+        icon1={pivotXIcon}
+        iconAlt1="Pivot X Icon"
+        icon2={pivotYIcon}
+        iconAlt2="Pivot Y Icon"
+        val1={x}
+        val2={y}
+        onChange1={(val) => this.setSelectionAttribute('relativePivot', {x: val, y})}
+        onChange2={(val) => this.setSelectionAttribute('relativePivot', {x, y: val})}
+        id="inspector-pivot" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -589,7 +627,18 @@ class MobileInspector extends Component {
         {this.renderPosition()}
         {this.renderSize()}
         {this.renderScale()}
-        {this.renderRotation()}
+        <MobileInspectorShearSlider
+          tooltip1="Rotation"
+          icon1={rotateIcon}
+          iconAlt1="Rotation Icon"
+          numericVal={this.getSelectionAttribute('rotation')}
+          onNumericChange={(val) => this.setSelectionAttribute('rotation', val)}
+          tooltip2="Shear"
+          icon2={shearIcon}
+          iconAlt2="Shear Icon"
+          shearVal={this.getSelectionAttribute('shear')}
+          onShearChange={(val) => this.setSelectionAttribute('shear', val)} />
+        {this.renderPivot()}
       </div>
     )
   }

@@ -85,6 +85,9 @@
                 self.attachTextArea(paper);
             }
         },
+        focus: function () {
+            editElem[0].focus();
+        },
         finishEditing: function() {
             editElem.remove();
         },

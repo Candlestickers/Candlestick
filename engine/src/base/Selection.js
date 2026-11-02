@@ -34,6 +34,7 @@ Wick.Selection = class extends Wick.Base {
 
         this._selectedObjectsUUIDs = args.selectedObjects || [];
         this._widgetRotation = args.widgetRotation || 0;
+        this._widgetShear = args.widgetShear || 0;
         this._pivotPoint = { x: 0, y: 0 };
         this._originalWidth = 0;
         this._originalHeight = 0;
@@ -47,6 +48,7 @@ Wick.Selection = class extends Wick.Base {
         var data = super._serialize(args);
         data.selectedObjects = Array.from(this._selectedObjectsUUIDs);
         data.widgetRotation = this._widgetRotation;
+        data.widgetShear = this._widgetShear;
         data.pivotPoint = {
             x: this._pivotPoint.x,
             y: this._pivotPoint.y,
@@ -60,6 +62,7 @@ Wick.Selection = class extends Wick.Base {
         super._deserialize(data);
         this._selectedObjectsUUIDs = data.selectedObjects || [];
         this._widgetRotation = data.widgetRotation;
+        this._widgetShear = data.widgetShear;
         this._pivotPoint = {
             x: data.pivotPoint.x,
             y: data.pivotPoint.y
@@ -96,6 +99,8 @@ Wick.Selection = class extends Wick.Base {
             "width",
             "height",
             "rotation",
+            "shear",
+            "relativePivot",
             "opacity",
             "sound",
             "soundVolume",
@@ -400,6 +405,18 @@ Wick.Selection = class extends Wick.Base {
     }
 
     /**
+     * The shear of the selection (used for canvas selections)
+     * @type {number}
+     */
+    get widgetShear() {
+        return this._widgetShear;
+    }
+
+    set widgetShear(widgetShear) {
+        this._widgetShear = widgetShear;
+    }
+
+    /**
      * The point that transformations to the selection will be based around.
      * @type {object}
      */
@@ -559,6 +576,62 @@ Wick.Selection = class extends Wick.Base {
     set rotation(rotation) {
         this.project.tryToAutoCreateTween();
         this.view.rotation = rotation;
+    }
+
+    /**
+     * The horizontal shear of the selection.
+     * @type {number}
+     */
+    get shear() {
+        return this.view.shear;
+    }
+
+    set shear(shear) {
+        this.project.tryToAutoCreateTween();
+        this.view.shear = shear;
+    }
+
+    /** 
+     * The pivot location relative to the selection transform.
+     * @type {}
+     */
+    get relativePivot() {
+        var selectedObject = this.getSelectedObject();
+        if (selectedObject instanceof Wick.Clip) {
+            return { x: selectedObject.pivot[0], y: selectedObject.pivot[1] };
+        } else {
+            var invScaleX = 1 / this.scaleX, invScaleY = 1 / this.scaleY;
+            if (isNaN(invScaleX) || invScaleX === 0) invScaleX = 1;
+            if (isNaN(invScaleY) || invScaleY === 0) invScaleY = 1;
+            var center = this.view._getSelectedObjectsBounds().center;
+            var globalToLocal = (new paper.Matrix()).scale(invScaleX, invScaleY).shear(-this.shear, 0).rotate(-this.rotation);
+            var relativePivot = globalToLocal.transform((new paper.Point(this._pivotPoint)).subtract(center));
+            return { x: relativePivot.x, y: relativePivot.y };
+        }
+    }
+
+    set relativePivot(relativePivot) {
+        this.project.tryToAutoCreateTween();
+        var selectedObject = this.getSelectedObject();
+        if (selectedObject instanceof Wick.Clip) {
+            var transformation = selectedObject.transformation;
+            var matrix = new paper.Matrix(transformation.matrix);
+
+            // Move the clip opposite the pivot so it appears stationary
+            var pivot = matrix.transform((new paper.Point(relativePivot)).subtract(selectedObject.pivot));
+            selectedObject.pivot = [relativePivot.x, relativePivot.y];
+            transformation.x = pivot.x; transformation.y = pivot.y;
+            selectedObject.transformation = transformation;
+            this.pivotPoint = { x: pivot.x, y: pivot.y };
+        } else {
+            var scaleX = this.scaleX, scaleY = this.scaleY;
+            if (isNaN(scaleX) || scaleX === 0) scaleX = 1;
+            if (isNaN(scaleY) || scaleY === 0) scaleY = 1;
+            var center = this.view._getSelectedObjectsBounds().center;
+            var localToGlobal = (new paper.Matrix()).rotate(this.rotation).shear(this.shear, 0).scale(scaleX, scaleY);
+            var pivot = localToGlobal.transform(relativePivot).add(center);
+            this.pivotPoint = { x: pivot.x, y: pivot.y };
+        }
     }
 
     /**
@@ -980,6 +1053,7 @@ Wick.Selection = class extends Wick.Base {
         if (selectedObject instanceof Wick.Clip) {
             // Single clip selected: Use that Clip's transformation for the pivot point and rotation
             this._widgetRotation = selectedObject.transformation.rotation;
+            this._widgetShear = selectedObject.transformation.shear;
             this._pivotPoint = {
                 x: selectedObject.transformation.x,
                 y: selectedObject.transformation.y,
@@ -987,6 +1061,7 @@ Wick.Selection = class extends Wick.Base {
         } else {
             // Path selected or multiple objects selected: Reset rotation and use center for pivot point
             this._widgetRotation = 0;
+            this._widgetShear = 0;
 
             var boundsCenter = this.view._getSelectedObjectsBounds().center;
             this._pivotPoint = {

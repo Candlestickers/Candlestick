@@ -19,11 +19,11 @@
 
 // Use React Hotkeys style mappings
 class HotKeyInterface extends Object {
-  static get DEFAULT_REPEAT_START_MS () {
+  static get DEFAULT_REPEAT_START_MS() {
     return 500;
   }
 
-  static get DEFAULT_REPEAT_MS () {
+  static get DEFAULT_REPEAT_MS() {
     return 20;
   }
 
@@ -40,6 +40,7 @@ class HotKeyInterface extends Object {
     // Initialize all hotkeys settings
     this.createDefaultKeyMap();
     this.createDefaultHandlers();
+    this.capslockify(this.keyMap)
 
     // Initialize custom hotkeys;
     this.customHotKeys = {};
@@ -95,7 +96,7 @@ class HotKeyInterface extends Object {
       },
       'deactivate-pan': {
         name: "Deactivate Pan",
-        sequences: [{sequence: "x", action: "keyup"}],
+        sequences: [{ sequence: "x", action: "keyup" }],
       },
       'activate-fillbucket': {
         name: "Activate Fill",
@@ -107,12 +108,12 @@ class HotKeyInterface extends Object {
       },
       'deactivate-eyedropper': {
         name: "Deactivate Eyedropper",
-        sequences: [{sequence: "d", action: "keyup"}, {sequence: "i", action: "keyup"}],
+        sequences: [{ sequence: "d", action: "keyup" }, { sequence: "i", action: "keyup" }],
       },
       'swap-fill-stroke': {
         name: "Swap Fill & Stroke Color",
-        sequences: ["s", {sequence: "s", action: "keyup"}]
-      }, // adding new hotkey -H.A.
+        sequences: ["s", { sequence: "s", action: "keyup" }]
+      },
       'activate-zoom': {
         name: "Deactivate Zoom",
         sequences: ['z'],
@@ -302,7 +303,7 @@ class HotKeyInterface extends Object {
       'export-selection': {
         name: "Export Selected Clip",
         sequences: ['meta+e'],
-      }, 
+      },
       'export-project-to-new-window': {
         name: "Export Project to New Window",
         sequences: ['alt+k']
@@ -310,22 +311,22 @@ class HotKeyInterface extends Object {
       'toggle-onion-skinning': {
         name: "Toggle Onion Skinning",
         sequences: ['0']
-      }, 
+      },
       'leave-focus': {
         name: "Leave Focus",
-        sequences : ['alt+f'],
+        sequences: ['alt+f'],
       },
       'toggle-clip-borders': {
         name: "Toggle Clip Borders",
-        sequences : ['9'],
-      }, 
+        sequences: ['9'],
+      },
       'shrink-active-frames': {
         name: "Shrink Active Frames",
-        sequences : ['shift+5'],
-      }, 
+        sequences: ['shift+5'],
+      },
       'extend-active-frames': {
         name: "Extend Active Frames",
-        sequences : ['shift+4'],
+        sequences: ['shift+4'],
       }
     }
 
@@ -335,9 +336,9 @@ class HotKeyInterface extends Object {
       sequences: [],
     }
     // Map all repeatable sequences to the custom handler that clears the repeat timers (see finishRepeating)
-    for(var name in this.keyMap) {
+    for (var name in this.keyMap) {
       var key = this.keyMap[name];
-      if(key.repeatable) {
+      if (key.repeatable) {
         key.sequences.forEach(sequence => {
           this.keyMap['finish-repeating'].sequences.push({
             sequence: sequence,
@@ -363,7 +364,7 @@ class HotKeyInterface extends Object {
         "activate-rectangle",
         "activate-ellipse",
         "activate-line",
-        "activate-path-cursor", 
+        "activate-path-cursor",
         "activate-text",
         "activate-fillbucket",
         "activate-eyedropper",
@@ -375,9 +376,9 @@ class HotKeyInterface extends Object {
       "Edit Controls": [
         "delete",
         "break-apart",
-        "undo", 
+        "undo",
         "redo",
-        "copy", 
+        "copy",
         "cut",
         "paste",
         "duplicate",
@@ -385,15 +386,15 @@ class HotKeyInterface extends Object {
       ],
       "Windows and Modals": [
         "toggle-script-editor",
-      ], 
+      ],
       "Canvas Selection": [
         "create-clip-from-selection",
-        "bring-to-front", 
-        "send-to-back", 
+        "bring-to-front",
+        "send-to-back",
         "move-forwards",
         "move-backwards",
-        "nudge-up", 
-        "nudge-down", 
+        "nudge-up",
+        "nudge-down",
         "nudge-left",
         "nudge-right",
         "nudge-up-more",
@@ -444,17 +445,17 @@ class HotKeyInterface extends Object {
 
         if (selection.length > 0) {
 
-          if(window.EditorGradientColorSwapState){
+          if (window.EditorGradientColorSwapState) {
             // If something is selected, try to swap its fill and stroke if it's a path
             selection.forEach(obj => {
 
               if (obj._classname === "Path") {
 
-                if(obj.fillColor._type === "gradient"){
+                if (obj.fillColor._type === "gradient") {
                   const temp_POS = obj.fillColor._components[1];
                   obj.fillColor._components[1] = obj.fillColor._components[2];
                   obj.fillColor._components[2] = temp_POS;
-                }else{
+                } else {
                   const temp_FC = obj._json[1].fillColor;
                   obj.fillColor = obj._json[1].strokeColor;
                   obj.strokeColor = temp_FC;
@@ -463,17 +464,17 @@ class HotKeyInterface extends Object {
             });
           }
 
-            this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors" });
 
-        } else if(window.EditorGradientColorSwapState){
+        } else if (window.EditorGradientColorSwapState) {
           // Otherwise, swap the project’s tool settings
           const fill = this.editor.project.toolSettings.getSetting('fillColor');
           const stroke = this.editor.project.toolSettings.getSetting('strokeColor');
-      
+
           this.editor.project.toolSettings.setSetting('fillColor', stroke);
           this.editor.project.toolSettings.setSetting('strokeColor', fill);
 
-          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors"});
+          this.editor.projectDidChange({ actionName: "Swapped fill & stroke colors" });
         }
 
       },
@@ -498,7 +499,7 @@ class HotKeyInterface extends Object {
       'break-apart': this.editor.breakApartSelection,
       'undo': this.editor.undoAction,
       'redo': this.editor.redoAction,
-      'leave-focus': this.editor.focusTimelineOfParentObject,
+      'leave-focus': this.editor.focusTimelineOfParentClip,
       'do-nothing': (() => console.log("donothing")),
       'copy': this.editor.copySelectionToClipboard,
       'paste': this.editor.pasteFromClipboard,
@@ -545,7 +546,7 @@ class HotKeyInterface extends Object {
     }
 
     // Wrap each handler for some custom functionality (see wrapHotkeyFunction)
-    for(let name in this.handlers) {
+    for (let name in this.handlers) {
       let origHandler = this.handlers[name];
       this.handlers[name] = ((e) => {
         this.wrapHotkeyFunction(e, name, origHandler);
@@ -559,7 +560,7 @@ class HotKeyInterface extends Object {
   }
 
   wrapHotkeyFunction = (e, name, fn) => {
-    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
       // If we are not on a text input area, use the hotkey's function.
       // Don't prevent default for 'paste' — we need the browser to fire the paste
       // event so our listener can access clipboardData (files, real filenames, etc.)
@@ -568,7 +569,7 @@ class HotKeyInterface extends Object {
 
       // Start the repeat timers if this hotkey is repeatable
       var options = this.keyMap[name];
-      if(options.repeatable) {
+      if (options.repeatable) {
         clearInterval(this.repeatKeyInterval);
         clearTimeout(this.repeatKeyTimeout);
         this.repeatKeyTimeout = setTimeout(() => {
@@ -584,7 +585,7 @@ class HotKeyInterface extends Object {
   }
 
   finishRepeating = () => {
-    if(this.repeatKeyInterval || this.repeatKeyTimeout) {
+    if (this.repeatKeyInterval || this.repeatKeyTimeout) {
       clearInterval(this.repeatKeyInterval);
       clearTimeout(this.repeatKeyTimeout);
       this.repeatKeyInterval = null;
@@ -643,15 +644,15 @@ class HotKeyInterface extends Object {
 
       // Set default attributes...
       let oldSequences = keyMap[actionName].sequences.concat([]);
-      oldSequences.forEach((sequence,i) => {
+      oldSequences.forEach((sequence, i) => {
         let newSequence = sequence;
 
         if (typeof sequence === "string") {
           newSequence = sequence.replace("meta", replacement);
         } else if (typeof sequence === "object") {
           newSequence = {
-              sequence: sequence.sequence.replace("meta", replacement),
-              action: sequence.action,
+            sequence: sequence.sequence.replace("meta", replacement),
+            action: sequence.action,
           }
         }
         oldSequences[i] = newSequence;
@@ -662,7 +663,7 @@ class HotKeyInterface extends Object {
         name: keyMap[actionName].name,
         sequences: oldSequences, // Ensure we get a deep copy of this array, avoid reference errors.
       }
-      
+
       // Update keymap with new attributes.
       if (customKeys[actionName]) {
         let customSequences = customKeys[actionName];
@@ -684,10 +685,10 @@ class HotKeyInterface extends Object {
           let customSequence = customKeys[exception][key];
           if ((customSequence || customSequence === "") && newKeyMap["de" + exception]) {
             if (typeof customSequence === "string") {
-              newKeyMap["de" + exception].sequences[i] = {sequence: customSequence, action: "keyup"};
+              newKeyMap["de" + exception].sequences[i] = { sequence: customSequence, action: "keyup" };
             }
             else if (typeof customSequence === "object") {
-              newKeyMap["de" + exception].sequences[i] = {...customSequence, action: "keyup"};
+              newKeyMap["de" + exception].sequences[i] = { ...customSequence, action: "keyup" };
             }
           }
         });
@@ -716,7 +717,7 @@ class HotKeyInterface extends Object {
   }
 
   // Replaces keys with symbols.
-  static replaceKeys (str) {
+  static replaceKeys(str) {
     const keys = [
       ['shift', '⇪'],
       ['Shift', '⇪'],
@@ -750,7 +751,7 @@ class HotKeyInterface extends Object {
    * @param {Object} keymap - Keymap object
    * @param {string} action - String representing an action in the editor. i.e. 'activate-zoom'. 
    */
-  static getHotKey (keymap, action) {
+  static getHotKey(keymap, action) {
     if (!keymap) return '';
     if (!action) return '';
 
@@ -759,6 +760,51 @@ class HotKeyInterface extends Object {
     if (!option.sequences || !option.sequences[0]) return '';
 
     return option.sequences[0];
+  }
+
+  /**
+   * Adds capslock support to the keyMap sequences.
+   * react-hotkeys matches key sequences case-sensitively, so with capslock on,
+   * a single-letter hotkey like 'x' no longer matches because the browser reports 'X'.
+   * This adds an uppercased-key variant of every sequence so both work.
+   * @param {Object} keyMap - Keymap object
+   */
+  capslockify(keyMap = this.keyMap) {
+    Object.values(keyMap).forEach(hotkey => {
+      const extraSequences = [];
+
+      hotkey.sequences.forEach(seq => {
+        if (typeof seq === "string") {
+          const upper = HotKeyInterface.uppercaseKeyLetter(seq);
+          if (upper !== seq) extraSequences.push(upper);
+        } else if (seq && typeof seq === "object") {
+          const upper = HotKeyInterface.uppercaseKeyLetter(seq.sequence);
+          if (upper !== seq.sequence) extraSequences.push({ ...seq, sequence: upper });
+        }
+      });
+
+      hotkey.sequences.push(...extraSequences);
+    });
+  }
+
+  /**
+   * Uppercases the key portion (after the last '+') of a hotkey sequence string,
+   * but only if it's a single letter. Modifier names ('meta', 'shift', 'alt') and
+   * multi-character key names ('up', 'backspace', etc.) are left untouched.
+   * @param {string} sequence - the sequence string to modify, e.g. 'shift+t' or 'x'
+   */
+  static uppercaseKeyLetter(sequence) {
+    if (typeof sequence !== "string") return sequence;
+
+    const parts = sequence.split("+");
+    const key = parts[parts.length - 1];
+
+    if (key.length === 1 && /[a-z]/i.test(key)) {
+      parts[parts.length - 1] = key.toUpperCase();
+      return parts.join("+");
+    }
+
+    return sequence;
   }
 }
 

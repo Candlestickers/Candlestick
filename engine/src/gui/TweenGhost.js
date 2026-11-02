@@ -75,6 +75,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
 
     finish () {
         var timeline = this._mainTween.project.activeTimeline;
+        var selection = this.model.project.selection;
         timeline.playheadPosition += this.moveCols;
 
         // Move all tweens by how much the mouse moved.
@@ -88,6 +89,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
         this._tweens.forEach(tween => {
             tween._originalFrame.addTween(tween)
             delete tween._originalFrame;
+            if(!tween.project) selection.deselect(tween);
         });
     }
 }

@@ -25,7 +25,8 @@ Wick.ImageAsset = class extends Wick.FileAsset {
     static getValidMIMETypes () {
         let jpgTypes = ['image/jpeg']
         let pngTypes = ['image/png']
-        return jpgTypes.concat(pngTypes);
+        let webpTypes = ['image/webp']
+        return jpgTypes.concat(pngTypes).concat(webpTypes);
     }
 
     /**
@@ -33,7 +34,7 @@ Wick.ImageAsset = class extends Wick.FileAsset {
      * @returns {string[]} Array of strings representing extensions.
      */
     static getValidExtensions () {
-        return ['.jpeg', '.jpg', '.png'];
+        return ['.jpeg', '.jpg', '.png', '.webp'];
     }
 
     /**

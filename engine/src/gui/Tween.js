@@ -33,9 +33,15 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
         var ctx = this.ctx;
 
         var r = Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
-        if(this.project.frameSizeMode === 'large') {
-            r *= 1.25;
-        }
+        var _tcw = this.gridCellWidth;
+        var _tG = Wick.GUIElement;
+        if (_tcw <= _tG.GRID_SMALL_CELL_WIDTH)
+            r *= 0.5+0.25 * (_tcw / _tG.GRID_SMALL_CELL_WIDTH);
+        else if (_tcw <= _tG.GRID_NORMAL_CELL_WIDTH)
+            r *= 0.75+0.25 * ((_tcw - _tG.GRID_SMALL_CELL_WIDTH) / (_tG.GRID_NORMAL_CELL_WIDTH - _tG.GRID_SMALL_CELL_WIDTH));
+        else
+            r *= 1.0+0.25 * ((_tcw - _tG.GRID_NORMAL_CELL_WIDTH) / (_tG.GRID_LARGE_CELL_WIDTH - _tG.GRID_NORMAL_CELL_WIDTH));
+        
 
         // Tween diamond
         ctx.save();
@@ -88,24 +94,27 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
             var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
             var arrowSize = 5;
 
-            // Line
-            ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-            ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
-            ctx.beginPath();
-            ctx.moveTo(linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding, 0);
-            ctx.stroke();
+            // Only draw if there's enough room
+            if (nextTweenPosition > linePadding * 2 + arrowSize) {
+                // Line
+                ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+                ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+                ctx.beginPath();
+                ctx.moveTo(linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding, 0);
+                ctx.stroke();
 
-            // Arrow head
-            ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-            ctx.beginPath();
-            ctx.moveTo(nextTweenPosition - linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(nextTweenPosition - linePadding, 0);
-            ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
-            ctx.stroke();
+                // Arrow head
+                ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+                ctx.beginPath();
+                ctx.moveTo(nextTweenPosition - linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(nextTweenPosition - linePadding, 0);
+                ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
+                ctx.stroke();
+            }
         } else if (this.model.playheadPosition !== this.model.parentFrame.length) {
             // There is no tween in front of this tween, so draw a dotted line to the end of the frame
 
