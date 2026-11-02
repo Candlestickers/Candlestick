@@ -38,6 +38,7 @@ class WelcomeModal extends Component {
             "Video Encoding Fix",
             "Tween Pasting Improvements",
             "Outliner Dragging Fix",
+            "Path Cursor Fixes",
             "Other Minor Fixes"
         ]
 
