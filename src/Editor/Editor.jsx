@@ -1312,6 +1312,9 @@ class Editor extends EditorCore {
                                                 <DockedPanel showOverlay={this.state.previewPlaying}>
                                                     {renderSize === "small"
                                                         && <MobileContainer
+                                                            activeTool={this.getActiveTool().name}
+                                                            setActiveTool={this.setActiveTool}
+                                                            getToolSettingRestrictions={this.getToolSettingRestrictions}
                                                             project={this.project}
                                                             projectDidChange={this.projectDidChange}
                                                             projectData={this.state.project}
@@ -1389,8 +1392,11 @@ class Editor extends EditorCore {
                                             <ReflexElement {...this.resizeProps}>
                                                 <DockedPanel showOverlay={false /*this.state.previewPlaying*/}>
                                                     <Inspector
+                                                        activeTool={this.getActiveTool().name}
+                                                        setActiveTool={this.setActiveTool}
                                                         getToolSetting={this.getToolSetting}
                                                         setToolSetting={this.setToolSetting}
+                                                        getToolSettingRestrictions={this.getToolSettingRestrictions}
                                                         getSelectionType={this.getSelectionType}
                                                         getAllSoundAssets={this.getAllSoundAssets}
                                                         getAllSelectionAttributes={this.getAllSelectionAttributes}

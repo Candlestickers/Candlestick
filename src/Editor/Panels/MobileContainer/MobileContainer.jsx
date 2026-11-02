@@ -22,7 +22,9 @@ import './_mobilecontainer.scss';
 
 import MobileTabbedInterface from '../../Util/MobileTabbedInterface/MobileTabbedInterface';
 import Timeline from '../Timeline/Timeline';
-import MobileInspector from './MobileInspector/MobileInspector'
+import Inspector from '../Inspector/Inspector';
+import brushIcon from 'resources/toolbar-icons/brush.svg';
+import MobileInspector, { inspectorTabs } from './MobileInspector/MobileInspector'
 import MobileAssetLibrary from './MobileAssetLibrary/MobileAssetLibrary';
 //import AssetLibrary from '../AssetLibrary/AssetLibrary';
 import InspectorScriptWindow from '../Inspector/InspectorScriptWindow/InspectorScriptWindow'
@@ -44,10 +46,36 @@ class MobileContainer extends Component {
     constructor (props) {
         super(props);
 
+        const availableTabs = MobileContainer.getAvailableTabs(props);
         this.state = {
-          
-        }
+            availableTabs,
+            selectedTab: availableTabs.includes('brush') ? 'brush' : 'timeline',
+        };
     }
+
+    static getAvailableTabs(props) {
+        const tabs = ['timeline'];
+        const inspectorContent = inspectorTabs[props.getSelectionType()];
+        if (inspectorContent && inspectorContent.length > 0) tabs.push('inspector');
+        if (props.selectionIsScriptable()) tabs.push('code');
+        if (props.activeTool === 'brush') tabs.push('brush');
+        tabs.push('asset');
+        return tabs;
+    }
+
+    static getDerivedStateFromProps(props, state) {
+        const availableTabs = MobileContainer.getAvailableTabs(props);
+        // Prefer Brush, then Inspector, when multiple panels appear together.
+        const addedTab = ['brush', 'inspector', 'code'].find(tab =>
+            availableTabs.includes(tab) && !state.availableTabs.includes(tab));
+        const selectedTab = addedTab || (availableTabs.includes(state.selectedTab)
+            ? state.selectedTab : 'timeline');
+        if (availableTabs.join() !== state.availableTabs.join() || selectedTab !== state.selectedTab) {
+            return { availableTabs, selectedTab };
+        }
+        return null;
+    }
+
     renderTimeline = (props) => {
         return(
             <Fragment>
@@ -134,24 +162,22 @@ class MobileContainer extends Component {
     }
 
     render() {
+        const panels = {
+            timeline: { icon: timelineIcon, iconActive: timelineIconActive, iconAlt: 'timeline icon', render: () => this.renderTimeline(this.props) },
+            inspector: { icon: inspectorIcon, iconActive: inspectorIconActive, iconAlt: 'inspector icon', render: () => this.renderInpector(this.props) },
+            code: { icon: codeIcon, iconActive: codeIconActive, iconAlt: 'code editor icon', render: () => this.renderCode(this.props) },
+            brush: { icon: brushIcon, iconActive: brushIcon, iconAlt: 'brush settings', render: () => <div className="mobile-brush-panel"><Inspector {...this.props} activeTool="brush" /></div> },
+            asset: { icon: assetIcon, iconActive: assetIconActive, iconAlt: 'asset library icon', render: () => this.renderAsset(this.props) },
+        };
         return (
-            <MobileTabbedInterface className="mobile-container" 
-                                   tabs={[{label: "timeline", icon: timelineIcon, iconActive: timelineIconActive, iconAlt: "timeline icon"},
-                                          {label: "inspector", icon: inspectorIcon, iconActive: inspectorIconActive, iconAlt: "inspector icon"},
-                                          {label: "code", icon: codeIcon, iconActive: codeIconActive, iconAlt: "code editor icon"},
-                                          {label: "asset", icon: assetIcon, iconActive: assetIconActive, iconAlt: "asset library icon"}
-                                        ]}>
-                {this.renderTimeline(this.props)}
-                {this.renderInpector(this.props)}
-                {(this.props.selectionIsScriptable()) ? this.renderCode(this.props) : <div className='mobile-inspector-unknown-selection'>
-                    <div>No Scriptable</div>
-                    <div>Object Selected</div>
-                    </div>}
-                {this.renderAsset(this.props)}
-
+            <MobileTabbedInterface className="mobile-container"
+                selectedTab={this.state.selectedTab}
+                onTabSelect={selectedTab => this.setState({ selectedTab })}
+                tabs={this.state.availableTabs.map(label => ({ label, ...panels[label] }))}>
+                {this.state.availableTabs.map(label => <Fragment key={label}>{panels[label].render()}</Fragment>)}
             </MobileTabbedInterface>
-        ); 
+        );
     }
 }
 
-export default MobileContainer
+export default MobileContainer;
