@@ -36,9 +36,9 @@ class WelcomeModal extends Component {
         this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
             "Video Encoding Fix",
-            "Tween Pasting Improvements",
+            "Tween Fixes",
+            "Cursor and Path Cursor Fixes",
             "Outliner Dragging Fix",
-            "Path Cursor Fixes",
             "Other Minor Fixes"
         ]
 
