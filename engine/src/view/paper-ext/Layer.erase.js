@@ -25,6 +25,8 @@
     by zrispo (github.com/zrispo) (zach@wickeditor.com)
  */
 
+import paper from 'lib/paper.js';
+
 (function () {
 
     // Splits a CompoundPath with multiple CW children into individual pieces

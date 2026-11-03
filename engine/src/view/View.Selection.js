@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Selection = class extends Wick.View {
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import View from './View';
+
+export default class Selection extends View {
     /**
      * Create a new Selection view.
      */

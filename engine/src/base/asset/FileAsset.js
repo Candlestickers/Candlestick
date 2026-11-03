@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.FileAsset = class extends Wick.Asset {
+import Wick from 'src/Wick';
+import Asset from './Asset';
+
+export default class FileAsset extends Asset {
     /**
      * Returns all valid MIME types for files which can be converted to Wick Assets.
      * @return {string[]} Array of strings of MIME types in the form MediaType/Subtype.

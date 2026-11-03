@@ -32,7 +32,7 @@
 
 var paper = function(self, undefined) {
 
-self = self || require('./node/self.js');
+self = self// || require('./node/self.js');
 var window = self.window,
 	document = self.document;
 
@@ -17370,7 +17370,7 @@ var paper = new (PaperScope.inject(Base.exports, {
 }))();
 
 if (paper.agent.node) {
-	require('./node/extend.js')(paper);
+	//require('./node/extend.js')(paper);
 }
 
 if (typeof define === 'function' && define.amd) {

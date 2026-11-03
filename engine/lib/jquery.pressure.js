@@ -1,4 +1,5 @@
 // Pressure v2.1.2 | Created By Stuart Yamartino | MIT License | 2015 - 2017
+// import jQuery from 'jquery';
 ;(function(root, factory) {
   if (typeof define === 'function' && define.amd) {
     define(['jquery'], factory);

@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.ActionButton = class extends Wick.GUIElement.Button {
+import Wick from 'src/Wick';
+import Button from './Button';
+
+export default class ActionButton extends Button {
     constructor (model, args) {
         super(model, args);
 

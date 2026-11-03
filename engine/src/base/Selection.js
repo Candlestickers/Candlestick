@@ -17,10 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+import Base from './Base';
+
 /**
  * Class representing a Wick Selection.
  */
-Wick.Selection = class extends Wick.Base {
+export default class Selection extends Base {
     static get LOCATION_NAMES() {
         return ['Canvas', 'Timeline', 'AssetLibrary'];
     }

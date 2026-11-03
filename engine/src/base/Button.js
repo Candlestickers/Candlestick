@@ -17,11 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Clip from './Clip';
+
 /**
  * A class representing a Wick Button.
  * Buttons are just clips with special timelines controlled by mouse interactions.
  */
-Wick.Button = class extends Wick.Clip {
+export default class Button extends Clip {
     /**
      * Create a new button.
      * @param {object} args

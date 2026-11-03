@@ -1,7 +1,7 @@
 /*
  * Utility class to convert Pre 1.0.9a projects into the most recent format
  */
-Wick.WickFile.Alpha = class {
+export default class WickFileAlpha {
     /**
      * Convert the old recursive format to the new flat format.
      */
@@ -11,7 +11,7 @@ Wick.WickFile.Alpha = class {
         newProjectJSON.zoom = 1;
         var newProjectObjects = {};
 
-        Wick.WickFile.Alpha.flattenWickObject(projectJSON, null, newProjectObjects);
+        WickFileAlpha.flattenWickObject(projectJSON, null, newProjectObjects);
 
         return {
             project: newProjectJSON,
@@ -26,19 +26,19 @@ Wick.WickFile.Alpha = class {
 
         if(objectJSON.root) {
             objectJSON.focus = objectJSON.root.uuid;
-            Wick.WickFile.Alpha.flattenWickObject(objectJSON.root, objectJSON, objects);
+            WickFileAlpha.flattenWickObject(objectJSON.root, objectJSON, objects);
             delete objectJSON.root;
         }
         if(objectJSON.assets) {
             objectJSON.assets.forEach(asset => {
-                Wick.WickFile.Alpha.flattenWickObject(asset, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(asset, objectJSON, objects);
             });
             delete objectJSON.assets;
         }
         if(objectJSON.selection) {
             objectJSON.selection.widgetRotation = 0;
             objectJSON.selection.pivotPoint = {x:0, y:0};
-            Wick.WickFile.Alpha.flattenWickObject(objectJSON.selection, objectJSON, objects);
+            WickFileAlpha.flattenWickObject(objectJSON.selection, objectJSON, objects);
             delete objectJSON.selection;
         }
         if(objectJSON.transform) {
@@ -53,36 +53,36 @@ Wick.WickFile.Alpha = class {
             delete objectJSON.transform;
         }
         if(objectJSON.timeline) {
-            Wick.WickFile.Alpha.flattenWickObject(objectJSON.timeline, objectJSON, objects);
+            WickFileAlpha.flattenWickObject(objectJSON.timeline, objectJSON, objects);
             delete objectJSON.timeline;
         }
         if(objectJSON.layers) {
             objectJSON.layers.forEach(layer => {
-                Wick.WickFile.Alpha.flattenWickObject(layer, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(layer, objectJSON, objects);
             });
             delete objectJSON.layers;
         }
         if(objectJSON.frames) {
             objectJSON.frames.forEach(frame => {
-                Wick.WickFile.Alpha.flattenWickObject(frame, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(frame, objectJSON, objects);
             });
             delete objectJSON.frames;
         }
         if(objectJSON.clips) {
             objectJSON.clips.forEach(clip => {
-                Wick.WickFile.Alpha.flattenWickObject(clip, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(clip, objectJSON, objects);
             });
             delete objectJSON.clips;
         }
         if(objectJSON.paths) {
             objectJSON.paths.forEach(path => {
-                Wick.WickFile.Alpha.flattenWickObject(path, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(path, objectJSON, objects);
             });
             delete objectJSON.paths;
         }
         if(objectJSON.tweens) {
             objectJSON.tweens.forEach(tween => {
-                Wick.WickFile.Alpha.flattenWickObject(tween, objectJSON, objects);
+                WickFileAlpha.flattenWickObject(tween, objectJSON, objects);
             });
             delete objectJSON.tweens;
         }

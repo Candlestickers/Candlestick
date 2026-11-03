@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tools.Pencil = class extends Wick.Tool {
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import Tool from './Tool';
+
+export default class Pencil extends Tool {
     static get MIN_ADD_POINT_MOVEMENT () {
         return 2;
     }

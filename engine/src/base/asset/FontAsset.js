@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.FontAsset = class extends Wick.FileAsset {
+import Base64ArrayBuffer from 'lib/base64-arraybuffer.js';
+import Wick from 'src/Wick';
+import FileAsset from './FileAsset';
+
+export default class FontAsset extends FileAsset {
     /**
      * Valid MIME types for font assets.
      * @returns {string[]} Array of strings representing MIME types in the form font/filetype.

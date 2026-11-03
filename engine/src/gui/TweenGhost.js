@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
+import Wick from 'src/Wick';
+import Ghost from './Ghost';
+
+export default class TweenGhost extends Ghost {
     constructor (model) {
         super(model);
 

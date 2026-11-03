@@ -17,7 +17,12 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Project = class extends Wick.View {
+import $ from 'jquery';
+import paper from 'lib/paper.js';
+import Wick from 'src/Wick';
+import View from './View';
+
+export default class Project extends View {
     static get DEFAULT_CANVAS_BG_COLOR() {
         return 'rgb(187, 187, 187)';
     }

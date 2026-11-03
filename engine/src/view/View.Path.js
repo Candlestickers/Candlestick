@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Path = class extends Wick.View {
+import Wick from 'src/Wick';
+import View from './View';
+
+export default class Path extends View {
     /**
      * Create a path view.
      */

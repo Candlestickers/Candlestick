@@ -5,7 +5,7 @@
  * @type {Date}
  */
 
-function Timestamp() {
+export default function Timestamp() {
 // Create a date object with the current time
   var now = new Date();
 

@@ -7,7 +7,11 @@
 // this.elements:
 //   - dictionary of elements {uuid1: element1, uuid2: element2}
 //   - these are the exact objects that go into this.quadtree by reference 
-Wick.Quadtree = class {
+
+import Quadtree from 'lib/quadtree.min.js';
+import Wick from 'src/Wick';
+
+export default class WickQuadtree {
     constructor(width, height) {
       this._quadtree = new Quadtree({
         width: width,

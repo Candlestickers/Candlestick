@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.Tool = class {
+import invert from 'lib/invert.min.js';
+import paper from 'lib/paper.js';
+
+export default class Tool {
     static get DOUBLE_CLICK_TIME () {
         return 300;
     }
@@ -306,5 +309,3 @@ Wick.Tool = class {
         }
     }
 }
-
-Wick.Tools = {};

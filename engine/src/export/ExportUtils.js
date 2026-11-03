@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.ExportUtils = class {
+export default class ExportUtils {
     // https://stackoverflow.com/questions/12168909/blob-from-dataurl
     static dataURItoBlob(dataURI) {
         // convert base64 to raw binary data held in a string

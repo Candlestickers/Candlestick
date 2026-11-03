@@ -17,10 +17,13 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import Wick from 'src/Wick';
+import Base from './Base';
+
 /**
  * Class representing a Wick Timeline.
  */
-Wick.Timeline = class extends Wick.Base {
+export default class Timeline extends Base {
     /**
      * Create a timeline.
      */
@@ -171,7 +174,7 @@ Wick.Timeline = class extends Wick.Base {
      */
     exportSVG(onError) {
 
-            var svgOutput = paper.project.exportSVG({ asString: true, matchShapes: true, embedImages: true });
+            var svgOutput = this.view.paper.project.exportSVG({ asString: true, matchShapes: true, embedImages: true });
             return svgOutput;
         }
         //this.project.paper.

@@ -17,7 +17,11 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.BreadcrumbsButton = class extends Wick.GUIElement.Button {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+import Button from './Button';
+
+export default class BreadcrumbsButton extends Button {
     constructor (model) {
         super(model, {
             clickFn: () => {

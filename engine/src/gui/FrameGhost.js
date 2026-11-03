@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
+import Wick from 'src/Wick';
+import Ghost from './Ghost';
+
+export default class FrameGhost extends Ghost {
     constructor (model) {
         super(model);
 

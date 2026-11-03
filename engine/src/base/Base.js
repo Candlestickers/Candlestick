@@ -17,10 +17,16 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import uuidv4 from 'lib/uuid.js';
+import reserved from 'lib/reserved-words.js';
+import isVarName from 'lib/is-var-name.js';
+import Wick from 'src/Wick';
+import GlobalAPI from 'src/GlobalAPI';
+
 /**
  * The base class for all objects within the Wick Engine.
  */
-Wick.Base = class {
+export default class Base {
     /**
      * Creates a Base object.
      * @parm {string} identifier - (Optional) The identifier of the object. Defaults to null.

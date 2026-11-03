@@ -19,7 +19,10 @@
 
 // Thanks to FlyOrBoom (https://github.com/FlyOrBoom) for the styling of these sliders!
 
-Wick.GUIElement.OnionSkinRange = class extends Wick.GUIElement {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+
+export default class OnionSkinRange extends GUIElement {
     constructor (model, direction) {
         super(model);
 

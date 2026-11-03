@@ -71,3 +71,4 @@ var Base64ArrayBuffer = (function () {
   return base64ArrayBuffer;
 
 })();
+export default Base64ArrayBuffer;

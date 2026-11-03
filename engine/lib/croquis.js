@@ -1548,3 +1548,4 @@ Croquis.Brush = function () {
         return dirtyRect;
     };
 };
+export default Croquis;

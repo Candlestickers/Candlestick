@@ -17,7 +17,10 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.GUIElement.FramesContainer = class extends Wick.GUIElement {
+import Wick from 'src/Wick';
+import GUIElement from './GUIElement';
+
+export default class FramesContainer extends GUIElement {
     constructor (model) {
         super(model);
 

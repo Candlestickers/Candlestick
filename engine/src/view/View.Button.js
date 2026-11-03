@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-Wick.View.Button = class extends Wick.View.Clip {
+import Clip from './View.Clip';
+
+export default class Button extends Clip {
     
 }
