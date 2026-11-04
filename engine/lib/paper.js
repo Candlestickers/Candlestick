@@ -1,22 +1,22 @@
 /*!
- * Paper.js v0.12.4 - The Swiss Army Knife of Vector Graphics Scripting.
+ * Paper.js v0.12.20 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
  *
- * Copyright (c) 2011 - 2019, Juerg Lehni & Jonathan Puckey
- * http://scratchdisk.com/ & https://puckey.studio/
+ * Copyright (c) 2011 - 2020, Jürg Lehni & Jonathan Puckey
+ * http://juerglehni.com/ & https://puckey.studio/
  *
  * Distributed under the MIT license. See LICENSE file for details.
  *
  * All rights reserved.
  *
- * Date: Sun Dec 15 21:25:00 2019 +0100
+ * Date: Sun Oct 18 17:04:58 2026 +0200
  *
  ***
  *
  * Straps.js - Class inheritance library with support for bean-style accessors
  *
- * Copyright (c) 2006 - 2019 Juerg Lehni
- * http://scratchdisk.com/
+ * Copyright (c) 2006 - 2020 Jürg Lehni
+ * http://juerglehni.com/
  *
  * Distributed under the MIT license.
  *
@@ -575,7 +575,7 @@ statics: {
 						if (Base.isPlainObject(arg)) {
 							arg.insert = false;
 							if (useTarget) {
-								args = args.concat([{ insert: true }]);
+								args = args.concat([Item.INSERT]);
 							}
 						}
 					}
@@ -821,7 +821,7 @@ var PaperScope = Base.extend({
 		}
 	},
 
-	version: "0.12.4",
+	version: "0.12.20",
 
 	getView: function() {
 		var project = this.project;
@@ -1221,6 +1221,7 @@ var Numerical = new function() {
 		CURVETIME_EPSILON: 1e-8,
 		GEOMETRIC_EPSILON: 1e-7,
 		TRIGONOMETRIC_EPSILON: 1e-8,
+		ANGULAR_EPSILON: 1e-5,
 		KAPPA: 4 * (sqrt(2) - 1) / 3,
 
 		isZero: function(val) {
@@ -1918,7 +1919,9 @@ var Rectangle = Base.extend({
 		} else if (type === 'undefined' || arg0 === null) {
 			this._set(0, 0, 0, 0);
 			read = arg0 === null ? 1 : 0;
-		} else if (args.length === 1) {
+		} else if (args.length === 1
+				|| Array.isArray(arg0) && arg0.length === 4
+				|| arg0.x !== undefined && arg0.width !== undefined) {
 			if (Array.isArray(arg0)) {
 				this._set.apply(this, arg0);
 				read = 1;
@@ -3138,6 +3141,7 @@ var Item = Base.extend(Emitter, {
 			return extend.base.apply(this, arguments);
 		},
 
+		INSERT: { insert: true },
 		NO_INSERT: { insert: false }
 	},
 
@@ -3224,13 +3228,13 @@ new function() {
 		matrix._owner = this;
 		this._style = new Style(project._currentStyle, this, project);
 		if (internal || hasProps && props.insert == false
-			|| !settings.insertItems && !(hasProps && props.insert === true)) {
+			|| !settings.insertItems && !(hasProps && props.insert == true)) {
 			this._setProject(project);
 		} else {
 			(hasProps && props.parent || project)
 					._insertItem(undefined, this, true);
 		}
-		if (hasProps && props !== Item.NO_INSERT) {
+		if (hasProps && props !== Item.NO_INSERT && props !== Item.INSERT) {
 			this.set(props, {
 				internal: true, insert: true, project: true, parent: true
 			});
@@ -3660,15 +3664,25 @@ new function() {
 			var rotation = this.getRotation(),
 				decomposed = this._decomposed,
 				matrix = new Matrix(),
-				center = this.getPosition(true);
-			matrix.translate(center);
-			if (rotation)
-				matrix.rotate(rotation);
-			matrix.scale(scaling.x / current.x, scaling.y / current.y);
-			if (rotation)
-				matrix.rotate(-rotation);
-			matrix.translate(center.negate());
-			this.transform(matrix);
+				isZero = Numerical.isZero;
+			if (isZero(current.x) || isZero(current.y)) {
+				matrix.translate(decomposed.translation);
+				if (rotation) {
+					matrix.rotate(rotation);
+				}
+				matrix.scale(scaling.x, scaling.y);
+				this._matrix.set(matrix);
+			} else {
+				var center = this.getPosition(true);
+				matrix.translate(center);
+				if (rotation)
+					matrix.rotate(rotation);
+				matrix.scale(scaling.x / current.x, scaling.y / current.y);
+				if (rotation)
+					matrix.rotate(-rotation);
+				matrix.translate(center.negate());
+				this.transform(matrix);
+			}
 			if (decomposed) {
 				decomposed.scaling = scaling;
 				this._decomposed = decomposed;
@@ -3682,7 +3696,7 @@ new function() {
 
 	setMatrix: function() {
 		var matrix = this._matrix;
-		matrix.initialize.apply(matrix, arguments);
+		matrix.set.apply(matrix, arguments);
 	},
 
 	getGlobalMatrix: function(_dontClone) {
@@ -3807,6 +3821,15 @@ new function() {
 		return this._index;
 	},
 
+	setIndex: function(index) {
+		var parent = this._parent,
+			children = parent && parent._children;
+		if (children) {
+			parent.insertChildren(index in children ? index : undefined,
+								  [this]);
+		}
+	},
+
 	equals: function(item) {
 		return item === this || item && this._class === item._class
 				&& this._style.equals(item._style)
@@ -3881,27 +3904,45 @@ new function() {
 			this.setName(name);
 	},
 
-	rasterize: function(resolution, insert) {
+	rasterize: function(arg0, arg1) {
+		var resolution,
+			insert,
+			raster;
+		if (Base.isPlainObject(arg0)) {
+			resolution = arg0.resolution;
+			insert = arg0.insert;
+			raster = arg0.raster;
+		} else {
+			resolution = arg0;
+			insert = arg1;
+		}
+		if (!raster) {
+			raster = new Raster(Item.NO_INSERT);
+		}
 		var bounds = this.getStrokeBounds(),
 			scale = (resolution || this.getView().getResolution()) / 72,
 			topLeft = bounds.getTopLeft().floor(),
 			bottomRight = bounds.getBottomRight().ceil(),
-			size = new Size(bottomRight.subtract(topLeft)),
-			raster = new Raster(Item.NO_INSERT);
-		if (!size.isZero()) {
-			var canvas = CanvasProvider.getCanvas(size.multiply(scale)),
-				ctx = canvas.getContext('2d'),
+			boundsSize = new Size(bottomRight.subtract(topLeft)),
+			rasterSize = boundsSize.multiply(scale);
+		raster.setSize(rasterSize, true);
+
+		if (!rasterSize.isZero()) {
+			var ctx = raster.getContext(true),
 				matrix = new Matrix().scale(scale).translate(topLeft.negate());
 			ctx.save();
 			matrix.applyToContext(ctx);
 			this.draw(ctx, new Base({ matrices: [matrix] }));
 			ctx.restore();
-			raster.setCanvas(canvas);
 		}
-		raster.transform(new Matrix().translate(topLeft.add(size.divide(2)))
-				.scale(1 / scale));
-		if (insert === undefined || insert)
+		raster._matrix.set(
+			new Matrix()
+				.translate(topLeft.add(boundsSize.divide(2)))
+				.scale(1 / scale)
+		);
+		if (insert === undefined || insert) {
 			raster.insertAbove(this);
+		}
 		return raster;
 	},
 
@@ -4608,6 +4649,7 @@ new function() {
 
 	fitBounds: function(rectangle, fill) {
 		rectangle = Rectangle.read(arguments);
+		fill = Base.read(arguments);
 		var bounds = this.getBounds(),
 			itemRatio = bounds.height / bounds.width,
 			rectRatio = rectangle.height / rectangle.width,
@@ -4686,7 +4728,7 @@ new function() {
 		}
 
 		var blendMode = this._blendMode,
-			opacity = this._opacity,
+			opacity = Numerical.clamp(this._opacity, 0, 1),
 			normalBlend = blendMode === 'normal',
 			nativeBlend = BlendMode.nativeModes[blendMode],
 			direct = normalBlend && opacity === 1
@@ -5063,7 +5105,11 @@ var Shape = Item.extend({
 				return;
 			var size = radius * 2;
 			this._radius = radius;
-			this._size._set(size, size);
+			if (this._size) {
+				this._size._set(size, size);
+			} else {
+				this._size = new Size(size, size);
+			}
 		} else {
 			radius = Size.read(arguments);
 			if (!this._radius) {
@@ -5335,12 +5381,12 @@ var Raster = Item.extend({
 		source: null
 	},
 	_prioritize: ['crossOrigin'],
-	_smoothing: true,
+	_smoothing: 'low',
 	beans: true,
 
 	initialize: function Raster(source, position) {
 		if (!this._initialize(source,
-				position !== undefined && Point.read(arguments))) {
+				position !== undefined && Point.read([position]))) {
 			var image,
 				type = typeof source,
 				object = type === 'string'
@@ -5349,7 +5395,7 @@ var Raster = Item.extend({
 						? source
 						: null;
 			if (object && object !== Item.NO_INSERT) {
-				if (object.getContent || object.naturalHeight != null) {
+				if (object.getContext || object.naturalHeight != null) {
 					image = object;
 				} else if (object) {
 					var size = Size.read(arguments);
@@ -5393,20 +5439,23 @@ var Raster = Item.extend({
 				this, 'setSize');
 	},
 
-	setSize: function() {
+	setSize: function(_size, _clear) {
 		var size = Size.read(arguments);
 		if (!size.equals(this._size)) {
 			if (size.width > 0 && size.height > 0) {
-				var element = this.getElement();
+				var element = !_clear && this.getElement();
 				this._setImage(CanvasProvider.getCanvas(size));
-				if (element)
+				if (element) {
 					this.getContext(true).drawImage(element, 0, 0,
 							size.width, size.height);
+				}
 			} else {
 				if (this._canvas)
 					CanvasProvider.release(this._canvas);
 				this._size = size.clone();
 			}
+		} else if (_clear) {
+			this.clear();
 		}
 	},
 
@@ -5559,7 +5608,9 @@ var Raster = Item.extend({
 	},
 
 	setSmoothing: function(smoothing) {
-		this._smoothing = smoothing;
+		this._smoothing = typeof smoothing === 'string'
+			? smoothing
+			: smoothing ? 'low' : 'off';
 		this._changed(257);
 	},
 
@@ -5698,9 +5749,14 @@ var Raster = Item.extend({
 				rect.width, rect.height);
 	},
 
-	setImageData: function(data ) {
+	putImageData: function(data ) {
 		var point = Point.read(arguments, 1);
 		this.getContext(true).putImageData(data, point.x, point.y);
+	},
+
+	setImageData: function(data) {
+		this.setSize(data);
+		this.getContext(true).putImageData(data, 0, 0);
 	},
 
 	_getBounds: function(matrix, options) {
@@ -5725,12 +5781,16 @@ var Raster = Item.extend({
 	_draw: function(ctx, param, viewMatrix) {
 		var element = this.getElement();
 		if (element && element.width > 0 && element.height > 0) {
-			ctx.globalAlpha = this._opacity;
+			ctx.globalAlpha = Numerical.clamp(this._opacity, 0, 1);
 
 			this._setStyles(ctx, param, viewMatrix);
 
+			var smoothing = this._smoothing,
+				disabled = smoothing === 'off';
 			DomElement.setPrefixed(
-				ctx, 'imageSmoothingEnabled', this._smoothing
+				ctx,
+				disabled ? 'imageSmoothingEnabled' : 'imageSmoothingQuality',
+				disabled ? false : smoothing
 			);
 
 			ctx.drawImage(element,
@@ -6800,13 +6860,13 @@ statics: {
 		}
 
 		padding /= 2;
-		var minPad = min[coord] - padding,
-			maxPad = max[coord] + padding;
+		var minPad = min[coord] + padding,
+			maxPad = max[coord] - padding;
 		if (    v0 < minPad || v1 < minPad || v2 < minPad || v3 < minPad ||
 				v0 > maxPad || v1 > maxPad || v2 > maxPad || v3 > maxPad) {
 			if (v1 < v0 != v1 < v3 && v2 < v0 != v2 < v3) {
-				add(v0, padding);
-				add(v3, padding);
+				add(v0, 0);
+				add(v3, 0);
 			} else {
 				var a = 3 * (v1 - v2) - v0 + v3,
 					b = 2 * (v0 + v2) - 4 * v1,
@@ -7694,10 +7754,13 @@ var CurveLocation = Base.extend({
 		this._intersection = this._next = this._previous = null;
 	},
 
-	_setCurve: function(curve) {
-		var path = curve._path;
+	_setPath: function(path) {
 		this._path = path;
 		this._version = path ? path._version : 0;
+	},
+
+	_setCurve: function(curve) {
+		this._setPath(curve._path);
 		this._curve = curve;
 		this._segment = null;
 		this._segment1 = curve._segment1;
@@ -7705,7 +7768,14 @@ var CurveLocation = Base.extend({
 	},
 
 	_setSegment: function(segment) {
-		this._setCurve(segment.getCurve());
+		var curve = segment.getCurve();
+		if (curve) {
+			this._setCurve(curve);
+		} else {
+			this._setPath(segment._path);
+			this._segment1 = segment;
+			this._segment2 = null;
+		}
 		this._segment = segment;
 		this._time = segment === this._segment1 ? 0 : 1;
 		this._point = segment._point.clone();
@@ -7911,7 +7981,7 @@ var CurveLocation = Base.extend({
 				offset = Curve.getLength(v,
 					end && count ? roots[count - 1] : 0,
 					!end && count ? roots[0] : 1);
-			offsets.push(count ? offset : offset / 64);
+			offsets.push(count ? offset : offset / 32);
 		}
 
 		function isInRange(angle, min, max) {
@@ -8270,7 +8340,7 @@ var PathItem = Item.extend({
 				matched = [],
 				count = 0;
 			ok = true;
-			var boundsOverlaps = CollisionDetection.findBoundsOverlaps(paths1, paths2, Numerical.GEOMETRIC_EPSILON);
+			var boundsOverlaps = CollisionDetection.findItemBoundsCollisions(paths1, paths2, Numerical.GEOMETRIC_EPSILON);
 			for (var i1 = length1 - 1; i1 >= 0 && ok; i1--) {
 				var path1 = paths1[i1];
 				ok = false;
@@ -9448,7 +9518,6 @@ new function() {
 							length = flattener.length,
 							from = -style.getDashOffset(), to,
 							i = 0;
-						from = from % length;
 						while (from > 0) {
 							from -= getOffset(i--) + getOffset(i--);
 						}
@@ -9621,9 +9690,11 @@ new function() {
 				}
 			}
 			if (extent) {
-				var epsilon = 1e-7,
+				var epsilon = 1e-5,
 					ext = abs(extent),
-					count = ext >= 360 ? 4 : Math.ceil((ext - epsilon) / 90),
+					count = ext >= 360
+						? 4
+						: Math.ceil((ext - epsilon) / 90),
 					inc = extent / count,
 					half = inc * Math.PI / 360,
 					z = 4 / 3 * Math.sin(half) / (1 + Math.cos(half)),
@@ -9796,13 +9867,16 @@ statics: {
 		}
 
 		var length = segments.length - (closed ? 0 : 1);
-		for (var i = 1; i < length; i++)
-			addJoin(segments[i], join);
-		if (closed) {
-			addJoin(segments[0], join);
-		} else if (length > 0) {
-			addCap(segments[0], cap);
-			addCap(segments[segments.length - 1], cap);
+		if (length > 0) {
+			for (var i = 1; i < length; i++) {
+				addJoin(segments[i], join);
+			}
+			if (closed) {
+				addJoin(segments[0], join);
+			} else {
+				addCap(segments[0], cap);
+				addCap(segments[segments.length - 1], cap);
+			}
 		}
 		return bounds;
 	},
@@ -9928,10 +10002,14 @@ Path.inject({ statics: new function() {
 
 	function createPath(segments, closed, args) {
 		var props = Base.getNamed(args),
-			path = new Path(props && props.insert == false && Item.NO_INSERT);
+			path = new Path(props && (
+				props.insert == true ? Item.INSERT
+				: props.insert == false ? Item.NO_INSERT
+				: null
+			));
 		path._add(segments);
 		path._closed = closed;
-		return path.set(props, { insert: true });
+		return path.set(props, Item.INSERT);
 	}
 
 	function createEllipse(center, radius, args) {
@@ -10015,12 +10093,10 @@ Path.inject({ statics: new function() {
 				from = Point.readNamed(args, 'from'),
 				through = Point.readNamed(args, 'through'),
 				to = Point.readNamed(args, 'to'),
-				props = Base.getNamed(args),
-				path = new Path(props && props.insert == false
-						&& Item.NO_INSERT);
-			path.moveTo(from);
-			path.arcTo(through, to);
-			return path.set(props);
+				arc = new Path(Item.NO_INSERT);
+			arc.moveTo(from);
+			arc.arcTo(through, to);
+			return createPath(arc._segments, false, args);
 		},
 
 		RegularPolygon: function() {
@@ -10884,8 +10960,8 @@ PathItem.inject(new function() {
 
 			if (inter) {
 				collect(inter);
-				while (inter && inter._prev)
-					inter = inter._prev;
+				while (inter && inter._previous)
+					inter = inter._previous;
 				collect(inter, start);
 			}
 			return crossings;
@@ -11649,7 +11725,9 @@ var Color = Base.extend(new function() {
 			if (!color) {
 				if (window) {
 					if (!colorCtx) {
-						colorCtx = CanvasProvider.getContext(1, 1);
+						colorCtx = CanvasProvider.getContext(1, 1, {
+							willReadFrequently: true
+						});
 						colorCtx.globalCompositeOperation = 'copy';
 					}
 					colorCtx.fillStyle = 'rgba(0,0,0,0)';
@@ -12777,7 +12855,7 @@ var View = Base.extend(Emitter, {
 		if (window && element) {
 			this._id = element.getAttribute('id');
 			if (this._id == null)
-				element.setAttribute('id', this._id = 'view-' + View._id++);
+				element.setAttribute('id', this._id = 'paper-view-' + View._id++);
 			DomEvent.add(element, this._viewEvents);
 			var none = 'none';
 			DomElement.setPrefixed(element.style, {
@@ -13038,7 +13116,7 @@ var View = Base.extend(Emitter, {
 			pixels = parseFloat(DomElement.getStyles(temp).fontSize);
 			parent.removeChild(temp);
 		} else {
-			pixels = parseFloat(pixels);
+			pixels = parseFloat(size);
 		}
 		return pixels;
 	},
@@ -13114,7 +13192,7 @@ var View = Base.extend(Emitter, {
 
 	setMatrix: function() {
 		var matrix = this._matrix;
-		matrix.initialize.apply(matrix, arguments);
+		matrix.set.apply(matrix, arguments);
 	},
 
 	transform: function(matrix) {
@@ -13862,8 +13940,8 @@ var ToolEvent = Event.extend({
 	},
 
 	setCount: function(count) {
-		this.tool[/^mouse(down|up)$/.test(this.type) ? 'downCount' : 'count']
-			= count;
+		this.tool[/^mouse(down|up)$/.test(this.type)
+				? '_downCount' : '_moveCount'] = count;
 	},
 
 	getItem: function() {
@@ -13949,8 +14027,6 @@ var Tool = PaperScopeItem.extend({
 			type = 'mousemove';
 		var move = mouse.move || mouse.drag,
 			responds = this.responds(type),
-			minDistance = this.minDistance,
-			maxDistance = this.maxDistance,
 			called = false,
 			tool = this;
 		function update(minDistance, maxDistance) {
@@ -13993,10 +14069,10 @@ var Tool = PaperScopeItem.extend({
 			update();
 			emit();
 		} else if (mouse.up) {
-			update(null, maxDistance);
+			update(null, this._maxDistance);
 			emit();
 		} else if (responds) {
-			while (update(minDistance, maxDistance))
+			while (update(this._minDistance, this._maxDistance))
 				emit();
 		}
 		return called;
@@ -14008,7 +14084,7 @@ var Tween = Base.extend(Emitter, {
 	_class: 'Tween',
 
 	statics: {
-		easings: {
+		easings: new Base({
 			linear: function(t) {
 				return t;
 			},
@@ -14068,7 +14144,7 @@ var Tween = Base.extend(Emitter, {
 					? 16 * t * t * t * t * t
 					: 1 + 16 * (--t) * t * t * t * t;
 			}
-		}
+		})
 	},
 
 	initialize: function Tween(object, from, to, duration, easing, start) {
@@ -14114,7 +14190,7 @@ var Tween = Base.extend(Emitter, {
 
 	update: function(progress) {
 		if (this.running) {
-			if (progress > 1) {
+			if (progress >= 1) {
 				progress = 1;
 				this.running = false;
 			}
@@ -14130,20 +14206,20 @@ var Tween = Base.extend(Emitter, {
 				var key = keys[i],
 					from = getValue(this._from[key]),
 					to = getValue(this._to[key]),
-					value = (from && to && from.__add && to.__add)
-						? to.__subtract(from).__multiply(factor).__add(from)
+					value = (from && to && from.multiply && to.multiply)
+						? to.subtract(from).multiply(factor).add(from)
 						: ((to - from) * factor) + from;
 				this._setProperty(this._parsedKeys[key], value);
 			}
 
-			if (!this.running && this._then) {
-				this._then(this.object);
-			}
 			if (this.responds('update')) {
 				this.emit('update', new Base({
 					progress: progress,
 					factor: factor
 				}));
+			}
+			if (!this.running && this._then) {
+				this._then(this.object);
 			}
 		}
 		return this;
@@ -14212,7 +14288,16 @@ var Tween = Base.extend(Emitter, {
 	},
 
 	_calculate: function(left, operator, right) {
-		return paper.PaperScript.calculateBinary(left, operator, right);
+		var name = { '+': 'add', '-': 'subtract', '*': 'multiply',
+				'/': 'divide' }[operator];
+		if (left && left[name])
+			return left[name](right);
+		switch (operator) {
+		case '+': return left + right;
+		case '-': return left - right;
+		case '*': return left * right;
+		case '/': return left / right;
+		}
 	},
 
 	_parseKeys: function(keys) {
@@ -14274,10 +14359,10 @@ var Http = {
 	}
 };
 
-var CanvasProvider = {
+var CanvasProvider = Base.exports.CanvasProvider = {
 	canvases: [],
 
-	getCanvas: function(width, height) {
+	getCanvas: function(width, height, options) {
 		if (!window)
 			return null;
 		var canvas,
@@ -14292,7 +14377,7 @@ var CanvasProvider = {
 			canvas = document.createElement('canvas');
 			clear = false;
 		}
-		var ctx = canvas.getContext('2d');
+		var ctx = canvas.getContext('2d', options || {});
 		if (!ctx) {
 			throw new Error('Canvas ' + canvas +
 					' is unable to provide a 2D context.');
@@ -14308,9 +14393,9 @@ var CanvasProvider = {
 		return canvas;
 	},
 
-	getContext: function(width, height) {
-		var canvas = this.getCanvas(width, height);
-		return canvas ? canvas.getContext('2d') : null;
+	getContext: function(width, height, options) {
+		var canvas = this.getCanvas(width, height, options);
+		return canvas ? canvas.getContext('2d', options || {}) : null;
 	},
 
 	release: function(obj) {
@@ -14508,7 +14593,7 @@ var BlendMode = new function() {
 		this[mode] = true;
 	}, {});
 
-	var ctx = CanvasProvider.getContext(1, 1);
+	var ctx = CanvasProvider.getContext(1, 1, { willReadFrequently: true });
 	if (ctx) {
 		Base.each(modes, function(func, mode) {
 			var darken = mode === 'darken',
@@ -14911,7 +14996,7 @@ new function() {
 		PointText: exportText
 	};
 
-	function applyStyle(item, node, isRoot) {
+	function applyStyle(item, node, options, isRoot) {
 		var attrs = {},
 			parent = !isRoot && item.getParent(),
 			style = [];
@@ -14925,7 +15010,8 @@ new function() {
 				value = item[get]();
 			if (entry.exportFilter
 					? entry.exportFilter(item, value)
-					: !parent || !Base.equals(parent[get](), value)) {
+					: options.reduceAttributes == false
+						|| !parent || !Base.equals(parent[get](), value)) {
 				if (type === 'color' && value != null) {
 					var alpha = value.getAlpha();
 					if (alpha < 1)
@@ -15007,7 +15093,7 @@ new function() {
 			if (data && data !== '{}' && data !== 'null')
 				node.setAttribute('data-paper-data', data);
 		}
-		return node && applyStyle(item, node, isRoot);
+		return node && applyStyle(item, node, options, isRoot);
 	}
 
 	function setOptions(options) {
@@ -15297,7 +15383,7 @@ new function() {
 				if (!transform)
 					break;
 				var parts = transform.split(/\(\s*/),
-					command = parts[0],
+					command = parts[0].trim(),
 					v = parts[1].split(/[\s,]+/g);
 				for (var j = 0, m = v.length; j < m; j++)
 					v[j] = parseFloat(v[j]);
@@ -15473,10 +15559,27 @@ new function() {
 		return res;
 	}
 
+	var sandbox;
+
+	function getSandbox() {
+		if (!(sandbox && sandbox.contentDocument)) {
+			sandbox = document.createElement('iframe');
+			sandbox.setAttribute('sandbox', 'allow-same-origin');
+			sandbox.style.cssText = 'position: absolute; visibility: hidden;'
+					+ ' width: 0; height: 0; border: 0';
+			document.body.appendChild(sandbox);
+			var doc = sandbox.contentDocument,
+				meta = doc.createElement('meta');
+			meta.httpEquiv = 'Content-Security-Policy';
+			meta.content = "default-src 'none'; style-src 'unsafe-inline'";
+			doc.head.appendChild(meta);
+		}
+		return sandbox.contentDocument.body;
+	}
+
 	function importNode(node, options, isRoot) {
 		var type = node.nodeName.toLowerCase(),
 			isElement = type !== '#document',
-			body = document.body,
 			container,
 			parent,
 			next;
@@ -15489,46 +15592,53 @@ new function() {
 			parent = node.parentNode;
 			next = node.nextSibling;
 			container.appendChild(node);
-			body.appendChild(container);
+			getSandbox().appendChild(container);
 		}
 		var settings = paper.settings,
 			applyMatrix = settings.applyMatrix,
-			insertItems = settings.insertItems;
-		settings.applyMatrix = false;
-		settings.insertItems = false;
-		var importer = importers[type],
-			item = importer && importer(node, type, options, isRoot) || null;
-		settings.insertItems = insertItems;
-		settings.applyMatrix = applyMatrix;
-		if (item) {
-			if (isElement && !(item instanceof Group))
-				item = applyAttributes(item, node, isRoot);
-			var onImport = options.onImport,
-				data = isElement && node.getAttribute('data-paper-data');
-			if (onImport)
-				item = onImport(node, item, options) || item;
-			if (options.expandShapes && item instanceof Shape) {
-				item.remove();
-				item = item.toPath();
+			insertItems = settings.insertItems,
+			item;
+		try {
+			settings.applyMatrix = false;
+			settings.insertItems = false;
+			try {
+				var importer = importers[type];
+				item = importer && importer(node, type, options, isRoot)
+						|| null;
+			} finally {
+				settings.insertItems = insertItems;
+				settings.applyMatrix = applyMatrix;
 			}
-			if (data)
-				item._data = JSON.parse(data);
-		}
-		if (container) {
-			body.removeChild(container);
-			if (parent) {
-				if (next) {
-					parent.insertBefore(node, next);
-				} else {
-					parent.appendChild(node);
+			if (item) {
+				if (isElement && !(item instanceof Group))
+					item = applyAttributes(item, node, isRoot);
+				var onImport = options.onImport,
+					data = isElement && node.getAttribute('data-paper-data');
+				if (onImport)
+					item = onImport(node, item, options) || item;
+				if (options.expandShapes && item instanceof Shape) {
+					item.remove();
+					item = item.toPath();
+				}
+				if (data)
+					item._data = JSON.parse(data);
+			}
+		} finally {
+			if (container) {
+				container.parentNode.removeChild(container);
+				if (parent) {
+					if (next) {
+						parent.insertBefore(node, next);
+					} else {
+						parent.appendChild(node);
+					}
 				}
 			}
+			if (isRoot)
+				definitions = {};
 		}
-		if (isRoot) {
-			definitions = {};
-			if (item && Base.pick(options.applyMatrix, applyMatrix))
-				item.matrix.apply(true, true);
-		}
+		if (isRoot && item && Base.pick(options.applyMatrix, applyMatrix))
+			item.matrix.apply(true, true);
 		return item;
 	}
 
@@ -15542,8 +15652,12 @@ new function() {
 
 		function onLoad(svg) {
 			try {
-				var node = typeof svg === 'object' ? svg : new self.DOMParser()
-						.parseFromString(svg, 'image/svg+xml');
+				var node = typeof svg === 'object'
+					? svg
+					: new self.DOMParser().parseFromString(
+						svg.trim(),
+						'image/svg+xml'
+					);
 				if (!node.nodeName) {
 					node = null;
 					throw new Error('Unsupported SVG source: ' + source);
@@ -15570,7 +15684,7 @@ new function() {
 			}
 		}
 
-		if (typeof source === 'string' && !/^.*</.test(source)) {
+		if (typeof source === 'string' && !/^[\s\S]*</.test(source)) {
 			var node = document.getElementById(source);
 			if (node) {
 				onLoad(node);
@@ -17037,20 +17151,7 @@ Base.exports.PaperScript = function() {
 			code = code.substring(0, start) + str + code.substring(end);
 		}
 
-		function walkAST(node, parent) {
-			if (!node)
-				return;
-			for (var key in node) {
-				if (key === 'range' || key === 'loc')
-					continue;
-				var value = node[key];
-				if (Array.isArray(value)) {
-					for (var i = 0, l = value.length; i < l; i++)
-						walkAST(value[i], node);
-				} else if (value && typeof value === 'object') {
-					walkAST(value, node);
-				}
-			}
+		function handleOverloading(node, parent) {
 			switch (node.type) {
 			case 'UnaryExpression':
 				if (node.operator in unaryOperators
@@ -17112,6 +17213,11 @@ Base.exports.PaperScript = function() {
 					}
 				}
 				break;
+			}
+		}
+
+		function handleExports(node) {
+			switch (node.type) {
 			case 'ExportDefaultDeclaration':
 				replaceCode({
 					range: [node.start, node.declaration.start]
@@ -17146,6 +17252,29 @@ Base.exports.PaperScript = function() {
 			}
 		}
 
+		function walkAST(node, parent, paperFeatures) {
+			if (node) {
+				for (var key in node) {
+					if (key !== 'range' && key !== 'loc') {
+						var value = node[key];
+						if (Array.isArray(value)) {
+							for (var i = 0, l = value.length; i < l; i++) {
+								walkAST(value[i], node, paperFeatures);
+							}
+						} else if (value && typeof value === 'object') {
+							walkAST(value, node, paperFeatures);
+						}
+					}
+				}
+				if (paperFeatures.operatorOverloading !== false) {
+					handleOverloading(node, parent);
+				}
+				if (paperFeatures.moduleExports !== false) {
+					handleExports(node);
+				}
+			}
+		}
+
 		function encodeVLQ(value) {
 			var res = '',
 				base64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -17161,13 +17290,14 @@ Base.exports.PaperScript = function() {
 		}
 
 		var url = options.url || '',
+			sourceMaps = options.sourceMaps,
+			paperFeatures = options.paperFeatures || {},
+			source = options.source || code,
+			offset = options.offset || 0,
 			agent = paper.agent,
 			version = agent.versionNumber,
 			offsetCode = false,
-			sourceMaps = options.sourceMaps,
-			source = options.source || code,
 			lineBreaks = /\r\n|\n|\r/mg,
-			offset = options.offset || 0,
 			map;
 		if (sourceMaps && (agent.chrome && version >= 30
 				|| agent.webkit && version >= 537.76
@@ -17198,11 +17328,16 @@ Base.exports.PaperScript = function() {
 				sourcesContent: [source]
 			};
 		}
-		walkAST(parse(code, {
-			ranges: true,
-			preserveParens: true,
-			sourceType: 'module'
-		}));
+		if (
+			paperFeatures.operatorOverloading !== false ||
+			paperFeatures.moduleExports !== false
+		) {
+			walkAST(parse(code, {
+				ranges: true,
+				preserveParens: true,
+				sourceType: 'module'
+			}), null, paperFeatures);
+		}
 		if (map) {
 			if (offsetCode) {
 				code = new Array(offset + 1).join('\n') + code;
@@ -17365,8 +17500,10 @@ var paper = new (PaperScope.inject(Base.exports, {
 	DomElement: DomElement,
 	document: document,
 	window: window,
-	Symbol: SymbolDefinition,
 	PlacedSymbol: SymbolItem
+}).inject({
+	enumerable: false,
+	Symbol: SymbolDefinition
 }))();
 
 if (paper.agent.node) {
