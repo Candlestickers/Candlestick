@@ -35,6 +35,7 @@ import InspectorImagePreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/InspectorSoundPreview';
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
+import InspectorEaseEditor from './InspectorEaseEditor/InspectorEaseEditor';
 
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
@@ -724,6 +725,7 @@ class Inspector extends Component {
     })
     return (
       <div className="inspector-item">
+        <InspectorEaseEditor/>
         <InspectorSelector
           tooltip="Easing Type"
           type="select"
