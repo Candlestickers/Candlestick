@@ -25,7 +25,7 @@ import './_exportmedia.scss';
 
 class ExportMedia extends Component {
   render() {
-    let renderName = this.props.project.name;
+    let renderName = this.props.project?.name;
 
     if (this.props.renderType === "video") {
       renderName += ".mp4";
