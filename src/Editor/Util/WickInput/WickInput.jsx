@@ -31,7 +31,7 @@ import { Input } from 'reactstrap';
 import WickTextInput from './WickTextInput/WickTextInput';
 import { isMobile } from 'react-device-detect';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 /**
  * Creates an input to be used in the Wick Editor
