@@ -24,7 +24,7 @@ import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 
 import './_actionbutton.scss';
 
-var classNames = require('classnames');
+import classNames from 'classnames';
 
 export default function ActionButton (props) {
   let isActive = props.isActive || (() => false);

@@ -17,7 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@import 'Editor/_editor.scss';
+@use 'Editor/_editor.scss' as *;
 
 .timeline {
   background-color: $flame-dark;

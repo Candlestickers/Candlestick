@@ -21,7 +21,7 @@ import React, { Component } from 'react';
 
 import './_tabbedinterface.scss';
 
-var classNames = require('classnames'); 
+import classNames from 'classnames'; 
 
 class TabbedInterface extends Component {
     /**
