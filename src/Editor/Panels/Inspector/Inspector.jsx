@@ -729,7 +729,9 @@ componentWillUnmount() { this._mounted = false; }
     })
     return (
       <div className="inspector-item">
-        <InspectorEaseEditor/>
+        <InspectorEaseEditor
+          tween={this.props.project.selection.getSelectedObjects()[0]}
+        />
         <InspectorSelector
           tooltip="Easing Type"
           type="select"

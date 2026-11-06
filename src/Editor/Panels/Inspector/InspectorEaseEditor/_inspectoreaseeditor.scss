@@ -1,0 +1,7 @@
+@use 'Editor/_wickbrand.scss' as *;
+
+.inspector-ease-editor-container canvas {
+    width: 100%;
+    height: auto;
+    background-color: $editor-tertiary;
+}

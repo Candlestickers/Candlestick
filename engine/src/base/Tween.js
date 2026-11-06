@@ -31,7 +31,7 @@ Wick.Tween = class extends Wick.Base {
             'in-exp', 'out-exp', 'in-out-exp',
             'in-circle', 'out-circle', 'in-out-circle',
             'in-back', 'out-back', 'in-out-back',
-            'in-bounce', 'out-bounce', 'in-out-bounce'];
+            'in-bounce', 'out-bounce', 'in-out-bounce', 'custom'];
     }
 
     static _calculateTimeValue (tweenA, tweenB, playheadPosition) {
@@ -56,6 +56,7 @@ Wick.Tween = class extends Wick.Base {
         this._transformation = args.transformation || new Wick.Transformation();
         this.fullRotations = args.fullRotations === undefined ? 0 : args.fullRotations;
         this.easingType = args.easingType || 'none';
+        this.easeCurve = args.easeCurve || null;
 
         this._originalLayerIndex = -1;
     }
@@ -249,6 +250,7 @@ Wick.Tween = class extends Wick.Base {
             'in-bounce': TWEEN.Easing.Bounce.In,
             'out-bounce': TWEEN.Easing.Bounce.Out,
             'in-out-bounce': TWEEN.Easing.Bounce.InOut,
+            'custom': null,
         }[this.easingType];
     }
 }
