@@ -34,6 +34,60 @@ Wick.Tween = class extends Wick.Base {
             'in-bounce', 'out-bounce', 'in-out-bounce', 'custom'];
     }
 
+    /**
+     * Build an easing function from a bezier path.
+     * @param {object} curve - {points: [{x, y, inX, inY, outX, outY}, ...]}, from (0,0) to (1,1) with x always increasing.
+     * Handles are offsets from their point (the first point has no in handle and the last no out handle).
+     * Falls back to linear if missing or invalid.
+     * @returns {function} A function that takes the time (0-1) and returns the progress (0-1).
+     */
+    static _bezierEase (curve) {
+        var points = curve && curve.points;
+        var valid = Array.isArray(points) && points.length >= 2 && points.every((point, i) => {
+            return point && Number.isFinite(point.x) && Number.isFinite(point.y) && (i === 0 || point.x > points[i - 1].x);
+        });
+        if(!valid) return TWEEN.Easing.Linear.None;
+
+        var handle = value => Number.isFinite(value) ? value : 0;
+        var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+        var bezier = (p0, p1, p2, p3, u) => {
+            var v = 1 - u;
+            return v * v * v * p0 + 3 * v * v * u * p1 + 3 * v * u * u * p2 + u * u * u * p3;
+        };
+
+        return function (t) {
+            if(t <= 0) return 0;
+            if(t >= 1) return 1;
+
+            // A segment is the stretch of curve between two neighbouring points
+            var i = 0;
+            while(i < points.length - 2 && t > points[i + 1].x) i++;
+            var p = points[i], q = points[i + 1];
+
+            // Keeping the handles' x between the two points means x only ever goes up along the segment
+            var x1 = clamp(p.x + handle(p.outX), p.x, q.x), y1 = p.y + handle(p.outY);
+            var x2 = clamp(q.x + handle(q.inX), p.x, q.x), y2 = q.y + handle(q.inY);
+
+            var low = 0, high = 1, u = t;
+            for(var n = 0; n < 30; n++) {
+                u = (low + high) / 2;
+                if(bezier(p.x, x1, x2, q.x, u) < t) low = u;
+                else high = u;
+            }
+
+            return bezier(p.y, y1, y2, q.y, u);
+        };
+    }
+
+    /**
+     * Copy an ease curve so no two tweens share an object. Anything that isn't an object becomes null.
+     */
+    static _copyEaseCurve (curve) {
+        if(!curve || typeof curve !== 'object' || Array.isArray(curve)) return null;
+        return JSON.parse(JSON.stringify(curve));
+    }
+
     static _calculateTimeValue (tweenA, tweenB, playheadPosition) {
         var tweenAPlayhead = tweenA.playheadPosition;
         var tweenBPlayhead = tweenB.playheadPosition;
@@ -107,6 +161,7 @@ Wick.Tween = class extends Wick.Base {
         data.transformation = this._transformation.values;
         data.fullRotations = this.fullRotations;
         data.easingType = this.easingType;
+        data.easeCurve = Wick.Tween._copyEaseCurve(this.easeCurve);
 
         data.originalLayerIndex = this.layerIndex !== -1 ? this.layerIndex : this._originalLayerIndex;
 
@@ -120,6 +175,7 @@ Wick.Tween = class extends Wick.Base {
         this._transformation = new Wick.Transformation(data.transformation);
         this.fullRotations = data.fullRotations;
         this.easingType = data.easingType;
+        this.easeCurve = Wick.Tween._copyEaseCurve(data.easeCurve);
 
         this._originalLayerIndex = data.originalLayerIndex;
     }
@@ -219,8 +275,13 @@ Wick.Tween = class extends Wick.Base {
         return this._originalLayerIndex;
     }
 
-     /* retrieve Tween.js easing functions by name */
+    /**
+     * Retrieve Tween.js easing functions by name.
+     * @returns {Function}
+     */
     _getTweenFunction () {
+        if(this.easingType === 'custom') return Wick.Tween._bezierEase(this.easeCurve);
+
         return {
             'none': TWEEN.Easing.Linear.None,
             'in': TWEEN.Easing.Quadratic.In,
@@ -250,7 +311,6 @@ Wick.Tween = class extends Wick.Base {
             'in-bounce': TWEEN.Easing.Bounce.In,
             'out-bounce': TWEEN.Easing.Bounce.Out,
             'in-out-bounce': TWEEN.Easing.Bounce.InOut,
-            'custom': null,
         }[this.easingType];
     }
 }

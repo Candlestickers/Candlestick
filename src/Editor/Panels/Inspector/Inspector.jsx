@@ -728,10 +728,7 @@ componentWillUnmount() { this._mounted = false; }
       optionLabels.push({label: option, value: option});
     })
     return (
-      <div className="inspector-item">
-        <InspectorEaseEditor
-          tween={this.props.project.selection.getSelectedObjects()[0]}
-        />
+      <div className="inspector-item" key={this.props.project.selection.getSelectedObjects()[0].uuid}>
         <InspectorSelector
           tooltip="Easing Type"
           type="select"
@@ -739,6 +736,10 @@ componentWillUnmount() { this._mounted = false; }
           value={this.getSelectionAttribute('easingType')}
           isSearchable={true}
           onChange={(val) => {this.setSelectionAttribute('easingType', val.value)}} />
+          <InspectorEaseEditor
+          tween={this.props.project.selection.getSelectedObjects()[0]}
+          setSelectionAttribute={this.setSelectionAttribute}
+        />
       </div>
     );
   }

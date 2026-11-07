@@ -113,6 +113,7 @@ Wick.Selection = class extends Wick.Base {
             "animationType",
             "singleFrameNumber",
             "isSynced",
+            "easeCurve",
         ];
     }
 
@@ -721,6 +722,23 @@ Wick.Selection = class extends Wick.Base {
         if (this.selectionType === "clip") {
             this.getSelectedObject().isSynced = syncBool;
         }
+    }
+
+    /**
+     * The custom ease curve of the selected tweens, as {points: [...]} (a bezier path, see Wick.Tween._bezierEase).
+     * Null if there are no selected tweens or the first one has no custom curve.
+     * @type {object|null}
+     */
+    get easeCurve () {
+        var tween = this.getSelectedObjects('Tween')[0];
+        return tween ? tween.easeCurve : null;
+    }
+
+    set easeCurve (easeCurve) {
+        // Each tween gets its own copy so they never share one object
+        this.getSelectedObjects('Tween').forEach(tween => {
+            tween.easeCurve = Wick.Tween._copyEaseCurve(easeCurve);
+        });
     }
 
     /**
