@@ -1282,6 +1282,26 @@ orderDynamicFrames() {
     }
 
     /**
+     * Moves the selected paths and clips to their own layers.
+     */
+    distributeSelectionToLayers() {
+        let thisSelected = this.selection.getSelectedObjects("Canvas");
+        
+        let thisTimeline = thisSelected[0].parentTimeline;
+        let thisPlayheadPosition = thisTimeline.playheadPosition;
+
+        thisSelected.forEach(object => {
+            let newLayer = new Wick.Layer();
+            thisTimeline.insertChild(newLayer, 0);
+            newLayer.name = `Layer ${thisTimeline.layers.length}`;
+
+            let newFrame = newLayer.insertBlankFrame(thisPlayheadPosition);
+            object.remove();
+            newFrame.addChild(object);
+        });
+    }
+
+    /**
      * Breaks selected clips into their children clips and paths.
      */
     breakApartSelection() {
