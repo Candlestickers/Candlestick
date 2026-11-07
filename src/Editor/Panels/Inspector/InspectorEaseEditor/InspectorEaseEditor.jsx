@@ -297,26 +297,42 @@ class InspectorEaseEditor extends Component {
     }
 
     /**
-     * Draws the axes and labels for the graph.
+     * Draws the grid, axes and labels for the graph.
      */
     drawGraph() {
         const plot = this.getPlot();
 
+        const style = getComputedStyle(this.canvasRef.current);
+        const axisColor = style.getPropertyValue('--ease-axis-color').trim();
+        const labelColor = style.getPropertyValue('--ease-label-color').trim();
+        const gridColor = style.getPropertyValue('--ease-grid-color').trim();
+
+        // grid
+        const gridStyle = { strokeColor: gridColor, strokeWidth: 1 };
+        for (let i = 0; i <= 8; i++) {
+            const x = plot.left + plot.width * i / 8;
+            new paper.Path.Line({ ...gridStyle, from: [x, plot.top], to: [x, plot.floor] });
+        }
+        for (let i = Math.ceil(this.yRange.min * 8); i <= Math.floor(this.yRange.max * 8); i++) {
+            const y = plot.bottom - plot.height * i / 8;
+            new paper.Path.Line({ ...gridStyle, from: [plot.left, y], to: [plot.left + plot.width, y] });
+        }
+
         this.YAxis = new paper.Path.Line({
             from: [plot.left, plot.floor],
             to: [plot.left, plot.top],
-            strokeColor: 'black',
+            strokeColor: axisColor,
             strokeWidth: 1
         });
 
         this.XAxis = new paper.Path.Line({
             from: [plot.left + plot.width, plot.bottom],
             to: [plot.left, plot.bottom],
-            strokeColor: 'black',
+            strokeColor: axisColor,
             strokeWidth: 1
         });
 
-        const labelStyle = { fillColor: 'white', underline: true, fontSize: 12, letterTracking: 100, justification: 'center' };
+        const labelStyle = { fillColor: labelColor, underline: true, fontSize: 12, letterTracking: 100, justification: 'center' };
 
         this.XLabel = new paper.PointText({
             ...labelStyle,
