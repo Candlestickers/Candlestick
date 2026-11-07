@@ -1,3 +1,5 @@
+import React from 'react';
+
 import './_savedprojectitem.scss';
 
 let classNames = require('classnames');

@@ -17,7 +17,6 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const localforage = require('localforage')
 /**
  * Utility class for autosaving projects.
  */

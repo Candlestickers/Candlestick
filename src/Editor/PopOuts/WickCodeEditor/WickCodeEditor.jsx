@@ -23,11 +23,10 @@ import WickInput from 'Editor/Util/WickInput/WickInput';
 import { Rnd } from 'react-rnd';
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import AddScriptPanel from './AddScriptPanel/AddScriptPanel';
-import Console from 'console-feed/lib/Component/index.js'
+import { Console } from 'console-feed'
 
 // Import Ace Editor and themes.
 import AceEditor from 'react-ace';
-import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-javascript';
 import 'ace-builds/src-noconflict/ext-searchbox';
 
@@ -41,8 +40,6 @@ import 'Editor/styles/PopOuts/_wickcodeeditor.css';
 
 import capitalize from 'Editor/Util/DataFunctions/capitalize';
 import ToolIcon from '../../Util/ToolIcon/ToolIcon';
-
-ace.config.set('basePath', import.meta.env.VITE_PUBLIC_URL + 'ace-workers/');
 
 const editorThemes = [
   {

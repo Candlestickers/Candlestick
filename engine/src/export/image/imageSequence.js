@@ -17,7 +17,6 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const JSZip = require('jszip');
 /**
  * Utility class for generating image sequences.
  */

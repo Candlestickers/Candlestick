@@ -16,8 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
-const lerp = require('lerp');
-const TWEEN = require('@tweenjs/tween.js');
+
 /**
  * Class representing a tween.
  */

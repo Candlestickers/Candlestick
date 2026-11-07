@@ -17,8 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const platform = require('platform');
-const JSZip = require('jszip');
+
 /**
  * Utility class for creating and parsing wick files.
  */

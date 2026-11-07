@@ -1548,5 +1548,3 @@ Croquis.Brush = function () {
         return dirtyRect;
     };
 };
-
-module.exports = Croquis;
