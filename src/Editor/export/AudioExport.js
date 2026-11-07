@@ -1,4 +1,4 @@
-import * as toWav from 'audiobuffer-to-wav';
+import toWav from 'audiobuffer-to-wav';
 
 window.toWavFunc = toWav;
 
