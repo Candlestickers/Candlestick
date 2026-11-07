@@ -21,7 +21,7 @@ import React, { Component } from 'react';
 
 import './_mobiletabbedinterface.scss';
 
-import classNames from 'classnames'; 
+var classNames = require('classnames'); 
 
 class MobileTabbedInterface extends Component {
     /**

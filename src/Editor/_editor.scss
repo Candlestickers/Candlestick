@@ -17,8 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@use './_wickbrand.scss' as *;
-@forward './_wickbrand.scss';
+@import './_wickbrand.scss';
 
 $menu-bar-height: 40px;
 $toolbox-height: 40px;

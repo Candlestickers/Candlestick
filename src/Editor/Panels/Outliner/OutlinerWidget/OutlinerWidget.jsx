@@ -3,7 +3,7 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import '../_outliner.scss';
 
-import classNames from 'classnames';
+var classNames = require('classnames');
 
 class OutlinerLayerButtons extends Component {
   render() {

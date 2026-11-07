@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import classNames from 'classnames';
+let classNames = require('classnames');
 
 /**
  * A delayed text input object that will not the provided on change unless the value is valid, and 

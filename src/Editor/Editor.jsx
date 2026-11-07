@@ -23,9 +23,6 @@ import './_editor.scss';
 import './styles/default_theme.css';
 import './styles/default_styles.css';
 
-import packageJSON from '../../package.json';
-import classNames from 'classnames';
-
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
@@ -146,6 +143,11 @@ async function loadPathIntoEditor(editorThis, filePath) {
     }
 }
 
+
+const { version } = require('../../package.json');
+
+var classNames = require('classnames');
+
 // Watches for container resize and calls onResize, replacing react-sizeme
 function ResizeTrigger({ onResize, children }) {
     const { ref } = useResizeDetector({ onResize });
@@ -162,7 +164,7 @@ class Editor extends EditorCore {
         // "Live" editor states
         this.project = null;
         this.paper = null;
-        this.editorVersion = packageJSON.version + '';
+        this.editorVersion = version + '';
 
         // GUI state
         this.state = {

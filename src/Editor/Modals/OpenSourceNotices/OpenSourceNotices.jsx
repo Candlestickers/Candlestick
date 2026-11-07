@@ -23,7 +23,7 @@ import WickModal from 'Editor/Modals/WickModal/WickModal';
 
 import './_opensourcenotices.scss';
 
-import classNames from 'classnames';
+var classNames = require("classnames");
 
 class OpenSourceNotices extends Component {
     render() {

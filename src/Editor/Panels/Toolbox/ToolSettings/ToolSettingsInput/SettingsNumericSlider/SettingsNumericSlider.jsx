@@ -6,7 +6,7 @@ import ToolIcon from 'Editor/Util/ToolIcon/ToolIcon';
 
 import 'Editor/styles/Panels/Toolbox/settingsnumericslider.css';
 
-import classNames from 'classnames';
+const classNames = require('classnames');
 
 export default function SettingsNumericSlider (props) {
 

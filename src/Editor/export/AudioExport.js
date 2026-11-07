@@ -1,4 +1,4 @@
-import * as toWav from 'audiobuffer-to-wav';
+var toWav = require('audiobuffer-to-wav')
 
 window.toWavFunc = toWav;
 

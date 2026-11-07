@@ -5,7 +5,7 @@ import ActionButton from '../../Util/ActionButton/ActionButton';
 
 import './_savedprojects.scss';
 import SavedProjectItem from './SavedProjectItem/SavedProjectItem';
-import classNames from 'classnames';
+let classNames = require('classnames');
 
 export default function SavedProjects(props) {
   // Use an empty list if saved files are not provided.

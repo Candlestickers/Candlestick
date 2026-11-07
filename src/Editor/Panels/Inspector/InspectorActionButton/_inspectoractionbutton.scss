@@ -17,7 +17,7 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@use '../_inspector.scss' as *;
+@import '../_inspector.scss';
 
 .inspector-button {
   height: $inspector-button-height;
