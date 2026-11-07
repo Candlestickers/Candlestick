@@ -36,8 +36,6 @@ Wick.Tween = class extends Wick.Base {
     /**
      * Build an easing function from a bezier path.
      * @param {object} curve - {points: [{x, y, inX, inY, outX, outY}, ...]}, from (0,0) to (1,1) with x always increasing.
-     * Handles are offsets from their point (the first point has no in handle and the last no out handle).
-     * Falls back to linear if missing or invalid.
      * @returns {function} A function that takes the time (0-1) and returns the progress (0-1).
      */
     static _bezierEase (curve) {
@@ -58,7 +56,6 @@ Wick.Tween = class extends Wick.Base {
             if(t <= 0) return 0;
             if(t >= 1) return 1;
 
-            // A segment is the stretch of curve between two neighbouring points
             var i = 0;
             while(i < points.length - 2 && t > points[i + 1].x) i++;
             var p = points[i], q = points[i + 1];
@@ -80,6 +77,8 @@ Wick.Tween = class extends Wick.Base {
 
     /**
      * Copy an ease curve so no two tweens share an object. Anything without a list of points becomes null.
+     * @param {object} curve - The ease curve.
+     * @returns {object|null} A copy of the ease curve or null if invalid.
      */
     static _copyEaseCurve (curve) {
         if(!curve || !Array.isArray(curve.points)) return null;
@@ -123,7 +122,6 @@ Wick.Tween = class extends Wick.Base {
     static interpolate (tweenA, tweenB, playheadPosition, target) {
         var interpTween = target || new Wick.Tween();
 
-        // Calculate value (0.0-1.0) to pass to tweening function
         var t = Wick.Tween._calculateTimeValue(tweenA, tweenB, playheadPosition);
 
         // The easing is the same for every attribute, so only work it out once
@@ -238,7 +236,7 @@ Wick.Tween = class extends Wick.Base {
 
     /**
      * The tween that comes after this tween in the parent frame.
-     * @returns {Wick.Tween}
+     * @returns {Wick.Tween | null}
      */
     getNextTween () {
         if(!this.parentFrame) return null;

@@ -93,8 +93,8 @@ class InspectorEaseEditor extends Component {
     }
 
     componentDidUpdate() {
-        // The tween's curve is replaced, never changed in place, so the same object means nothing to compare
         const curve = this.getEaseCurve();
+        // The tween's curve is replaced, never changed in place, so the same object means nothing to compare
         if (curve === this.seenCurve) return;
 
         this.seenCurve = curve;
@@ -109,7 +109,7 @@ class InspectorEaseEditor extends Component {
     /**
      * Finds the object under the mouse.
      * @param {paper.Point} point - the point that was clicked
-     * @returns 
+     * @returns {paper.HitResult}
      */
     getHitResult(point) {
         return paper.project.hitTest(point, {
@@ -180,13 +180,9 @@ class InspectorEaseEditor extends Component {
     }
 
     /**
-     * The plot is the area inside the margins. Going from 0 to 1 always takes the same number of pixels, and the
-     * canvas grows taller to fit anything above 1 or below 0.
-     * @param {object} curve - The curve the plot has to fit, see DEFAULT_CURVE.
-     * @returns {object} `left` and `width` are the canvas x and width of the plot, and `height` is the number of
-     * pixels in one graph unit. `min` and `max` are the lowest and highest graph y shown. Graph y 0 is at canvas y
-     * `bottom`. `top` and `floor` are the canvas y of the top and bottom edges of the whole plot, and `canvasHeight`
-     * is the height the canvas needs.
+     * The plot is the area inside the margins. Going from 0 to 1 always takes the same number of pixels.
+     * @param {object} curve - The curve the plot has to fit.
+     * @returns {object}
      */
     getPlot(curve) {
         const { width, height } = this.props;
@@ -194,16 +190,17 @@ class InspectorEaseEditor extends Component {
         const margin = { left: 20, right: 10, top: 10, bottom: 20 };
         const unit = height - margin.top - margin.bottom;
         const floor = margin.top + unit * (max - min);
+
         return {
-            left: margin.left,
-            width: width - margin.left - margin.right,
-            height: unit,
-            min,
-            max,
-            top: margin.top,
-            bottom: margin.top + unit * max,
-            floor,
-            canvasHeight: floor + margin.bottom
+            left: margin.left, // canvas x of plot
+            width: width - margin.left - margin.right, // canvas width of plot
+            height: unit, // pixels per graph unit
+            min, // lowest graph y shown
+            max, // highest graph y shown
+            top: margin.top, // canvas y of top edge of plot
+            bottom: margin.top + unit * max, // canvas y of graph y 0
+            floor, // canvas y of bottom edge of plot
+            canvasHeight: floor + margin.bottom // canvas height needed
         };
     }
 
@@ -219,7 +216,6 @@ class InspectorEaseEditor extends Component {
 
     /**
      * The range of graph y the canvas has to show: 0 to 1, widened to fit any point or handle end outside it.
-     * Rounded to 0.01 so tiny floating point errors don't resize the canvas.
      * @param {object} curve - A curve, see getEaseCurve.
      * @returns {object} The `min` and `max` graph y.
      */
@@ -233,8 +229,7 @@ class InspectorEaseEditor extends Component {
     }
 
     /**
-     * Draws the given curve, with the canvas sized to fit it. The grid, axes and labels are only redrawn when the
-     * range of the graph changes, as they stay the same otherwise.
+     * Draws the given curve, with the canvas sized to fit it
      * @param {object} curve - The curve to draw, see getEaseCurve.
      */
     redraw(curve) {
@@ -316,7 +311,7 @@ class InspectorEaseEditor extends Component {
 
     /**
      * Draws the given curve as a path with a point and two handles per segment.
-     * @param {object} curve - The curve to draw, see DEFAULT_CURVE.
+     * @param {object} curve - The curve to draw.
      */
     drawCurve(curve) {
         const { left, bottom, width, height } = this.plot;
