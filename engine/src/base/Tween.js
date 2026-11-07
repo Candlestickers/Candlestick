@@ -48,7 +48,6 @@ Wick.Tween = class extends Wick.Base {
         });
         if(!valid) return TWEEN.Easing.Linear.None;
 
-        var handle = value => Number.isFinite(value) ? value : 0;
         var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
         var bezier = (p0, p1, p2, p3, u) => {
@@ -66,8 +65,8 @@ Wick.Tween = class extends Wick.Base {
             var p = points[i], q = points[i + 1];
 
             // Keeping the handles' x between the two points means x only ever goes up along the segment
-            var x1 = clamp(p.x + handle(p.outX), p.x, q.x), y1 = p.y + handle(p.outY);
-            var x2 = clamp(q.x + handle(q.inX), p.x, q.x), y2 = q.y + handle(q.inY);
+            var x1 = clamp(p.x + (p.outX || 0), p.x, q.x), y1 = p.y + (p.outY || 0);
+            var x2 = clamp(q.x + (q.inX || 0), p.x, q.x), y2 = q.y + (q.inY || 0);
 
             var low = 0, high = 1, u = t;
             for(var n = 0; n < 30; n++) {
@@ -81,10 +80,10 @@ Wick.Tween = class extends Wick.Base {
     }
 
     /**
-     * Copy an ease curve so no two tweens share an object. Anything that isn't an object becomes null.
+     * Copy an ease curve so no two tweens share an object. Anything without a list of points becomes null.
      */
     static _copyEaseCurve (curve) {
-        if(!curve || typeof curve !== 'object' || Array.isArray(curve)) return null;
+        if(!curve || !Array.isArray(curve.points)) return null;
         return JSON.parse(JSON.stringify(curve));
     }
 
@@ -120,17 +119,19 @@ Wick.Tween = class extends Wick.Base {
      * @param {Wick.Tween} tweenA - The first tween
      * @param {Wick.Tween} tweenB - The second tween
      * @param {Number} playheadPosition - The point between the two tweens to use to interpolate
+     * @param {Wick.Tween} target - (Optional) An existing tween to write the result into, instead of creating a new one
      */
-    static interpolate (tweenA, tweenB, playheadPosition) {
-        var interpTween = new Wick.Tween();
+    static interpolate (tweenA, tweenB, playheadPosition, target) {
+        var interpTween = target || new Wick.Tween();
 
         // Calculate value (0.0-1.0) to pass to tweening function
         var t = Wick.Tween._calculateTimeValue(tweenA, tweenB, playheadPosition);
 
-        // Interpolate every transformation attribute using the t value
+        // The easing is the same for every attribute, so only work it out once
+        var tt = tweenA._getTweenFunction()(t);
+
+        // Interpolate every transformation attribute using the eased t value
         ["x", "y", "scaleX", "scaleY", "rotation", "shear", "opacity"].forEach(propName => {
-            var tweenFn = tweenA._getTweenFunction();
-            var tt = tweenFn(t);
             var valA = tweenA.transformation[propName];
             var valB = tweenB.transformation[propName];
             if(propName === 'rotation') {

@@ -25,13 +25,22 @@ import './_inspectoreaseeditor.scss';
 // How far above 1 and below 0 (in graph units, where 0 to 1 is the whole movement) points and handles can go
 const MAX_OVERSHOOT = 1;
 
+// A straight line, with the handles a third of the way along.
+const DEFAULT_CURVE = {
+    points: [
+        { x: 0, y: 0, outX: 1 / 3, outY: 1 / 3 },
+        { x: 1, y: 1, inX: -1 / 3, inY: -1 / 3 }
+    ]
+};
+
+// Helper to clamp a value between two limits, whichever order they are given in
+const clamp = (value, a, b) => Math.min(Math.max(value, Math.min(a, b)), Math.max(a, b));
+
 class InspectorEaseEditor extends Component {
-    constructor(props) {
-        super(props);
-        this.props = props;
-        this.canvasRef = createRef();
-        this.hitResult = null;
-    }
+    static defaultProps = { width: 200, height: 200 };
+
+    canvasRef = createRef();
+    hitResult = null;
 
     componentDidMount() {
         paper.setup(this.canvasRef.current);
@@ -59,15 +68,12 @@ class InspectorEaseEditor extends Component {
             }
         };
         this.tool.onMouseDrag = (e) => {
-            if (!this.hitResult) return;
-
-            const { type, segment } = this.hitResult;
-            if (type === 'segment') {
+            const { type, segment } = this.hitResult || {};
+            if (type === 'segment' && segment.previous && segment.next) {
                 // The two end points stay put
-                if (!segment.previous || !segment.next) return;
                 this.moveAnchor(segment, e.delta);
             } else if (type === 'handle-in' || type === 'handle-out') {
-                this.dragHandle(this.hitResult, e.delta, !e.modifiers.shift);
+                this.dragHandle(segment, type === 'handle-in' ? 'handleIn' : 'handleOut', e.delta, !e.modifiers.shift);
             } else {
                 return;
             }
@@ -78,26 +84,24 @@ class InspectorEaseEditor extends Component {
             // Only save when something was actually dragged, so a plain click doesn't add an undo step
             if (!this.dragged) return;
             this.dragged = false;
-            // Remember what was saved first, as saving can re-render this component straight away
+            // Redrawing resizes the canvas to fit the curve, and has to come before saving, which can re-render this component
             const curve = this.getCurve();
-            this.lastCurve = JSON.stringify(curve);
-            // The canvas grows or shrinks to fit the curve once it's let go
-            const range = this.getYRange(curve);
-            if (range.min !== this.yRange.min || range.max !== this.yRange.max) this.redraw(curve);
+            this.redraw(curve);
             this.props.setSelectionAttribute('easeCurve', curve);
         };
         this.tool.activate();
     }
 
     componentDidUpdate() {
-        // Undo and redo change the tween's saved curve without going through this editor, so redraw it when it changes
-        if (JSON.stringify(this.getEaseCurve()) === this.lastCurve) return;
+        // The tween's curve is replaced, never changed in place, so the same object means nothing to compare
+        const curve = this.getEaseCurve();
+        if (curve === this.seenCurve) return;
 
-        this.redraw(this.getEaseCurve());
+        this.seenCurve = curve;
+        if (JSON.stringify(curve) !== this.lastCurve) this.redraw(curve);
     }
 
     componentWillUnmount() {
-        // paper.setup() makes a brand new project and tool each time this mounts, so remove ours
         this.tool.remove();
         this.paperProj.remove();
     }
@@ -123,42 +127,18 @@ class InspectorEaseEditor extends Component {
      * graph can show vertically. The horizontal part is what makes the curve a valid easing, and it matches how
      * the engine plays it back.
      * @param {paper.Segment} segment - The segment to clamp the handle of.
-     * @param {boolean} isHandleIn - Whether to clamp the in handle (true) or out handle (false).
+     * @param {string} side - Which handle to clamp, 'handleIn' or 'handleOut'.
      */
-    clampHandle(segment, isHandleIn) {
-        const neighbour = isHandleIn ? segment.previous : segment.next;
+    clampHandle(segment, side) {
+        const neighbour = side === 'handleIn' ? segment.previous : segment.next;
         if (!neighbour) return;
 
-        const handle = isHandleIn ? segment.handleIn : segment.handleOut;
-        const min = Math.min(segment.point.x, neighbour.point.x);
-        const max = Math.max(segment.point.x, neighbour.point.x);
-        const clamped = new paper.Point(
-            Math.min(Math.max(segment.point.x + handle.x, min), max) - segment.point.x,
-            this.clampY(segment.point.y + handle.y) - segment.point.y
+        const point = segment.point;
+        const handle = segment[side];
+        segment[side] = new paper.Point(
+            clamp(point.x + handle.x, point.x, neighbour.point.x) - point.x,
+            this.clampY(point.y + handle.y) - point.y
         );
-
-        if (isHandleIn) {
-            segment.handleIn = clamped;
-        } else {
-            segment.handleOut = clamped;
-        }
-    }
-
-    /**
-     * Moves one handle by delta, keeping its end between its point and the neighbouring point horizontally.
-     * @param {paper.Segment} segment - The segment to move the handle of.
-     * @param {boolean} isHandleIn - Whether to move the in handle (true) or out handle (false).
-     * @param {paper.Point} delta - The amount to move the handle by.
-     */
-    moveHandle(segment, isHandleIn, delta) {
-        const handle = (isHandleIn ? segment.handleIn : segment.handleOut).add(delta);
-
-        if (isHandleIn) {
-            segment.handleIn = handle;
-        } else {
-            segment.handleOut = handle;
-        }
-        this.clampHandle(segment, isHandleIn);
     }
 
     /**
@@ -167,62 +147,63 @@ class InspectorEaseEditor extends Component {
      * @param {paper.Point} delta - The amount to move the segment by.
      */
     moveAnchor(segment, delta) {
-        const gap = this.getPlot().width * 0.01;
-        const x = Math.min(Math.max(segment.point.x + delta.x, segment.previous.point.x + gap), segment.next.point.x - gap);
-        segment.point = new paper.Point(x, this.clampY(segment.point.y + delta.y));
+        const gap = this.plot.width * 0.01;
+        segment.point = new paper.Point(
+            clamp(segment.point.x + delta.x, segment.previous.point.x + gap, segment.next.point.x - gap),
+            this.clampY(segment.point.y + delta.y)
+        );
 
         // The handles around the point may now reach past their neighbours
-        this.clampHandle(segment, true);
-        this.clampHandle(segment, false);
-        this.clampHandle(segment.previous, false);
-        this.clampHandle(segment.next, true);
+        this.clampHandle(segment, 'handleIn');
+        this.clampHandle(segment, 'handleOut');
+        this.clampHandle(segment.previous, 'handleOut');
+        this.clampHandle(segment.next, 'handleIn');
     }
 
     /**
      * Drags one of the curve's handles by the given delta. If linked, the point's other handle turns to stay in line.
+     * @param {paper.Segment} segment - The segment the handle belongs to.
+     * @param {string} side - Which handle to drag, 'handleIn' or 'handleOut'.
+     * @param {paper.Point} delta - The amount to move the handle by.
+     * @param {boolean} linked - Whether the point's other handle follows.
      */
-    dragHandle(hitResult, delta, linked) {
-        const segment = hitResult.segment;
-        const isHandleIn = hitResult.type === 'handle-in';
-        this.moveHandle(segment, isHandleIn, delta);
+    dragHandle(segment, side, delta, linked) {
+        segment[side] = segment[side].add(delta);
+        this.clampHandle(segment, side);
 
         // Points between the ends are smooth: the other handle points the opposite way but keeps its own length
-        if (linked && segment.previous && segment.next) {
-            const handle = isHandleIn ? segment.handleIn : segment.handleOut;
-            const other = isHandleIn ? segment.handleOut : segment.handleIn;
-            if (handle.isZero() || other.isZero()) return;
-
-            const opposite = handle.normalize(other.length).negate();
-            if (isHandleIn) {
-                segment.handleOut = opposite;
-            } else {
-                segment.handleIn = opposite;
-            }
-            this.clampHandle(segment, !isHandleIn);
+        const other = side === 'handleIn' ? 'handleOut' : 'handleIn';
+        if (linked && segment.previous && segment.next && !segment[side].isZero() && !segment[other].isZero()) {
+            segment[other] = segment[side].normalize(segment[other].length).negate();
+            this.clampHandle(segment, other);
         }
     }
 
     /**
      * The plot is the area inside the margins. Going from 0 to 1 always takes the same number of pixels, and the
-     * canvas grows taller to fit anything above 1 or below 0 (see yRange).
+     * canvas grows taller to fit anything above 1 or below 0.
+     * @param {object} curve - The curve the plot has to fit, see DEFAULT_CURVE.
      * @returns {object} `left` and `width` are the canvas x and width of the plot, and `height` is the number of
-     * pixels in one graph unit. Graph y 0 is at canvas y `bottom`. `top` and `floor` are the canvas y of the top and
-     * bottom edges of the whole plot, and `canvasHeight` is the height the canvas needs.
+     * pixels in one graph unit. `min` and `max` are the lowest and highest graph y shown. Graph y 0 is at canvas y
+     * `bottom`. `top` and `floor` are the canvas y of the top and bottom edges of the whole plot, and `canvasHeight`
+     * is the height the canvas needs.
      */
-    getPlot() {
-        const width = this.props.width || 200;
-        const height = this.props.height || 200;
+    getPlot(curve) {
+        const { width, height } = this.props;
+        const { min, max } = this.getYRange(curve);
         const margin = { left: 20, right: 10, top: 10, bottom: 20 };
         const unit = height - margin.top - margin.bottom;
-        const range = this.yRange || { min: 0, max: 1 };
+        const floor = margin.top + unit * (max - min);
         return {
             left: margin.left,
             width: width - margin.left - margin.right,
             height: unit,
+            min,
+            max,
             top: margin.top,
-            bottom: margin.top + unit * range.max,
-            floor: margin.top + unit * (range.max - range.min),
-            canvasHeight: margin.top + unit * (range.max - range.min) + margin.bottom
+            bottom: margin.top + unit * max,
+            floor,
+            canvasHeight: floor + margin.bottom
         };
     }
 
@@ -232,8 +213,8 @@ class InspectorEaseEditor extends Component {
      * @returns {number}
      */
     clampY(y) {
-        const plot = this.getPlot();
-        return Math.min(Math.max(y, plot.bottom - (1 + MAX_OVERSHOOT) * plot.height), plot.bottom + MAX_OVERSHOOT * plot.height);
+        const { bottom, height } = this.plot;
+        return clamp(y, bottom - (1 + MAX_OVERSHOOT) * height, bottom + MAX_OVERSHOOT * height);
     }
 
     /**
@@ -243,30 +224,36 @@ class InspectorEaseEditor extends Component {
      * @returns {object} The `min` and `max` graph y.
      */
     getYRange(curve) {
-        let min = 0;
-        let max = 1;
-        curve.points.forEach(point => {
-            [point.y, point.y + (point.inY || 0), point.y + (point.outY || 0)].forEach(y => {
-                min = Math.min(min, y);
-                max = Math.max(max, y);
-            });
-        });
-
+        const ys = curve.points.flatMap(point => [point.y, point.y + (point.inY || 0), point.y + (point.outY || 0)]);
         const round = value => Math.round(value * 100) / 100;
-        return { min: Math.max(round(min), -MAX_OVERSHOOT), max: Math.min(round(max), 1 + MAX_OVERSHOOT) };
+        return {
+            min: clamp(round(Math.min(0, ...ys)), -MAX_OVERSHOOT, 0),
+            max: clamp(round(Math.max(1, ...ys)), 1, 1 + MAX_OVERSHOOT)
+        };
     }
 
     /**
-     * Draws the graph and the given curve from scratch, with the canvas sized to fit the curve.
+     * Draws the given curve, with the canvas sized to fit it. The grid, axes and labels are only redrawn when the
+     * range of the graph changes, as they stay the same otherwise.
      * @param {object} curve - The curve to draw, see getEaseCurve.
      */
     redraw(curve) {
+        const plot = this.getPlot(curve);
+        const rangeChanged = !this.plot || plot.min !== this.plot.min || plot.max !== this.plot.max;
+
         this.hitResult = null;
-        this.yRange = this.getYRange(curve);
-        this.paperProj.view.viewSize = new paper.Size(this.props.width || 200, this.getPlot().canvasHeight);
-        this.paperProj.activeLayer.removeChildren();
-        this.drawGraph();
-        this.drawInitEase(curve);
+        this.seenCurve = curve;
+        this.lastCurve = JSON.stringify(curve);
+        this.plot = plot;
+
+        if (rangeChanged) {
+            this.paperProj.view.viewSize = new paper.Size(this.props.width, plot.canvasHeight);
+            this.paperProj.activeLayer.removeChildren();
+            this.drawGraph();
+        } else {
+            this.path.remove();
+        }
+        this.drawCurve(curve);
     }
 
     /**
@@ -274,25 +261,16 @@ class InspectorEaseEditor extends Component {
      * @returns {object}
      */
     getCurve() {
-        const plot = this.getPlot();
+        const { left, bottom, width, height } = this.plot;
         const last = this.path.segments.length - 1;
         return {
-            points: this.path.segments.map((segment, i) => {
-                const point = {
-                    x: (segment.point.x - plot.left) / plot.width,
-                    y: (plot.bottom - segment.point.y) / plot.height
-                };
+            points: this.path.segments.map((segment, i) => ({
+                x: (segment.point.x - left) / width,
+                y: (bottom - segment.point.y) / height,
                 // The first point has no in handle and the last no out handle
-                if (i > 0) {
-                    point.inX = segment.handleIn.x / plot.width;
-                    point.inY = -segment.handleIn.y / plot.height;
-                }
-                if (i < last) {
-                    point.outX = segment.handleOut.x / plot.width;
-                    point.outY = -segment.handleOut.y / plot.height;
-                }
-                return point;
-            })
+                ...(i > 0 && { inX: segment.handleIn.x / width, inY: -segment.handleIn.y / height }),
+                ...(i < last && { outX: segment.handleOut.x / width, outY: -segment.handleOut.y / height })
+            }))
         };
     }
 
@@ -300,98 +278,66 @@ class InspectorEaseEditor extends Component {
      * Draws the grid, axes and labels for the graph.
      */
     drawGraph() {
-        const plot = this.getPlot();
+        const { left, width, height, min, max, top, bottom, floor } = this.plot;
 
+        // The colours are custom properties in the stylesheet
         const style = getComputedStyle(this.canvasRef.current);
-        const axisColor = style.getPropertyValue('--ease-axis-color').trim();
-        const labelColor = style.getPropertyValue('--ease-label-color').trim();
-        const gridColor = style.getPropertyValue('--ease-grid-color').trim();
+        const color = name => style.getPropertyValue(name).trim();
 
-        // grid
-        const gridStyle = { strokeColor: gridColor, strokeWidth: 1 };
-        for (let i = 0; i <= 8; i++) {
-            const x = plot.left + plot.width * i / 8;
-            new paper.Path.Line({ ...gridStyle, from: [x, plot.top], to: [x, plot.floor] });
+        // The grid is drawn first so everything else sits on top of it
+        const gridStyle = { strokeColor: color('--ease-grid-color'), strokeWidth: 1 };
+        const divisions = 8;
+        for (let i = 0; i <= divisions; i++) {
+            const x = left + width * i / divisions;
+            new paper.Path.Line({ ...gridStyle, from: [x, top], to: [x, floor] });
         }
-        for (let i = Math.ceil(this.yRange.min * 8); i <= Math.floor(this.yRange.max * 8); i++) {
-            const y = plot.bottom - plot.height * i / 8;
-            new paper.Path.Line({ ...gridStyle, from: [plot.left, y], to: [plot.left + plot.width, y] });
+        for (let i = Math.ceil(min * divisions); i <= Math.floor(max * divisions); i++) {
+            const y = bottom - height * i / divisions;
+            new paper.Path.Line({ ...gridStyle, from: [left, y], to: [left + width, y] });
         }
 
-        this.YAxis = new paper.Path.Line({
-            from: [plot.left, plot.floor],
-            to: [plot.left, plot.top],
-            strokeColor: axisColor,
-            strokeWidth: 1
-        });
+        const axisStyle = { strokeColor: color('--ease-axis-color'), strokeWidth: 1 };
+        new paper.Path.Line({ ...axisStyle, from: [left, floor], to: [left, top] });
+        new paper.Path.Line({ ...axisStyle, from: [left + width, bottom], to: [left, bottom] });
 
-        this.XAxis = new paper.Path.Line({
-            from: [plot.left + plot.width, plot.bottom],
-            to: [plot.left, plot.bottom],
-            strokeColor: axisColor,
-            strokeWidth: 1
-        });
+        const labelStyle = { fillColor: color('--ease-label-color'), underline: true, fontSize: 12, letterTracking: 100, justification: 'center' };
+        new paper.PointText({ ...labelStyle, content: 'Time', point: [left + width / 2, floor + 13] });
 
-        const labelStyle = { fillColor: labelColor, underline: true, fontSize: 12, letterTracking: 100, justification: 'center' };
-
-        this.XLabel = new paper.PointText({
-            ...labelStyle,
-            content: 'Time',
-            point: [plot.left + plot.width / 2, plot.floor + 13]
-        });
-
-        const YLabelPoint = new paper.Point(plot.left - 6, (plot.top + plot.floor) / 2);
-
-        this.YLabel = new paper.PointText({
-            ...labelStyle,
-            letterTracking: 10,
-            content: 'Progress',
-            point: YLabelPoint
-        });
-        this.YLabel.rotate(-90, YLabelPoint);
+        const yLabelPoint = new paper.Point(left - 6, (top + floor) / 2);
+        new paper.PointText({ ...labelStyle, letterTracking: 10, content: 'Progress', point: yLabelPoint }).rotate(-90, yLabelPoint);
     }
 
     /**
-     * The curve to show: the tween's saved one, or a straight line (handles a third of the way along) if it has none.
-     * A curve is {points: [{x, y, inX, inY, outX, outY}, ...]} in graph space (0-1) with handles as offsets.
+     * The curve to show: the tween's saved one, or DEFAULT_CURVE if it has none.
      */
     getEaseCurve() {
-        const saved = this.props.tween.easeCurve;
-        return (saved && Array.isArray(saved.points)) ? saved : {
-            points: [
-                { x: 0, y: 0, outX: 1 / 3, outY: 1 / 3 },
-                { x: 1, y: 1, inX: -1 / 3, inY: -1 / 3 }
-            ]
-        };
+        return this.props.tween.easeCurve || DEFAULT_CURVE;
     }
 
     /**
-     * Draws the given curve (the tween's by default) as a path with a point and two handles per segment.
-     * @param {object} curve - The curve to draw, see getEaseCurve.
+     * Draws the given curve as a path with a point and two handles per segment.
+     * @param {object} curve - The curve to draw, see DEFAULT_CURVE.
      */
-    drawInitEase(curve = this.getEaseCurve()) {
-        const plot = this.getPlot();
-        this.lastCurve = JSON.stringify(curve);
+    drawCurve(curve) {
+        const { left, bottom, width, height } = this.plot;
 
-        this.path = new paper.Path({
-            strokeColor: 'black',
-            strokeWidth: 2
-        });
         // Paper handles are offsets from their own point, and graph y points up while canvas y points down
-        curve.points.forEach(point => {
-            this.path.add(new paper.Segment(
-                new paper.Point(plot.left + point.x * plot.width, plot.bottom - point.y * plot.height),
-                new paper.Point((point.inX || 0) * plot.width, -(point.inY || 0) * plot.height),
-                new paper.Point((point.outX || 0) * plot.width, -(point.outY || 0) * plot.height)
-            ));
+        this.path = new paper.Path({
+            segments: curve.points.map(point => new paper.Segment(
+                new paper.Point(left + point.x * width, bottom - point.y * height),
+                new paper.Point((point.inX || 0) * width, -(point.inY || 0) * height),
+                new paper.Point((point.outX || 0) * width, -(point.outY || 0) * height)
+            )),
+            strokeColor: 'black',
+            strokeWidth: 2,
+            fullySelected: true
         });
-        this.path.fullySelected = true;
     }
 
     render() {
         return (
             <div className="inspector-ease-editor-container">
-                <canvas ref={this.canvasRef} id="inspector-ease-editor" width={this.props.width || "200"} height={this.props.height || "200"}>
+                <canvas ref={this.canvasRef} id="inspector-ease-editor" width={this.props.width} height={this.props.height}>
                     Tween easing editor goes here!
                 </canvas>
             </div>
