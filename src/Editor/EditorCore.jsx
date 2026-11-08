@@ -484,6 +484,57 @@ class EditorCore extends Component {
     }
 
     /**
+     * Saves a curve as a named ease on the project, and makes the selected tweens use it. Saving under the name of an
+     * existing ease replaces that ease, and so changes every tween using it. Saving doesn't go in the undo history.
+     * @param {string} name - The name to save the ease under.
+     * @param {object} curve - The curve to save, as {points: [...]}.
+     * @returns {string | null} The name the ease was saved under, or null if the curve wasn't valid.
+     */
+    saveEase = (name, curve) => {
+        let easeName = String(name || '').trim();
+        let savedName = null;
+        if (this.project.eases.has(easeName)) {
+            if (this.project.updateEase(easeName, curve)) savedName = easeName;
+        } else {
+            savedName = this.project.addEase(name, curve);
+        }
+
+        if (savedName) this.project.selection.applyEase(savedName);
+        this.projectDidChange({ skipHistory: true, actionName: "Save Ease" });
+        return savedName;
+    }
+
+    /**
+     * Renames a saved ease.
+     * @param {string} name - The current name of the ease.
+     * @param {string} newName - The name to give it.
+     * @returns {boolean} True if the ease was renamed.
+     */
+    renameEase = (name, newName) => {
+        let renamed = this.project.renameEase(name, newName);
+        if (renamed) this.projectDidChange({ skipHistory: true, actionName: "Rename Ease" });
+        return renamed;
+    }
+
+    /**
+     * Deletes a saved ease. Tweens that used it keep their curve.
+     * @param {string} name - The name of the ease to delete.
+     */
+    deleteEase = (name) => {
+        this.project.deleteEase(name);
+        this.projectDidChange({ skipHistory: true, actionName: "Delete Ease" });
+    }
+
+    /**
+     * Makes the selected tweens use a saved ease. They get its curve, and change with it from then on.
+     * @param {string} name - The name of the saved ease.
+     */
+    applyEase = (name) => {
+        this.project.selection.applyEase(name);
+        this.projectDidChange({ actionName: "Apply Ease: " + name });
+    }
+
+    /**
      * Determines if a given object is selected.
      * @param {object} object - Selection object to check if it is selected
      * @returns {boolean} - True if the object is selected, false otherwise

@@ -18,9 +18,9 @@
  */
 
 import { Component, createRef } from 'react';
+import './_inspectoreaseeditor.scss';
 import { PaperScope } from 'paper';
 const paper = new PaperScope();
-import './_inspectoreaseeditor.scss';
 
 // How far above 1 and below 0 (in graph units, where 0 to 1 is the whole movement) points and handles can go
 const MAX_OVERSHOOT = 1;

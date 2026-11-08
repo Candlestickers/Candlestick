@@ -108,6 +108,7 @@ Wick.Tween = class extends Wick.Base {
         this.fullRotations = args.fullRotations === undefined ? 0 : args.fullRotations;
         this.easingType = args.easingType || 'none';
         this.easeCurve = args.easeCurve || null;
+        this.easeName = args.easeName || null;
 
         this._originalLayerIndex = -1;
     }
@@ -160,6 +161,7 @@ Wick.Tween = class extends Wick.Base {
         data.fullRotations = this.fullRotations;
         data.easingType = this.easingType;
         data.easeCurve = Wick.Tween._copyEaseCurve(this.easeCurve);
+        data.easeName = this.easeName;
 
         data.originalLayerIndex = this.layerIndex !== -1 ? this.layerIndex : this._originalLayerIndex;
 
@@ -174,6 +176,7 @@ Wick.Tween = class extends Wick.Base {
         this.fullRotations = data.fullRotations;
         this.easingType = data.easingType;
         this.easeCurve = Wick.Tween._copyEaseCurve(data.easeCurve);
+        this.easeName = data.easeName || null;
 
         this._originalLayerIndex = data.originalLayerIndex;
     }

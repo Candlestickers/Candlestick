@@ -40,6 +40,9 @@ Wick.Project = class extends Wick.Base {
         this._backgroundColor = args.backgroundColor || new Wick.Color('#ffffff');
         this._hitTestOptions = this.getDefaultHitTestOptions();
 
+        // mapped by {name:{curve}}
+        this._eases = args.eases || new Map();
+
         this.pan = { x: 0, y: 0 };
         this._zoom = 1.0;
         this.rotation = 0.0;
@@ -227,6 +230,7 @@ Wick.Project = class extends Wick.Base {
         this.height = data.height;
         this.framerate = data.framerate;
         this.backgroundColor = new Wick.Color(data.backgroundColor);
+        this._eases = new Map(data.eases || []);
 
         this._focus = data.focus;
 
@@ -249,6 +253,7 @@ Wick.Project = class extends Wick.Base {
         data.height = this.height;
         data.backgroundColor = this.backgroundColor.rgba;
         data.framerate = this.framerate;
+        data.eases = [...this._eases];
 
         data.onionSkinEnabled = this.onionSkinEnabled
         data.onionSkinSeekForwards = this.onionSkinSeekForwards;
@@ -361,6 +366,96 @@ Wick.Project = class extends Wick.Base {
           this._hitTestOptions.overlap = Boolean(options.overlap);
           this._hitTestOptions.intersections = Boolean(options.intersections);
         }
+    }
+
+    /**
+     * All custom eases.
+     * @type {Map} - {ease:{curve}}
+     */
+    get eases() {
+        return this._eases;
+    }
+
+    set eases(ease) {
+        if (ease instanceof Map) this._eases = ease;
+        else console.warn('Wick.Project.eases setter: argument must be a Map');
+    }
+
+    /**
+     * Saves a curve as a named ease.
+     * @param {string} name - The name to save under.
+     * @param {object} curve - The curve to save, as {points: [...]}.
+     * @returns {string | null}
+     */
+    addEase(name, curve) {
+        var curveCopy = Wick.Tween._copyEaseCurve(curve);
+        if (!curveCopy) return null;
+
+        var baseName = String(name || '').trim() || 'New Ease';
+        var finalName = baseName;
+        for (var counter = 2; this._eases.has(finalName); counter++) {
+            finalName = baseName + ' ' + counter;
+        }
+
+        this._eases.set(finalName, curveCopy);
+        return finalName;
+    }
+
+    /**
+     * Renames an ease.
+     * @param {string} name - The current name of the ease.
+     * @param {string} newName - The name to give.
+     * @returns {boolean}
+     */
+    renameEase(name, newName) {
+        newName = String(newName || '').trim();
+        if (!this._eases.has(name) || !newName || this._eases.has(newName)) return false;
+
+        this._eases = new Map([...this._eases].map(([easeName, curve]) => [easeName === name ? newName : easeName, curve]));
+        this._getTweensUsingEase(name).forEach(tween => { tween.easeName = newName; });
+        return true;
+    }
+
+    /**
+     * Replaces the curve of a saved ease.
+     * @param {string} name - The name of the ease.
+     * @param {object} curve - The new curve, as {points: [...]}.
+     * @returns {boolean}
+     */
+    updateEase(name, curve) {
+        var curveCopy = Wick.Tween._copyEaseCurve(curve);
+        if (!this._eases.has(name) || !curveCopy) return false;
+
+        this._eases.set(name, curveCopy);
+        this._getTweensUsingEase(name).forEach(tween => { tween.easeCurve = Wick.Tween._copyEaseCurve(curveCopy); });
+        return true;
+    }
+
+    /**
+     * Removes a saved ease.
+     * @param {string} name - The name of the ease.
+     */
+    deleteEase(name) {
+        this._eases.delete(name);
+        this._getTweensUsingEase(name).forEach(tween => { tween.easeName = null; });
+    }
+
+    /**
+     * Gets the curve of a saved ease.
+     * @param {string} name - The name of the ease.
+     * @returns {object | null} The curve, as {points: [...]}.
+     */
+    getEase(name) {
+        return this._eases.get(name) || null;
+    }
+
+    /**
+     * All tweens in the project that use a given ease.
+     * @param {string} name - The name of the ease.
+     * @returns {Wick.Tween[]}
+     */
+    _getTweensUsingEase(name) {
+        return this.getChildrenRecursive().filter(child => child.classname === 'Tween' && child.easeName === name);
     }
 
     /**
