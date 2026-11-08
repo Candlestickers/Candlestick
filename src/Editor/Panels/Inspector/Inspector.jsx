@@ -36,7 +36,7 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
-import { Console , Hook , Unhook } from 'console-feed';
+import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
