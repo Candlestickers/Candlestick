@@ -76,7 +76,7 @@ class SettingsModal extends Component {
               toast={this.props.toast} 
               toggle={this.props.toggle}
               createCombinedHotKeyMap={this.props.createCombinedHotKeyMap}/>
-            <EditorSettings 
+            <EditorSettings
               colorPickerType={this.props.colorPickerType}
               changeColorPickerType={this.props.changeColorPickerType}
               updateLastColors={this.props.updateLastColors}
@@ -84,6 +84,7 @@ class SettingsModal extends Component {
               getToolSetting={this.props.getToolSetting}
               setToolSetting={this.props.setToolSetting}
               toggle={this.props.toggle}
+              project={this.props.project}
               getToolSettingRestrictions={this.props.getToolSettingRestrictions}/>
           </TabbedInterface>
         </div>
@@ -111,7 +112,7 @@ class SettingsModal extends Component {
               changeColorPickerType={this.props.changeColorPickerType}
               updateLastColors={this.props.updateLastColors}
               lastColorsUsed={this.props.lastColorsUsed}/>
-            <EditorSettings 
+            <EditorSettings
               isMobile={true}
               colorPickerType={this.props.colorPickerType}
               changeColorPickerType={this.props.changeColorPickerType}
@@ -119,6 +120,7 @@ class SettingsModal extends Component {
               lastColorsUsed={this.props.lastColorsUsed}
               getToolSetting={this.props.getToolSetting}
               setToolSetting={this.props.setToolSetting}
+              project={this.props.project}
               getToolSettingRestrictions={this.props.getToolSettingRestrictions}/>
           </TabbedInterface>
         </div>

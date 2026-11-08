@@ -46,11 +46,14 @@
     </script>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
         body, html {
             margin: 0px;
             width: 100%;
             height: 100%;
             background-color: black;
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
         }
 
         #wick-canvas-container {
@@ -66,8 +69,9 @@
             width: 100%;
             height: 100%;
             margin: 0px;
-            background-color: #1EE29A;
-            font-family: sans-serif;
+            background-color: #343434;
+            background-image: linear-gradient(0deg, #FF0801, #FFD84B);
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
             transform-origin: 50% 50%;
         }
 
@@ -92,38 +96,35 @@
             animation-iteration-count: infinite;
         }
 
-        .flashy {
+        .flicker {
             position: absolute;
             top: 50%;
             left: 50%;
-            margin-left: -50px;
-            margin-top: -50px;
-            width: 100px;
-            height: 100px;
+            margin-left: -64px;
+            margin-top: -64px;
             animation: float .6s ease-in-out infinite alternate;
         }
 
-        .shadow {
+        .flicker-shadow {
             position: absolute;
-            top: calc(50% + 70px);
+            top: calc(50% + 70px); 
             left: 50%;
-            margin-left: -45px;
-            margin-top: -22.5px;
-            width: 90px;
-            height: 45px;
+            margin-left: -60px;
+            margin-top: -10.5px;
+            width: 120px;
+            height: 20px;
             animation: pulse .6s ease-in-out infinite alternate;
+            z-index: -5;
         }
 
         .text {
             position: absolute;
-            top: calc(50% + 100px);
+            top: calc(50% + 150px);
             left: 50%;
             margin-left: -100px;
             width: 200px;
-            height: 30px;
             animation: pulse 1.2s ease-in-out infinite alternate;
-            color: white;
-            font-size: 20px;
+            font-family: 'Nunito Sans', 'Nunito', sans-serif;
         }
 
         @keyframes float {
@@ -139,29 +140,37 @@
 
     <!-- Preloader -->
     <div id="preloader">
-      <div class="flashy">
-        <svg viewBox="0 0 399 405" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <g id="Style-Guide" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                <g id="Artboard-Copy-4" transform="translate(-1043.000000, -286.000000)">
-                    <g id="Page-1-Copy-14" transform="translate(1050.000000, 296.000000)">
-                        <path d="M305.129796,382.759914 C306.418105,384.08742 308.603283,383.908779 309.646405,382.384447 C320.26904,366.864077 372.357375,285.798514 380.623846,215.509175 C387.415966,157.758934 367.947229,106.895463 346.778311,80.3164676 C329.751769,58.9383847 289.498026,1.47054634 178.520632,5.17066086 C64.4783966,8.97453692 -21.3780458,118.906127 4.69784554,231.425337 C24.5849067,317.237186 63.7557391,369.482718 73.4793538,381.475197 C74.6224861,382.886139 76.7624987,382.923579 77.9594001,381.557564 L116.555978,337.503844 C117.816327,336.065089 120.104742,336.203081 121.182276,337.783038 L152.503887,383.72372 C153.60723,385.341116 155.968771,385.438459 157.202236,383.917336 L192.43394,340.460513 C193.651274,338.958645 195.974101,339.029246 197.095726,340.602784 L227.758127,383.584658 C228.934596,385.232006 231.399374,385.21596 232.552185,383.552566 L265.070697,336.641661 C266.120271,335.128026 268.298997,334.949385 269.583005,336.271542 L305.129796,382.759914 Z" id="Fill-1" fill="#FEFEFE"></path>
-                        <path d="M304.85935,382.757352 C306.146689,384.086376 308.330222,383.907531 309.372559,382.381456 C315.299665,373.705126 332.195577,342.832902 349.08964,306.534876 C362.450536,277.828098 376.501967,246.372815 380.296559,215.31533 C394.60335,98.2189578 317.519792,-2.28838132e-12 196.906621,0 C76.2934496,2.28838132e-12 -10.1657681,94.7402574 4.65360011,215.31533 C8.76059591,248.731148 21.771743,280.724662 33.3037656,306.534876 C51.9757611,348.325309 71.3947754,376.061869 77.4013468,383.484047 C78.5436184,384.896603 80.6820197,384.934086 81.87802,383.566508 L116.427513,337.449523 C117.686913,336.009123 119.973605,336.147273 121.050328,337.729036 L152.348356,383.72226 C153.450868,385.341506 155.810632,385.43896 157.043167,383.916098 L192.248345,340.409573 C193.464762,338.905988 195.785841,338.976669 196.906621,340.552007 L227.545935,383.583039 C228.721519,385.232271 231.184441,385.216207 232.336384,383.550911 L264.830412,336.586354 C265.879196,335.070988 268.056282,334.892143 269.339323,336.215812 L304.85935,382.757352 Z" id="Stroke-3" stroke="#231F20" stroke-width="20"></path>
-                        <path d="M247.566244,157.286356 C208.913866,159.417742 178.222635,172.883089 179.015004,187.360559 C179.807372,201.838028 211.782513,211.845286 250.434891,209.7139 C289.086134,207.581374 319.777365,194.117167 318.984996,179.639697 C318.192628,165.162227 286.217487,155.15383 247.566244,157.286356 Z" id="Fill-5" fill="#FFD1F7" opacity="0.748018569"></path>
-                        <path d="M224,160 C224,167.731942 218.628079,174 212,174 C205.373399,174 200,167.731942 200,160 C200,152.268058 205.373399,146 212,146 C218.628079,146 224,152.268058 224,160" id="Fill-7" fill="#231F20"></path>
-                        <path d="M301,154 C301,163.941438 294.508233,172 286.499339,172 C278.491767,172 272,163.941438 272,154 C272,144.058562 278.491767,136 286.499339,136 C294.508233,136 301,144.058562 301,154" id="Fill-9" fill="#231F20"></path>
-                    </g>
-                </g>
-            </g>
-        </svg>
-      </div>
-      <div class="shadow">
-        <svg viewBox="0 0 100 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <ellipse cx="50" cy="25" rx="40" ry="10" style="fill:#09C399;" />
-        </svg>
-      </div>
-      <div class="text">
-          <div id="loading-bar">Loading...</div>
-      </div>
+        <div class="flicker">
+            <svg width="128" height="128" viewBox="0 0 204 204" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M194 113C194 162.15 154.87 199 106 199C66.2579 199 32.174 176.276 21 140C15.3195 121.558 12.6584 98.8772 10.2208 71.4994C10.1069 70.2201 11.2125 69.1672 12.4848 69.3427L36.2445 72.6199C37.5987 72.8067 38.7371 71.6101 38.4829 70.2669L32.6979 39.689C32.4003 38.116 33.9794 36.8483 35.4509 37.479L64.1307 49.7703C65.4713 50.3449 66.9562 49.3374 66.9179 47.8794L66.0889 16.3781C66.0489 14.8582 67.6525 13.8513 69.0041 14.5476L96.7136 28.8222C97.8732 29.4195 99.285 28.7649 99.5783 27.4939L104.379 6.68939C104.685 5.36338 106.198 4.72365 107.359 5.43359C130.5 19.5846 152.492 35.5476 167 50C183.19 66.128 194 88.2712 194 113Z" fill="url(#paint0_radial_147_293)" stroke="#B73E0E" stroke-width="10" stroke-linejoin="round" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M131.318 115.026C112.52 116.097 97.6179 122.623 98.0075 129.636C98.3971 136.648 113.884 141.518 132.682 140.447C151.48 139.376 166.382 132.85 165.993 125.837C165.603 118.824 150.019 114.052 131.318 115.026Z" fill="#FF8F7B" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M119.533 116.194C119.533 119.896 117 123.012 113.786 123.012C110.669 123.012 108.04 119.993 108.04 116.194C108.04 112.396 110.572 109.376 113.786 109.376C117 109.474 119.533 112.493 119.533 116.194Z" fill="#231F20" />
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M156.837 113.37C156.837 118.24 153.72 122.136 149.922 122.136C146.123 122.136 143.006 118.24 143.006 113.37C143.006 108.5 146.123 104.604 149.922 104.604C153.818 104.604 156.837 108.5 156.837 113.37Z" fill="#231F20" />
+                <defs>
+                    <radialGradient id="paint0_radial_147_293" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(132.5 163) rotate(-118.921) scale(125.102 140.086)">
+                        <stop stop-color="#F9D133" />
+                        <stop offset="1" stop-color="#FF871E" />
+                    </radialGradient>
+                </defs>
+            </svg>
+        </div>
+        
+        <div class="flicker-shadow">
+            <svg viewBox="0 0 100 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <ellipse cx="50" cy="25" rx="40" ry="10" style="fill:#c30909;" />
+            </svg>
+        </div>
+        <div class="text">
+            <svg viewBox="0 0 200 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <style>
+                    .small {
+                        font: bold 26px Nunito, sans-serif;
+                        fill: rgb(255, 255, 255);
+                    }
+                </style>
+                <text x="100" y="22" text-anchor="middle" class="small">Loading...</text>
+            </svg>
+        </div>
     </div>
 
     <!-- Wick project canvas container -->

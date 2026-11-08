@@ -156,7 +156,7 @@ Wick.Layer = class extends Wick.Base {
      * @param {Wick.Tween} tween - the tween to add
      */
     addTween (tween) {
-        this.activeFrame && this.activeFrame.addChild(tween);
+        this.activeFrame && this.activeFrame.addTween(tween);
     }
 
     /**

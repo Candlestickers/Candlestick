@@ -285,7 +285,7 @@ body {
   border-left: $splitter-width solid $splitter-color !important;
   width: $splitter-width !important;
   cursor: col-resize;
-  margin: 0 -$splitter-width;
+  margin: 0 (-$splitter-width);
   height: 100%; }
 
 .reflex-container.vertical > .reflex-splitter.reflex-thin.active,

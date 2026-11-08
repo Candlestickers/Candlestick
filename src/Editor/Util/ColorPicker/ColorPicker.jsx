@@ -81,10 +81,15 @@ function arraysEqual(arr1, arr2) {
 }
 
 export default function ColorPicker (props) {
+  let selectedObjects =
+    (typeof props.getSelection === 'function') ?
+    [...props.getSelection()._selectedObjectsUUIDs] : null;
+  if (selectedObjects) selectedObjects.sort();
+
   const [open, setOpen] = useState(false);
-  const [lastObjects, setLastObjects] = useState(props.selectedObjects);
-  if (!arraysEqual(props.selectedObjects, lastObjects)) {
-    setLastObjects(props.selectedObjects);
+  const [lastObjects, setLastObjects] = useState(selectedObjects);
+  if (!arraysEqual(selectedObjects, lastObjects)) {
+    setLastObjects(selectedObjects);
 
     // Close pop-up if selection changed
     if (open)
@@ -106,7 +111,7 @@ export default function ColorPicker (props) {
     // Don't close if click started on popover
     // Don't close if clicked on selected objects
     let clickedCanvas = (e.touches ? e.target : data.downTarget) === props.targetCanvas;
-    let selectionUnchanged = arraysEqual(props.selectedObjects, lastObjects);
+    let selectionUnchanged = arraysEqual(selectedObjects, lastObjects);
     if (!data.clickedPopover && !(clickedCanvas && selectionUnchanged))
       setOpen(false);
   }
@@ -124,37 +129,69 @@ export default function ColorPicker (props) {
     if (color.gradient) {
       colorCSS = colorCSSOpaque = 'linear-gradient(to right';
 
-      const sortedControlStops = color.gradient.stops.toSorted((objectA, objectB) => objectA.offset - objectB.offset);
+      const sortedControlStops = [...color.gradient.stops];
+      sortedControlStops.sort((objectA, objectB) => objectA.offset - objectB.offset);
       sortedControlStops.forEach(paperControlStop => {
           colorCSS += `, ${paperControlStop.color.toCSS()} ${paperControlStop.offset * 100}%`;
           let { red, green, blue } = paperControlStop.color;
-          colorCSSOpaque += `, rgb(${red*256},${green*256},${blue*256}) ${paperControlStop.offset * 100}%`;
+          colorCSSOpaque += `, rgb(${red*255},${green*255},${blue*255}) ${paperControlStop.offset * 100}%`;
       });
       colorCSS += ')';
       colorCSSOpaque += ')';
     }
-    else
-      colorCSS = color.toCSS();
+    else {
+      colorCSS = color.toCSS(); colorCSSOpaque = `rgb(${color.red*255},${color.green*255},${color.blue*255})`;
+      colorCSS = `linear-gradient(${colorCSS}, ${colorCSS})`;
+      colorCSSOpaque = `linear-gradient(${colorCSSOpaque}, ${colorCSSOpaque})`;
+    }
+  }
+  else if (typeof color === 'string') {
+    // Used as a background-image
+    colorCSS = colorCSSOpaque = `linear-gradient(${color}, ${color})`;
+    // regex to remove alpha from color string
+    colorCSSOpaque = colorCSSOpaque.replaceAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/g, 'rgb($1, $2, $3)');
   }
   // Bring desynced color state up, so if the solid-gradient state updates, the pop-up position updates
   const [desyncedColor, setDesyncedColor] = useState(color);
 
+  // Bring functions involving selection down to avoid repeating code
+  let selectionGiven = (typeof props.getSelection === 'function');
+  let setGradientActive = (stopIndex) => {
+    if (!selectionGiven) return;
+    let selection = props.getSelection();
+
+    if (stopIndex !== undefined && selection.useGradientGUI) return;
+    selection.useGradientGUI = props.stroke ? 'stroke' : 'fill';
+    selection.selectedStopIndex = stopIndex || 0;
+    props.renderSelection();
+  };
+  let setGradientInactive = () => {
+    if (!selectionGiven) return;
+    let selection = props.getSelection();
+
+    selection.useGradientGUI = false;
+    selection.selectedStopIndex = 0;
+    props.renderSelection();
+  };
+  let getSelectedStopIndex = () => selectionGiven && props.getSelection().selectedStopIndex;
+  let setSelectedStopIndex = (index) => {
+    if (!selectionGiven) return;
+    props.getSelection().selectedStopIndex = index;
+  };
+  let selectedObjectsBounds = selectionGiven && props.getSelection().view._getSelectedObjectsBounds();
+
   return (
       <button
-        className="btn-color-picker"
+        className={"btn-color-picker" + (props.stroke ? " btn-color-picker-stroke" : "")}
         aria-label="color picker button"
         id={itemID}
         onClick={toggle}
-        style={props.stroke ?
-          { borderColor: colorCSS } :
-          color.gradient ?
-          { backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`, backgroundColor: 'white' } :
-          { backgroundColor: colorCSS }
-        }>
-          {(!props.stroke && color.gradient) &&
+        style={{
+          backgroundImage: `${colorCSS}, ${CHECKERBOARD_URL}`,
+          backgroundColor: 'white'
+        }}>
           <div className="btn-color-picker-background-opaque"
             style={{ backgroundImage: colorCSSOpaque }} />
-          }
           <Popover
             tabIndex={-1}
             id={popoverID}
@@ -176,11 +213,11 @@ export default function ColorPicker (props) {
               onChangeComplete={props.onChangeComplete}
               onChangeIntermediate={props.onChangeIntermediate}
 
-              selectedObjectsBounds={props.selectedObjectsBounds}
-              setGradientActive={props.setGradientActive}
-              setGradientInactive={props.setGradientInactive}
-              getSelectedStopIndex={props.getSelectedStopIndex}
-              setSelectedStopIndex={props.setSelectedStopIndex}
+              selectedObjectsBounds={selectedObjectsBounds}
+              setGradientActive={setGradientActive}
+              setGradientInactive={setGradientInactive}
+              getSelectedStopIndex={getSelectedStopIndex}
+              setSelectedStopIndex={setSelectedStopIndex}
 
               lastColorsUsed={props.lastColorsUsed}
               updateLastColors={props.updateLastColors}

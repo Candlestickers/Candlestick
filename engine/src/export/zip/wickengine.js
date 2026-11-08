@@ -59171,17 +59171,27 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       ctx.restore();
     } else {
       this.cursor = 'grab';
-    } // Frame scripts dot
+    } // Dot scale shared by script indicator and content dot
+    var _dcw = this.gridCellWidth;
+    var _dG = Wick.GUIElement;
+    var _dotScale;
+    if (_dcw <= _dG.GRID_SMALL_CELL_WIDTH) {
+      _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);
+    } else if (_dcw <= _dG.GRID_NORMAL_CELL_WIDTH) {
+      _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));
+    } else {
+      _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
+    }
 
-
+    // Frame scripts dot
     if (this.model.hasContentfulScripts) {
       ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
       ctx.beginPath();
-      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * 1.3, 0, Math.PI);
+      ctx.arc(this.gridCellWidth / 2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
       ctx.fill();
-    } // Frame identifier
+    }
 
-
+    // Frame identifier
     if (this.model.identifier) {
       ctx.save();
       ctx.beginPath();
@@ -59193,7 +59203,9 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       ctx.restore();
     }
 
-    if (this.model.tweens.length === 0 && !this.model.sound) {
+    var _hideDot = this.model.identifier
+               || (Wick.GUIElement.HIDE_CONTENT_DOTS && !this.model.contentful);
+    if (this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
       // Frame contentful dot
       ctx.fillStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
 
@@ -59204,13 +59216,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
       }
 
       ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
-      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS;
-
-      if (this.project.frameSizeMode === 'small') {
-        r *= 0.75;
-      } else if (this.project.frameSizeMode === 'large') {
-        r *= 1.25;
-      }
+      var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
 
       ctx.beginPath();
       ctx.arc(this.gridCellWidth / 2, this.gridCellHeight / 2, r, 0, 2 * Math.PI);
@@ -59305,6 +59311,8 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
 
   _mouseOverFrameEdge() {
     var widthPx = this.model.length * this.gridCellWidth;
+    var _hcw = this.gridCellWidth;
+    if (_hcw <= 16 && !this.model.isSelected) return null;
     var handlePx = Wick.GUIElement.FRAME_HANDLE_WIDTH;
     if (this.project.frameSizeMode === 'small') handlePx *= 0.5;
 
@@ -60284,7 +60292,10 @@ Wick.GUIElement.OnionSkinRange = class extends Wick.GUIElement {
 
     var seek = this.direction === 'right' ? this.model.project.onionSkinSeekForwards : this.model.project.onionSkinSeekBackwards;
     var width = seek * this.gridCellWidth;
-    var edgeWidth = this.gridCellWidth - Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    var margin = Wick.GUIElement.PLAYHEAD_MARGIN * 2;
+    if (this.gridCellWidth < Wick.GUIElement.GRID_SMALL_CELL_WIDTH)
+      margin *= (this.gridCellWidth - 8) / (Wick.GUIElement.GRID_SMALL_CELL_WIDTH - 8);
+    var edgeWidth = this.gridCellWidth - margin;
     var height = Wick.GUIElement.NUMBER_LINE_HEIGHT * 0.9; // Draw handle
 
     var grd = ctx.createLinearGradient(0, 0, width + edgeWidth, 0);
@@ -61008,6 +61019,15 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
 
   _onMouseWheel(e) {
     e.preventDefault();
+    // Modifier + scroll: fire frame size event instead of scrolling
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      var frameDelta = -(e.deltaY * e.deltaFactor);
+      this._canvas.dispatchEvent(new CustomEvent('wickFrameSizeScroll', {
+        detail: { delta: frameDelta },
+        bubbles: true
+      }));
+      return;
+    }
     var dx = e.deltaX * e.deltaFactor * 0.5;
     var dy = e.deltaY * e.deltaFactor * 0.5;
     this.scrollX += dx;
@@ -61516,10 +61536,16 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
     super.draw();
     var ctx = this.ctx;
     var r = Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
+    var _tcw = this.gridCellWidth;
+    var _tG = Wick.GUIElement;
 
-    if (this.project.frameSizeMode === 'large') {
-      r *= 1.25;
-    } // Tween diamond
+    if(_tcw <= _tG.GRID_SMALL_CELL_WIDTH)
+      r *= 0.5+0.25 * (_tcw / _tG.GRID_SMALL_CELL_WIDTH);
+    else if(_tcw <= _tG.GRID_NORMAL_CELL_WIDTH)
+      r *= 0.75+0.25 * ((_tcw - _tG.GRID_SMALL_CELL_WIDTH) / (_tG.GRID_NORMAL_CELL_WIDTH - _tG.GRID_SMALL_CELL_WIDTH));
+    else
+      r *= 1+0.25 * ((_tcw - _tG.GRID_NORMAL_CELL_WIDTH) / (_tG.GRID_LARGE_CELL_WIDTH - _tG.GRID_NORMAL_CELL_WIDTH));
+    // Tween diamond
 
 
     ctx.save();
@@ -61572,24 +61598,27 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
       // Draw an arrow pointing towards the next tween
       var nextTweenGridPosition = nextTween.playheadPosition - this.model.playheadPosition;
       var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
-      var arrowSize = 5; // Line
+      var arrowSize = 5; // Only draw if there's enough room — otherwise the arrow flips or collapses
 
-      ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
-      ctx.beginPath();
-      ctx.moveTo(linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding, 0);
-      ctx.stroke(); // Arrow head
+      if (nextTweenPosition > linePadding * 2 + arrowSize) {
+		// Line
+		ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+		ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+		ctx.beginPath();
+		ctx.moveTo(linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding, 0);
+		ctx.stroke(); // Arrow head
 
-      ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(nextTweenPosition - linePadding, 0);
-      ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
-      ctx.stroke();
+		ctx.fillStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
+		ctx.beginPath();
+		ctx.moveTo(nextTweenPosition - linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding - arrowSize, -arrowSize);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(nextTweenPosition - linePadding, 0);
+		ctx.lineTo(nextTweenPosition - linePadding - arrowSize, arrowSize);
+		ctx.stroke();
+      }
     } else if (this.model.playheadPosition !== this.model.parentFrame.length) {
       // There is no tween in front of this tween, so draw a dotted line to the end of the frame
       var tweenPos = this.model.playheadPosition * this.gridCellWidth;

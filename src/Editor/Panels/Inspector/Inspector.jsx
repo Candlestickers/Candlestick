@@ -247,22 +247,8 @@ class Inspector extends Component {
           onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('fillColor', col)}
           enableGradient={true}
           selectionProps={{
-            setGradientActive: () => {
-              this.props.project.selection.useGradientGUI = 'fill';
-              this.props.project.selection.selectedStopIndex = 0;
-              this.props.project.view.render();
-            },
-            setGradientInactive: () => {
-              this.props.project.selection.useGradientGUI = false;
-              this.props.project.selection.selectedStopIndex = 0;
-              this.props.project.view.render();
-            },
-            getSelectedStopIndex: () => this.props.project.selection.selectedStopIndex,
-            setSelectedStopIndex: (index) => {
-              this.props.project.selection.selectedStopIndex = index;
-            },
-            selectedObjects: this.props.project.selection._selectedObjectsUUIDs.toSorted(),
-            selectedObjectsBounds: this.props.project.selection.view._getSelectedObjectsBounds(),
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.view.render(),
             targetCanvas: this.props.project.view._svgCanvas
           }}
           id={"inspector-selection-fill-color"}
@@ -283,22 +269,8 @@ class Inspector extends Component {
           onChangeIntermediate1={(col) => this.setSelectionAttributeIntermediate('strokeColor', col)}
           enableGradient={true}
           selectionProps={{
-            setGradientActive: () => {
-              this.props.project.selection.useGradientGUI = 'stroke';
-              this.props.project.selection.selectedStopIndex = 0;
-              this.props.project.view.render();
-            },
-            setGradientInactive: () => {
-              this.props.project.selection.useGradientGUI = false;
-              this.props.project.selection.selectedStopIndex = 0;
-              this.props.project.view.render();
-            },
-            getSelectedStopIndex: () => this.props.project.selection.selectedStopIndex,
-            setSelectedStopIndex: (index) => {
-              this.props.project.selection.selectedStopIndex = index;
-            },
-            selectedObjects: this.props.project.selection._selectedObjectsUUIDs.toSorted(),
-            selectedObjectsBounds: this.props.project.selection.view._getSelectedObjectsBounds(),
+            getSelection: () => this.props.project.selection,
+            renderSelection: () => this.props.project.view.render(),
             targetCanvas: this.props.project.view._svgCanvas
           }}
           id={"inspector-selection-stroke-color"}
@@ -588,6 +560,36 @@ class Inspector extends Component {
   }
 
   /**
+   * Renders an inspector row allowing viewing and editing of the selection's shear.
+   */
+  renderShear = () => {
+    return (
+      <InspectorNumericInput
+        tooltip="Shear"
+        val={this.getSelectionAttribute('shear')}
+        onChange={(val) => this.setSelectionAttribute('shear', val)}
+        id="inspector-shear" />
+    )
+  }
+
+  /**
+   * Renders an inspector row allowing viewing and editing of the selection's pivot x y position.
+   */
+  renderPivot = () => {
+    var { x, y } = this.getSelectionAttribute('relativePivot');
+    return (
+      <InspectorDualNumericInput
+        tooltip1="Pivot X"
+        tooltip2="Pivot Y"
+        val1={x}
+        val2={y}
+        onChange1={(val) => this.setSelectionAttribute('relativePivot', {x: val, y})}
+        onChange2={(val) => this.setSelectionAttribute('relativePivot', {x, y: val})}
+        id="inspector-pivot" />
+    )
+  }
+
+  /**
    * Renders an inspector row allowing viewing and editing of the selection's opacity.
    */
   renderOpacity = () => {
@@ -614,6 +616,8 @@ class Inspector extends Component {
         {this.renderSize()}
         {this.renderScale()}
         {this.renderRotation()}
+        {this.renderShear()}
+        {this.renderPivot()}
         {this.renderOpacity()}
       </div>
     )

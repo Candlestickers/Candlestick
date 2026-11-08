@@ -75,7 +75,7 @@ gulp.task("default", function() {
       'src/export/html/HTMLExport.js',
       'src/export/html/HTMLPreview.js',
       'src/export/svg/SvgFile.js', 
-      'src/export/image/ImageSequence.js',
+      'src/export/image/imageSequence.js',
       'src/export/zip/ZIPExport.js',
       'src/base/Base.js',
       'src/base/Layer.js',

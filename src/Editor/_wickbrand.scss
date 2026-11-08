@@ -17,6 +17,8 @@
  * along with Wick Editor.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@use 'sass:color';
+
 // Define Color Scheme
 
 // CANDLESTICK 2025
@@ -309,12 +311,12 @@ a:hover {
   color: #000;
 }
 .btn-wick-warning:hover {
-  background: darken($interface-warning-dark, 7.5%);
-  border: darken($interface-warning-dark, 7.5%);
+  background: color.adjust($interface-warning-dark, $lightness: -7.5%);
+  border: color.adjust($interface-warning-dark, $lightness: -7.5%);
 }
 .btn-wick-warning:active {
-  background: darken($interface-warning-dark, 12.5%);
-  border: darken($interface-warning-dark, 12.5%);
+  background: color.adjust($interface-warning-dark, $lightness: -12.5%);
+  border: color.adjust($interface-warning-dark, $lightness: -12.5%);
 }
 
 .btn-wick-accept {
@@ -323,12 +325,12 @@ a:hover {
   color: #000;
 }
 .btn-wick-accept:hover {
-  background: darken($wick-green-dark, 7.5%);
-  border: darken($wick-green-dark, 7.5%);
+  background: color.adjust($wick-green-dark, $lightness: -7.5%);
+  border: color.adjust($wick-green-dark, $lightness: -7.5%);
 }
 .btn-wick-accept:active {
-  background: darken($wick-green-dark, 12.5%);
-  border: darken($wick-green-dark, 12.5%);
+  background: color.adjust($wick-green-dark, $lightness: -12.5%);
+  border: color.adjust($wick-green-dark, $lightness: -12.5%);
 }
 // define interface element properties
 $splitter-size: calc(#{$editor-outline-padding} / 2);

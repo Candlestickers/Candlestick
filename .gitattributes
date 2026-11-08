@@ -1,0 +1,12 @@
+src-tauri/tauri.conf.json filter=lfs diff=lfs merge=lfs -text
+src-tauri/AppImage filter=lfs diff=lfs merge=lfs -text
+src-tauri/build.rs filter=lfs diff=lfs merge=lfs -text
+src-tauri/capabilities filter=lfs diff=lfs merge=lfs -text
+src-tauri/Cargo.toml filter=lfs diff=lfs merge=lfs -text
+src-tauri/icons filter=lfs diff=lfs merge=lfs -text
+src-tauri/src filter=lfs diff=lfs merge=lfs -text
+src-tauri/target filter=lfs diff=lfs merge=lfs -text
+src-tauri/AppRun filter=lfs diff=lfs merge=lfs -text
+src-tauri/binaries filter=lfs diff=lfs merge=lfs -text
+src-tauri/bundle filter=lfs diff=lfs merge=lfs -text
+src-tauri/Cargo.lock filter=lfs diff=lfs merge=lfs -text
