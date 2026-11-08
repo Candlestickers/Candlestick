@@ -739,8 +739,8 @@ class Inspector extends Component {
         />
         <InspectorEaseLibrary
           project={this.props.project}
-          easeName={this.getSelectionAttribute('easeName')}
-          easeCurve={this.getSelectionAttribute('easeCurve')}
+          easeName={this.props.project.selection.easeName}
+          easeCurve={this.props.project.selection.easeCurve}
           applyEase={this.props.applyEase}
           saveEase={this.props.saveEase}
           renameEase={this.props.renameEase}

@@ -39,11 +39,6 @@ function InspectorEaseLibrary({ project, easeName, easeCurve, applyEase, saveEas
     const [name, setName] = useState(current || '');
     useEffect(() => setName(current || ''), [current]);
 
-    const pick = (option) => applyEase(option.value);
-    const save = () => saveEase(name, easeCurve);
-    const rename = () => renameEase(current, name);
-    const remove = () => deleteEase(current);
-
     return (
         <div className="inspector-ease-library">
             <InspectorSelector
@@ -53,7 +48,7 @@ function InspectorEaseLibrary({ project, easeName, easeCurve, applyEase, saveEas
                 options={options}
                 value={current || ''}
                 isSearchable={true}
-                onChange={pick} />
+                onChange={(option) => applyEase(option.value)} />
             <InspectorTextInput
                 tooltip="Ease Name"
                 val={name}
@@ -66,21 +61,21 @@ function InspectorEaseLibrary({ project, easeName, easeCurve, applyEase, saveEas
                     tooltip="Save ease"
                     color="gray"
                     disabled={!easeCurve}
-                    action={save} />
-                {current &&
+                    action={() => saveEase(name, easeCurve)} />
+                {current && <>
                     <ActionButton
                         id="ease-rename-button"
                         text="Rename"
                         tooltip="Rename ease"
                         color="gray"
-                        action={rename} />}
-                {current &&
+                        action={() => renameEase(current, name)} />
                     <ActionButton
                         id="ease-delete-button"
                         text="Delete"
                         tooltip="Delete ease"
                         color="gray"
-                        action={remove} />}
+                        action={() => deleteEase(current)} />
+                </>}
             </div>
         </div>
     );

@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const bezierEases = new WeakMap();
+
 /**
  * Class representing a tween.
  */
@@ -38,7 +40,7 @@ Wick.Tween = class extends Wick.Base {
      * @param {object} curve - {points: [{x, y, inX, inY, outX, outY}, ...]}, from (0,0) to (1,1) with x always increasing.
      * @returns {function} A function that takes the time (0-1) and returns the progress (0-1).
      */
-    static _bezierEase (curve) {
+    static _buildBezierEase (curve) {
         var points = curve && curve.points;
         var valid = Array.isArray(points) && points.length >= 2 && points.every((point, i) => {
             return point && Number.isFinite(point.x) && Number.isFinite(point.y) && (i === 0 || point.x > points[i - 1].x);
@@ -73,6 +75,13 @@ Wick.Tween = class extends Wick.Base {
 
             return bezier(p.y, y1, y2, q.y, u);
         };
+    }
+
+    static _bezierEase (curve) {
+        if(!curve || typeof curve !== 'object') return Wick.Tween._buildBezierEase(curve);
+
+        if(!bezierEases.has(curve)) bezierEases.set(curve, Wick.Tween._buildBezierEase(curve));
+        return bezierEases.get(curve);
     }
 
     /**

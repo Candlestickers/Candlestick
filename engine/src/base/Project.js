@@ -387,18 +387,19 @@ Wick.Project = class extends Wick.Base {
      * @param {object} curve - The curve to save, as {points: [...]}.
      * @returns {string | null}
      */
-    addEase(name, curve) {
+    saveEase(name, curve) {
         var curveCopy = Wick.Tween._copyEaseCurve(curve);
         if (!curveCopy) return null;
 
-        var baseName = String(name || '').trim() || 'New Ease';
-        var finalName = baseName;
-        for (var counter = 2; this._eases.has(finalName); counter++) {
-            finalName = baseName + ' ' + counter;
+        var easeName = String(name || '').trim();
+        if (!easeName) {
+            easeName = 'New Ease';
+            for (var counter = 2; this._eases.has(easeName); counter++) easeName = 'New Ease ' + counter;
         }
 
-        this._eases.set(finalName, curveCopy);
-        return finalName;
+        this._eases.set(easeName, curveCopy);
+        this._getTweensUsingEase(easeName).forEach(tween => { tween.easeCurve = Wick.Tween._copyEaseCurve(curveCopy); });
+        return easeName;
     }
 
     /**
@@ -417,21 +418,6 @@ Wick.Project = class extends Wick.Base {
     }
 
     /**
-     * Replaces the curve of a saved ease.
-     * @param {string} name - The name of the ease.
-     * @param {object} curve - The new curve, as {points: [...]}.
-     * @returns {boolean}
-     */
-    updateEase(name, curve) {
-        var curveCopy = Wick.Tween._copyEaseCurve(curve);
-        if (!this._eases.has(name) || !curveCopy) return false;
-
-        this._eases.set(name, curveCopy);
-        this._getTweensUsingEase(name).forEach(tween => { tween.easeCurve = Wick.Tween._copyEaseCurve(curveCopy); });
-        return true;
-    }
-
-    /**
      * Removes a saved ease.
      * @param {string} name - The name of the ease.
      */
@@ -441,21 +427,12 @@ Wick.Project = class extends Wick.Base {
     }
 
     /**
-     * Gets the curve of a saved ease.
-     * @param {string} name - The name of the ease.
-     * @returns {object | null} The curve, as {points: [...]}.
-     */
-    getEase(name) {
-        return this._eases.get(name) || null;
-    }
-
-    /**
      * All tweens in the project that use a given ease.
      * @param {string} name - The name of the ease.
      * @returns {Wick.Tween[]}
      */
     _getTweensUsingEase(name) {
-        return this.getChildrenRecursive().filter(child => child.classname === 'Tween' && child.easeName === name);
+        return this.getAllFrames().flatMap(frame => frame.getChildren('Tween')).filter(tween => tween.easeName === name);
     }
 
     /**

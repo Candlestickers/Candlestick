@@ -488,32 +488,20 @@ class EditorCore extends Component {
      * existing ease replaces that ease, and so changes every tween using it. Saving doesn't go in the undo history.
      * @param {string} name - The name to save the ease under.
      * @param {object} curve - The curve to save, as {points: [...]}.
-     * @returns {string | null} The name the ease was saved under, or null if the curve wasn't valid.
      */
     saveEase = (name, curve) => {
-        let easeName = String(name || '').trim();
-        let savedName = null;
-        if (this.project.eases.has(easeName)) {
-            if (this.project.updateEase(easeName, curve)) savedName = easeName;
-        } else {
-            savedName = this.project.addEase(name, curve);
-        }
-
+        let savedName = this.project.saveEase(name, curve);
         if (savedName) this.project.selection.applyEase(savedName);
         this.projectDidChange({ skipHistory: true, actionName: "Save Ease" });
-        return savedName;
     }
 
     /**
      * Renames a saved ease.
      * @param {string} name - The current name of the ease.
      * @param {string} newName - The name to give it.
-     * @returns {boolean} True if the ease was renamed.
      */
     renameEase = (name, newName) => {
-        let renamed = this.project.renameEase(name, newName);
-        if (renamed) this.projectDidChange({ skipHistory: true, actionName: "Rename Ease" });
-        return renamed;
+        if (this.project.renameEase(name, newName)) this.projectDidChange({ skipHistory: true, actionName: "Rename Ease" });
     }
 
     /**
