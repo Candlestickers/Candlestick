@@ -35,13 +35,11 @@ class WelcomeModal extends Component {
         super();
         this.forumPost = "https://url.candlestickers.app/updates";
         this.updates = [
-            "Clip Shearing",
-            "Movable Pivot",
-            "Improved Frame Resizing",
-            "Autosaved Settings",
-            "Improved Video Import/Export",
-            "Fixed Vcam",
-            "Other Changes and Fixes"
+            "Video Encoding Fix",
+            "Tween Fixes",
+            "Cursor and Path Cursor Fixes",
+            "Outliner Dragging Fix",
+            "Other Minor Fixes"
         ]
 
         /*let t1 = ["Guy de Bree", "Dimp", "Hyun's Dojo"]
@@ -81,7 +79,7 @@ class WelcomeModal extends Component {
                 {...modalProps}
                 className="modal-body welcome-modal-mobile-body">
                 <div className="welcome-modal-mobile-image-container">
-                    <img className="welcome-modal-mobile-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={mobileSplash} />
+                    <img className="welcome-modal-mobile-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={mobileSplash} draggable="false" />
                 </div>
                 <div className="welcome-modal-mobile-content">
                     <div className="welcome-modal-title small-modal">Candlestick</div>
@@ -110,7 +108,7 @@ class WelcomeModal extends Component {
 
                 <div id="welcome-modal-interior-content">
                     <div id="welcome-image-container" className="welcome-modal-main-container">
-                        <img id="welcome-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={splash} />
+                        <img id="welcome-image" alt="Flicker breaks through the Candlestick timeline into the canvas" src={splash} draggable="false" />
                     </div>
                     <div id="welcome-message-container" className="modal-main-container">
                         <div id="welcome-modal-title" className="welcome-modal-item">Welcome To Candlestick!</div>

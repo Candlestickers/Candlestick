@@ -48,6 +48,9 @@ Wick.View.Path = class extends Wick.View {
         }
 
         this.importJSON(this.model.json);
+        if(!(this.model.project && this.model.project._activeTool && this.model.project._activeTool.name === 'pathcursor')) {
+            this.item.fullySelected = false;
+        }
 
         if(this.item instanceof this.paper.Raster) {
             this.item.smoothing = this.model.project.imageSmoothing;
