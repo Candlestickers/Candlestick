@@ -398,6 +398,17 @@ class EditorCore extends Component {
     }
 
     /**
+     * Selects a folder in the Asset Library. Folders are an editor-side
+     * concept (see AssetLibrary.jsx), not Wick.Base objects, so this goes
+     * through a dedicated selection path rather than selectObjects.
+     * @param {object} folder - The folder to select.
+     */
+    selectFolder = (folder) => {
+        this.project.selection.selectFolder(folder);
+        this.projectDidChange({ actionName: "Select Folder" });
+    }
+
+    /**
      * Removes the given objects from the selection. No
      * changes will be made if the selection does not change.
      * @param {object[]} objects - The objects to remove from the selection.

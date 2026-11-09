@@ -86,7 +86,7 @@ function Asset(props) {
         {renderAddButton()}
         <span className="asset-button delete">
           <ActionButton
-            classsName="delete"
+            className="delete"
             color="red"
             icon="delete-black"
             action={() => {
