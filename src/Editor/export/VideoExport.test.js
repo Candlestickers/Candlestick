@@ -1,0 +1,175 @@
+import VideoExport, { getFFmpegBaseURL } from './VideoExport'
+import AudioExport from './AudioExport'
+
+describe('FFmpeg worker cleanup', () => {
+  test.each(['load', 'writeFile', 'exec', 'readFile', 'nonzero exit', 'empty output', 'save'])
+  ('terminates after %s failure and preserves the error', async stage => {
+    const previousFFmpeg = window.FFmpegWASM
+    const previousSave = window.saveFileFromWick
+    const failure = new Error('Test failure')
+    const encoder = {
+      on: jest.fn(),
+      terminate: jest.fn(),
+      load: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+      exec: jest.fn().mockResolvedValue(0),
+      readFile: jest.fn().mockResolvedValue(new Uint8Array([1])),
+    }
+    const onFinish = jest.fn()
+    window.FFmpegWASM = { FFmpeg: jest.fn(() => encoder) }
+    window.saveFileFromWick = jest.fn()
+    let expected = failure
+    if (stage === 'nonzero exit') {
+      encoder.exec.mockResolvedValue(1)
+      expected = new Error('ffmpeg exited with code 1 — video encoding failed')
+    } else if (stage === 'empty output') {
+      encoder.readFile.mockResolvedValue(new Uint8Array())
+      expected = new Error('ffmpeg produced an empty output file')
+    } else if (stage === 'save') {
+      window.saveFileFromWick.mockImplementation(() => { throw failure })
+    } else {
+      encoder[stage].mockRejectedValue(failure)
+    }
+    try {
+      await expect(VideoExport._generateVideo({
+        images: [{ name: 'frame000000000000.jpg', data: new Uint8Array([1]) }],
+        audio: null,
+        args: { project: { name: 'Test', width: 100, height: 100, framerate: 12 }, onFinish },
+      })).rejects.toThrow(expected)
+      expect(encoder.terminate).toHaveBeenCalledTimes(1)
+      expect(onFinish).not.toHaveBeenCalled()
+    } finally {
+      if (previousFFmpeg === undefined) delete window.FFmpegWASM
+      else window.FFmpegWASM = previousFFmpeg
+      if (previousSave === undefined) delete window.saveFileFromWick
+      else window.saveFileFromWick = previousSave
+    }
+  })
+})
+
+describe('FFmpeg asset URLs', () => {
+  test.each([
+    ['.', 'https://candlestickers.app/', 'https://candlestickers.app/corelibs/ffmpeg/'],
+    ['./', 'https://candlestickers.app/', 'https://candlestickers.app/corelibs/ffmpeg/'],
+    ['', 'http://localhost:3000/', 'http://localhost:3000/corelibs/ffmpeg/'],
+    ['/', 'https://candlestickers.app/test/', 'https://candlestickers.app/corelibs/ffmpeg/'],
+    ['/test', 'https://candlestickers.app/test/', 'https://candlestickers.app/test/corelibs/ffmpeg/'],
+    ['/test/', 'https://candlestickers.app/test/', 'https://candlestickers.app/test/corelibs/ffmpeg/'],
+    ['.', 'https://candlestickers.app/test/?example=demo', 'https://candlestickers.app/test/corelibs/ffmpeg/'],
+    ['https://candlestickers.app/test/', 'https://candlestickers.app/', 'https://candlestickers.app/test/corelibs/ffmpeg/'],
+    ['.', 'tauri://localhost/', 'tauri://localhost/corelibs/ffmpeg/'],
+  ])('resolves %s against %s', (publicURL, documentURL, expected) => {
+    const result = getFFmpegBaseURL(publicURL, documentURL)
+    expect(result).toBe(expected)
+    expect(new URL(result).origin).toBe(new URL(documentURL).origin)
+  })
+
+  test('loads the UMD script and encoder assets from the resolved directory', async () => {
+    const previousPublicURL = process.env.PUBLIC_URL
+    const previousFFmpeg = window.FFmpegWASM
+    const previousSave = window.saveFileFromWick
+    process.env.PUBLIC_URL = '.'
+    delete window.FFmpegWASM
+    const encoder = {
+      on: jest.fn(),
+      terminate: jest.fn(),
+      load: jest.fn().mockResolvedValue(undefined),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+      exec: jest.fn().mockResolvedValue(0),
+      readFile: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+    }
+    window.saveFileFromWick = jest.fn()
+    let scriptURL
+    const append = jest.spyOn(document.head, 'appendChild').mockImplementation(script => {
+      scriptURL = script.src
+      window.FFmpegWASM = { FFmpeg: jest.fn(() => encoder) }
+      script.onload()
+      return script
+    })
+    try {
+      await VideoExport._generateVideo({
+        images: [{ name: 'frame000000000000.jpg', data: new Uint8Array([1]) }],
+        audio: null,
+        args: { project: { name: 'Test', width: 100, height: 100, framerate: 12 } },
+      })
+      const base = new URL('./corelibs/ffmpeg/', document.baseURI).href
+      expect(scriptURL).toBe(base + 'ffmpeg.umd.js')
+      expect(encoder.load).toHaveBeenCalledWith({
+        coreURL: base + 'ffmpeg-core.js',
+        wasmURL: base + 'ffmpeg-core.wasm',
+      })
+      expect(window.saveFileFromWick).toHaveBeenCalledWith(expect.any(Blob), 'Test', '.mp4')
+      expect(encoder.terminate).toHaveBeenCalledTimes(1)
+    } finally {
+      append.mockRestore()
+      if (previousPublicURL === undefined) delete process.env.PUBLIC_URL
+      else process.env.PUBLIC_URL = previousPublicURL
+      if (previousFFmpeg === undefined) delete window.FFmpegWASM
+      else window.FFmpegWASM = previousFFmpeg
+      if (previousSave === undefined) delete window.saveFileFromWick
+      else window.saveFileFromWick = previousSave
+    }
+  })
+})
+
+
+describe('streamed video export', () => {
+  test.each(['success', 'frame write failure', 'audio failure'])('%s', async outcome => {
+    const previousFFmpeg = window.FFmpegWASM
+    const previousSave = window.saveFileFromWick
+    const events = []
+    const failure = new Error(outcome)
+    const encoder = {
+      on: jest.fn(), terminate: jest.fn(),
+      load: jest.fn(async () => { events.push('load') }),
+      writeFile: jest.fn(async name => {
+        events.push(name)
+        if (outcome === 'frame write failure') throw failure
+      }),
+      exec: jest.fn().mockResolvedValue(0),
+      readFile: jest.fn().mockResolvedValue(new Uint8Array([1])),
+    }
+    const project = {
+      name: 'Stream', width: 100, height: 100, framerate: 24, soundsPlayed: [],
+      generateImageSequence: options => {
+        ;(async () => {
+          for (let i = 0; i < 865; i++) {
+            await options.onFrame({ arrayBuffer: async () => new Uint8Array([i % 256]).buffer })
+          }
+          project.soundsPlayed = [{ src: 'sound' }]
+          options.onFinish([])
+        })().catch(options.onError)
+      },
+    }
+    const audio = jest.spyOn(AudioExport, 'generateAudioFile').mockImplementation(async args => {
+      events.push('audio')
+      expect(args.soundInfo).toEqual([{ src: 'sound' }])
+      if (outcome === 'audio failure') throw failure
+      return new Uint8Array([1, 2])
+    })
+    window.FFmpegWASM = { FFmpeg: jest.fn(() => encoder) }
+    window.saveFileFromWick = jest.fn()
+    try {
+      const exportPromise = VideoExport.renderVideo({project})
+      if (outcome === 'success') {
+        await exportPromise
+        expect(events[0]).toBe('load')
+        expect(events[1]).toBe('frame000000000000.jpg')
+        expect(events[865]).toBe('frame000000000864.jpg')
+        expect(events.slice(-2)).toEqual(['audio', 'audio.wav'])
+        expect(encoder.writeFile).toHaveBeenCalledTimes(866)
+        expect(window.saveFileFromWick).toHaveBeenCalledTimes(1)
+      } else {
+        await expect(exportPromise).rejects.toBe(failure)
+        expect(encoder.exec).not.toHaveBeenCalled()
+      }
+      expect(encoder.terminate).toHaveBeenCalledTimes(1)
+    } finally {
+      audio.mockRestore()
+      if (previousFFmpeg === undefined) delete window.FFmpegWASM
+      else window.FFmpegWASM = previousFFmpeg
+      if (previousSave === undefined) delete window.saveFileFromWick
+      else window.saveFileFromWick = previousSave
+    }
+  })
+})
