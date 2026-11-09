@@ -1766,6 +1766,7 @@ class EditorCore extends Component {
         }
 
         window.Wick.ImageSequence.frameToPng({
+            ...args,
             frame: frame,
             width: args.width,
             height: args.height,
