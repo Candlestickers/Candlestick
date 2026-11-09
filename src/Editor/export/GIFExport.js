@@ -22,7 +22,7 @@ class GIFExport {
       quality: 10,
       width: width,
       height: height,
-      workerScript: process.env.PUBLIC_URL + "/corelibs/gif/gif.worker.js",
+      workerScript: import.meta.env.VITE_PUBLIC_URL + "corelibs/gif/gif.worker.js",
     });
 
     gif.on('finished', (gif) => {

@@ -17,14 +17,14 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+const hull = require('hull');
 /**
  * A class representing a Wick Clip.
  */
 Wick.Clip = class extends Wick.Tickable {
     /**
      * Returns a list of all possible animation types for this object.
-     * @type {Object} - An object containing keys that represent the animation type a a key and a human-readable version of the animation type as a value.
+     * @returns {Object} - An object containing keys that represent the animation type a a key and a human-readable version of the animation type as a value.
      */
     static get animationTypes () {
         return {
