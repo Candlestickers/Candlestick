@@ -53,7 +53,7 @@ class Toolbox extends Component {
       cursors: {active: 'cursor', options: ['cursor', 'pathcursor']},
       brushes: {active: 'brush', options: ['brush', 'pencil']},
       eraser: 'eraser',
-      shapes: {active: 'rectangle', options: ['rectangle', 'ellipse', 'line', 'text']},
+      shapes: {active: 'rectangle', options: ['rectangle', 'ellipse', 'line', 'text', 'shape']},
       tools: {active: 'fillbucket', options: ['fillbucket', 'eyedropper']}
     }
   }
@@ -96,6 +96,7 @@ class Toolbox extends Component {
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='eraser' tooltip="Eraser" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='rectangle' tooltip="Rectangle" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='ellipse' tooltip="Ellipse" />
+        <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='shape' tooltip="Shape" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='line' tooltip="Line" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='pathcursor' tooltip="Path Cursor" />
         <ToolButton {...this.toolButtonProps} keyMap={this.props.keyMap} name='text' tooltip="Text" />
@@ -111,7 +112,7 @@ class Toolbox extends Component {
         <div className="color-container toolbox-item" id="fill-color-picker-container">
           <WickInput
             type="color"
-            color={this.props.getToolSetting('fillColor').rgba}
+            color={this.props.getToolSetting('fillColor')?.rgba || "rgb(0, 0, 0)"}
             onChange={(color) => {this.props.setToolSetting('fillColor', new window.Wick.Color(color));}}
             id="tool-box-fill-color"
             tooltipID="tool-box-fill-color"
@@ -126,7 +127,7 @@ class Toolbox extends Component {
         <div className="color-container toolbox-item" id="stroke-color-picker-container">
           <WickInput
             type="color"
-            color= {this.props.getToolSetting('strokeColor').rgba}
+            color= {this.props.getToolSetting('strokeColor')?.rgba || "rgb(0, 0, 0)"}
             onChange={(color) => {this.props.setToolSetting('strokeColor', new window.Wick.Color(color));}}
             id="tool-box-stroke-color"
             tooltipID="tool-box-stroke-color"
