@@ -24,7 +24,7 @@ import Select from 'react-select';
 import 'react-dropdown/style.css';
 
 import ColorPicker from 'Editor/Util/ColorPicker/ColorPicker';
-import { Tooltip as ReactTooltip } from 'react-tooltip';
+import { Tooltip } from 'react-tooltip';
 import WickButton from './WickButton/WickButton';
 
 import { Input } from 'reactstrap';
@@ -74,7 +74,7 @@ class WickInput extends Component {
     // Detect if on mobile to disable tooltips.
 
     return (
-      <ReactTooltip
+      <Tooltip
         disable={isMobile}
         id={tooltipID}
         type='info'
@@ -85,7 +85,7 @@ class WickInput extends Component {
         aria-haspopup='true'
         className="wick-tooltip">
         <span>{this.props.tooltip}</span>
-      </ReactTooltip>
+      </Tooltip>
     )
   }
 
