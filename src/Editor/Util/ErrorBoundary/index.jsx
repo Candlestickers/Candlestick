@@ -36,7 +36,7 @@ class ErrorBoundary extends React.Component {
     if(this.props.processError) {
       this.props.processError(error, errorInfo)
     }
-    console.log('err: ', error, ' info: ', errorInfo)
+    console.log('err: ', error, ' info: ', errorInfo.componentStack)
   }
 
   render() {
