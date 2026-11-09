@@ -48,9 +48,7 @@ Wick.AudioTrack = class {
         if (!args.onProgress) args.onProgress = (frame, maxFrames) => {}
 
         let genBuffer = (audioInfo) => {
-            if (!audioInfo) args.callback(null);
-
-            if(audioInfo.length === 0) {
+            if (!audioInfo || audioInfo.length === 0) {
                 // No audio in the project, no AudioBuffer to create
                 args.callback(null);
                 return;
@@ -59,7 +57,7 @@ Wick.AudioTrack = class {
             Wick.AudioTrack.generateProjectAudioBuffer(audioInfo, audioArraybuffer => {
                 args.callback(audioArraybuffer);
             },
-            args.onProgress);
+            args.onProgress).catch(args.onError || console.error);
         }
 
         // If audio information is passed in from a previous render, use that. Otherwise, render it again.
@@ -80,59 +78,63 @@ Wick.AudioTrack = class {
      * @param {Function} callback - callback to recieve the generated AudioBuffer
      * @param {Function} onProgress(message, progress) - A function which receive a message.
      */
-    static generateProjectAudioBuffer (projectAudioInfo, callback, onProgress) {
-        window.AudioContext = window.AudioContext || window.webkitAudioContext;
-        var ctx = new AudioContext();
-
-        let audiobuffers = [];
-
-        let mergeAudio = () => {
-            onProgress && onProgress("Merging Audio");
-            audiobuffers.sort((a,b) => {return(a.duration - b.duration)})
-
-            let i=0;
-
-            let mergedAudioBuffer = audiobuffers.reduce((buffer1, buffer2) => {
-                let buf = this.mergeBuffers([buffer1, buffer2], ctx, onProgress);
-                
-                i += 1;
-
-                return buf;
-            });
-
-            callback(mergedAudioBuffer);
+    static async generateProjectAudioBuffer (projectAudioInfo, callback, onProgress) {
+        if (!projectAudioInfo.length) {
+            callback(null);
+            return;
         }
 
-        for (let i=0; i<projectAudioInfo.length; i++) {
-
-            let audioInfo = projectAudioInfo[i];
-
-            this.base64ToAudioBuffer(audioInfo.src, ctx, audiobuffer => {
-
-                let offset = audioInfo.offset || 0; // Milliseconds to offset.
-                let offsetSeconds = offset / 1000; // Adjust to seconds.
-
-                let startSeconds = audioInfo.start / 1000;
-                let endSeconds = audioInfo.end / 1000;
-                let lengthSeconds = endSeconds - startSeconds;
-                let volume = audioInfo.volume || 1;
-
-                let shiftedAudioBuffer = this.offsetAudioBuffer(audiobuffer, offsetSeconds, ctx);
-                let croppedAudioBuffer = this.cropAudioBuffer(shiftedAudioBuffer, lengthSeconds, ctx);
-                let volumeAdjustedAudioBuffer = this.adjustBufferVolume(croppedAudioBuffer, volume, ctx);
-                let delayedAudiobuffer = this.addStartDelayToAudioBuffer(volumeAdjustedAudioBuffer, startSeconds, ctx);
-
-                onProgress && onProgress("Creating Audio " + (i+1) + "/" + projectAudioInfo.length, (i+1)/projectAudioInfo.length);
-
-                audiobuffers.push(delayedAudiobuffer);
-
-                if (audiobuffers.length >= projectAudioInfo.length) {
-                    mergeAudio();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContextClass();
+        const decoded = new Map();
+        let output;
+        try {
+            let channels = 1;
+            let length = 1;
+            // Decode each asset once, sequentially, instead of once per occurrence.
+            for (const info of projectAudioInfo) {
+                if (!decoded.has(info.src)) {
+                    const buffer = await new Promise((resolve, reject) => {
+                        this.base64ToAudioBuffer(info.src, ctx, resolve, reject);
+                    });
+                    decoded.set(info.src, buffer);
+                    channels = Math.max(channels, buffer.numberOfChannels);
                 }
-            });
+                const samples = Math.trunc((info.end - info.start) / 1000 * ctx.sampleRate);
+                length = Math.max(length, Math.round(info.start / 1000 * ctx.sampleRate + samples));
+            }
 
+            // Mix straight into one final buffer: no shifted, cropped, gain,
+            // silence-padded, or pairwise-merged copies for each occurrence.
+            output = ctx.createBuffer(channels, length, ctx.sampleRate);
+            for (let i = 0; i < projectAudioInfo.length; i++) {
+                const info = projectAudioInfo[i];
+                const buffer = decoded.get(info.src);
+                const start = Math.trunc(info.start / 1000 * ctx.sampleRate);
+                const samples = Math.trunc((info.end - info.start) / 1000 * ctx.sampleRate);
+                const offsetSeconds = (info.offset || 0) / 1000;
+                const offset = offsetSeconds < 0
+                    ? -Math.round(-offsetSeconds * ctx.sampleRate)
+                    : Math.round(offsetSeconds * ctx.sampleRate);
+                const volume = Math.max(info.volume == null ? 1 : info.volume, 0);
+                const first = Math.max(0, -offset, -start);
+                const last = Math.min(samples, buffer.length, buffer.length - offset, output.length - start);
+                for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                    const source = buffer.getChannelData(channel);
+                    const target = output.getChannelData(channel);
+                    for (let sample = first; sample < last; sample++) {
+                        const value = source[sample + offset] * volume;
+                        if (Number.isFinite(value)) target[start + sample] += value;
+                    }
+                }
+                onProgress && onProgress("Creating Audio " + (i + 1) + "/" + projectAudioInfo.length,
+                    (i + 1) / projectAudioInfo.length);
+            }
+        } finally {
+            decoded.clear();
+            await ctx.close();
         }
-
+        callback(output);
     }
 
     /*
@@ -359,15 +361,12 @@ Wick.AudioTrack = class {
      * @param {AudioContext} ctx - an AudioContext instance.
      * @param {Function} callback - callback to recieve the generated AudioBuffer
      */
-    static base64ToAudioBuffer (base64, ctx, callback) {
+    static base64ToAudioBuffer (base64, ctx, callback, onError = console.error) {
         let base64DataOnly = base64.split(',')[1];
         let arraybuffer = Base64ArrayBuffer.decode(base64DataOnly);
 
         ctx.decodeAudioData(arraybuffer, function(audioBuffer) {
             callback(audioBuffer);
-        }, (e) => {
-            console.log('onError');
-            console.log(e);
-        });
+        }, onError);
     }
 }
