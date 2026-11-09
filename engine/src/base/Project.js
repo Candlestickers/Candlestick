@@ -1171,6 +1171,8 @@ orderDynamicFrames() {
             });
         });
 
+        // Switch to cursor tool so we can interact with the selection
+        this.activeTool = 'cursor';
         this.selection.selectMultipleObjects(objectsToAdd);
     }
     

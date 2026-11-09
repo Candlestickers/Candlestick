@@ -173,7 +173,9 @@ Wick.Clipboard = class {
             // Paste tweens at the position of the playhead
             if(object instanceof Wick.Tween) {
                 object._originalLayerIndex += layerIndicesMoved;
-                object.playheadPosition += project.focus.timeline.playheadPosition - 1;
+                // Tween playhead position is relative to its frame
+                var playheadPosition = project.activeFrame ? project.activeFrame.getRelativePlayheadPosition() : project.activeTimeline.playheadPosition;
+                object.playheadPosition += playheadPosition - 1;
             }
 
             project.addObject(object);
@@ -187,7 +189,7 @@ Wick.Clipboard = class {
             }
 
             // Wait to select objects.
-            objectsToSelect.push(object);
+            if(object.project) objectsToSelect.push(object);
         });
 
         // Select newly added objects.
