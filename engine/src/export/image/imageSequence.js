@@ -57,4 +57,20 @@ Wick.ImageSequence = class {
             onProgress: onProgress,
         });
     }
+
+    /**
+     * Create a png file from a frame.
+     * @param {Wick.Frame} frame - the frame to create a png from
+     * @param {function} callback - Function called when the file is created. Contains the file as a parameter.
+     */
+    static frameToPng(args) {
+        let { frame, callback } = args;
+
+        let dataURL = frame.toImage(args);
+        if (!dataURL) {
+            callback(null);
+            return;
+        }
+        callback(Wick.ExportUtils.dataURItoBlob(dataURL));
+    }
 }

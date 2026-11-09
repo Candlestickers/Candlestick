@@ -1711,6 +1711,72 @@ class EditorCore extends Component {
     }
 
     /**
+     * Export the current frame as an image
+     */
+    exportFrameAsImage = (args) => {
+        if(!args) args = {};
+
+        let frame = this.project.activeFrame;
+        if(!frame || frame.sound) {
+            this.toast('Select a frame with drawn content to export.', 'warning');
+            return;
+        }
+
+        this.openModal('ExportMedia');
+        this.setState({
+            renderProgress: 0,
+            renderType: "image",
+            renderStatusMessage: "Creating image.",
+            exporting: true,
+        });
+
+        let toastID = this.toast('Exporting image...', 'info');
+
+        let onFinish = (blob) => {
+            if(!blob) {
+                this.updateToast(toastID, {
+                    type: 'error',
+                    text: "Error saving image. Please try again."
+                });
+                this.setState({
+                    exporting: false,
+                });
+                return;
+            }
+
+            let success = () => {
+                this.updateToast(toastID, {
+                    type: 'success',
+                    text: "Successfully saved image."
+                });
+            }
+
+            let fail = () => {
+                this.updateToast(toastID, {
+                    type: 'error',
+                    text: "Error saving image. Please try again."
+                });
+            }
+
+            window.saveFileFromWick(blob, this.project.name + '_image', '.png', success, fail);
+
+            this.setState({
+                exporting: false,
+            })
+        }
+
+        window.Wick.ImageSequence.frameToPng({
+            frame: frame,
+            width: args.width,
+            height: args.height,
+            callback: (file) => {
+                this.hideWaitOverlay();
+                onFinish(file);
+            },
+        });
+    }
+
+    /**
      * Imports a wick file into the editor.
      * @param {File} file Zipped wick file to import.
      */
