@@ -38,7 +38,6 @@ Wick.View.Frame = class extends Wick.View {
 
         this.objectsLayer = new this.paper.Layer();
         this.objectsLayer.remove();
-
     }
 
     /**
