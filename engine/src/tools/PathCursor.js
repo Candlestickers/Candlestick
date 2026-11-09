@@ -124,8 +124,11 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
 
         if (this.detailedEditing == null) {
             // If detailed editing is off, turn it on for this path.
-            this.detailedEditing = this.hitResult.item;
-            this.detailedEditing.setFullySelected(true);
+            if(this.hitResult.item && (this.hitResult.item.className === 'Path' || this.hitResult.item.className === 'CompoundPath')) {
+                this.detailedEditing = this.hitResult.item;
+                this.detailedEditing.setFullySelected(true);
+                this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
+            }
 
         } else if (!this.hitResult.item) {
             // If detailed editing is on for some path, but the user
@@ -239,7 +242,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
     }
 
     onMouseUp (e) {
-        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve') {
+        if (this.hitResult.type === 'segment' || this.hitResult.type === 'curve' ||
+            (this.hitResult.type && this.hitResult.type.startsWith('handle'))) {
             this.fireEvent({eventName: 'canvasModified', actionName:'pathcursor'});
         }
     }
@@ -270,12 +274,13 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
         if(!newHitResult) newHitResult = new this.paper.HitResult();
 
         if (this.detailedEditing !== null) {
-            // Bugfix: newHitResult.item might be inside a CompoundPath
             var targetItem = newHitResult.item;
+            // newHitResult.item might be inside a CompoundPath
             if (targetItem && targetItem.parent.className === 'CompoundPath') {
                 targetItem = targetItem.parent;
             }
-            if (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing)) {
+
+            if (targetItem && (this._getWickUUID(targetItem) !== this._getWickUUID(this.detailedEditing) || !targetItem.fullySelected)) {
                 // Hits an item, but not the one currently in detail edit - handle as a click with no hit.
                 return new this.paper.HitResult();
             }
@@ -322,6 +327,8 @@ Wick.Tools.PathCursor = class extends Wick.Tool {
             return this.CURSOR_CURVE;
         } else if (this.hitResult.type === 'segment') {
             return this.CURSOR_SEGMENT;
+        } else {
+            return this.CURSOR_DEFAULT;
         }
     }
 
