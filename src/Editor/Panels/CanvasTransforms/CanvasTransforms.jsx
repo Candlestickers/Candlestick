@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import PlayButton from 'Editor/Util/PlayButton/PlayButton';
-import ReactTooltip from 'react-tooltip';
+import {Tooltip as ReactTooltip} from 'react-tooltip';
 import HotKeyInterface from 'Editor/hotKeyMap';
 import './_canvastransforms.scss';
 import { isMobile } from 'react-device-detect';
@@ -152,7 +152,8 @@ class CanvasTransforms extends Component {
         disable={isMobile}
         id={'play-button-object'}
         type='info'
-        place={'top'}
+        data-tooltip-place={'top'}
+        delayHide={0} 
         effect='solid'
         aria-haspopup='true'
         className="wick-tooltip">
