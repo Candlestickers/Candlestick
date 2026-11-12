@@ -1,0 +1,20 @@
+
+.mobile-container .mobile-tabbed-interface-main-tab {
+    flex: 1;
+    min-width: 0;
+}
+
+.mobile-brush-tab-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.mobile-brush-panel {
+    height: 100%;
+    min-height: 0;
+
+    .inspector-body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

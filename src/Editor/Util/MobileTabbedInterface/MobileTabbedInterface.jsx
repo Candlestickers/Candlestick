@@ -47,6 +47,10 @@ class MobileTabbedInterface extends Component {
         }
     }
 
+    get selectedTab() {
+        return this.props.selectedTab === undefined ? this.state.selectedTab : this.props.selectedTab;
+    }
+
     // Selects the tab of the given name.
     selectTab = (label) => {
         this.setState({
@@ -66,15 +70,18 @@ class MobileTabbedInterface extends Component {
             <div role="tablist" className="mobile-tabbed-interface-main-tab-container">
                 {this.props.tabs.map( (tab, i) => 
                     <button
+                    role="tab"
+                    aria-label={tab.label}
+                    aria-selected={this.selectedTab === tab.label}
                     key={`tab-${tab.label}-${i}`}
                     className={classNames("mobile-tabbed-interface-main-tab", 
                                           "mobile-"+tab.label+"-tab", 
                                           this.props.tabClassName, 
-                                          {"selected": (this.state.selectedTab === tab.label)})}
+                                          {"selected": (this.selectedTab === tab.label)})}
                     onClick={() => {this.selectTab(tab.label)}}>
                         <img className={classNames("mobile-tabbed-interface-icon",
                                         "mobile-"+tab.label+"-tab-icon")}
-                             src={this.state.selectedTab === tab.label ? tab.iconActive : tab.icon} alt={tab.alt}></img>
+                             src={this.selectedTab === tab.label ? tab.iconActive : tab.icon} alt={tab.iconAlt || tab.alt}></img>
                     </button> 
                 )}
             </div>
@@ -86,7 +93,7 @@ class MobileTabbedInterface extends Component {
             <div className={classNames("mobile-tabbed-interface", this.props.className)}>
                 {this.renderTabs()}
                 <div className={classNames("mobile-tabbed-interface-body", this.props.bodyClassName)}>
-                    {this.props.children[this.props.tabs.map((tab) => tab.label).indexOf(this.state.selectedTab)]}
+                    {this.props.children[this.props.tabs.map((tab) => tab.label).indexOf(this.selectedTab)]}
                 </div>
             </div>
         ); 

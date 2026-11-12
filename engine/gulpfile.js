@@ -98,6 +98,7 @@ gulp.task("default", function() {
       'src/base/Clip.js',
       'src/base/Button.js',
       'src/tools/Tool.js',
+      'src/tools/BrushUtils.js',
       'src/tools/Brush.js',
       'src/tools/Cursor.js',
       'src/tools/Ellipse.js',

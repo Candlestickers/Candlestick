@@ -446,20 +446,25 @@ body.hasHover .action-button-error:hover {
 }
 
 body.hasHover .action-button-checkbox:hover {
-  //background-color: $editor-tertiary;
-  border: 2px solid $wick-green-light;
+  border: 1px solid rgba($wick-green-light, 0.6);
   color: black;
 }
 
 .action-button-checkbox:active {
-  //background-color: $wick-green-dark;
-  border: 2px solid $wick-green-dark;
+  background-color: rgba($wick-green-dark, 0.45);
+  border: 2px solid $wick-green;
   color: black;
 }
 
 .action-button-checkbox.active-button {
-  //background-color: $wick-green-dark;
-  border: 2px solid $wick-green-dark;
+  background-color: rgba($wick-green-dark, 0.45);
+  border: 2px solid $wick-green;
+  color: black;
+}
+
+body.hasHover .action-button-checkbox.active-button:hover {
+  background-color: rgba($wick-green, 0.55);
+  border: 2px solid $wick-green-light;
   color: black;
 }
 

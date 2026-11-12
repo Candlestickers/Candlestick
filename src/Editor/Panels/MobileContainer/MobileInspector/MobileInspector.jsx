@@ -61,6 +61,31 @@ import strokeIcon from 'resources/mobile-inspector-icons/strokewidth-icon.svg';
 import opacityIcon from 'resources/mobile-inspector-icons/opacity-icon.svg';
 import fillOpacityIcon from 'resources/mobile-inspector-icons/fillopacity-icon.svg';
 
+export const inspectorTabs = {
+      "frame": ['frameSettings', 'identifier'],
+      "layer": ['layerSettings', 'identifier'],
+      "multiframe": [], // just name
+      "tween": ['tweenSettings'],
+      "multitween": ['tweenSettings'],
+      "clip": ['transform', 'animationSettings', 'identifier'],
+      "button": ['transform', 'identifier'],
+      "path": ['transform', 'style'],
+      "text": ['transform', 'style', 'font', 'identifier'],
+      "image": ['transform'],
+      "multipath": ['transform', 'style'],
+      "multiclip": ['transform'],
+      "multitimeline": [],
+      "multicanvas": ['transform'],
+      "imageasset": ['assetSettings', 'name'],
+      "soundasset": ['assetSettings', 'name'],
+      "fontasset": ['name'],
+      "clipasset": ['name'],
+      "multiassetmixed": ['assetSettings'],
+      "multisoundasset": ['assetSettings'],
+      "multiimageasset": ['assetSettings'],
+      "unknown": [],
+    };
+
 class MobileInspector extends Component {
   constructor(props) {
     super(props);
@@ -116,30 +141,10 @@ class MobileInspector extends Component {
     }
     
     this.inspectorTabs = {
-      "frame": ['frameSettings', 'identifier'],
-      "layer": ['layerSettings', 'identifier'],
-      "multiframe": [], // just name
-      "tween": ['tweenSettings'],
-      "multitween": ['tweenSettings'],
-      "clip": ['transform', 'animationSettings', 'identifier'],
-      "button": ['transform', 'identifier'],
-      "path": ['transform', 'style'],
-      "text": ['transform', 'style', 'font', 'identifier'],
-      "image": ['transform'],
-      "multipath": (this.getSelectionAttribute('fontFamily') && 
-      typeof this.getSelectionAttribute('fontFamily') !== 'undefined') ? ['transform', 'style', 'font'] : ['transform', 'style'],
-      "multiclip": ['transform'],
-      "multitimeline": [],
-      "multicanvas": ['transform'],
-      "imageasset": ['assetSettings', 'name'],
-      "soundasset": ['assetSettings', 'name'],
-      "fontasset": ['name'],
-      "clipasset": ['name'],
-      "multiassetmixed": ['assetSettings'],
-      "multisoundasset": ['assetSettings'],
-      "multiimageasset": ['assetSettings'],
-      "unknown": [],
-    }
+      ...inspectorTabs,
+      multipath: this.getSelectionAttribute('fontFamily')
+        ? ['transform', 'style', 'font'] : ['transform', 'style'],
+    };
 
   }
 
