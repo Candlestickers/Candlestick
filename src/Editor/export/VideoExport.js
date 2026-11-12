@@ -119,7 +119,9 @@ class VideoExport {
     let { project, onProgress, onFinish } = args
 
     // Respects PUBLIC_URL so the /test deploy loads from /test/corelibs/ffmpeg/
-    const baseURL = window.location.origin + (import.meta.env.BASE_URL || '').replace(/\/?$/, '')
+    const baseURL = window.location.origin + (
+      (import.meta.env.PUBLIC_URL && import.meta.env.PUBLIC_URL !== '.') ? import.meta.env.PUBLIC_URL : '' // if PUBLIC_URL is a dot, ignore
+    ).replace(/\/?$/, '');
 
     // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
     // The ESM build creates a { type: 'module' } worker which disables importScripts(),
