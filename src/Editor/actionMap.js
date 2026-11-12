@@ -230,6 +230,13 @@ class ActionMapInterface extends Object {
         id: 'action-create-instance-of-selected-asset',
         color: 'active-blue'
       },
+      exportFrameAsImage: {
+        icon: 'add',
+        tooltip: 'Export Frame As Image',
+        action: this.editor.exportFrameAsImage,
+        id: 'action-export-frame-as-asset',
+        color: 'active-green'
+      },
     }
   }
 }

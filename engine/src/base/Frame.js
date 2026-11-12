@@ -738,4 +738,67 @@ Wick.Frame = class extends Wick.Tickable {
             }
         });
     }
+
+    /**
+     * Create an image from this frame.
+     * @param {object} args - the arguments for creating the image.
+     * @param {number} args.width - the width of the image.
+     * @param {number} args.height - the height of the image.
+     * @param {string} args.imageType - MIMEtype of image to create.
+     */
+    toImage(args) {
+        if (this.sound !== null) return null;
+        if(!args) args = {};
+        if(!args.imageType) args.imageType = 'image/png';
+        if(!args.width) args.width = this.project.width;
+        if(!args.height) args.height = this.project.height;
+
+        var renderCopy = this.project;
+        var oldCanvasContainer = renderCopy.view.canvasContainer;
+        var oldRenderBlackBars = renderCopy.renderBlackBars;
+        let oldShowClipBorders = renderCopy.showClipBorders;
+        renderCopy.renderBlackBars = false;
+        renderCopy.showClipBorders = false;
+
+        this.project.history.saveSnapshot('before-gif-render');
+        this.project.selection.clear();
+
+        let container = window.document.createElement('div');
+
+        container.style.width  = (args.width/window.devicePixelRatio)+'px';
+        container.style.height = (args.height/window.devicePixelRatio)+'px';
+        window.document.body.appendChild(container);
+        renderCopy.view.canvasContainer = container;
+        renderCopy.view.resize();
+
+        var zoom = 1;
+        if (args.height < args.width) {
+            zoom = args.height / this.project.height;
+        } else {
+            zoom = args.width / this.project.width;
+        }
+
+        renderCopy.focus = this.parentClip || renderCopy.root;
+        renderCopy.focus.timeline.playheadPosition = this.start;
+        renderCopy.onionSkinEnabled = false;
+        renderCopy.zoom = zoom / window.devicePixelRatio;
+        renderCopy.pan = {x: 0, y: 0};
+
+        renderCopy.view.paper.view.autoUpdate = false;
+        renderCopy.view.render();
+        renderCopy.view.paper.view.update();
+
+        var dataURL = renderCopy.view.canvas.toDataURL(args.imageType);
+
+        renderCopy.view.paper.view.autoUpdate = true;
+        renderCopy.view.canvasContainer = oldCanvasContainer;
+        renderCopy.view.resize();
+        renderCopy.history.loadSnapshot('before-gif-render');
+        renderCopy.renderBlackBars = oldRenderBlackBars;
+        renderCopy.showClipBorders = oldShowClipBorders;
+        renderCopy.view.render();
+        window.document.body.removeChild(container);
+
+        return dataURL;
+    }
 }
