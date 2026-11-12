@@ -78,6 +78,7 @@ import iconRecenter from 'resources/tool-icons/recenter.svg';
 import iconAdd from 'resources/asset-library-icons/add.svg';
 import iconUpload from 'resources/asset-library-icons/upload.svg';
 import iconSubtract from 'resources/tool-icons/subtract.svg';
+import iconSubtractDark from 'resources/tool-icons/subtract-dark.svg';
 import iconIntersect from 'resources/tool-icons/intersect.svg';
 import iconUnite from 'resources/tool-icons/unite.svg';
 import iconAddDark from 'resources/asset-library-icons/add-icon-dark.svg';
@@ -290,6 +291,7 @@ const icons = {
   "moreactions": iconMoreActions,
   "unite": iconUnite,
   "subtract": iconSubtract,
+  "subtract-dark": iconSubtractDark,
   "intersect": iconIntersect,
   "alignX": iconAlignX,
   "alignY": iconAlignY,

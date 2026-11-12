@@ -230,6 +230,13 @@ class ActionMapInterface extends Object {
         id: 'action-create-instance-of-selected-asset',
         color: 'active-blue'
       },
+      distributeSelectionToLayers: {
+        icon: 'subtract-dark',
+        tooltip: 'Distribute to Layers',
+        action: this.editor.distributeSelectionToLayers,
+        id: 'action-distribute-selection-to-layers',
+        color: 'active-blue'
+      }
     }
   }
 }

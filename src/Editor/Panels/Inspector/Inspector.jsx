@@ -89,6 +89,7 @@ class Inspector extends Component {
       'breakApart': ["clip", "button",],
       'convertSelectionToButton': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'convertSelectionToClip': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
+      'distributeSelectionToLayers': ["path", "text", "image", "multipath", "multiclip", "multicanvas"],
       'editTimeline': ["clip", "button"],
       'addAssetToCanvas': ["imageasset", "clipasset"],
       // 'alignX': [ "multipath"] // H.A.

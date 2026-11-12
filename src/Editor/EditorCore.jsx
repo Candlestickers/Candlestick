@@ -528,6 +528,14 @@ class EditorCore extends Component {
     }
 
     /**
+     * Moves the selected paths and clips to their own layers.
+     */
+    distributeSelectionToLayers = () => {
+        this.project.distributeSelectionToLayers();
+        this.projectDidChange({ actionName: "Distribute Selection To Layers" });
+    }
+
+    /**
      * Updates the focus object of the project.
      * @param {Wick.Clip} object Object to set as focus.
      */
