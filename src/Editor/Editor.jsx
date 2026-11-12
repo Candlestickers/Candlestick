@@ -144,7 +144,7 @@ async function loadPathIntoEditor(editorThis, filePath) {
 }
 
 
-const { version } = require('../../package.json');
+import { version } from '../../package.json';
 
 var classNames = require('classnames');
 

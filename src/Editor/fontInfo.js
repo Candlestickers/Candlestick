@@ -10,7 +10,7 @@ class FontInfoInterface extends Object {
     }
 
     _getAllFontInfo = () => {
-        fetch (process.env.PUBLIC_URL + '/fonts/fontList.json')
+        fetch (import.meta.env.BASE_URL + 'fonts/fontList.json')
         .then((response) => response.json())
         .then((data) => {
             this.allFontInfo = data;
@@ -120,7 +120,7 @@ class FontInfoInterface extends Object {
       let folderName = font + '/'
       let fontFileName = font + "_" + weight + variant + '.ttf';
 
-      fetch (process.env.PUBLIC_URL + '/fonts/' + folderName + fontFileName)
+      fetch (import.meta.env.BASE_URL + 'fonts/' + folderName + fontFileName)
       .then((response) => response.blob())
       .then((data) => {
           data.hasFont = false;

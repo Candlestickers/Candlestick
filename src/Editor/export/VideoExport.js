@@ -120,7 +120,7 @@ class VideoExport {
 
     // Respects PUBLIC_URL so the /test deploy loads from /test/corelibs/ffmpeg/
     const baseURL = window.location.origin + (
-      (process.env.PUBLIC_URL && process.env.PUBLIC_URL !== '.') ? process.env.PUBLIC_URL : '' // if PUBLIC_URL is a dot, ignore
+      (import.meta.env.PUBLIC_URL && import.meta.env.PUBLIC_URL !== '.') ? import.meta.env.PUBLIC_URL : '' // if PUBLIC_URL is a dot, ignore
     ).replace(/\/?$/, '');
 
     // Load the UMD bundle via script tag instead of letting webpack bundle the ESM version.
