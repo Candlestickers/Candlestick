@@ -100,7 +100,9 @@ export default function initializeDefaultFileHandlers() {
       input.className = "wick-editor-hidden-file-input";
       input.type = 'file';
       input.style.display = 'none';
-      let isIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i);
+      // https://github.com/ruffle-rs/ruffle/pull/14017/
+      let isIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i) ||
+        (navigator.platform === "MacIntel" && typeof navigator.standalone !== "undefined");
       let isAndroid = navigator.userAgent.match(/Android/i);
       // iOS: skip accept entirely (broken for custom extensions)
       // Android: use */* so .wick files are visible
