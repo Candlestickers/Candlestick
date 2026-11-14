@@ -35,6 +35,8 @@ import InspectorImagePreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/InspectorSoundPreview';
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
+import InspectorEaseEditor from './InspectorEaseEditor/InspectorEaseEditor';
+import InspectorEaseLibrary from './InspectorEaseLibrary/InspectorEaseLibrary';
 
 import { Console, Hook, Unhook } from 'console-feed';
 // import { useEffect, useState } from 'react';
@@ -723,7 +725,7 @@ class Inspector extends Component {
       optionLabels.push({label: option, value: option});
     })
     return (
-      <div className="inspector-item">
+      <div className="inspector-item" key={this.props.project.selection.getSelectedObjects()[0].uuid}>
         <InspectorSelector
           tooltip="Easing Type"
           type="select"
@@ -731,6 +733,18 @@ class Inspector extends Component {
           value={this.getSelectionAttribute('easingType')}
           isSearchable={true}
           onChange={(val) => {this.setSelectionAttribute('easingType', val.value)}} />
+          <InspectorEaseEditor
+          tween={this.props.project.selection.getSelectedObjects()[0]}
+          setSelectionAttribute={this.setSelectionAttribute}
+        />
+        <InspectorEaseLibrary
+          project={this.props.project}
+          easeName={this.props.project.selection.easeName}
+          easeCurve={this.props.project.selection.easeCurve}
+          applyEase={this.props.applyEase}
+          saveEase={this.props.saveEase}
+          renameEase={this.props.renameEase}
+          deleteEase={this.props.deleteEase} />
       </div>
     );
   }

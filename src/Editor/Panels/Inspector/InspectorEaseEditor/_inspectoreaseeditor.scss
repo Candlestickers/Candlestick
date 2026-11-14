@@ -1,0 +1,13 @@
+@use 'Editor/_wickbrand.scss' as *;
+
+.inspector-ease-editor-container {
+    --ease-axis-color: #{$editor-modal-text-gray};
+    --ease-label-color: #{$editor-secondary-text};
+    --ease-grid-color: #{rgba($editor-primary-text, 0.15)};
+}
+
+.inspector-ease-editor-container canvas {
+    width: 100%;
+    height: auto;
+    background-color: $editor-tertiary;
+}

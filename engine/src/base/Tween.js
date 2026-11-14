@@ -17,6 +17,8 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+const bezierEases = new WeakMap();
+
 /**
  * Class representing a tween.
  */
@@ -30,7 +32,66 @@ Wick.Tween = class extends Wick.Base {
             'in-exp', 'out-exp', 'in-out-exp',
             'in-circle', 'out-circle', 'in-out-circle',
             'in-back', 'out-back', 'in-out-back',
-            'in-bounce', 'out-bounce', 'in-out-bounce'];
+            'in-bounce', 'out-bounce', 'in-out-bounce', 'custom'];
+    }
+
+    /**
+     * Build an easing function from a bezier path.
+     * @param {object} curve - {points: [{x, y, inX, inY, outX, outY}, ...]}, from (0,0) to (1,1) with x always increasing.
+     * @returns {function} A function that takes the time (0-1) and returns the progress (0-1).
+     */
+    static _buildBezierEase (curve) {
+        var points = curve && curve.points;
+        var valid = Array.isArray(points) && points.length >= 2 && points.every((point, i) => {
+            return point && Number.isFinite(point.x) && Number.isFinite(point.y) && (i === 0 || point.x > points[i - 1].x);
+        });
+        if(!valid) return TWEEN.Easing.Linear.None;
+
+        var clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+        var bezier = (p0, p1, p2, p3, u) => {
+            var v = 1 - u;
+            return v * v * v * p0 + 3 * v * v * u * p1 + 3 * v * u * u * p2 + u * u * u * p3;
+        };
+
+        return function (t) {
+            if(t <= 0) return 0;
+            if(t >= 1) return 1;
+
+            var i = 0;
+            while(i < points.length - 2 && t > points[i + 1].x) i++;
+            var p = points[i], q = points[i + 1];
+
+            // Keeping the handles' x between the two points means x only ever goes up along the segment
+            var x1 = clamp(p.x + (p.outX || 0), p.x, q.x), y1 = p.y + (p.outY || 0);
+            var x2 = clamp(q.x + (q.inX || 0), p.x, q.x), y2 = q.y + (q.inY || 0);
+
+            var low = 0, high = 1, u = t;
+            for(var n = 0; n < 30; n++) {
+                u = (low + high) / 2;
+                if(bezier(p.x, x1, x2, q.x, u) < t) low = u;
+                else high = u;
+            }
+
+            return bezier(p.y, y1, y2, q.y, u);
+        };
+    }
+
+    static _bezierEase (curve) {
+        if(!curve || typeof curve !== 'object') return Wick.Tween._buildBezierEase(curve);
+
+        if(!bezierEases.has(curve)) bezierEases.set(curve, Wick.Tween._buildBezierEase(curve));
+        return bezierEases.get(curve);
+    }
+
+    /**
+     * Copy an ease curve so no two tweens share an object. Anything without a list of points becomes null.
+     * @param {object} curve - The ease curve.
+     * @returns {object|null} A copy of the ease curve or null if invalid.
+     */
+    static _copyEaseCurve (curve) {
+        if(!curve || !Array.isArray(curve.points)) return null;
+        return JSON.parse(JSON.stringify(curve));
     }
 
     static _calculateTimeValue (tweenA, tweenB, playheadPosition) {
@@ -55,6 +116,8 @@ Wick.Tween = class extends Wick.Base {
         this._transformation = args.transformation || new Wick.Transformation();
         this.fullRotations = args.fullRotations === undefined ? 0 : args.fullRotations;
         this.easingType = args.easingType || 'none';
+        this.easeCurve = args.easeCurve || null;
+        this.easeName = args.easeName || null;
 
         this._originalLayerIndex = -1;
     }
@@ -64,17 +127,18 @@ Wick.Tween = class extends Wick.Base {
      * @param {Wick.Tween} tweenA - The first tween
      * @param {Wick.Tween} tweenB - The second tween
      * @param {Number} playheadPosition - The point between the two tweens to use to interpolate
+     * @param {Wick.Tween} target - (Optional) An existing tween to write the result into, instead of creating a new one
      */
-    static interpolate (tweenA, tweenB, playheadPosition) {
-        var interpTween = new Wick.Tween();
+    static interpolate (tweenA, tweenB, playheadPosition, target) {
+        var interpTween = target || new Wick.Tween();
 
-        // Calculate value (0.0-1.0) to pass to tweening function
         var t = Wick.Tween._calculateTimeValue(tweenA, tweenB, playheadPosition);
 
-        // Interpolate every transformation attribute using the t value
+        // The easing is the same for every attribute, so only work it out once
+        var tt = tweenA._getTweenFunction()(t);
+
+        // Interpolate every transformation attribute using the eased t value
         ["x", "y", "scaleX", "scaleY", "rotation", "shear", "opacity"].forEach(propName => {
-            var tweenFn = tweenA._getTweenFunction();
-            var tt = tweenFn(t);
             var valA = tweenA.transformation[propName];
             var valB = tweenB.transformation[propName];
             if(propName === 'rotation') {
@@ -105,6 +169,8 @@ Wick.Tween = class extends Wick.Base {
         data.transformation = this._transformation.values;
         data.fullRotations = this.fullRotations;
         data.easingType = this.easingType;
+        data.easeCurve = Wick.Tween._copyEaseCurve(this.easeCurve);
+        data.easeName = this.easeName;
 
         data.originalLayerIndex = this.layerIndex !== -1 ? this.layerIndex : this._originalLayerIndex;
 
@@ -118,6 +184,8 @@ Wick.Tween = class extends Wick.Base {
         this._transformation = new Wick.Transformation(data.transformation);
         this.fullRotations = data.fullRotations;
         this.easingType = data.easingType;
+        this.easeCurve = Wick.Tween._copyEaseCurve(data.easeCurve);
+        this.easeName = data.easeName || null;
 
         this._originalLayerIndex = data.originalLayerIndex;
     }
@@ -180,7 +248,7 @@ Wick.Tween = class extends Wick.Base {
 
     /**
      * The tween that comes after this tween in the parent frame.
-     * @returns {Wick.Tween}
+     * @returns {Wick.Tween | null}
      */
     getNextTween () {
         if(!this.parentFrame) return null;
@@ -217,8 +285,13 @@ Wick.Tween = class extends Wick.Base {
         return this._originalLayerIndex;
     }
 
-     /* retrieve Tween.js easing functions by name */
+    /**
+     * Retrieve Tween.js easing functions by name.
+     * @returns {Function}
+     */
     _getTweenFunction () {
+        if(this.easingType === 'custom') return Wick.Tween._bezierEase(this.easeCurve);
+
         return {
             'none': TWEEN.Easing.Linear.None,
             'in': TWEEN.Easing.Quadratic.In,

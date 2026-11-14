@@ -549,7 +549,9 @@ Wick.Frame = class extends Wick.Tickable {
         var seekForwardsTween = this.seekTweenInFront(playheadPosition);
 
         if (seekBackwardsTween && seekForwardsTween) {
-           return Wick.Tween.interpolate(seekBackwardsTween, seekForwardsTween, playheadPosition);
+            // This runs every time the playhead moves, so keep reusing one tween for the in-between values
+            this._interpolatedTween = this._interpolatedTween || new Wick.Tween();
+            return Wick.Tween.interpolate(seekBackwardsTween, seekForwardsTween, playheadPosition, this._interpolatedTween);
         } else if (seekForwardsTween) {
             return seekForwardsTween;
         } else if (seekBackwardsTween) {
@@ -673,33 +675,27 @@ Wick.Frame = class extends Wick.Tickable {
     }
 
     /**
-     * Find the first tween on this frame that exists behind the given playhead position.
-     * @returns {Wick.Tween}
+     * Find the closest tween on this frame that exists at or behind the given playhead position.
+     * @returns {Wick.Tween | null}
      */
     seekTweenBehind(playheadPosition) {
-        var seekBackwardsPosition = playheadPosition;
-        var seekBackwardsTween = null;
-        while (seekBackwardsPosition > 0) {
-            seekBackwardsTween = this.getTweenAtPosition(seekBackwardsPosition);
-            seekBackwardsPosition--;
-            if (seekBackwardsTween) break;
-        }
-        return seekBackwardsTween;
+        return this.tweens.reduce((closest, tween) => {
+            var position = tween.playheadPosition;
+            var isCloser = position >= 1 && position <= playheadPosition && (!closest || position > closest.playheadPosition);
+            return isCloser ? tween : closest;
+        }, null);
     }
 
     /**
-     * Find the first tween on this frame that exists past the given playhead position.
-     * @returns {Wick.Tween}
+     * Find the closest tween on this frame that exists at or past the given playhead position.
+     * @returns {Wick.Tween | null}
      */
     seekTweenInFront(playheadPosition) {
-        var seekForwardsPosition = playheadPosition;
-        var seekForwardsTween = null;
-        while (seekForwardsPosition <= this.end) {
-            seekForwardsTween = this.getTweenAtPosition(seekForwardsPosition);
-            seekForwardsPosition++;
-            if (seekForwardsTween) break;
-        }
-        return seekForwardsTween;
+        return this.tweens.reduce((closest, tween) => {
+            var position = tween.playheadPosition;
+            var isCloser = position >= playheadPosition && position <= this.end && (!closest || position < closest.playheadPosition);
+            return isCloser ? tween : closest;
+        }, null);
     }
 
     _onInactive() {

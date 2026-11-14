@@ -9,6 +9,7 @@
     "url": "https://github.com/Candlestickers/Candlestick"
   },
   "dependencies": {
+    "paper":"^0.17.0",
     "@ffmpeg/core": "0.12.9",
     "@ffmpeg/ffmpeg": "^0.12.6",
     "@tauri-apps/api": "^2.9.0",

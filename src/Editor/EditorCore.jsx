@@ -484,6 +484,45 @@ class EditorCore extends Component {
     }
 
     /**
+     * Saves a curve as a named ease on the project, and makes the selected tweens use it. Saving under the name of an
+     * existing ease replaces that ease, and so changes every tween using it. Saving doesn't go in the undo history.
+     * @param {string} name - The name to save the ease under.
+     * @param {object} curve - The curve to save, as {points: [...]}.
+     */
+    saveEase = (name, curve) => {
+        let savedName = this.project.saveEase(name, curve);
+        if (savedName) this.project.selection.applyEase(savedName);
+        this.projectDidChange({ skipHistory: true, actionName: "Save Ease" });
+    }
+
+    /**
+     * Renames a saved ease.
+     * @param {string} name - The current name of the ease.
+     * @param {string} newName - The name to give it.
+     */
+    renameEase = (name, newName) => {
+        if (this.project.renameEase(name, newName)) this.projectDidChange({ skipHistory: true, actionName: "Rename Ease" });
+    }
+
+    /**
+     * Deletes a saved ease. Tweens that used it keep their curve.
+     * @param {string} name - The name of the ease to delete.
+     */
+    deleteEase = (name) => {
+        this.project.deleteEase(name);
+        this.projectDidChange({ skipHistory: true, actionName: "Delete Ease" });
+    }
+
+    /**
+     * Makes the selected tweens use a saved ease. They get its curve, and change with it from then on.
+     * @param {string} name - The name of the saved ease.
+     */
+    applyEase = (name) => {
+        this.project.selection.applyEase(name);
+        this.projectDidChange({ actionName: "Apply Ease: " + name });
+    }
+
+    /**
      * Determines if a given object is selected.
      * @param {object} object - Selection object to check if it is selected
      * @returns {boolean} - True if the object is selected, false otherwise

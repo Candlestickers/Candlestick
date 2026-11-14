@@ -1395,6 +1395,10 @@ class Editor extends EditorCore {
                                                         getAllSoundAssets={this.getAllSoundAssets}
                                                         getAllSelectionAttributes={this.getAllSelectionAttributes}
                                                         setSelectionAttribute={this.setSelectionAttribute}
+                                                        saveEase={this.saveEase}
+                                                        renameEase={this.renameEase}
+                                                        applyEase={this.applyEase}
+                                                        deleteEase={this.deleteEase}
                                                         editorActions={this.actionMapInterface.editorActions}
                                                         selectionIsScriptable={this.selectionIsScriptable}
                                                         script={this.getSelectedObjectScript()}

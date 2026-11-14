@@ -22,7 +22,7 @@ import { useDrop } from 'react-dnd';
 import DragDropTypes from 'Editor/DragDropTypes.js';
 
 import './_canvas.scss';
-import styles from './_canvas.scss';
+//import styles from './_canvas.scss';
 
 class Canvas extends Component {
   constructor (props) {
@@ -63,7 +63,7 @@ class Canvas extends Component {
 
     this.currentAttachedProject = project;
 
-    project.view.canvasBGColor = styles.editorCanvasBorder;
+    project.view.canvasBGColor = '#6A6A6A'//styles.editorCanvasBorder;
     project.view.canvasContainer = this.canvasContainer.current;
     project.view.resize();
 
