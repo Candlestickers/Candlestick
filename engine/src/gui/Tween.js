@@ -32,16 +32,8 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
 
         var ctx = this.ctx;
 
-        var r = Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
-        var _tcw = this.gridCellWidth;
-        var _tG = Wick.GUIElement;
-        if (_tcw <= _tG.GRID_SMALL_CELL_WIDTH)
-            r *= 0.5+0.25 * (_tcw / _tG.GRID_SMALL_CELL_WIDTH);
-        else if (_tcw <= _tG.GRID_NORMAL_CELL_WIDTH)
-            r *= 0.75+0.25 * ((_tcw - _tG.GRID_SMALL_CELL_WIDTH) / (_tG.GRID_NORMAL_CELL_WIDTH - _tG.GRID_SMALL_CELL_WIDTH));
-        else
-            r *= 1.0+0.25 * ((_tcw - _tG.GRID_NORMAL_CELL_WIDTH) / (_tG.GRID_LARGE_CELL_WIDTH - _tG.GRID_NORMAL_CELL_WIDTH));
-        
+        var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.7 + 0.3;
+        var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
 
         // Tween diamond
         ctx.save();
@@ -52,7 +44,7 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
                 ctx.fillStyle = Wick.GUIElement.TWEEN_FILL_COLOR_1;
             }
             ctx.beginPath();
-            ctx.roundRect(-r, -r, r*2, r*2, 3);
+            ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
             ctx.fill();
         ctx.restore();
 
@@ -68,7 +60,7 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
                 ctx.fillStyle = Wick.GUIElement.TWEEN_FILL_COLOR_2;
             }
             ctx.beginPath();
-            ctx.roundRect(-r, -r, r*2, r*2, 3);
+            ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
             ctx.fill();
         ctx.restore();
 
@@ -79,13 +71,13 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
                 ctx.strokeStyle = Wick.GUIElement.SELECTED_ITEM_BORDER_COLOR;
                 ctx.lineWidth = Wick.GUIElement.FRAME_HIGHLIGHT_STROKEWIDTH;
                 ctx.beginPath();
-                ctx.roundRect(-r, -r, r*2, r*2, 3);
+                ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
                 ctx.stroke();
             ctx.restore();
         }
 
         // Tween arrows
-        var linePadding = 18;
+        var linePadding = this.gridCellWidth/4 + 4;
         var nextTween = this.model.getNextTween();
         if(nextTween) {
             // Draw an arrow pointing towards the next tween
