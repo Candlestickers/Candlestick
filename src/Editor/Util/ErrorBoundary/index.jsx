@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
     fallback: () => null
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(_error) {
     return { hasError: true }
   }
 
@@ -36,11 +36,11 @@ class ErrorBoundary extends React.Component {
     if(this.props.processError) {
       this.props.processError(error, errorInfo)
     }
+    console.log('err: ', error, ' info: ', errorInfo.componentStack)
   }
 
   render() {
     if(this.state.hasError) {
-      console.log("error234", this.state.hasError);
       const ErrorComponent = this.props.fallback;
 
       return <ErrorComponent />;
