@@ -15,7 +15,7 @@ Candlestick is a fork of Wick Editor, a free and open-source tool for creating g
 We plan to update our Node packages in the future. Until then, you will need to use Node Version 14 to install the right packages. If using an M-series Mac, this will require installing Rosetta 2.
 
 See the original Wick Editor [README](https://github.com/Wicklets/wick-editor/blob/master/README.md) for older instructions.
-Newer instructions are provided below, with a focus on Mac development. If you're a Windows user, look at [StickmanRed](https://github.com/StickmanRed)'s guide [here](https://github.com/StickmanRed/wick-editor/discussions/40). You should still read these instructions first, though.
+Newer instructions are provided below, with a focus on Mac & Linux development. If you're a Windows user, look at [StickmanRed](https://github.com/StickmanRed)'s guide [here](https://github.com/StickmanRed/wick-editor/discussions/40). You should still read these instructions first, though.
 
 ### 1. Homebrew
 This is optional as you can download things without, but Homebrew is a simple set of command line tools that make the process easier. We recommend downloading it if you haven't already. 
@@ -28,10 +28,15 @@ If nothing returns you can download it with [this command](<https://brew.sh/>)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
+<sup>If your on linux, skip this step.</sup>
+
 ### 2. Node Version Manager
 <sup>(nvm = Node Version Manager)</sup>
 
 nvm is a CLI library that helps you manage the Node versions you have installed on your device. You should be able to [install Node versions directly from online](<https://nodejs.org/en/download>).
+
+<sup>_For Linux, use your distrbution package manager._</sup>
+
 Run a quick nvm check to see if you have it installed—
 ```
 nvm ls
@@ -44,7 +49,7 @@ Or just paste this command into your terminal:
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 ```
-which downloads the nvm code to an nvm directory on your system. Try running `nvm ls` or `nvm --version` afterwards, and if you get nothing from both then go back to [this link](<https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating>) and follow the instructions.
+which downloads the nvm code to an nvm directory on your system. Try running `nvm ls` or `nvm --version` afterwards, and if you get nothing from both then go back to [this link](<https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating>) and follow the instruction
 
 <sup>If you're on Windows, please see [nvm-windows](https://github.com/coreybutler/nvm-windows).</sup>
 
