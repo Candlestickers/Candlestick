@@ -52,6 +52,7 @@ import AssetLibrary from './Panels/AssetLibrary/AssetLibrary';
 import Outliner from './Panels/Outliner/Outliner';
 import OutlinerExpandButton from './Panels/OutlinerExpandButton/OutlinerExpandButton';
 import WickCodeEditor from './PopOuts/WickCodeEditor/WickCodeEditor';
+import ModifiersPanel from './PopOuts/ModifiersPanel/ModifiersPanel';
 
 import EditorWrapper from './EditorWrapper';
 
@@ -164,6 +165,7 @@ class Editor extends EditorCore {
         this.project = null;
         this.paper = null;
         this.editorVersion = version + '';
+        this.modifierKeys = { ctrlKey: false, altKey: false, shiftKey: false };
 
         // GUI state
         this.state = {
@@ -172,6 +174,7 @@ class Editor extends EditorCore {
             activeModalName: window.localStorage.skipWelcomeMessage ? null : "WelcomeMessage",
             activeModalQueue: [],
             codeEditorOpen: false,
+            modifiersPanelOpen: false,
             scriptToEdit: "default",
             showCanvasActions: false,
             showBooleanCanvasActions: false,
@@ -343,6 +346,7 @@ class Editor extends EditorCore {
             ...this.state,
             project: this.project.serialize(),
             codeEditorWindowProperties: this.getDefaultCodeEditorProperties(),
+            modifiersPanelWindowProperties: this.getDefaultModifiersPanelProperties(),
         });
 
         // Leave Page warning.
@@ -568,6 +572,7 @@ class Editor extends EditorCore {
         // reset the code window if we resize the window.
         this.setState({
             codeEditorWindowProperties: this.getDefaultCodeEditorProperties(),
+            modifiersPanelWindowProperties: this.getDefaultModifiersPanelProperties(),
         });
 
         // re-render project to avoid incorrect pan
@@ -588,6 +593,20 @@ class Editor extends EditorCore {
                 consoleOpen: true,
                 fontSize: 16,
                 theme: 'monokai'
+            }
+        );
+    }
+
+    getDefaultModifiersPanelProperties = () => {
+        return (
+            {
+                width: 260,
+                height: 160,
+                x: 0,
+                y: 40,
+                minWidth: 200,
+                minHeight: 125,
+                fontSize: 16,
             }
         );
     }
@@ -654,6 +673,21 @@ class Editor extends EditorCore {
 
         this.setState({
             codeEditorWindowProperties: finalProperties,
+        });
+    }
+
+    /**
+     * Updates the modifiers panel properties in the state.
+     * @param  {object} newProperties object with new modifiers panel properties. Can include width, height, x, y.
+     */
+    updateModifiersPanelWindowProperties = (newProperties) => {
+        let finalProperties = this.state.modifiersPanelWindowProperties;
+        Object.keys(newProperties).forEach(key => {
+            finalProperties[key] = newProperties[key];
+        });
+
+        this.setState({
+            modifiersPanelWindowProperties: finalProperties,
         });
     }
 
@@ -776,6 +810,45 @@ class Editor extends EditorCore {
         this.setState({
             codeEditorOpen: state,
         });
+    }
+
+    /**
+     * Opens and closes the modifiers panel depending on the state of the panel.
+     * @param {boolean} state - Optional. True will open the modifiers panel, false will close.
+     */
+    toggleModifiersPanel = (state) => {
+        if (state === undefined || (typeof state !== "boolean")) {
+            state = !this.state.modifiersPanelOpen;
+        }
+
+        this.setState({
+            modifiersPanelOpen: state,
+        });
+    }
+
+    // Maps our modifier key names to the values paper.js' listens for.
+    static MODIFIER_KEY_DOM_NAMES = { ctrl: 'Control', alt: 'Alt', shift: 'Shift' };
+
+    /**
+     * Toggles a modifier key on or off. Toggled-on keys are applied to every mouse event
+     * dispatched through the editor (see EditorWrapper's onMouseDown), and are also reflected
+     * as real keydown/keyup events so Paper.js tools (which track modifiers via their own
+     * Key module, not the mouse event) pick up the change too.
+     * @param {string} key - The key to toggle. Should be one of 'ctrl', 'alt', or 'shift'.
+     */
+    toggleModifierKey = (key) => {
+        let propName = key.toLowerCase() + 'Key';
+        let isDown = this.modifierKeys[propName] = !this.modifierKeys[propName];
+
+        let domKey = Editor.MODIFIER_KEY_DOM_NAMES[key.toLowerCase()];
+        document.dispatchEvent(new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
+            key: domKey,
+            bubbles: true,
+            cancelable: true,
+            [propName]: isDown,
+        }));
+
+        this.forceUpdate();
     }
 
     /**
@@ -1178,6 +1251,7 @@ class Editor extends EditorCore {
                                 toast={this.toast}
                                 openExportMedia={() => { this.openModal('ExportMedia') }}
                                 openExportOptions={() => { this.openModal('ExportOptions') }}
+                                toggleModifiersPanel={this.toggleModifiersPanel}
                             />
                         </DockedPanel>
                     </div>
@@ -1485,6 +1559,15 @@ class Editor extends EditorCore {
                                 consoleLogs={this.state.consoleLogs}
                                 setConsoleLogs={this.setConsoleLogs}
                                 renderSize={renderSize}
+                            />}
+                        {this.state.modifiersPanelOpen &&
+                            <ModifiersPanel
+                                modifiersPanelWindowProperties={this.state.modifiersPanelWindowProperties}
+                                updateModifiersPanelWindowProperties={this.updateModifiersPanelWindowProperties}
+                                toggleModifiersPanel={this.toggleModifiersPanel}
+                                toggleModifierKey={this.toggleModifierKey}
+                                renderSize={renderSize}
+                                keys={this.modifierKeys}
                             />}
                     </div>
                 </EditorWrapper>
