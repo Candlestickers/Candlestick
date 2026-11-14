@@ -112,6 +112,7 @@ Wick.Frame = class extends Wick.Tickable {
      * @type {Wick.SoundAsset}
      */
     get sound() {
+        if(!this.project) return null;
         var uuid = this._soundAssetUUID;
         return uuid ? this.project.getAssetByUUID(uuid) : null;
     }

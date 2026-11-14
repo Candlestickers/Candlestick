@@ -23,6 +23,9 @@ Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
 
         this._mainFrame = model;
         this._frames = model.project.selection.getSelectedObjects('Frame');
+
+        this.rejectIfOut = false;
+        this.addLayersBelow = true;
     }
 
     draw () {
@@ -56,7 +59,13 @@ Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
             // (this makes it easy to tell where frames will land)
             ctx.save();
             ctx.translate(this.moveCols*this.gridCellWidth, this.moveRows*this.gridCellHeight);
-            if(frame.parentLayer.index + this.moveRows > frame.parentTimeline.layers.length - 1) {
+
+            let destinationLayer = frame.parentLayer.index + this.moveRows;
+            // if rejecting out-of-bounds moves, start of frame cannot go out of bounds
+            // if not, warn when the entire frame moves out of bounds
+            let frameCol = (this.rejectIfOut ? frame.start : frame.end) + this.moveCols;
+
+            if((destinationLayer > frame.parentTimeline.layers.length - 1 && !this.addLayersBelow) || destinationLayer < 0 || frameCol < 1) {
                 ctx.fillStyle = Wick.GUIElement.FRAME_GHOST_NOT_ALLOWED_COLOR
                 ctx.strokeStyle = '#ff0000';
             } else {
@@ -76,26 +85,61 @@ Wick.GUIElement.FrameGhost = class extends Wick.GUIElement.Ghost {
 
     finish () {
         var timeline = this.model.parentTimeline;
-        timeline.playheadPosition += this.moveCols;
+        var selection = this.model.project.selection; // this.model might be removed from project if moved to a nonexistent layer, so save the selection now
         timeline.deferFrameGapResolve();
 
-        // Remove all frames, then re-add them in their new places
-        this._frames.forEach(frame => {
-            frame._originalLayerIndex = frame.parentLayer.index;
-            frame.remove();
-        });
-        this._frames.forEach(frame => {
-            frame.start += this.moveCols;
-            frame.end += this.moveCols;
-        });
-        this._frames.forEach(frame => {
-            var layer = timeline.layers[frame._originalLayerIndex + this.moveRows];
-            delete frame._originalLayerIndex;
-            if(layer) {
-                layer.addFrame(frame);
-            }
-        });
+        // if any frame goes out-of-bounds, movement may be rejected
+        let reject = false;
+        if(this.rejectIfOut) {
+            this._frames.forEach(frame => {
+                let destinationLayer = frame.parentLayer.index + this.moveRows;
+                // reject if frame goes out of bounds (except if adding layers below is allowed and the frame goes below)
+                if((destinationLayer >= timeline.layers.length && !this.addLayersBelow) || destinationLayer < 0 || frame.start + this.moveCols < 1)
+                    reject = true;
+            });
+        }
 
-        timeline.resolveFrameGaps(this._frames);
+        if(!reject) {
+            // Remove all frames
+            this._frames.forEach(frame => {
+                frame._originalLayerIndex = frame.parentLayer.index;
+                frame.remove();
+                frame.start += this.moveCols;
+                frame.end += this.moveCols;
+            });
+
+            // Add frames to new destinations
+            let relocated = false;
+            this._frames.forEach(frame => {
+                // frame is fully to the left of the timeline: ignore
+                if(frame.end <= 0) {
+                    selection.deselect(frame);
+                } else {
+                    // add layers if necessary/allowed
+                    if(this.addLayersBelow && frame._originalLayerIndex + this.moveRows > 0) {
+                        while(timeline.layers.length < frame._originalLayerIndex + this.moveRows + 1) {
+                            timeline.addLayer(new Wick.Layer());
+                        }
+                    }
+
+                    var layer = timeline.layers[frame._originalLayerIndex + this.moveRows];
+                    delete frame._originalLayerIndex;
+
+                    // add frame if layer is there
+                    if(layer) {
+                        layer.addFrame(frame);
+                        relocated = true;
+                    } else {
+                        selection.deselect(frame);
+                    }
+                }
+            });
+
+            // only move playhead if at least one frame actually moved (and wasn't deleted out of bounds)
+            if(relocated) {
+                timeline.playheadPosition += this.moveCols;
+            }
+            timeline.resolveFrameGaps(this._frames);
+        }
     }
 }
