@@ -2,33 +2,32 @@
 WickSound = class {
 	constructor(assetName) {
 		this.asset = project.project.getAssetByName(assetName);
-		this._pan         = 0;
-		this._volume      = 1;
-		this._seek        = 0;
-		this._loop        = false;
-		this._loopRange   = {low:0, high:this.duration()};
-		this._playIntro   = false;
+		this._pan                = 0;
+		this._volume             = 1;
+		this._seek               = 0;
+		this._loop               = false;
+		this._loopRange          = {low: 0, high: this.duration()};
+		this._playIntro          = false;
 		this._hasCustomLoopRange = false;
-		this._muteVolume  = 1;
+		this._muteVolume         = 1;
 	}
 
 	// set a custom loop range, if low and high are the same as the sound duration
 	setLoopRange(low, high) {
 		if(low < 0) low = 0;
-		if(high>this.duration()) high = this.duration();
-		if(high<=low) {
+		if(high > this.duration()) high = this.duration();
+		if(high <= low) {
 			low = 0;
 			high = this.duration();
 		}
 
-		if(low == 0 && high == this.duration()) {
+		if(low == 0 && Math.abs(high - this.duration()) < 1e-4) {
 			this._hasCustomLoopRange = false;
-			return;
-		} 
-
-		// if the sound is playing and we are setting loop to true,
-		this._hasCustomLoopRange = true;
-		this._loopRange = {low:low, high:high};
+			this._loopRange = {low:0, high:this.duration()};
+		} else {
+			this._hasCustomLoopRange = true;
+			this._loopRange = {low:low, high:high};
+		}
 	}
 
 	playIntro(playIntro) {
@@ -39,7 +38,7 @@ WickSound = class {
 
 	// set sound to loop or not, returns is its looping when no argument is passed.
 	loop(loop) {
-		if(loop === null || loop === undefined) return (this._loop);
+		if(loop === null || loop === undefined) return this._loop;
 
 		this._loop = loop;
 
@@ -56,7 +55,7 @@ WickSound = class {
 		}
 	}
 
-	// helper for custom looping
+	// helper for looping
 	// returns a seek position if a loop should occur, or nothing otherwise
 	_getLoopPosition() {
 		let curr = this.seek();
@@ -77,12 +76,10 @@ WickSound = class {
 
 	// Method for volume control, volume = 1 is the default sound volume. 
 	volume(volume) {
-		if(volume === null || volume === undefined){
-			return this._volume;
-		}
+		if(volume === null || volume === undefined) return this._volume;
 
 		this._volume  = volume;
-		if(this._volume<0) {
+		if(this._volume < 0) {
 			this._volume = 0;
 		}else if(this._volume>1) {
 			this._volume = 1;
@@ -91,46 +88,37 @@ WickSound = class {
 	}
 
 	// Method for rate control, rate = 1 is the default sound rate.
-	// rate can go from 0.1 to 4
 	rate(rate) {
-		if(rate === null || rate === undefined){
-			return this.asset._howl.rate();
-		}
+		if(rate === null || rate === undefined) return this.asset._howl.rate();
 
-		if(rate<=0.01)   rate = 0.01;
-		else if(rate>10) rate = 10;
-		
+		if(rate < 0) rate = 0;
 		this.asset._howl.rate(rate);
 	}
 
 	// Method for panning pan = -1 all left, pan = 1 all right...
 	stereo(pan) {
-		if(pan === null || pan === undefined){
-			return this._pan;
-		}
+		if(pan === null || pan === undefined) return this._pan;
 
 		this._pan = pan;
-		if(this._pan<-1)     this._pan = -1;
-		else if(this._pan>1) this._pan = 1;
+		if(this._pan < -1)     this._pan = -1;
+		else if(this._pan > 1) this._pan = 1;
 		
 		this.asset._howl.stereo(this._pan);
 	}
 
 	// seek sound in seconds from 0 to sound duration
 	seek(seconds) {
-		if(seconds === null || seconds === undefined) {
-			return this.asset._howl.seek();
-		}
+		if(seconds === null || seconds === undefined) return this.asset._howl.seek();
 
 		this._seek = seconds;
-		if(this._seek >this.duration()) this._seek = this.duration();
-		else if(this._seek<0)           this._seek = 0;
+		if(this._seek > this.duration()) this._seek = this.duration();
+		else if(this._seek < 0)          this._seek = 0;
 		
 		this.asset._howl.seek(this._seek);
 	}
 
 	// returns the internal Howl object
-	getHowl(){
+	getHowl() {
 		return this.asset._howl;
 	}
 
@@ -172,7 +160,7 @@ WickSound = class {
 		this.seek(0);
 	}
 
-	// It pause the sound
+	// pause the sound
 	pause() {
 		this.asset._howl.pause();
 		this._seek = this.currently();
