@@ -48,6 +48,7 @@ import InspectorBrush from './InspectorBrush/InspectorBrush';
 import { drawBrushPreview } from './InspectorBrush/InspectorBrushPreview';
 import InspectorBrushTileDeleteBadge from './InspectorBrush/InspectorBrushTileDeleteBadge';
 import InspectorBrushShapePicker from './InspectorBrush/InspectorBrushShapePicker';
+import InspectorBrushList from './InspectorBrush/InspectorBrushList';
 // import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
@@ -1341,110 +1342,6 @@ class Inspector extends Component {
     this.props.setToolSetting('brushShape', id);
   }
 
-  renderBrushList = () => {
-    const { savedBrushes, selectedBrushIndex, customShapes } = this.state;
-    const shapeMap = {};
-    BRUSH_SHAPES.forEach(s => { shapeMap[s.id] = s; });
-    customShapes.forEach(cs => {
-      shapeMap[cs.id] = { id: cs.id, name: cs.name,
-        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g> };
-    });
-
-    return (
-      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
-            {savedBrushes.map((brush, i) => {
-              const active = selectedBrushIndex === i;
-              const shape = shapeMap[brush.shape] || shapeMap['circle'];
-              const tipId = `brush-tip-${i}`;
-              return (
-                <div
-                  key={i}
-                  id={tipId}
-                  data-tip
-                  data-for={tipId}
-                  onClick={() => {
-                    this.setState({ selectedBrushIndex: i, isEditingBrush: false });
-                    this.applyBrush(brush);
-                    localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
-                  }}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    padding: '6px 2px',
-                    borderRadius: '5px',
-                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
-                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
-                  }}>
-                  <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
-                    <span>{brush.name || 'Brush'}</span>
-                  </ReactTooltip>
-                  {active && savedBrushes.length > 1 && <InspectorBrushTileDeleteBadge onDelete={this.deleteSelectedBrush}/>}
-                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
-                    <g fill="white">{shape.svg}</g>
-                  </svg>
-                </div>
-              );
-            })}
-            {/* "+" add new brush cell */}
-            <div
-              id="brush-tip-new"
-              data-tip
-              data-for="brush-tip-new"
-              onClick={this.toggleNewBrushMenu}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                padding: '6px 2px',
-                borderRadius: '5px',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px dashed rgba(255,255,255,0.2)',
-                fontSize: '18px',
-                color: 'rgba(255,255,255,0.4)',
-                lineHeight: 1,
-              }}>
-              {/* <ReactTooltip id="brush-tip-new" type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
-                <span>New Brush</span>
-              </ReactTooltip> */}
-              +
-              <PopupMenu
-                isOpen={this.state.showNewBrushMenu}
-                toggle={this.closeNewBrushMenu}
-                target="brush-tip-new"
-                className="more-canvas-actions-popover">
-                <div className="brush-modes-widget">
-                  <div className='actions-container'>
-                    <ToolSettingsInput
-                      name='Create'
-                      icon='add'
-                      type='checkbox'
-                      value={false}
-                      onChange={this.startNewBrush}
-                    />
-                    <ToolSettingsInput
-                      name='Import'
-                      icon='upload'
-                      type='checkbox'
-                      value={false}
-                      onChange={() => { this.importBrush(); this.closeNewBrushMenu(); }}
-                    />
-                  </div>
-                </div>
-              </PopupMenu>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   renderBrushSettings = () => {
     let brushModeIcon = 'brushmodenone';
     let brushMode = this.props.getToolSetting('brushMode');
@@ -1455,16 +1352,12 @@ class Inspector extends Component {
     const { isEditingBrush, selectedBrushIndex } = this.state;
     const canEdit = selectedBrushIndex !== null || isEditingBrush;
 
-    const getAvailableDefaultShapes = () => {
-      return BRUSH_SHAPES.filter(s => !this.state.removedShapes.includes(s.id));
-    }
-    const getSvgCustomShapes = () => {
-      return this.state.customShapes.map(cs => ({
-        id: cs.id,
-        name: cs.name,
-        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
-      }));
-    }
+    const availableDefaultShapes = BRUSH_SHAPES.filter(s => !this.state.removedShapes.includes(s.id));
+    const svgCustomShapes = this.state.customShapes.map(cs => ({
+      id: cs.id,
+      name: cs.name,
+      svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
+    }));
 
     return (
       <div>
@@ -1496,7 +1389,25 @@ class Inspector extends Component {
         </div>
         {/* Saved brush list */}
         {/* Brush list — hidden while editing */}
-        {!isEditingBrush && this.renderBrushList()}
+        {!isEditingBrush && (
+          <InspectorBrushList
+            savedBrushes={this.state.savedBrushes}
+            selectedBrushIndex={this.state.selectedBrushIndex}
+            defaultShapes={BRUSH_SHAPES}
+            svgCustomShapes={svgCustomShapes}
+            selectBrush={(brush, i) => {
+              this.setState({ selectedBrushIndex: i, isEditingBrush: false });
+              this.applyBrush(brush);
+              localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
+            }}
+            deleteSelectedBrush={this.deleteSelectedBrush}
+            showNewBrushMenu={this.state.showNewBrushMenu}
+            toggleNewBrushMenu={this.toggleNewBrushMenu}
+            closeNewBrushMenu={this.closeNewBrushMenu}
+            startNewBrush={this.startNewBrush}
+            importBrush={this.importBrush}
+          />
+        )}
         {/* Sliders always visible */}
         <div className="inspector-item">
           {!isEditingBrush && (<>
@@ -1578,8 +1489,8 @@ class Inspector extends Component {
           <InspectorBrushShapePicker
             currentShape={this.props.getToolSetting('brushShape')}
             setShape={shape => this.props.setToolSetting('brushShape', shape)}
-            getAvailableDefaultShapes={getAvailableDefaultShapes}
-            getSvgCustomShapes={getSvgCustomShapes}
+            availableDefaultShapes={availableDefaultShapes}
+            svgCustomShapes={svgCustomShapes}
             deleteSelectedShape={this.deleteSelectedShape}
           />
         )}

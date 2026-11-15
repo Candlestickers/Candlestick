@@ -1,11 +1,11 @@
 import InspectorBrushTileDeleteBadge from "./InspectorBrushTileDeleteBadge";
 
 export default function InspectorBrushShapePicker (
-  { currentShape, setShape, getAvailableDefaultShapes, getSvgCustomShapes, deleteSelectedShape }
+  { currentShape, setShape, availableDefaultShapes, svgCustomShapes, deleteSelectedShape }
 ) {
   const allShapes = [
-    ...getAvailableDefaultShapes(),
-    ...getSvgCustomShapes(),
+    ...availableDefaultShapes,
+    ...svgCustomShapes,
   ];
   return (
     <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
