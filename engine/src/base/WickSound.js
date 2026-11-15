@@ -7,6 +7,7 @@ WickSound = class {
 		this._seek        = 0;
 		this._loop        = false;
 		this._loopRange   = {low:0, high:this.duration()};
+		this._playIntro   = false;
 		this._hasCustomLoopRange = false;
 		this._muteVolume  = 1;
 	}
@@ -30,6 +31,12 @@ WickSound = class {
 		this._loopRange = {low:low, high:high};
 	}
 
+	playIntro(playIntro) {
+		if(playIntro === null || playIntro === undefined) return this._playIntro;
+
+		this._playIntro = playIntro;
+	}
+
 	// set sound to loop or not, returns is its looping when no argument is passed.
 	loop(loop) {
 		if(loop === null || loop === undefined) return (this._loop);
@@ -43,13 +50,28 @@ WickSound = class {
 
 	// required only to update the loop when using custom loop range
 	updateLoop() {
-		if(this._loop && this._hasCustomLoopRange) {
-			if(this.isPlaying()) {
-				let curr = this.currently();
-				if (curr < this._loopRange.low || curr > this._loopRange.high) {
-					this.seek(this._loopRange.low);
-				}
-			}
+		if(this._loop && this._hasCustomLoopRange && this.isPlaying()) {
+			let loopPos = this._getLoopPosition();
+			if(loopPos) this.seek(loopPos);
+		}
+	}
+
+	// helper for custom looping
+	// returns a seek position if a loop should occur, or nothing otherwise
+	_getLoopPosition() {
+		let curr = this.seek();
+
+		if(!this._playIntro && (curr < this._loopRange.low)) { // audio position before start (intro), and intro is disabled
+			return this._loopRange.low;
+		} else if (curr > this._loopRange.high) { // audio position after end
+			// loop end is at the end of the audio: basic loop
+			if(Math.abs(this._loopRange.high - this.duration()) < 1e-4) return this._loopRange.low;
+
+			// custom loop: subtract loop duration for more seamless looping than just setting to the start
+			let loopPos = curr - (this._loopRange.high - this._loopRange.low);
+			if(loopPos > this._loopRange.high) { // audio position was more than one loop duration ahead, fall back to looping at the start
+				return this._loopRange.low;
+			} else return loopPos;
 		}
 	}
 
@@ -113,12 +135,17 @@ WickSound = class {
 	}
 
 	// play sound at specified second.  If no argument is 
-	// passed, it will start at the beging.  If the current
+	// passed, it will start at the beginning.  If the current
 	// sound is in pause, it will resume the sound from where
 	// it was before the pause.
 	play(seconds=this.seek()) {
 		if(!this.isPlaying()) {
 			this.seek(seconds);
+			// calculate loop before starting to play
+			if(this.loop()) {
+				let loopPos = this._getLoopPosition();
+				if(loopPos) this.seek(loopPos);
+			}
 			this.asset._howl.play();
 		}
 	}
