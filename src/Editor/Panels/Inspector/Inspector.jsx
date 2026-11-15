@@ -46,6 +46,8 @@ import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 import { Console, Hook, Unhook } from 'console-feed';
 import InspectorBrush from './InspectorBrush/InspectorBrush';
 import { drawBrushPreview } from './InspectorBrush/InspectorBrushPreview';
+import InspectorBrushTileDeleteBadge from './InspectorBrush/InspectorBrushTileDeleteBadge';
+import InspectorBrushShapePicker from './InspectorBrush/InspectorBrushShapePicker';
 // import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
@@ -1178,35 +1180,6 @@ class Inspector extends Component {
     URL.revokeObjectURL(url);
   }
 
-  renderTileDeleteBadge = (onDelete) => {
-    return (
-      <div
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        title="Delete"
-        style={{
-          position: 'absolute',
-          top: '-5px',
-          left: '-5px',
-          width: '14px',
-          height: '14px',
-          borderRadius: '100%',
-          background: '#4a4a4a',
-          border: '1px solid rgba(255,255,255,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '10px',
-          lineHeight: 1,
-          color: 'white',
-          cursor: 'pointer',
-          zIndex: 2,
-        }}> 
-        {/* draing the X symbol for deleting brush preset/ shape :P -H.A. */}
-        &times;
-      </div>
-    );
-  }
-
   deleteSelectedShape = () => {
     const shape = this.props.getToolSetting('brushShape');
     if (!shape) return;
@@ -1410,7 +1383,7 @@ class Inspector extends Component {
                   <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
                     <span>{brush.name || 'Brush'}</span>
                   </ReactTooltip>
-                  {active && savedBrushes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedBrush)}
+                  {active && savedBrushes.length > 1 && <InspectorBrushTileDeleteBadge onDelete={this.deleteSelectedBrush}/>}
                   <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
                     <g fill="white">{shape.svg}</g>
                   </svg>
@@ -1472,52 +1445,6 @@ class Inspector extends Component {
     );
   }
 
-  renderBrushShapePicker = () => {
-    const currentShape = this.props.getToolSetting('brushShape');
-    const { customShapes, removedShapes } = this.state;
-    const allShapes = [
-      ...BRUSH_SHAPES.filter(s => !removedShapes.includes(s.id)),
-      ...customShapes.map(cs => ({
-        id: cs.id,
-        name: cs.name,
-        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
-      })),
-    ];
-    return (
-      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
-            {allShapes.map(shape => {
-              const active = currentShape === shape.id;
-              return (
-                <div
-                  key={shape.id}
-                  onClick={() => this.props.setToolSetting('brushShape', shape.id)}
-                  title={shape.name}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    padding: '6px 2px',
-                    borderRadius: '5px',
-                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
-                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
-                  }}>
-                  {active && allShapes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedShape)}
-                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
-                    <g fill="white">{shape.svg}</g>
-                  </svg>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   renderBrushSettings = () => {
     let brushModeIcon = 'brushmodenone';
     let brushMode = this.props.getToolSetting('brushMode');
@@ -1527,6 +1454,17 @@ class Inspector extends Component {
 
     const { isEditingBrush, selectedBrushIndex } = this.state;
     const canEdit = selectedBrushIndex !== null || isEditingBrush;
+
+    const getAvailableDefaultShapes = () => {
+      return BRUSH_SHAPES.filter(s => !this.state.removedShapes.includes(s.id));
+    }
+    const getSvgCustomShapes = () => {
+      return this.state.customShapes.map(cs => ({
+        id: cs.id,
+        name: cs.name,
+        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
+      }));
+    }
 
     return (
       <div>
@@ -1636,7 +1574,15 @@ class Inspector extends Component {
           </div>
         )}
         {/* Edit-only: shape picker */}
-        {isEditingBrush && this.renderBrushShapePicker()}
+        {isEditingBrush && (
+          <InspectorBrushShapePicker
+            currentShape={this.props.getToolSetting('brushShape')}
+            setShape={shape => this.props.setToolSetting('brushShape', shape)}
+            getAvailableDefaultShapes={getAvailableDefaultShapes}
+            getSvgCustomShapes={getSvgCustomShapes}
+            deleteSelectedShape={this.deleteSelectedShape}
+          />
+        )}
         {/* Toggles — browse mode only (edit mode has nothing to show here) */}
         {!isEditingBrush && (
           <div className='settings-input-container' style={{ marginTop: '8px' }}>
