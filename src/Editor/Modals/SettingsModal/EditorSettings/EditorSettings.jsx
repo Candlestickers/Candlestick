@@ -59,6 +59,10 @@ class EditorSettings extends Component {
       { label: 'Device & Wick Clipboard', value: 'device' },
     ];
 
+    const FRAME_SIZE_ICON_W = 16;
+    const frameSizeIconLeft = (width) => // % of the way from xsmall to large width
+      `calc(${((width - window.Wick.GUIElement.FRAME_XSMALL_W) / (window.Wick.GUIElement.FRAME_LARGE_W - window.Wick.GUIElement.FRAME_XSMALL_W)) * 100}% - ${FRAME_SIZE_ICON_W/2}px)`;
+
     return (
       <div className="editor-settings-modal-body">
         <div className="editor-settings-group">
@@ -164,11 +168,10 @@ class EditorSettings extends Component {
                 }
               }}
             />
-            {/* icons pinned at their proportional track positions: small=50/150=33%, normal=100/150=67%, large=150/150=100% */}
-            <div style={{ position: 'relative', height: '20px', marginTop: '2px' }}>
-              <img alt="Small"  src={iconFramesSmall}  style={{ position: 'absolute', left: 'calc(33.3% - 8px)',  height: '16px', opacity: 0.6 }} />
-              <img alt="Normal" src={iconFramesNormal} style={{ position: 'absolute', left: 'calc(66.7% - 8px)',  height: '16px', opacity: 0.6 }} />
-              <img alt="Large"  src={iconFramesLarge}  style={{ position: 'absolute', left: 'calc(100% - 16px)', height: '16px', opacity: 0.6 }} />
+            <div style={{ position: 'relative', left: `${FRAME_SIZE_ICON_W/2}px`, width: `calc(100% - ${FRAME_SIZE_ICON_W}px)`, height: '20px', marginTop: '2px' }}>
+              <img alt="Small"  src={iconFramesSmall}  style={{ position: 'absolute', left: frameSizeIconLeft(window.Wick.GUIElement.FRAME_SMALL_W),  height: `${FRAME_SIZE_ICON_W}px`, opacity: 0.6 }} />
+              <img alt="Normal" src={iconFramesNormal} style={{ position: 'absolute', left: frameSizeIconLeft(window.Wick.GUIElement.FRAME_NORMAL_W), height: `${FRAME_SIZE_ICON_W}px`, opacity: 0.6 }} />
+              <img alt="Large"  src={iconFramesLarge}  style={{ position: 'absolute', left: frameSizeIconLeft(window.Wick.GUIElement.FRAME_LARGE_W),  height: `${FRAME_SIZE_ICON_W}px`, opacity: 0.6 }} />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
