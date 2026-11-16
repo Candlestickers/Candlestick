@@ -67,7 +67,7 @@ class Timeline extends Component {
 
     if (window.Wick && window.Wick.GUIElement) {
       let G = window.Wick.GUIElement;
-      let value = localStorage.getItem('wickEditorFrameSizeValue'); if(!value) return;
+      let value = localStorage.getItem('wickEditorFrameSizeValue') || G.FRAME_NORMAL_W;
       value = parseInt(value) + step;
       
       let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));

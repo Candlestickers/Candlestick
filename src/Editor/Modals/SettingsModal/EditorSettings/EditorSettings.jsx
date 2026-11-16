@@ -39,9 +39,10 @@ class EditorSettings extends Component {
       frameSizeValue: (() => {
         const stored = localStorage.getItem('wickEditorFrameSizeValue');
         if (stored !== null) return parseInt(stored);
-        // migrate old string value (scale: 0=xsmall, 50=small, 100=normal, 150=large)
+        // migrate old string value
+        // if neither frameSizeValue nor frameSizeMode exist, falls back to normal frame width
         const legacy = localStorage.getItem('wickEditorFrameSizeMode');
-        return legacy === 'small' ? window.Wick.GUIElement.FRAME_SMALL_W : legacy === 'normal' ? window.Wick.GUIElement.FRAME_NORMAL_W : window.Wick.GUIElement.FRAME_LARGE_W;
+        return legacy === 'small' ? window.Wick.GUIElement.FRAME_SMALL_W : legacy === 'large' ? window.Wick.GUIElement.FRAME_LARGE_W : window.Wick.GUIElement.FRAME_NORMAL_W;
       })(),
       fillGapsMethod: localStorage.getItem('wickEditorFillGapsMethod') || 'auto_extend',
     }

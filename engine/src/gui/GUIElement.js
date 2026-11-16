@@ -227,7 +227,7 @@ if(isTablet) {
 const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
 if (_savedFrameSizeValue !== null) {
     let G = Wick.GUIElement;
-    let value = parseInt(_savedFrameSizeValue); if(!value) value = G.FRAME_NORMAL_W;
+    let value = parseInt(_savedFrameSizeValue) || G.FRAME_NORMAL_W;
     
     let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));
     let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
