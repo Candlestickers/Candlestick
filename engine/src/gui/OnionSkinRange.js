@@ -39,10 +39,10 @@ Wick.GUIElement.OnionSkinRange = class extends Wick.GUIElement {
 
         // Calculate positions of the handle
         var seek = this.direction === 'right' ? this.model.project.onionSkinSeekForwards : this.model.project.onionSkinSeekBackwards;
-        var width = Math.max((seek-0.25) * this.gridCellWidth, this.gridCellWidth/2);
+        var width = Math.max((seek-0.15) * this.gridCellWidth, this.gridCellWidth/2);
         var margin = Wick.GUIElement.PLAYHEAD_MARGIN * 2;
-        if (this.gridCellWidth < Wick.GUIElement.FRAME_SMALL_W)
-            margin *= (this.gridCellWidth - Wick.GUIElement.FRAME_XSMALL_W) / (Wick.GUIElement.FRAME_SMALL_W - Wick.GUIElement.FRAME_XSMALL_W);
+        if (this.gridCellWidth < Wick.GUIElement.FRAME_NORMAL_W)
+            margin *= (this.gridCellWidth - Wick.GUIElement.FRAME_XSMALL_W) / (Wick.GUIElement.FRAME_NORMAL_W - Wick.GUIElement.FRAME_XSMALL_W);
         var edgeWidth = this.gridCellWidth - margin;
         var height = Wick.GUIElement.NUMBER_LINE_HEIGHT * 0.9;
 
