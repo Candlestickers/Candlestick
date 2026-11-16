@@ -17,8 +17,6 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const SIMPLIFY_FRAME_THRESHOLD = 16;
-
 Wick.GUIElement.Frame = class extends Wick.GUIElement {
     constructor (model) {
         super(model);
@@ -117,8 +115,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             ctx.restore();
         }
 
-        var _hideDot = this.model.identifier // avoid overlapping name label
-                   || (Wick.GUIElement.gridCellWidth <= SIMPLIFY_FRAME_THRESHOLD && !this.model.contentful); // at xsmall, only hide empty-frame dots
+        var _hideDot = Wick.GUIElement.gridCellWidth <= Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD && !this.model.contentful; // at xsmall, only hide empty-frame dots
         if(this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
             // Frame contentful dot
 
@@ -126,9 +123,9 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             if(this.model.contentful) {
                 ctx.strokeStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
             } else {
-                ctx.strokeStyle = '#aaa';
+                ctx.strokeStyle = Wick.GUIElement.FRAME_UNCONTENTFUL_DOT_COLOR;
             }
-            ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
+            ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH * _dotScale;
 
             var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
 
@@ -231,7 +228,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         var _hcw = this.gridCellWidth;
         var _hG = Wick.GUIElement;
         // At very small cell widths, disable edge resize for unselected frames
-        if (_hcw <= SIMPLIFY_FRAME_THRESHOLD && !this.model.isSelected) return null;
+        if (_hcw <= Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD && !this.model.isSelected) return null;
         var _hScale = Math.min(1, _hcw / _hG.FRAME_NORMAL_W);
         var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
 

@@ -204,6 +204,7 @@ Wick.GUIElement = class {
 
 Wick.GUIElement.IS_MOBILE = window.innerWidth < 600;
 
+Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD = 16;
 Wick.GUIElement.FRAME_XSMALL_W = 12;
 Wick.GUIElement.FRAME_XSMALL_H = 30;
 Wick.GUIElement.FRAME_SMALL_W = 22;
@@ -293,6 +294,7 @@ Wick.GUIElement.FRAME_BORDER_RADIUS = 5;
 Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS = 7;
 Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH = 3;
 Wick.GUIElement.FRAME_CONTENT_DOT_COLOR = '#1EE29A';
+Wick.GUIElement.FRAME_UNCONTENTFUL_DOT_COLOR = "#AAA";
 Wick.GUIElement.FRAME_MARGIN = 0.5;
 Wick.GUIElement.FRAME_DROP_SHADOW_DEPTH = 2; // Number of pixels to shift drop shadow below frame.
 Wick.GUIElement.FRAME_DROP_SHADOW_FILL = 'rgba(0,0,0,1)';
