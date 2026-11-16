@@ -63,18 +63,23 @@ class Timeline extends Component {
   }
 
   _onFrameSizeScroll = (e) => {
-    if(!window.Wick) return; const G = window.Wick.GUIElement; if(!G) return;
-    const step = e.detail.delta > 0 ? 1 : -1;
-    
-    const current = parseInt(localStorage.getItem('wickEditorFrameSizeValue') || G.FRAME_NORMAL_W);
-    let w = Math.max(G.FRAME_XSMALL_W, Math.min(current + step, G.FRAME_LARGE_W));
-    localStorage.setItem('wickEditorFrameSizeValue', w);
-    let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
-    let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
-    h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
-    
-    G.gridCellWidth = w;
-    G.gridCellHeight = h;
+    let step = e.detail.delta > 0 ? 1 : -1;
+
+    if (window.Wick && window.Wick.GUIElement) {
+      let G = window.Wick.GUIElement;
+      let value = localStorage.getItem('wickEditorFrameSizeValue'); if(!value) return;
+      value = parseInt(value) + step;
+      
+      let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));
+      let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
+      let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
+      h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
+
+      G.gridCellWidth = w;
+      G.gridCellHeight = h;
+
+      localStorage.setItem('wickEditorFrameSizeValue', w);
+    }
     
     this.props.project.guiElement.draw();
   }

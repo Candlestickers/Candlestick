@@ -226,15 +226,14 @@ if(isTablet) {
 // Restore saved frame size preference (overrides tablet/desktop default)
 const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
 if (_savedFrameSizeValue !== null) {
-    const G = Wick.GUIElement;
-    const stored = parseInt(_savedFrameSizeValue);
+    let G = Wick.GUIElement;
+    let value = parseInt(_savedFrameSizeValue); if(!value) value = G.FRAME_NORMAL_W;
     
-    let w = Math.max(G.FRAME_XSMALL_W, Math.min(stored, G.FRAME_LARGE_W));
-    localStorage.setItem('wickEditorFrameSizeValue', w);
+    let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));
     let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
     let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
     h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
-    
+
     G.gridCellWidth = w;
     G.gridCellHeight = h;
 } else {

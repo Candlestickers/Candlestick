@@ -523,11 +523,10 @@ class Editor extends EditorCore {
     resetEditorForLoad = () => {
         // Re-apply saved frame size so HIDE_CONTENT_DOTS and cell dims are correct after every project load
         if (window.Wick && window.Wick.GUIElement) {
-            if(!window.Wick) return; const G = window.Wick.GUIElement; if(!G) return;
-
-            const stored = localStorage.getItem('wickEditorFrameSizeValue'); if(!stored) return;
+            let G = window.Wick.GUIElement;
+            let value = localStorage.getItem('wickEditorFrameSizeValue'); if(!value) return;
             
-            let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(stored), G.FRAME_LARGE_W));
+            let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(value), G.FRAME_LARGE_W));
             let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
             let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
             h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));

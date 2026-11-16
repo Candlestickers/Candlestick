@@ -41,7 +41,7 @@ class EditorSettings extends Component {
         if (stored !== null) return parseInt(stored);
         // migrate old string value (scale: 0=xsmall, 50=small, 100=normal, 150=large)
         const legacy = localStorage.getItem('wickEditorFrameSizeMode');
-        return legacy === 'small' ? 50 : legacy === 'large' ? 150 : 100;
+        return legacy === 'small' ? window.Wick.GUIElement.FRAME_SMALL_W : legacy === 'normal' ? window.Wick.GUIElement.FRAME_NORMAL_W : window.Wick.GUIElement.FRAME_LARGE_W;
       })(),
       fillGapsMethod: localStorage.getItem('wickEditorFillGapsMethod') || 'auto_extend',
     }
@@ -132,8 +132,8 @@ class EditorSettings extends Component {
           <label className="editor-settings-group-title">Timeline</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <img alt="" src={
-              this.state.frameSizeValue >= 125 ? iconFramesLarge :
-              this.state.frameSizeValue >= 75  ? iconFramesNormal :
+              this.state.frameSizeValue >= (window.Wick.GUIElement.FRAME_NORMAL_W+window.Wick.GUIElement.FRAME_LARGE_W)/2 ? iconFramesLarge :
+              this.state.frameSizeValue >= (window.Wick.GUIElement.FRAME_SMALL_W+window.Wick.GUIElement.FRAME_NORMAL_W)/2 ? iconFramesNormal :
               iconFramesSmall
             } style={{ height: '18px' }}/>
             Frame Size:
@@ -141,37 +141,26 @@ class EditorSettings extends Component {
           <div style={{ padding: '4px 2px 0' }}>
             <input
               type="range"
-              min="0"
-              max="150"
+              min={window.Wick.GUIElement.FRAME_XSMALL_W}
+              max={window.Wick.GUIElement.FRAME_LARGE_W}
               step="1"
               value={this.state.frameSizeValue}
               style={{ width: '100%', cursor: 'pointer' }}
               onChange={(e) => {
-                const v = parseInt(e.target.value);
-                this.setState({ frameSizeValue: v });
-                localStorage.setItem('wickEditorFrameSizeValue', v);
                 if (window.Wick && window.Wick.GUIElement) {
-                  const G = window.Wick.GUIElement;
-                  // anchors: 0=xsmall(8,16), 50=small(22,32), 100=normal(38,42), 150=large(62,52)
-                  const XSW = 8, XSH = 16;
-                  let w, h;
-                  if (v <= 50) {
-                    const t = v / 50;
-                    w = Math.round(XSW + t * (G.FRAME_SMALL_W  - XSW));
-                    // below value 30, height stops shrinking (freeze at v=25 height)
-                    const ht = Math.max(v, 30) / 50;
-                    h = Math.round(XSH + ht * (G.FRAME_SMALL_H - XSH));
-                  } else if (v <= 100) {
-                    const t = (v - 50) / 50;
-                    w = Math.round(G.FRAME_SMALL_W  + t * (G.FRAME_NORMAL_W  - G.FRAME_SMALL_W));
-                    h = Math.round(G.FRAME_SMALL_H + t * (G.FRAME_NORMAL_H - G.FRAME_SMALL_H));
-                  } else {
-                    const t = (v - 100) / 50;
-                    w = Math.round(G.FRAME_NORMAL_W  + t * (G.FRAME_LARGE_W  - G.FRAME_NORMAL_W));
-                    h = Math.round(G.FRAME_NORMAL_H + t * (G.FRAME_LARGE_H - G.FRAME_NORMAL_H));
-                  }
-                  G.gridCellWidth  = w;
-                  G.gridCellHeight = Math.max(h, 30); // min height keeps layer buttons from overflowing
+                  let G = window.Wick.GUIElement;
+                  let value = parseInt(e.target.value);
+                  
+                  let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(value), G.FRAME_LARGE_W));
+                  let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
+                  let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
+                  h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
+
+                  G.gridCellWidth = w;
+                  G.gridCellHeight = h;
+
+                  this.setState({ frameSizeValue: w });
+                  localStorage.setItem('wickEditorFrameSizeValue', w);
                 }
               }}
             />
