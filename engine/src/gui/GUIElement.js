@@ -204,24 +204,24 @@ Wick.GUIElement = class {
 
 Wick.GUIElement.IS_MOBILE = window.innerWidth < 600;
 
-Wick.GUIElement.GRID_XSMALL_CELL_WIDTH = 12;
-Wick.GUIElement.GRID_XSMALL_CELL_HEIGHT = 30;
-Wick.GUIElement.GRID_SMALL_CELL_WIDTH = 22;
-Wick.GUIElement.GRID_SMALL_CELL_HEIGHT = 32;
-Wick.GUIElement.GRID_NORMAL_CELL_WIDTH = 38;
-Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT = 42;
-Wick.GUIElement.GRID_LARGE_CELL_WIDTH = 62;
-Wick.GUIElement.GRID_LARGE_CELL_HEIGHT = 52;
+Wick.GUIElement.FRAME_XSMALL_W = 12;
+Wick.GUIElement.FRAME_XSMALL_H = 30;
+Wick.GUIElement.FRAME_SMALL_W = 22;
+Wick.GUIElement.FRAME_SMALL_H = 32;
+Wick.GUIElement.FRAME_NORMAL_W = 38;
+Wick.GUIElement.FRAME_NORMAL_H = 42;
+Wick.GUIElement.FRAME_LARGE_W = 62;
+Wick.GUIElement.FRAME_LARGE_H = 52;
 
 /* Automatically choose larger frames if we're on a tablet */
 const userAgent = navigator.userAgent.toLowerCase();
 const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
 if(isTablet) {
-    Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-    Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+    Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
+    Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
 } else {
-    Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-    Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+    Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
+    Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
 }
 // Restore saved frame size preference (overrides tablet/desktop default)
 const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
@@ -229,11 +229,11 @@ if (_savedFrameSizeValue !== null) {
     const G = Wick.GUIElement;
     const stored = parseInt(_savedFrameSizeValue);
     
-    let w = Math.max(G.GRID_XSMALL_CELL_WIDTH, Math.min(stored, G.GRID_LARGE_CELL_WIDTH));
+    let w = Math.max(G.FRAME_XSMALL_W, Math.min(stored, G.FRAME_LARGE_W));
     localStorage.setItem('wickEditorFrameSizeValue', w);
-    let heightGrowthPerWidth = (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT)/(G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH);
-    let h = (w - G.GRID_SMALL_CELL_WIDTH) * heightGrowthPerWidth + G.GRID_SMALL_CELL_HEIGHT;
-    h = Math.max(G.GRID_XSMALL_CELL_HEIGHT, Math.min(h, G.GRID_LARGE_CELL_HEIGHT));
+    let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
+    let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
+    h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
     
     G.gridCellWidth = w;
     G.gridCellHeight = h;
@@ -241,17 +241,17 @@ if (_savedFrameSizeValue !== null) {
     const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
     if(_savedFrameSize) switch(_savedFrameSize){
         case 'small':
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_SMALL_W;
+            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_SMALL_H;
             break;
         case 'large':
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
+            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
             break;
         case 'normal':
         default:
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
+            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
     }
 }
 Wick.GUIElement.GRID_MARGIN = 1;

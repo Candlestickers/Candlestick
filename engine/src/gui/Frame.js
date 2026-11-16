@@ -94,7 +94,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         // Dot scale shared by script indicator and content dot
         var _dcw = this.gridCellWidth;
         var _dG = Wick.GUIElement;
-        var _dotScale = Math.min(1, _dcw/_dG.GRID_NORMAL_CELL_WIDTH, 1)*0.95 + 0.05;
+        var _dotScale = Math.min(1, _dcw/_dG.FRAME_NORMAL_W, 1)*0.95 + 0.05;
         
 
         // Frame scripts dot
@@ -232,7 +232,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         var _hG = Wick.GUIElement;
         // At very small cell widths, disable edge resize for unselected frames
         if (_hcw <= SIMPLIFY_FRAME_THRESHOLD && !this.model.isSelected) return null;
-        var _hScale = Math.min(1, _hcw / _hG.GRID_NORMAL_CELL_WIDTH);
+        var _hScale = Math.min(1, _hcw / _hG.FRAME_NORMAL_W);
         var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
 
         if(this.project._isDragging || !this.mouseInBounds()) {

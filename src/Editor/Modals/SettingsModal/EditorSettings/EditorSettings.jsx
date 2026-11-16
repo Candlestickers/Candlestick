@@ -157,18 +157,18 @@ class EditorSettings extends Component {
                   let w, h;
                   if (v <= 50) {
                     const t = v / 50;
-                    w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH  - XSW));
+                    w = Math.round(XSW + t * (G.FRAME_SMALL_W  - XSW));
                     // below value 30, height stops shrinking (freeze at v=25 height)
                     const ht = Math.max(v, 30) / 50;
-                    h = Math.round(XSH + ht * (G.GRID_SMALL_CELL_HEIGHT - XSH));
+                    h = Math.round(XSH + ht * (G.FRAME_SMALL_H - XSH));
                   } else if (v <= 100) {
                     const t = (v - 50) / 50;
-                    w = Math.round(G.GRID_SMALL_CELL_WIDTH  + t * (G.GRID_NORMAL_CELL_WIDTH  - G.GRID_SMALL_CELL_WIDTH));
-                    h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
+                    w = Math.round(G.FRAME_SMALL_W  + t * (G.FRAME_NORMAL_W  - G.FRAME_SMALL_W));
+                    h = Math.round(G.FRAME_SMALL_H + t * (G.FRAME_NORMAL_H - G.FRAME_SMALL_H));
                   } else {
                     const t = (v - 100) / 50;
-                    w = Math.round(G.GRID_NORMAL_CELL_WIDTH  + t * (G.GRID_LARGE_CELL_WIDTH  - G.GRID_NORMAL_CELL_WIDTH));
-                    h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
+                    w = Math.round(G.FRAME_NORMAL_W  + t * (G.FRAME_LARGE_W  - G.FRAME_NORMAL_W));
+                    h = Math.round(G.FRAME_NORMAL_H + t * (G.FRAME_LARGE_H - G.FRAME_NORMAL_H));
                   }
                   G.gridCellWidth  = w;
                   G.gridCellHeight = Math.max(h, 30); // min height keeps layer buttons from overflowing

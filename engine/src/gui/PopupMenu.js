@@ -52,8 +52,8 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Small',
             icon: 'small_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
+                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_SMALL_W;
+                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_SMALL_H;
                 localStorage.setItem('wickEditorFrameSizeMode', 'small');
                 localStorage.setItem('wickEditorFrameSizeValue', '50');
             }
@@ -63,8 +63,8 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Medium',
             icon: 'normal_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
+                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
+                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
                 localStorage.setItem('wickEditorFrameSizeMode', 'normal');
                 localStorage.setItem('wickEditorFrameSizeValue', '100');
             }
@@ -74,8 +74,8 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Large',
             icon: 'large_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
+                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
+                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
                 localStorage.setItem('wickEditorFrameSizeMode', 'large');
                 localStorage.setItem('wickEditorFrameSizeValue', '150');
             }
@@ -124,9 +124,9 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
         var ctx = this.ctx;
 
         var currentSize = Wick.GUIElement.gridCellWidth;
-        var smallSize = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-        var normalSize = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-        var largeSize = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
+        var smallSize = Wick.GUIElement.FRAME_SMALL_W;
+        var normalSize = Wick.GUIElement.FRAME_NORMAL_W;
+        var largeSize = Wick.GUIElement.FRAME_LARGE_W;
 
         ctx.save();
         ctx.translate(this.x, this.y - this.height);

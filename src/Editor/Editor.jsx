@@ -527,10 +527,10 @@ class Editor extends EditorCore {
 
             const stored = localStorage.getItem('wickEditorFrameSizeValue'); if(!stored) return;
             
-            let w = Math.max(G.GRID_XSMALL_CELL_WIDTH, Math.min(parseInt(stored), G.GRID_LARGE_CELL_WIDTH));
-            let heightGrowthPerWidth = (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT)/(G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH);
-            let h = (w - G.GRID_SMALL_CELL_WIDTH) * heightGrowthPerWidth + G.GRID_SMALL_CELL_HEIGHT;
-            h = Math.max(G.GRID_XSMALL_CELL_HEIGHT, Math.min(h, G.GRID_LARGE_CELL_HEIGHT));
+            let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(stored), G.FRAME_LARGE_W));
+            let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
+            let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
+            h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
 
             G.gridCellWidth = w;
             G.gridCellHeight = h;

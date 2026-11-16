@@ -32,7 +32,7 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
 
         var ctx = this.ctx;
 
-        var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.GRID_NORMAL_CELL_WIDTH, 1)*0.7 + 0.3;
+        var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.FRAME_NORMAL_W, 1)*0.7 + 0.3;
         var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
 
         // Tween diamond

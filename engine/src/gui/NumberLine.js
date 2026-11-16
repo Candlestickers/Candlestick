@@ -17,7 +17,7 @@
  * along with Wick Engine.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const EVERY_5_THRESHOLD = Wick.GUIElement.GRID_SMALL_CELL_WIDTH; // if frames are smaller than this, show every 5th frame number
+const EVERY_5_THRESHOLD = Wick.GUIElement.FRAME_SMALL_W; // if frames are smaller than this, show every 5th frame number
 const EVERY_10_THRESHOLD = EVERY_5_THRESHOLD/2; // if frames are smaller than this, show every 10th frame number
 
 Wick.GUIElement.NumberLine = class extends Wick.GUIElement {
