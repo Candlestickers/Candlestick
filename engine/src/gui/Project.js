@@ -467,7 +467,7 @@ Wick.GUIElement.Project = class extends Wick.GUIElement {
         // Call event functons on the elements interacted with
         var target = this._getTopMouseTarget();
         if(target) {
-            this.canvas.style.cursor = 'grabbing';
+            if(this.canvas.style.cursor === 'grab') this.canvas.style.cursor = 'grabbing';
             target.onMouseDrag(e);
             this._doAutoScroll(target);
         }
