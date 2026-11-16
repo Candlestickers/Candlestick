@@ -117,7 +117,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             }
             ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH * _dotScale;
 
-            var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
+            var r = (Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS - Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH/2) * _dotScale;
 
             ctx.beginPath();
             ctx.arc(this.gridCellWidth/2, this.gridCellHeight/2, r, 0, 2 * Math.PI);

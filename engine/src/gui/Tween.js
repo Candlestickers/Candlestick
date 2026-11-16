@@ -32,7 +32,7 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
 
         var ctx = this.ctx;
 
-        var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.FRAME_NORMAL_W, 1)*0.7 + 0.3;
+        var _tweenScale = Math.min(1, this.gridCellWidth/Wick.GUIElement.FRAME_NORMAL_W)*0.7 + 0.3;
         var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
 
         // Tween diamond
@@ -44,24 +44,21 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
                 ctx.fillStyle = Wick.GUIElement.TWEEN_FILL_COLOR_1;
             }
             ctx.beginPath();
-            ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
+            ctx.roundRect(-r, -r, r*2, r*2, r/4);
             ctx.fill();
         ctx.restore();
 
         // Tween diamond right half
+        if(this.mouseState === 'over') {
+            ctx.fillStyle = Wick.GUIElement.TWEEN_HOVER_COLOR_2;
+        } else {
+            ctx.fillStyle = Wick.GUIElement.TWEEN_FILL_COLOR_2;
+        }
         ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, -30, 30, 60);
         ctx.clip();
-        ctx.rotate(Math.PI / 4);
-            if(this.mouseState === 'over') {
-                ctx.fillStyle = Wick.GUIElement.TWEEN_HOVER_COLOR_2;
-            } else {
-                ctx.fillStyle = Wick.GUIElement.TWEEN_FILL_COLOR_2;
-            }
-            ctx.beginPath();
-            ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
-            ctx.fill();
+        ctx.beginPath();
+        ctx.rect(0, -r*2, r*2, r*4);
+        ctx.fill();
         ctx.restore();
 
         // Selection border
@@ -77,20 +74,20 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
         }
 
         // Tween arrows
-        var linePadding = this.gridCellWidth/4 + 4;
+        var linePadding = this.gridCellWidth/2;
         var nextTween = this.model.getNextTween();
         if(nextTween) {
             // Draw an arrow pointing towards the next tween
 
             var nextTweenGridPosition = nextTween.playheadPosition - this.model.playheadPosition;
             var nextTweenPosition = nextTweenGridPosition * this.gridCellWidth;
-            var arrowSize = 5;
+            var arrowSize = 5 * (_tweenScale+1)/2;
 
             // Only draw if there's enough room
             if (nextTweenPosition > linePadding * 2 + arrowSize) {
                 // Line
                 ctx.strokeStyle = Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR;
-                ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH;
+                ctx.lineWidth = Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH * (_tweenScale+1)/2;
                 ctx.beginPath();
                 ctx.moveTo(linePadding, 0);
                 ctx.lineTo(nextTweenPosition - linePadding, 0);
