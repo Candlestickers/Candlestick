@@ -92,26 +92,16 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         // Dot scale shared by script indicator and content dot
         var _dcw = this.gridCellWidth;
         var _dG = Wick.GUIElement;
-        var _dotScale = Math.min(1, _dcw/_dG.FRAME_NORMAL_W, 1)*0.95 + 0.05;
-        
+        var _dotScale = Math.min(1, _dcw/_dG.FRAME_NORMAL_W, 1)*0.7 + 0.3;
 
         // Frame scripts dot
         if(this.model.hasContentfulScripts) {
             ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
-            ctx.beginPath();
-            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
-            ctx.fill();
-        }
-
-        // Frame identifier
-        if(this.model.identifier) {
             ctx.save();
-            ctx.beginPath();
-            ctx.rect(0, 0, this.model.length * this.gridCellWidth, this.gridCellHeight);
             ctx.clip();
-            ctx.font = '12px Courier New';
-            ctx.fillStyle = 'black';
-            ctx.fillText(this.model.identifier, 0, 12);
+            ctx.beginPath();
+            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * Math.max(_dotScale, 0.6), 0, Math.PI);
+            ctx.fill();
             ctx.restore();
         }
 
@@ -160,6 +150,18 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
                     tween.guiElement.draw();
                 ctx.restore();
             });
+        }
+
+        // Frame identifier
+        if(this.model.identifier) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, this.model.length * this.gridCellWidth, this.gridCellHeight);
+            ctx.clip();
+            ctx.font = '12px Courier New';
+            ctx.fillStyle = 'black';
+            ctx.fillText(this.model.identifier, 0, 12);
+            ctx.restore();
         }
 
         ctx.globalAlpha = 1.0;
