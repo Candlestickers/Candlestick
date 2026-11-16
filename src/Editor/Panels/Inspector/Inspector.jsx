@@ -149,10 +149,7 @@ class Inspector extends Component {
     });
     localForage.getItem('WICK.CUSTOM_SHAPES').then(shapes => {
       if (shapes && Array.isArray(shapes)) {
-        this.setState({ customShapes: shapes });
-        // Register with engine so _buildBrushTipCanvas can find them
-        window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-        shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+        this.setCustomShapes(shapes);
       }
     });
     localForage.getItem('WICK.REMOVED_SHAPES').then(removed => {
@@ -1029,6 +1026,26 @@ class Inspector extends Component {
     )
   }
 
+  setCustomShapes = (shapes) => {
+    // Register with engine so _buildBrushTipCanvas can find them
+    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+    shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+    this.setState({ customShapes: shapes });
+  }
+  addCustomShape = (shape) => {
+    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+    window.wickCustomBrushShapes[shape.id] = shape;
+    const updatedCustomShapes = [...this.state.customShapes, shape];
+    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+    this.setState({ customShapes: updatedCustomShapes });
+  }
+  removeCustomShape = (shape) => {
+    if (window.wickCustomBrushShapes) delete window.wickCustomBrushShapes[shape];
+    const updatedCustomShapes = this.state.customShapes.filter(cs => cs.id !== shape);
+    this.setState({ customShapes: updatedCustomShapes });
+    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+  }
+
   toggleBrushModes = () => {
     this.setState({ showBrushModes: !this.state.showBrushModes });
   }
@@ -1066,15 +1083,11 @@ class Inspector extends Component {
         if (!brush || typeof brush !== 'object') throw new Error('Invalid');
         // If brush has an embedded custom shape, register it with a fresh ID
         let resolvedShape = brush.shape || 'circle';
-        let updatedCustomShapes = [...this.state.customShapes];
         if (brush.shapeData && brush.shapeData.pathD) {
           const newId = 'custom_' + Date.now();
           const newShape = { ...brush.shapeData, id: newId };
-          window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-          window.wickCustomBrushShapes[newId] = newShape;
-          updatedCustomShapes = [...updatedCustomShapes, newShape];
           resolvedShape = newId;
-          localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+          this.addCustomShape(newShape);
         }
         // FIXME: these "default" values are in 3 places (search for this same comment)
         const newBrush = {
@@ -1091,7 +1104,7 @@ class Inspector extends Component {
         };
         const updated = [...this.state.savedBrushes, newBrush];
         const newIndex = updated.length - 1;
-        this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex, customShapes: updatedCustomShapes });
+        this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex });
         localForage.setItem('WICK.BRUSHPRESETS', updated);
         localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', newIndex);
         this.applyBrush(newBrush);
@@ -1157,11 +1170,7 @@ class Inspector extends Component {
     const nextShape = allAvailable[nextIdx] || allAvailable[0];
 
     if (shape.startsWith('custom_')) {
-      // Remove from customShapes
-      const updatedCustomShapes = customShapes.filter(cs => cs.id !== shape);
-      if (window.wickCustomBrushShapes) delete window.wickCustomBrushShapes[shape];
-      this.setState({ customShapes: updatedCustomShapes });
-      localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+      this.removeCustomShape(shape);
     } else {
       // Add to removedShapes (built-in shapes are hidden, not truly deleted)
       const updatedRemoved = [...removedShapes, shape];
@@ -1274,14 +1283,11 @@ class Inspector extends Component {
 
     const id = 'custom_' + Date.now();
     const newShape = { id, name: 'Custom', pathD: d, tx, ty, scale };
-    const updatedCustomShapes = [...this.state.customShapes, newShape];
 
     // Register with engine immediately so brush can draw it right away
-    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-    window.wickCustomBrushShapes[id] = newShape;
+    this.addCustomShape(newShape);
 
-    this.setState({ customShapes: updatedCustomShapes, isEditingBrush: true, selectedBrushIndex: null });
-    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+    this.setState({ isEditingBrush: true, selectedBrushIndex: null });
 
     this.props.setActiveTool('brush');
     this.props.setToolSetting('brushShape', id);
