@@ -204,7 +204,7 @@ Wick.GUIElement = class {
 
 Wick.GUIElement.IS_MOBILE = window.innerWidth < 600;
 
-Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD = 16;
+Wick.GUIElement.FRAME_SIMPLIFY_W = 16;
 Wick.GUIElement.FRAME_XSMALL_W = 12;
 Wick.GUIElement.FRAME_XSMALL_H = 30;
 Wick.GUIElement.FRAME_SMALL_W = 22;

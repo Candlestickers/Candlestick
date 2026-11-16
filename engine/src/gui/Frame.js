@@ -105,7 +105,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             ctx.restore();
         }
 
-        var _hideDot = Wick.GUIElement.gridCellWidth <= Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD && !this.model.contentful; // at xsmall, only hide empty-frame dots
+        var _hideDot = Wick.GUIElement.gridCellWidth <= Wick.GUIElement.FRAME_SIMPLIFY_W && !this.model.contentful; // when small enough, hide empty-frame dots
         if(this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
             // Frame contentful dot
 
@@ -230,7 +230,7 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         var _hcw = this.gridCellWidth;
         var _hG = Wick.GUIElement;
         // At very small cell widths, disable edge resize for unselected frames
-        if (_hcw <= Wick.GUIElement.SIMPLIFY_FRAME_THRESHOLD && !this.model.isSelected) return null;
+        if (_hcw <= Wick.GUIElement.FRAME_SIMPLIFY_W && !this.model.isSelected) return null;
         var _hScale = Math.min(1, _hcw / _hG.FRAME_NORMAL_W);
         var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
 
