@@ -63,30 +63,19 @@ class Timeline extends Component {
   }
 
   _onFrameSizeScroll = (e) => {
-    const step = e.detail.delta > 0 ? 3 : -3;
-    const current = parseInt(localStorage.getItem('wickEditorFrameSizeValue') || '100');
-    const v = Math.max(0, Math.min(150, current + step));
-    localStorage.setItem('wickEditorFrameSizeValue', v);
-    if (window.Wick && window.Wick.GUIElement) {
-      const G = window.Wick.GUIElement;
-      const XSW = 8, XSH = 16;
-      let w, h;
-      if (v <= 50) {
-        const t = v / 50;
-        w = Math.round(XSW + t * (G.GRID_SMALL_CELL_WIDTH - XSW));
-        h = Math.round(XSH + t * (G.GRID_SMALL_CELL_HEIGHT - XSH));
-      } else if (v <= 100) {
-        const t = (v - 50) / 50;
-        w = Math.round(G.GRID_SMALL_CELL_WIDTH + t * (G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH));
-        h = Math.round(G.GRID_SMALL_CELL_HEIGHT + t * (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT));
-      } else {
-        const t = (v - 100) / 50;
-        w = Math.round(G.GRID_NORMAL_CELL_WIDTH + t * (G.GRID_LARGE_CELL_WIDTH - G.GRID_NORMAL_CELL_WIDTH));
-        h = Math.round(G.GRID_NORMAL_CELL_HEIGHT + t * (G.GRID_LARGE_CELL_HEIGHT - G.GRID_NORMAL_CELL_HEIGHT));
-      }
-      G.gridCellWidth = w;
-      G.gridCellHeight = Math.max(h, 30);
-    }
+    if(!window.Wick) return; const G = window.Wick.GUIElement; if(!G) return;
+    const step = e.detail.delta > 0 ? 1 : -1;
+    
+    const current = parseInt(localStorage.getItem('wickEditorFrameSizeValue') || G.GRID_NORMAL_CELL_WIDTH);
+    let w = Math.max(G.GRID_XSMALL_CELL_WIDTH, Math.min(current + step, G.GRID_LARGE_CELL_WIDTH));
+    localStorage.setItem('wickEditorFrameSizeValue', w);
+    let heightGrowthPerWidth = (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT)/(G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH);
+    let h = (w - G.GRID_SMALL_CELL_WIDTH) * heightGrowthPerWidth + G.GRID_SMALL_CELL_HEIGHT;
+    h = Math.max(G.GRID_XSMALL_CELL_HEIGHT, Math.min(h, G.GRID_LARGE_CELL_HEIGHT));
+    
+    G.gridCellWidth = w;
+    G.gridCellHeight = h;
+    
     this.props.project.guiElement.draw();
   }
 

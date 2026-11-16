@@ -204,6 +204,8 @@ Wick.GUIElement = class {
 
 Wick.GUIElement.IS_MOBILE = window.innerWidth < 600;
 
+Wick.GUIElement.GRID_XSMALL_CELL_WIDTH = 12;
+Wick.GUIElement.GRID_XSMALL_CELL_HEIGHT = 30;
 Wick.GUIElement.GRID_SMALL_CELL_WIDTH = 22;
 Wick.GUIElement.GRID_SMALL_CELL_HEIGHT = 32;
 Wick.GUIElement.GRID_NORMAL_CELL_WIDTH = 38;
@@ -224,26 +226,17 @@ if(isTablet) {
 // Restore saved frame size preference (overrides tablet/desktop default)
 const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
 if (_savedFrameSizeValue !== null) {
-    const _v = parseInt(_savedFrameSizeValue);
-    const _G = Wick.GUIElement;
-    const _XSW = 8, _XSH = 16;
-    let _w, _h;
-    if (_v <= 50) {
-        const _t = _v / 50;
-        _w = Math.round(_XSW + _t * (_G.GRID_SMALL_CELL_WIDTH - _XSW));
-        const _ht = Math.max(_v, 25) / 50;
-        _h = Math.round(_XSH + _ht * (_G.GRID_SMALL_CELL_HEIGHT - _XSH));
-    } else if (_v <= 100) {
-        const _t = (_v - 50) / 50;
-        _w = Math.round(_G.GRID_SMALL_CELL_WIDTH + _t * (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH));
-        _h = Math.round(_G.GRID_SMALL_CELL_HEIGHT + _t * (_G.GRID_NORMAL_CELL_HEIGHT - _G.GRID_SMALL_CELL_HEIGHT));
-    } else {
-        const _t = (_v - 100) / 50;
-        _w = Math.round(_G.GRID_NORMAL_CELL_WIDTH + _t * (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH));
-        _h = Math.round(_G.GRID_NORMAL_CELL_HEIGHT + _t * (_G.GRID_LARGE_CELL_HEIGHT - _G.GRID_NORMAL_CELL_HEIGHT));
-    }
-    _G.gridCellWidth = _w;
-    _G.gridCellHeight = Math.max(_h, 30);
+    const G = Wick.GUIElement;
+    const stored = parseInt(_savedFrameSizeValue);
+    
+    let w = Math.max(G.GRID_XSMALL_CELL_WIDTH, Math.min(stored, G.GRID_LARGE_CELL_WIDTH));
+    localStorage.setItem('wickEditorFrameSizeValue', w);
+    let heightGrowthPerWidth = (G.GRID_NORMAL_CELL_HEIGHT - G.GRID_SMALL_CELL_HEIGHT)/(G.GRID_NORMAL_CELL_WIDTH - G.GRID_SMALL_CELL_WIDTH);
+    let h = (w - G.GRID_SMALL_CELL_WIDTH) * heightGrowthPerWidth + G.GRID_SMALL_CELL_HEIGHT;
+    h = Math.max(G.GRID_XSMALL_CELL_HEIGHT, Math.min(h, G.GRID_LARGE_CELL_HEIGHT));
+    
+    G.gridCellWidth = w;
+    G.gridCellHeight = h;
 } else {
     const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
     if(_savedFrameSize) switch(_savedFrameSize){
