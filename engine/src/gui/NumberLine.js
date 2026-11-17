@@ -76,16 +76,14 @@ Wick.GUIElement.NumberLine = class extends Wick.GUIElement {
     _drawCell (i) {
         var ctx = this.ctx;
 
-        var cellW = this.gridCellWidth;
-        var smallW = Wick.GUIElement.GRID_SMALL_CELL_WIDTH; // 22
         // show every 5th when below the 'small' preset width
         // show only every 10th when very compact (below half small width)
-        var highlight = cellW < (smallW * 0.5)
-            ? (i === 0 || i % 10 === 9)   // frames 1, 10, 20, 30...
+        var highlight = (this.gridCellWidth < Wick.GUIElement.EVERY_10_THRESHOLD)
+            ? (i === 0 || i % 10 === 9)   // frames 1, 10, 20, 30... for extra-small frames
             : (i === 0 || i % 5 === 4);   // frames 1, 5, 10, 15...
 
         // Draw cell number
-        if(cellW >= smallW || highlight) {
+        if(this.gridCellWidth >= Wick.GUIElement.EVERY_5_THRESHOLD || highlight) { // draw number if frame is big enough, or if it should be highlighted
             var fontSize = (i>=99) ? 13 : 16;
             var fontFamily = Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_FAMILY;
             ctx.font = fontSize + "px " + fontFamily;

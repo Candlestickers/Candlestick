@@ -31,12 +31,12 @@ Wick.GUIElement.Playhead = class extends Wick.GUIElement {
         var _cw = this.gridCellWidth;
         var _G = Wick.GUIElement;
         var margin;
-        if (_cw <= _G.GRID_SMALL_CELL_WIDTH)
-            margin = Math.round((_cw / _G.GRID_SMALL_CELL_WIDTH) * 2);
-        else if(_cw <= _G.GRID_NORMAL_CELL_WIDTH)
-            margin = Math.round(2 + (_cw - _G.GRID_SMALL_CELL_WIDTH) / (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH) * 6);
+        if (_cw <= _G.FRAME_SMALL_W)
+            margin = Math.round((_cw / _G.FRAME_SMALL_W) * 2);
+        else if(_cw <= _G.FRAME_NORMAL_W)
+            margin = Math.round(2 + (_cw - _G.FRAME_SMALL_W) / (_G.FRAME_NORMAL_W - _G.FRAME_SMALL_W) * 6);
         else
-            margin = Math.round(8 + (_cw - _G.GRID_NORMAL_CELL_WIDTH) / (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH) * 12);
+            margin = Math.round(8 + (_cw - _G.FRAME_NORMAL_W) / (_G.FRAME_LARGE_W - _G.FRAME_NORMAL_W) * 12);
         
 
         var height = Wick.GUIElement.NUMBER_LINE_HEIGHT - 2;

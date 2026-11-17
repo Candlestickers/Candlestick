@@ -92,37 +92,20 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         // Dot scale shared by script indicator and content dot
         var _dcw = this.gridCellWidth;
         var _dG = Wick.GUIElement;
-        var _dotScale;
-        if(_dcw <= _dG.GRID_SMALL_CELL_WIDTH)
-            _dotScale = 0.5 + 0.25 * (_dcw / _dG.GRID_SMALL_CELL_WIDTH);
-        else if(_dcw <= _dG.GRID_NORMAL_CELL_WIDTH)
-            _dotScale = 0.75 + 0.25 * ((_dcw - _dG.GRID_SMALL_CELL_WIDTH) / (_dG.GRID_NORMAL_CELL_WIDTH - _dG.GRID_SMALL_CELL_WIDTH));
-        else
-            _dotScale = 1.0 + 0.25 * ((_dcw - _dG.GRID_NORMAL_CELL_WIDTH) / (_dG.GRID_LARGE_CELL_WIDTH - _dG.GRID_NORMAL_CELL_WIDTH));
-        
+        var _dotScale = Math.min(1, _dcw/_dG.FRAME_NORMAL_W, 1)*0.7 + 0.3;
 
         // Frame scripts dot
         if(this.model.hasContentfulScripts) {
             ctx.fillStyle = Wick.GUIElement.FRAME_SCRIPT_DOT_COLOR;
-            ctx.beginPath();
-            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale * 1.3, 0, Math.PI);
-            ctx.fill();
-        }
-
-        // Frame identifier
-        if(this.model.identifier) {
             ctx.save();
-            ctx.beginPath();
-            ctx.rect(0, 0, this.model.length * this.gridCellWidth, this.gridCellHeight);
             ctx.clip();
-            ctx.font = '12px Courier New';
-            ctx.fillStyle = 'black';
-            ctx.fillText(this.model.identifier, 0, 12);
+            ctx.beginPath();
+            ctx.arc(this.gridCellWidth/2, 0, Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * Math.max(_dotScale, 0.6), 0, Math.PI);
+            ctx.fill();
             ctx.restore();
         }
 
-        var _hideDot = this.model.identifier // avoid overlapping name label
-                   || (Wick.GUIElement.HIDE_CONTENT_DOTS && !this.model.contentful); // at xsmall, only hide empty-frame dots
+        var _hideDot = Wick.GUIElement.gridCellWidth <= Wick.GUIElement.FRAME_SIMPLIFY_W && !this.model.contentful; // when small enough, hide empty-frame dots
         if(this.model.tweens.length === 0 && !this.model.sound && !_hideDot) {
             // Frame contentful dot
 
@@ -130,11 +113,11 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
             if(this.model.contentful) {
                 ctx.strokeStyle = Wick.GUIElement.FRAME_CONTENT_DOT_COLOR;
             } else {
-                ctx.strokeStyle = '#aaa';
+                ctx.strokeStyle = Wick.GUIElement.FRAME_UNCONTENTFUL_DOT_COLOR;
             }
-            ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH;
+            ctx.lineWidth = Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH * _dotScale;
 
-            var r = Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS * _dotScale;
+            var r = (Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS - Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH/2) * _dotScale;
 
             ctx.beginPath();
             ctx.arc(this.gridCellWidth/2, this.gridCellHeight/2, r, 0, 2 * Math.PI);
@@ -167,6 +150,18 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
                     tween.guiElement.draw();
                 ctx.restore();
             });
+        }
+
+        // Frame identifier
+        if(this.model.identifier) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, this.model.length * this.gridCellWidth, this.gridCellHeight);
+            ctx.clip();
+            ctx.font = '12px Courier New';
+            ctx.fillStyle = 'black';
+            ctx.fillText(this.model.identifier, 0, 12);
+            ctx.restore();
         }
 
         ctx.globalAlpha = 1.0;
@@ -235,8 +230,8 @@ Wick.GUIElement.Frame = class extends Wick.GUIElement {
         var _hcw = this.gridCellWidth;
         var _hG = Wick.GUIElement;
         // At very small cell widths, disable edge resize for unselected frames
-        if (_hcw <= 16 && !this.model.isSelected) return null;
-        var _hScale = Math.min(1, _hcw / _hG.GRID_NORMAL_CELL_WIDTH);
+        if (_hcw <= Wick.GUIElement.FRAME_SIMPLIFY_W && !this.model.isSelected) return null;
+        var _hScale = Math.min(1, _hcw / _hG.FRAME_NORMAL_W);
         var handlePx = Math.round(_hG.FRAME_HANDLE_WIDTH * _hScale);
 
         if(this.project._isDragging || !this.mouseInBounds()) {

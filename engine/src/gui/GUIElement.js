@@ -90,11 +90,28 @@ Wick.GUIElement = class {
     }
 
     /**
+     * Try to set the size of frames, then return the actual set size.
+     * @type {number}
+     */
+    static setFrameSize (value) {
+        let w = Math.max(this.FRAME_XSMALL_W, Math.min(parseInt(value), this.FRAME_LARGE_W));
+        let heightGrowthPerWidth = (this.FRAME_NORMAL_H - this.FRAME_SMALL_H)/(this.FRAME_NORMAL_W - this.FRAME_SMALL_W);
+        let h = (w - this.FRAME_SMALL_W) * heightGrowthPerWidth + this.FRAME_SMALL_H;
+        h = Math.max(this.FRAME_XSMALL_H, Math.min(h, this.FRAME_LARGE_H));
+
+        this.gridCellWidth = w;
+        this.gridCellHeight = h;
+
+        localStorage.setItem('wickEditorFrameSizeValue', w);
+        return w;
+    }
+
+    /**
      * The current grid cell width that all GUIElements are based off of.
      * @type {number}
      */
     get gridCellWidth () {
-        return Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH;
+        return Wick.GUIElement.gridCellWidth;
     }
 
     /**
@@ -102,7 +119,7 @@ Wick.GUIElement = class {
      * @type {number}
      */
     get gridCellHeight () {
-        return Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT;
+        return Wick.GUIElement.gridCellHeight;
     }
 
     /**
@@ -204,64 +221,43 @@ Wick.GUIElement = class {
 
 Wick.GUIElement.IS_MOBILE = window.innerWidth < 600;
 
-Wick.GUIElement.GRID_SMALL_CELL_WIDTH = 22;
-Wick.GUIElement.GRID_SMALL_CELL_HEIGHT = 32;
-Wick.GUIElement.GRID_NORMAL_CELL_WIDTH = 38;
-Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT = 42;
-Wick.GUIElement.GRID_LARGE_CELL_WIDTH = 62;
-Wick.GUIElement.GRID_LARGE_CELL_HEIGHT = 52;
+Wick.GUIElement.FRAME_SIMPLIFY_W = 16;
+Wick.GUIElement.FRAME_XSMALL_W = 12;
+Wick.GUIElement.FRAME_XSMALL_H = 30;
+Wick.GUIElement.FRAME_SMALL_W = 22;
+Wick.GUIElement.FRAME_SMALL_H = 32;
+Wick.GUIElement.FRAME_NORMAL_W = 38;
+Wick.GUIElement.FRAME_NORMAL_H = 42;
+Wick.GUIElement.FRAME_LARGE_W = 62;
+Wick.GUIElement.FRAME_LARGE_H = 52;
 
-/* Automatically choose larger frames if we're on a tablet */
-const userAgent = navigator.userAgent.toLowerCase();
-const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
-if(isTablet) {
-    Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-    Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
-} else {
-    Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-    Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
-}
-// Restore saved frame size preference (overrides tablet/desktop default)
-const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
-if (_savedFrameSizeValue !== null) {
-    const _v = parseInt(_savedFrameSizeValue);
-    const _G = Wick.GUIElement;
-    const _XSW = 8, _XSH = 16;
-    let _w, _h;
-    if (_v <= 50) {
-        const _t = _v / 50;
-        _w = Math.round(_XSW + _t * (_G.GRID_SMALL_CELL_WIDTH - _XSW));
-        const _ht = Math.max(_v, 25) / 50;
-        _h = Math.round(_XSH + _ht * (_G.GRID_SMALL_CELL_HEIGHT - _XSH));
-    } else if (_v <= 100) {
-        const _t = (_v - 50) / 50;
-        _w = Math.round(_G.GRID_SMALL_CELL_WIDTH + _t * (_G.GRID_NORMAL_CELL_WIDTH - _G.GRID_SMALL_CELL_WIDTH));
-        _h = Math.round(_G.GRID_SMALL_CELL_HEIGHT + _t * (_G.GRID_NORMAL_CELL_HEIGHT - _G.GRID_SMALL_CELL_HEIGHT));
-    } else {
-        const _t = (_v - 100) / 50;
-        _w = Math.round(_G.GRID_NORMAL_CELL_WIDTH + _t * (_G.GRID_LARGE_CELL_WIDTH - _G.GRID_NORMAL_CELL_WIDTH));
-        _h = Math.round(_G.GRID_NORMAL_CELL_HEIGHT + _t * (_G.GRID_LARGE_CELL_HEIGHT - _G.GRID_NORMAL_CELL_HEIGHT));
+{ // initialize frame size
+    const _savedFrameSizeValue = parseInt(localStorage.getItem('wickEditorFrameSizeValue'));
+    const _savedFrameSizeMode = localStorage.getItem('wickEditorFrameSizeMode'); // old frame size storage, before v1.3.0
+    let initialSize;
+    if (_savedFrameSizeValue) { // user has already visited before without clearing storage
+        initialSize = _savedFrameSizeValue;
+    } else if(_savedFrameSizeMode) { // user has not used editor since before v1.3.0
+        switch(_savedFrameSizeMode) {
+            case 'small':
+                initialSize = Wick.GUIElement.FRAME_SMALL_W;
+                break;
+            case 'large':
+                initialSize = Wick.GUIElement.FRAME_LARGE_W;
+                break;
+            default: // normal
+                initialSize = Wick.GUIElement.FRAME_NORMAL_W;
+                break;
+        }
+    } else { // user has never used editor or cleared storage
+        // choose larger frames if using a tablet
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
+        initialSize = isTablet ? Wick.GUIElement.FRAME_LARGE_W : Wick.GUIElement.FRAME_NORMAL_W;
     }
-    _G.GRID_DEFAULT_CELL_WIDTH = _w;
-    _G.GRID_DEFAULT_CELL_HEIGHT = Math.max(_h, 30);
-    _G.HIDE_CONTENT_DOTS = _v < 15;
-} else {
-    const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
-    if(_savedFrameSize) switch(_savedFrameSize){
-        case 'small':
-            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_SMALL_CELL_WIDTH;
-            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_SMALL_CELL_HEIGHT;
-            break;
-        case 'large':
-            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_LARGE_CELL_WIDTH;
-            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_LARGE_CELL_HEIGHT;
-            break;
-        case 'normal':
-        default:
-            Wick.GUIElement.GRID_DEFAULT_CELL_WIDTH = Wick.GUIElement.GRID_NORMAL_CELL_WIDTH;
-            Wick.GUIElement.GRID_DEFAULT_CELL_HEIGHT = Wick.GUIElement.GRID_NORMAL_CELL_HEIGHT;
-    }
+    Wick.GUIElement.setFrameSize(initialSize);
 }
+
 Wick.GUIElement.GRID_MARGIN = 1;
 
 Wick.GUIElement.TIMELINE_BACKGROUND_COLOR = '#2A2E30';
@@ -290,6 +286,8 @@ Wick.GUIElement.NUMBER_LINE_NUMBERS_HIGHLIGHT_COLOR = '#ffffff';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_COMMON_COLOR = '#494949';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_FAMILY = 'PT Mono';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_SIZE = '18';
+Wick.GUIElement.EVERY_5_THRESHOLD = Wick.GUIElement.FRAME_SMALL_W; // if frames are smaller than this, show every 5th frame number
+Wick.GUIElement.EVERY_10_THRESHOLD = Wick.GUIElement.EVERY_5_THRESHOLD/2; // if frames are smaller than this, show every 10th frame number
 
 Wick.GUIElement.FRAME_HEIGHT = Wick.GUIElement.FRAMES_STRIP_HEIGHT;
 Wick.GUIElement.FRAME_HOVERED_OVER = '#1EE29A';
@@ -299,9 +297,10 @@ Wick.GUIElement.FRAME_AUDIO_FILL_COLOR = '#ccffff';
 Wick.GUIElement.FRAME_UNCONTENTFUL_FILL_COLOR = 'rgba(233,233,233,0.8)';
 Wick.GUIElement.FRAME_TWEENED_FILL_COLOR = '#ffffff';
 Wick.GUIElement.FRAME_BORDER_RADIUS = 5;
-Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS = 7;
+Wick.GUIElement.FRAME_CONTENT_DOT_RADIUS = 8;
 Wick.GUIElement.FRAME_CONTENT_DOT_STROKE_WIDTH = 3;
 Wick.GUIElement.FRAME_CONTENT_DOT_COLOR = '#1EE29A';
+Wick.GUIElement.FRAME_UNCONTENTFUL_DOT_COLOR = "#AAA";
 Wick.GUIElement.FRAME_MARGIN = 0.5;
 Wick.GUIElement.FRAME_DROP_SHADOW_DEPTH = 2; // Number of pixels to shift drop shadow below frame.
 Wick.GUIElement.FRAME_DROP_SHADOW_FILL = 'rgba(0,0,0,1)';
@@ -311,7 +310,6 @@ Wick.GUIElement.FRAME_HANDLE_HOVER_FILL_COLOR = Wick.GUIElement.SELECTED_ITEM_BO
 Wick.GUIElement.FRAME_HANDLE_WIDTH = 12;
 
 Wick.GUIElement.TWEEN_DIAMOND_RADIUS = 7;
-Wick.GUIElement.TWEEN_STROKE_WIDTH = 3;
 Wick.GUIElement.TWEEN_FILL_COLOR_1 = '#494949';
 Wick.GUIElement.TWEEN_FILL_COLOR_2 = '#8E8E8E';
 Wick.GUIElement.TWEEN_HOVER_COLOR_1 = '#09C07D';
@@ -320,6 +318,11 @@ Wick.GUIElement.TWEEN_STROKE_COLOR = '#222244';
 
 Wick.GUIElement.TWEEN_ARROW_STROKE_WIDTH = 2;
 Wick.GUIElement.TWEEN_ARROW_STROKE_COLOR = '#8E8E8E';
+
+Wick.GUIElement.ONION_SKIN_FILL_COLOR = '#FF5C5C';
+Wick.GUIElement.ONION_SKIN_ZERO_FILL_COLOR = '#7f7f7f';
+Wick.GUIElement.ONION_SKIN_MIN_ALPHA = '33';
+Wick.GUIElement.ONION_SKIN_GRAB_MIN_SIZE = 16;
 
 Wick.GUIElement.FRAME_GHOST_COLOR = Wick.GUIElement.SELECTED_ITEM_BORDER_COLOR;
 Wick.GUIElement.FRAME_GHOST_NOT_ALLOWED_COLOR = '#ff0000';
