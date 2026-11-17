@@ -1432,33 +1432,61 @@ class Inspector extends Component {
               getToolSetting={this.props.getToolSetting}
               getToolSettingRestrictions={this.props.getToolSettingRestrictions}
               setToolSetting={this.props.setToolSetting}
+              brushPreviewRef={this.brushPreviewRef}
+
               isEditingBrush={this.state.isEditingBrush}
-              setEditingBrush={() => this.setState({ isEditingBrush: true })}
+              editBrush={() => {
+                this._captureEditSnapshot();
+                this.setState({ isEditingBrush: true });
+              }}
+              saveEditingBrush={this.saveBrush}
               cancelEditingBrush={this.cancelEditingBrush}
+
+              savedBrushes={this.state.savedBrushes}
               selectedBrushIndex={this.state.selectedBrushIndex}
               selectBrush={(brush, i) => {
                 this.setState({ selectedBrushIndex: i, isEditingBrush: false });
                 this.applyBrush(brush);
                 localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
               }}
+              renameSelectedBrush={(name) => {
+                if (this.state.selectedBrushIndex === null) return;
+                const updated = [...this.state.savedBrushes];
+                updated[this.state.selectedBrushIndex] = { ...updated[this.state.selectedBrushIndex], name };
+                this.setState({ savedBrushes: updated });
+              }}
               deleteSelectedBrush={this.deleteSelectedBrush}
-              removedShapes={this.state.removedShapes}
-              customShapes={this.state.customShapes}
-              savedBrushes={this.state.savedBrushes}
-              setSavedBrushes={updated => this.setState({ savedBrushes: updated })}
-              brushPreviewRef={this.brushPreviewRef}
+
               showNewBrushMenu={this.state.showNewBrushMenu}
               toggleNewBrushMenu={this.toggleNewBrushMenu}
               closeNewBrushMenu={this.closeNewBrushMenu}
               startNewBrush={this.startNewBrush}
               importBrush={this.importBrush}
-              deleteSelectedShape={this.deleteSelectedShape}
+
               showBrushModes={this.state.showBrushModes}
               toggleBrushModes={this.toggleBrushModes}
               closeBrushModes={this.closeBrushModes}
-              saveBrush={this.saveBrush}
-              _captureEditSnapshot={this._captureEditSnapshot}
-              exportBrush={this.exportBrush}
+
+              removedShapes={this.state.removedShapes}
+              customShapes={this.state.customShapes}
+              deleteSelectedShape={this.deleteSelectedShape}
+
+              downloadBrush={() => {
+                const brush = this.state.selectedBrushIndex !== null
+                  ? this.state.savedBrushes[this.state.selectedBrushIndex]
+                  : {
+                      name: 'brush',
+                      shape: this.props.getToolSetting('brushShape'),
+                      brushSize: this.props.getToolSetting('brushSize'),
+                      brushResolution: this.props.getToolSetting('brushResolution'),
+                      brushSpacing: this.props.getToolSetting('brushSpacing'),
+                      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
+                      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
+                      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
+                      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+                    };
+                this.exportBrush(brush);
+              }}
               brushFileInputRef={this.brushFileInputRef}
               handleBrushFileImport={this.handleBrushFileImport}
             />

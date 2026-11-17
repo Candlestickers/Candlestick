@@ -4,16 +4,14 @@ import PopupMenu from "Editor/Util/PopupMenu/PopupMenu";
 import ToolSettingsInput from "Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput";
 import InspectorBrushTileDeleteBadge from "./InspectorBrushTileDeleteBadge";
 
-export default function ({
-  savedBrushes, selectedBrushIndex,
-  defaultShapes, svgCustomShapes,
-  selectBrush, deleteSelectedBrush,
+export default function InspectorBrushList ({
   showNewBrushMenu, toggleNewBrushMenu, closeNewBrushMenu,
+  savedBrushes, allShapes,
+  selectedBrushIndex, selectBrush, deleteSelectedBrush,
   startNewBrush, importBrush
 }) {
   const shapeMap = {};
-  defaultShapes.forEach(s => { shapeMap[s.id] = s; });
-  svgCustomShapes.forEach(cs => { shapeMap[cs.id] = cs; });
+  allShapes.forEach(s => { shapeMap[s.id] = s; });
 
   return (
     <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>

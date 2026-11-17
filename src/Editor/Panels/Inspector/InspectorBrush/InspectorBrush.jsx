@@ -1,6 +1,3 @@
-// Default brushes — structured like a parsed .cbrush JSON for easy migration later.
-// Each field matches the keys stored/loaded by saveBrush / applyBrush.
-
 import ToolSettingsInput from "Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput";
 import InspectorNumericSlider from "../InspectorRow/InspectorRowTypes/InspectorNumericSlider";
 import InspectorSelector from "../InspectorRow/InspectorRowTypes/InspectorSelector";
@@ -10,6 +7,8 @@ import InspectorBrushShapePicker from "./InspectorBrushShapePicker";
 import PopupMenu from "Editor/Util/PopupMenu/PopupMenu";
 import InspectorActionButton from "../InspectorActionButton/InspectorActionButton";
 
+// Default brushes — structured like a parsed .cbrush JSON for easy migration later.
+// Each field matches the keys stored/loaded by saveBrush / applyBrush.
 // FIXME: these "default" values are in 3 places (search for this same comment)
 export const DEFAULT_BRUSHES = [
   {
@@ -45,32 +44,28 @@ export const ROTATION_MODE_OPTIONS = [
   { label: 'Random', value: 'random' },
 ];
 
+// Wraps a degree value into [-180, 180] instead of clamping, so e.g. 200 becomes
+// -160 (the same angle) rather than getting truncated to the 180 boundary.
+const _normalizeAngle = (deg) => {
+  let a = ((deg % 360) + 360) % 360;
+  if (a > 180) a -= 360;
+  // 180 and -180 are the same angle; keep whichever sign was actually typed
+  // instead of always snapping to +180, so e.g. -180 doesn't jump to 180.
+  if (a === 180 && deg < 0) a = -180;
+  return a;
+}
+
 export default function InspectorBrush ({
   getToolSetting, getToolSettingRestrictions, setToolSetting,
-  isEditingBrush, setEditingBrush, cancelEditingBrush,
-  selectedBrushIndex, selectBrush, deleteSelectedBrush,
-  removedShapes, customShapes,
-  savedBrushes, setSavedBrushes,
   brushPreviewRef,
-  showNewBrushMenu, toggleNewBrushMenu, closeNewBrushMenu,
-  startNewBrush, importBrush,
-  deleteSelectedShape,
+  isEditingBrush, editBrush, saveEditingBrush, cancelEditingBrush,
+  savedBrushes, selectedBrushIndex, selectBrush, renameSelectedBrush, deleteSelectedBrush,
+  showNewBrushMenu, toggleNewBrushMenu, closeNewBrushMenu, startNewBrush, importBrush,
   showBrushModes, toggleBrushModes, closeBrushModes,
-  saveBrush,
-  _captureEditSnapshot,
-  exportBrush,
+  removedShapes, customShapes, deleteSelectedShape,
+  downloadBrush,
   brushFileInputRef, handleBrushFileImport
 }) {
-  // Wraps a degree value into [-180, 180] instead of clamping, so e.g. 200 becomes
-  // -160 (the same angle) rather than getting truncated to the 180 boundary.
-  const _normalizeAngle = (deg) => {
-    let a = ((deg % 360) + 360) % 360;
-    if (a > 180) a -= 360;
-    // 180 and -180 are the same angle; keep whichever sign was actually typed
-    // instead of always snapping to +180, so e.g. -180 doesn't jump to 180.
-    if (a === 180 && deg < 0) a = -180;
-    return a;
-  }
 
   let brushModeIcon = 'brushmodenone';
   let brushMode = getToolSetting('brushMode');
@@ -86,6 +81,8 @@ export default function InspectorBrush ({
     name: cs.name,
     svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
   }));
+  const allShapes = [...BRUSH_SHAPES, ...svgCustomShapes];
+  const availableShapes = [...availableDefaultShapes, ...svgCustomShapes];
 
   return (
     <div>
@@ -95,12 +92,7 @@ export default function InspectorBrush ({
           <InspectorTextInput
             tooltip="Name"
             val={selectedBrushIndex !== null ? (savedBrushes[selectedBrushIndex]?.name || '') : ''}
-            onChange={(val) => {
-              if (selectedBrushIndex === null) return;
-              const updated = [...savedBrushes];
-              updated[selectedBrushIndex] = { ...updated[selectedBrushIndex], name: val };
-              setSavedBrushes(updated);
-            }}
+            onChange={renameSelectedBrush}
             placeholder="Brush"
             id="inspector-brush-name"
           />
@@ -119,15 +111,14 @@ export default function InspectorBrush ({
       {/* Brush list — hidden while editing */}
       {!isEditingBrush && (
         <InspectorBrushList
-          savedBrushes={savedBrushes}
-          selectedBrushIndex={selectedBrushIndex}
-          defaultShapes={BRUSH_SHAPES}
-          svgCustomShapes={svgCustomShapes}
-          selectBrush={selectBrush}
-          deleteSelectedBrush={deleteSelectedBrush}
           showNewBrushMenu={showNewBrushMenu}
           toggleNewBrushMenu={toggleNewBrushMenu}
           closeNewBrushMenu={closeNewBrushMenu}
+          savedBrushes={savedBrushes}
+          allShapes={allShapes}
+          selectedBrushIndex={selectedBrushIndex}
+          selectBrush={selectBrush}
+          deleteSelectedBrush={deleteSelectedBrush}
           startNewBrush={startNewBrush}
           importBrush={importBrush}
         />
@@ -211,10 +202,9 @@ export default function InspectorBrush ({
       {/* Edit-only: shape picker */}
       {isEditingBrush && (
         <InspectorBrushShapePicker
+          availableShapes={availableShapes}
           currentShape={getToolSetting('brushShape')}
           setShape={shape => setToolSetting('brushShape', shape)}
-          availableDefaultShapes={availableDefaultShapes}
-          svgCustomShapes={svgCustomShapes}
           deleteSelectedShape={deleteSelectedShape}
         />
       )}
@@ -297,7 +287,7 @@ export default function InspectorBrush ({
                   icon: 'check-black',
                   tooltip: 'Save',
                   color: 'inspector',
-                  action: saveBrush,
+                  action: saveEditingBrush,
                 }} />
               </div>
             </div>
@@ -307,7 +297,7 @@ export default function InspectorBrush ({
               icon: 'pencil-black',
               tooltip: 'Edit Brush',
               color: 'inspector',
-              action: () => { _captureEditSnapshot(); setEditingBrush(); },
+              action: editBrush,
             }} />
           )}
         </div>
@@ -320,22 +310,7 @@ export default function InspectorBrush ({
             icon: 'brush-black',
             tooltip: 'Download Brush',
             color: 'inspector',
-            action: () => {
-              const brush = selectedBrushIndex !== null
-                ? savedBrushes[selectedBrushIndex]
-                : {
-                    name: 'brush',
-                    shape: getToolSetting('brushShape'),
-                    brushSize: getToolSetting('brushSize'),
-                    brushResolution: getToolSetting('brushResolution'),
-                    brushSpacing: getToolSetting('brushSpacing'),
-                    brushScatterAmount: getToolSetting('brushScatterAmount'),
-                    brushRotationMode: getToolSetting('brushRotationMode'),
-                    brushRotationOffset: getToolSetting('brushRotationOffset'),
-                    brushStabilizerWeight: getToolSetting('brushStabilizerWeight'),
-                  };
-              exportBrush(brush);
-            },
+            action: downloadBrush,
           }} />
         </div>
       )}
