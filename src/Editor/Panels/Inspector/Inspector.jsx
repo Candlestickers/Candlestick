@@ -40,7 +40,7 @@ import localForage from 'localforage';
 import { toast } from 'react-toastify';
 
 import { Console, Hook, Unhook } from 'console-feed';
-import InspectorBrush, { BRUSH_SHAPES, DEFAULT_BRUSHES } from './InspectorBrush/InspectorBrush';
+import InspectorBrush, { BRUSH_SHAPES, DEFAULT_BRUSHES, DEFAULT_BRUSH_PROPS } from './InspectorBrush/InspectorBrush';
 import { drawBrushPreview } from './InspectorBrush/InspectorBrushPreview';
 // import { useEffect, useState } from 'react';
 
@@ -139,14 +139,7 @@ class Inspector extends Component {
 
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
-    if (this.props.activeTool === 'brush') drawBrushPreview(this.brushPreviewRef.current, {
-      getToolSetting: this.props.getToolSetting,
-      snapshotCurrentSettings: settings => {
-        this._lastPreviewSettings = settings;
-      },
-      getThisRenderSeq: () => (this._previewSeq = (this._previewSeq || 0) + 1),
-      thisRenderStale: seq => (this._previewSeq !== seq)
-    });
+    if (this.props.activeTool === 'brush') this.updateBrushPreview();
     localForage.getItem('WICK.CUSTOM_SHAPES').then(shapes => {
       if (shapes && Array.isArray(shapes)) {
         this.setCustomShapes(shapes);
@@ -181,22 +174,7 @@ class Inspector extends Component {
     if (this.props.activeTool === 'brush') {
       const justSwitchedToBrush = prevProps.activeTool !== 'brush';
       if (justSwitchedToBrush) this._lastPreviewSettings = null;
-      const keys = [
-        'brushResolution', 'brushSpacing', 'brushScatterAmount',
-        'brushRotationMode', 'brushRotationOffset', 'brushShape'
-      ];
-      const last = this._lastPreviewSettings;
-      const currColor = this.props.getToolSetting('fillColor');
-      const colorChanged = !last || (currColor && currColor.rgba) !== last.fillColorRgba;
-      const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
-      if (colorChanged || settingChanged) drawBrushPreview(this.brushPreviewRef.current, {
-        getToolSetting: this.props.getToolSetting,
-        snapshotCurrentSettings: settings => {
-          this._lastPreviewSettings = settings;
-        },
-        getThisRenderSeq: () => (this._previewSeq = (this._previewSeq || 0) + 1),
-        thisRenderStale: seq => (this._previewSeq !== seq)
-      });
+      if (this.previewSettingsHaveChanged()) this.updateBrushPreview();
     }
 
   }
@@ -1046,6 +1024,59 @@ class Inspector extends Component {
     localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
   }
 
+  // The tool settings that define a brush.
+  getBrushPropertySettings = () => {
+    return {
+      shape: this.props.getToolSetting('brushShape'),
+      brushSize: this.props.getToolSetting('brushSize'),
+      brushResolution: this.props.getToolSetting('brushResolution'),
+      brushSpacing: this.props.getToolSetting('brushSpacing'),
+      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
+      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
+      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
+      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+    };
+  }
+
+  // The tool settings watched by the brush preview for changes.
+  getBrushPreviewSettings = () => {
+    // Brush color — use current fill color
+    let brushColor = '#5a9fd4';
+    try {
+      const fc = this.props.getToolSetting('fillColor');
+      if (fc) brushColor = fc.rgba;
+    } catch(e) {}
+
+    return {
+      brushShape: this.props.getToolSetting('brushShape') || DEFAULT_BRUSH_PROPS.shape,
+      brushSpacing: Math.max(0.05, this.props.getToolSetting('brushSpacing') || DEFAULT_BRUSH_PROPS.brushSpacing),
+      brushScatterAmount: this.props.getToolSetting('brushScatterAmount') ?? DEFAULT_BRUSH_PROPS.brushScatterAmount,
+      brushRotationMode: this.props.getToolSetting('brushRotationMode') || DEFAULT_BRUSH_PROPS.brushRotationMode,
+      brushRotationOffset: this.props.getToolSetting('brushRotationOffset') ?? DEFAULT_BRUSH_PROPS.brushRotationOffset,
+      brushResolution: this.props.getToolSetting('brushResolution') ?? DEFAULT_BRUSH_PROPS.brushResolution,
+      fillColorRgba: brushColor
+    };
+  }
+  previewSettingsHaveChanged = () => {
+      const keys = [
+        'brushShape', 'brushSpacing', 'brushScatterAmount',
+        'brushRotationMode', 'brushRotationOffset', 'brushResolution'
+      ];
+      const last = this._lastPreviewSettings;
+      const currColor = this.props.getToolSetting('fillColor');
+      const colorChanged = !last || (currColor && currColor.rgba) !== last.fillColorRgba;
+      const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
+      return colorChanged || settingChanged;
+  }
+  updateBrushPreview = () => {
+    drawBrushPreview(this.brushPreviewRef.current, {
+      snapshotCurrentSettings: () => {
+        this._lastPreviewSettings = this.getBrushPreviewSettings();
+        return this._lastPreviewSettings;
+      }
+    });
+  }
+
   toggleBrushModes = () => {
     this.setState({ showBrushModes: !this.state.showBrushModes });
   }
@@ -1082,25 +1113,24 @@ class Inspector extends Component {
         const brush = JSON.parse(ev.target.result);
         if (!brush || typeof brush !== 'object') throw new Error('Invalid');
         // If brush has an embedded custom shape, register it with a fresh ID
-        let resolvedShape = brush.shape || 'circle';
+        let resolvedShape = brush.shape;
         if (brush.shapeData && brush.shapeData.pathD) {
           const newId = 'custom_' + Date.now();
           const newShape = { ...brush.shapeData, id: newId };
           resolvedShape = newId;
           this.addCustomShape(newShape);
         }
-        // FIXME: these "default" values are in 3 places (search for this same comment)
         const newBrush = {
           name: brush.name || fileName.replace(/\.cbrush$/i, '') || 'Imported Brush',
-          shape: resolvedShape,
-          brushSize: brush.brushSize ?? 10,
-          brushResolution: brush.brushResolution ?? 1,
-          brushSpacing: brush.brushSpacing ?? 0.2,
-          brushScatterAmount: brush.brushScatterAmount ?? 0,
-          brushRotationMode: brush.brushRotationMode ?? 'fixed',
-          brushRotationOffset: brush.brushRotationOffset ?? 0,
-          brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
-          fillColorRgba: brush.fillColorRgba || '#000000',
+          shape: resolvedShape || DEFAULT_BRUSH_PROPS.shape,
+          brushSize: brush.brushSize ?? DEFAULT_BRUSH_PROPS.brushSize,
+          brushResolution: brush.brushResolution ?? DEFAULT_BRUSH_PROPS.brushResolution,
+          brushSpacing: brush.brushSpacing ?? DEFAULT_BRUSH_PROPS.brushSpacing,
+          brushScatterAmount: brush.brushScatterAmount ?? DEFAULT_BRUSH_PROPS.brushScatterAmount,
+          brushRotationMode: brush.brushRotationMode ?? DEFAULT_BRUSH_PROPS.brushRotationMode,
+          brushRotationOffset: brush.brushRotationOffset ?? DEFAULT_BRUSH_PROPS.brushRotationOffset,
+          brushStabilizerWeight: brush.brushStabilizerWeight ?? DEFAULT_BRUSH_PROPS.brushStabilizerWeight,
+          fillColorRgba: brush.fillColorRgba || DEFAULT_BRUSH_PROPS.fillColorRgba,
         };
         const updated = [...this.state.savedBrushes, newBrush];
         const newIndex = updated.length - 1;
@@ -1198,14 +1228,7 @@ class Inspector extends Component {
     const { savedBrushes, selectedBrushIndex } = this.state;
     const brushData = {
       name: selectedBrushIndex !== null ? savedBrushes[selectedBrushIndex].name : `Brush ${savedBrushes.length + 1}`,
-      shape:             this.props.getToolSetting('brushShape'),
-      brushSize:         this.props.getToolSetting('brushSize'),
-      brushResolution:   this.props.getToolSetting('brushResolution'),
-      brushSpacing:      this.props.getToolSetting('brushSpacing'),
-      brushScatterAmount:   this.props.getToolSetting('brushScatterAmount'),
-      brushRotationMode:    this.props.getToolSetting('brushRotationMode'),
-      brushRotationOffset:  this.props.getToolSetting('brushRotationOffset'),
-      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+      ...this.getBrushPropertySettings(),
       fillColorRgba: (() => { try { return this.props.getToolSetting('fillColor').rgba; } catch(e) { return '#000000'; } })(),
     };
     if (selectedBrushIndex !== null) {
@@ -1239,16 +1262,7 @@ class Inspector extends Component {
   _captureEditSnapshot = () => {
     this._preEditSnapshot = {
       selectedBrushIndex: this.state.selectedBrushIndex,
-      settings: {
-        shape:             this.props.getToolSetting('brushShape'),
-        brushSize:         this.props.getToolSetting('brushSize'),
-        brushResolution:   this.props.getToolSetting('brushResolution'),
-        brushSpacing:      this.props.getToolSetting('brushSpacing'),
-        brushScatterAmount:    this.props.getToolSetting('brushScatterAmount'),
-        brushRotationMode:     this.props.getToolSetting('brushRotationMode'),
-        brushRotationOffset:   this.props.getToolSetting('brushRotationOffset'),
-        brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
-      },
+      settings: this.getBrushPropertySettings(),
     };
   }
 
@@ -1476,14 +1490,7 @@ class Inspector extends Component {
                   ? this.state.savedBrushes[this.state.selectedBrushIndex]
                   : {
                       name: 'brush',
-                      shape: this.props.getToolSetting('brushShape'),
-                      brushSize: this.props.getToolSetting('brushSize'),
-                      brushResolution: this.props.getToolSetting('brushResolution'),
-                      brushSpacing: this.props.getToolSetting('brushSpacing'),
-                      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
-                      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
-                      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
-                      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+                      ...this.getBrushPropertySettings()
                     };
                 this.exportBrush(brush);
               }}

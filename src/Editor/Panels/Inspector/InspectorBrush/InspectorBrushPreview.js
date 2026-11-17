@@ -1,15 +1,3 @@
-const DEFAULT_BRUSH_PROPS = {
-    shape: 'circle',
-    brushSize: 10,
-    brushResolution: 1,
-    brushSpacing: 0.2,
-    brushScatterAmount: 0,
-    brushRotationMode: 'fixed',
-    brushRotationOffset: 0,
-    brushStabilizerWeight: 20,
-    fillColorRgba: '#000000',
-};
-
 // Mirrors the engine's rotateToDirection/randomAngle/angle logic (see Brush.js onMouseDown)
 // for the preview path, which is a fixed sine wave rather than real mouse movement.
 const _brushPreviewRotation = (rotationMode, rotationOffsetDeg, t, pathW, amplitude, rand) => {
@@ -64,7 +52,10 @@ margin, amplitude, pathW, numSteps) => {
 }
 
 // BRUSH PREVIEW— we're literally drawing a brush stroke here -H.A.
-export const drawBrushPreview = (canvas, { getToolSetting, snapshotCurrentSettings, getThisRenderSeq, thisRenderStale }) => {
+let previewSeq = 0;
+const getThisRenderSeq = () => ++previewSeq;
+const thisRenderIsStale = (seq) => previewSeq !== seq;
+export const drawBrushPreview = (canvas, { snapshotCurrentSettings }) => {
   if (!canvas) return;
   // Size the canvas buffer to physical pixels so it's sharp on Retina/HiDPI displays.
   // Only touch canvas.width/height when they actually change — assigning to either,
@@ -93,25 +84,10 @@ export const drawBrushPreview = (canvas, { getToolSetting, snapshotCurrentSettin
   // painted in one shot once ready, so the last good preview stays on screen
   // (no flicker) instead of flashing blank while potrace/the SVG image loads.
 
-  // Brush color — use current fill color
-  let brushColor = '#5a9fd4';
-  try {
-    const fc = getToolSetting('fillColor');
-    if (fc) brushColor = fc.rgba;
-  } catch(e) {}
-  
-  const shape = getToolSetting('brushShape') || DEFAULT_BRUSH_PROPS.shape;
-  const spacing = Math.max(0.05, getToolSetting('brushSpacing') || DEFAULT_BRUSH_PROPS.brushSpacing);
-  const scatterAmount = getToolSetting('brushScatterAmount') ?? DEFAULT_BRUSH_PROPS.brushScatterAmount;
-  const rotationMode = getToolSetting('brushRotationMode') || DEFAULT_BRUSH_PROPS.brushRotationMode;
-  const rotationOffset = getToolSetting('brushRotationOffset') ?? DEFAULT_BRUSH_PROPS.brushRotationOffset;
-  const resT = getToolSetting('brushResolution') ?? DEFAULT_BRUSH_PROPS.brushResolution;
-
-  // Snapshot current settings so componentDidUpdate can detect future changes
-  snapshotCurrentSettings({ brushResolution: resT, brushSpacing: spacing,
+  const { brushResolution: resT, brushSpacing: spacing,
     brushScatterAmount: scatterAmount,
     brushRotationMode: rotationMode, brushRotationOffset: rotationOffset, brushShape: shape,
-    fillColorRgba: brushColor });
+    fillColorRgba: brushColor } = snapshotCurrentSettings();
 
   // Tag this render so that if an older, slower-to-resolve render finishes
   // after a newer one, it's dropped instead of painting stale content back
@@ -188,7 +164,7 @@ export const drawBrushPreview = (canvas, { getToolSetting, snapshotCurrentSettin
         URL.revokeObjectURL(url);
         // A newer preview render has since started — drop this now-stale result
         // instead of painting it over whatever that one has already drawn.
-        if (thisRenderStale(seq)) return;
+        if (thisRenderIsStale(seq)) return;
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, W, H);
         // Scale SVG back up to full preview size — low-res SVG drawn large = jagged edges visible
@@ -196,7 +172,7 @@ export const drawBrushPreview = (canvas, { getToolSetting, snapshotCurrentSettin
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        if (thisRenderStale(seq)) return;
+        if (thisRenderIsStale(seq)) return;
         _brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
           scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
           margin, amplitude, pathW, numSteps);

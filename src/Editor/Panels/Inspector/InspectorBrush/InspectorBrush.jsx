@@ -9,20 +9,19 @@ import InspectorActionButton from "../InspectorActionButton/InspectorActionButto
 
 // Default brushes — structured like a parsed .cbrush JSON for easy migration later.
 // Each field matches the keys stored/loaded by saveBrush / applyBrush.
-// FIXME: these "default" values are in 3 places (search for this same comment)
+export const DEFAULT_BRUSH_PROPS = {
+  shape: 'circle',
+  brushSize: 10,
+  brushResolution: 1,
+  brushSpacing: 0.2,
+  brushScatterAmount: 0,
+  brushRotationMode: 'fixed',
+  brushRotationOffset: 0,
+  brushStabilizerWeight: 20,
+  fillColorRgba: '#000000',
+};
 export const DEFAULT_BRUSHES = [
-  {
-    name: 'Basic',
-    shape: 'circle',
-    brushSize: 10,
-    brushResolution: 1,
-    brushSpacing: 0.2,
-    brushScatterAmount: 0,
-    brushRotationMode: 'fixed',
-    brushRotationOffset: 0,
-    brushStabilizerWeight: 20,
-    fillColorRgba: '#000000',
-  },
+  { name: 'Basic', ...DEFAULT_BRUSH_PROPS },
 ];
 
 export const BRUSH_SHAPES = [
