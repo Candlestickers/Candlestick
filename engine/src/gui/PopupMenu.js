@@ -52,9 +52,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Small',
             icon: 'small_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_SMALL_W;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_SMALL_H;
-                localStorage.setItem('wickEditorFrameSizeValue', Wick.GUIElement.FRAME_SMALL_W);
+                Wick.GUIElement.setFrameSize(Wick.GUIElement.FRAME_SMALL_W);
             }
         });
 
@@ -62,9 +60,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Medium',
             icon: 'normal_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
-                localStorage.setItem('wickEditorFrameSizeValue', Wick.GUIElement.FRAME_NORMAL_W);
+                Wick.GUIElement.setFrameSize(Wick.GUIElement.FRAME_NORMAL_W);
             }
         });
 
@@ -72,9 +68,7 @@ Wick.GUIElement.PopupMenu = class extends Wick.GUIElement {
             tooltip: 'Large',
             icon: 'large_frames',
             clickFn: () => {
-                Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
-                Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
-                localStorage.setItem('wickEditorFrameSizeValue', Wick.GUIElement.FRAME_LARGE_W);
+                Wick.GUIElement.setFrameSize(Wick.GUIElement.FRAME_LARGE_W);
             }
         });
     };

@@ -64,23 +64,11 @@ class Timeline extends Component {
 
   _onFrameSizeScroll = (e) => {
     let step = e.detail.delta > 0 ? 1 : -1;
+    let value = parseInt(
+      localStorage.getItem('wickEditorFrameSizeValue') || window.Wick.GUIElement.FRAME_NORMAL_W
+    ) + step;
 
-    if (window.Wick && window.Wick.GUIElement) {
-      let G = window.Wick.GUIElement;
-      let value = localStorage.getItem('wickEditorFrameSizeValue') || G.FRAME_NORMAL_W;
-      value = parseInt(value) + step;
-      
-      let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));
-      let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
-      let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
-      h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
-
-      G.gridCellWidth = w;
-      G.gridCellHeight = h;
-
-      localStorage.setItem('wickEditorFrameSizeValue', w);
-    }
-    
+    window.Wick.GUIElement.setFrameSize(value);
     this.props.project.guiElement.draw();
   }
 

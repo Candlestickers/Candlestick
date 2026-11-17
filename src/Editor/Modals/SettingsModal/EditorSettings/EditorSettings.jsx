@@ -152,21 +152,9 @@ class EditorSettings extends Component {
               value={this.state.frameSizeValue}
               style={{ width: '100%', cursor: 'pointer' }}
               onChange={(e) => {
-                if (window.Wick && window.Wick.GUIElement) {
-                  let G = window.Wick.GUIElement;
-                  let value = parseInt(e.target.value);
-                  
-                  let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(value), G.FRAME_LARGE_W));
-                  let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
-                  let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
-                  h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
-
-                  G.gridCellWidth = w;
-                  G.gridCellHeight = h;
-
-                  this.setState({ frameSizeValue: w });
-                  localStorage.setItem('wickEditorFrameSizeValue', w);
-                }
+                let value = parseInt(e.target.value);
+                let w = window.Wick.GUIElement.setFrameSize(value);
+                this.setState({ frameSizeValue: w });
               }}
             />
             <div style={{ position: 'relative', left: `${FRAME_SIZE_ICON_W/2}px`, width: `calc(100% - ${FRAME_SIZE_ICON_W}px)`, height: '20px', marginTop: '2px' }}>

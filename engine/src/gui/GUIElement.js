@@ -90,6 +90,24 @@ Wick.GUIElement = class {
     }
 
     /**
+     * Try to set the size of frames, then return the actual set size.
+     * @type {number}
+     */
+    static setFrameSize (value) {
+        let G = Wick.GUIElement;
+        let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(value), G.FRAME_LARGE_W));
+        let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
+        let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
+        h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
+
+        G.gridCellWidth = w;
+        G.gridCellHeight = h;
+
+        localStorage.setItem('wickEditorFrameSizeValue', w);
+        return w;
+    }
+
+    /**
      * The current grid cell width that all GUIElements are based off of.
      * @type {number}
      */
@@ -214,46 +232,33 @@ Wick.GUIElement.FRAME_NORMAL_H = 42;
 Wick.GUIElement.FRAME_LARGE_W = 62;
 Wick.GUIElement.FRAME_LARGE_H = 52;
 
-/* Automatically choose larger frames if we're on a tablet */
-const userAgent = navigator.userAgent.toLowerCase();
-const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
-if(isTablet) {
-    Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
-    Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
-} else {
-    Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
-    Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
-}
-// Restore saved frame size preference (overrides tablet/desktop default)
-const _savedFrameSizeValue = localStorage.getItem('wickEditorFrameSizeValue');
-if (_savedFrameSizeValue !== null) {
-    let G = Wick.GUIElement;
-    let value = parseInt(_savedFrameSizeValue) || G.FRAME_NORMAL_W;
-    
-    let w = Math.max(G.FRAME_XSMALL_W, Math.min(value, G.FRAME_LARGE_W));
-    let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
-    let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
-    h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
-
-    G.gridCellWidth = w;
-    G.gridCellHeight = h;
-} else {
-    const _savedFrameSize = localStorage.getItem('wickEditorFrameSizeMode');
-    if(_savedFrameSize) switch(_savedFrameSize){
-        case 'small':
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_SMALL_W;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_SMALL_H;
-            break;
-        case 'large':
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_LARGE_W;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_LARGE_H;
-            break;
-        case 'normal':
-        default:
-            Wick.GUIElement.gridCellWidth = Wick.GUIElement.FRAME_NORMAL_W;
-            Wick.GUIElement.gridCellHeight = Wick.GUIElement.FRAME_NORMAL_H;
+{ // initialize frame size
+    const _savedFrameSizeValue = parseInt(localStorage.getItem('wickEditorFrameSizeValue'));
+    const _savedFrameSizeMode = localStorage.getItem('wickEditorFrameSizeMode'); // old frame size storage, before v1.3.0
+    let initialSize;
+    if (_savedFrameSizeValue) { // user has already visited before without clearing storage
+        initialSize = _savedFrameSizeValue;
+    } else if(_savedFrameSizeMode) { // user has not used editor since before v1.3.0
+        switch(_savedFrameSizeMode) {
+            case 'small':
+                initialSize = Wick.GUIElement.FRAME_SMALL_W;
+                break;
+            case 'large':
+                initialSize = Wick.GUIElement.FRAME_LARGE_W;
+                break;
+            default: // normal
+                initialSize = Wick.GUIElement.FRAME_NORMAL_W;
+                break;
+        }
+    } else { // user has never used editor or cleared storage
+        // choose larger frames if using a tablet
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
+        initialSize = isTablet ? Wick.GUIElement.FRAME_LARGE_W : Wick.GUIElement.FRAME_NORMAL_W;
     }
+    Wick.GUIElement.setFrameSize(initialSize);
 }
+
 Wick.GUIElement.GRID_MARGIN = 1;
 
 Wick.GUIElement.TIMELINE_BACKGROUND_COLOR = '#2A2E30';
