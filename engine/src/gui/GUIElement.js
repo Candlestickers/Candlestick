@@ -286,6 +286,8 @@ Wick.GUIElement.NUMBER_LINE_NUMBERS_HIGHLIGHT_COLOR = '#ffffff';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_COMMON_COLOR = '#494949';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_FAMILY = 'PT Mono';
 Wick.GUIElement.NUMBER_LINE_NUMBERS_FONT_SIZE = '18';
+Wick.GUIElement.EVERY_5_THRESHOLD = Wick.GUIElement.FRAME_SMALL_W; // if frames are smaller than this, show every 5th frame number
+Wick.GUIElement.EVERY_10_THRESHOLD = Wick.GUIElement.EVERY_5_THRESHOLD/2; // if frames are smaller than this, show every 10th frame number
 
 Wick.GUIElement.FRAME_HEIGHT = Wick.GUIElement.FRAMES_STRIP_HEIGHT;
 Wick.GUIElement.FRAME_HOVERED_OVER = '#1EE29A';

@@ -54,7 +54,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
                     var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
                     ctx.fillStyle = Wick.GUIElement.FRAME_GHOST_COLOR;
                     ctx.beginPath();
-                    ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
+                    ctx.roundRect(-r, -r, r*2, r*2, r/4);
                     ctx.fill();
                 ctx.restore();
 
@@ -68,7 +68,7 @@ Wick.GUIElement.TweenGhost = class extends Wick.GUIElement.Ghost {
                     var r = _tweenScale * Wick.GUIElement.TWEEN_DIAMOND_RADIUS;
                     ctx.fillStyle = Wick.GUIElement.FRAME_GHOST_COLOR;
                     ctx.beginPath();
-                    ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
+                    ctx.roundRect(-r, -r, r*2, r*2, r/4);
                     ctx.stroke();
                 ctx.restore();
             ctx.restore();

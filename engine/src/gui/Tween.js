@@ -68,7 +68,7 @@ Wick.GUIElement.Tween = class extends Wick.GUIElement {
                 ctx.strokeStyle = Wick.GUIElement.SELECTED_ITEM_BORDER_COLOR;
                 ctx.lineWidth = Wick.GUIElement.FRAME_HIGHLIGHT_STROKEWIDTH;
                 ctx.beginPath();
-                ctx.roundRect(-r, -r, r*2, r*2, r*3/7);
+                ctx.roundRect(-r, -r, r*2, r*2, r/4);
                 ctx.stroke();
             ctx.restore();
         }
