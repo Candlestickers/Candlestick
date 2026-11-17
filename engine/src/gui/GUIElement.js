@@ -94,14 +94,13 @@ Wick.GUIElement = class {
      * @type {number}
      */
     static setFrameSize (value) {
-        let G = Wick.GUIElement;
-        let w = Math.max(G.FRAME_XSMALL_W, Math.min(parseInt(value), G.FRAME_LARGE_W));
-        let heightGrowthPerWidth = (G.FRAME_NORMAL_H - G.FRAME_SMALL_H)/(G.FRAME_NORMAL_W - G.FRAME_SMALL_W);
-        let h = (w - G.FRAME_SMALL_W) * heightGrowthPerWidth + G.FRAME_SMALL_H;
-        h = Math.max(G.FRAME_XSMALL_H, Math.min(h, G.FRAME_LARGE_H));
+        let w = Math.max(this.FRAME_XSMALL_W, Math.min(parseInt(value), this.FRAME_LARGE_W));
+        let heightGrowthPerWidth = (this.FRAME_NORMAL_H - this.FRAME_SMALL_H)/(this.FRAME_NORMAL_W - this.FRAME_SMALL_W);
+        let h = (w - this.FRAME_SMALL_W) * heightGrowthPerWidth + this.FRAME_SMALL_H;
+        h = Math.max(this.FRAME_XSMALL_H, Math.min(h, this.FRAME_LARGE_H));
 
-        G.gridCellWidth = w;
-        G.gridCellHeight = h;
+        this.gridCellWidth = w;
+        this.gridCellHeight = h;
 
         localStorage.setItem('wickEditorFrameSizeValue', w);
         return w;
