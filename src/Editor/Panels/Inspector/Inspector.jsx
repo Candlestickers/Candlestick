@@ -36,54 +36,15 @@ import InspectorSoundPreview from './InspectorPreview/InspectorPreviewTypes/Insp
 import InspectorScriptWindow from './InspectorScriptWindow/InspectorScriptWindow';
 import InspectorCheckbox from './InspectorRow/InspectorRowTypes/InspectorCheckbox';
 
-import ToolSettingsInput from 'Editor/Panels/Toolbox/ToolSettings/ToolSettingsInput/ToolSettingsInput';
-import PopupMenu from 'Editor/Util/PopupMenu/PopupMenu';
-import ReactTooltip from 'react-tooltip';
 import localForage from 'localforage';
 import { toast } from 'react-toastify';
-import ActionButton from 'Editor/Util/ActionButton/ActionButton';
 
 import { Console, Hook, Unhook } from 'console-feed';
+import InspectorBrush, { BRUSH_SHAPES, DEFAULT_BRUSHES, DEFAULT_BRUSH_PROPS } from './InspectorBrush/InspectorBrush';
+import { drawBrushPreview } from './InspectorBrush/InspectorBrushPreview';
 // import { useEffect, useState } from 'react';
 
 window.EditorGradientColorSwapState = false;
-
-// Default brushes — structured like a parsed .cbrush JSON for easy migration later.
-// Each field matches the keys stored/loaded by saveBrush / applyBrush.
-// FIXME: these "default" values are in 3 places (search for this same comment)
-const DEFAULT_BRUSHES = [
-  {
-    name: 'Basic',
-    shape: 'circle',
-    brushSize: 10,
-    brushResolution: 1,
-    brushSpacing: 0.2,
-    brushScatterAmount: 0,
-    brushRotationMode: 'fixed',
-    brushRotationOffset: 0,
-    brushStabilizerWeight: 20,
-    fillColorRgba: '#000000',
-  },
-];
-
-const BRUSH_SHAPES = [
-  { id: 'circle',     name: 'Circle',
-    svg: <circle cx="14" cy="14" r="12"/> },
-  { id: 'square',     name: 'Square',
-    svg: <rect x="2" y="2" width="24" height="24"/> },
-  { id: 'sparkle',    name: 'Sparkle',
-    svg: <polygon points="14,1 15.4,12.6 27,14 15.4,15.4 14,27 12.6,15.4 1,14 12.6,12.6"/> },
-  { id: 'leaf',       name: 'Leaf',
-    svg: <path d="M14,2 Q26,14 14,26 Q2,14 14,2 Z"/> },
-  { id: 'scatter',    name: 'Scatter',
-    svg: <><circle cx="14" cy="14" r="4"/><circle cx="7" cy="8" r="3"/><circle cx="21" cy="8" r="2.5"/><circle cx="7" cy="20" r="3"/><circle cx="21" cy="20" r="2.5"/></> },
-];
-
-const ROTATION_MODE_OPTIONS = [
-  { label: 'Fixed',  value: 'fixed' },
-  { label: 'Path',   value: 'path' },
-  { label: 'Random', value: 'random' },
-];
 
 class Inspector extends Component {
   constructor (props) {
@@ -178,13 +139,10 @@ class Inspector extends Component {
 
   componentDidMount() {
     Hook(window.console, this.handleConsoleLog, false);
-    if (this.props.activeTool === 'brush') this.drawBrushPreview();
+    if (this.props.activeTool === 'brush') this.updateBrushPreview();
     localForage.getItem('WICK.CUSTOM_SHAPES').then(shapes => {
       if (shapes && Array.isArray(shapes)) {
-        this.setState({ customShapes: shapes });
-        // Register with engine so _buildBrushTipCanvas can find them
-        window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-        shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+        this.setCustomShapes(shapes);
       }
     });
     localForage.getItem('WICK.REMOVED_SHAPES').then(removed => {
@@ -216,235 +174,10 @@ class Inspector extends Component {
     if (this.props.activeTool === 'brush') {
       const justSwitchedToBrush = prevProps.activeTool !== 'brush';
       if (justSwitchedToBrush) this._lastPreviewSettings = null;
-      const keys = [
-        'brushResolution', 'brushSpacing', 'brushScatterAmount',
-        'brushRotationMode', 'brushRotationOffset', 'brushShape'
-      ];
-      const last = this._lastPreviewSettings;
-      const currColor = this.props.getToolSetting('fillColor');
-      const colorChanged = !last || (currColor && currColor.rgba) !== last.fillColorRgba;
-      const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
-      if (colorChanged || settingChanged) this.drawBrushPreview();
+      if (this.previewSettingsHaveChanged()) this.updateBrushPreview();
     }
 
   }
-
-  // Wraps a degree value into [-180, 180] instead of clamping, so e.g. 200 becomes
-  // -160 (the same angle) rather than getting truncated to the 180 boundary.
-  _normalizeAngle = (deg) => {
-    let a = ((deg % 360) + 360) % 360;
-    if (a > 180) a -= 360;
-    // 180 and -180 are the same angle; keep whichever sign was actually typed
-    // instead of always snapping to +180, so e.g. -180 doesn't jump to 180.
-    if (a === 180 && deg < 0) a = -180;
-    return a;
-  }
-
-  // Mirrors the engine's rotateToDirection/randomAngle/angle logic (see Brush.js onMouseDown)
-  // for the preview path, which is a fixed sine wave rather than real mouse movement.
-  _brushPreviewRotation = (rotationMode, rotationOffsetDeg, t, pathW, amplitude, rand) => {
-    if (rotationMode === 'random') {
-      return rand() * Math.PI * 2;
-    }
-    rand(); // consume the same random slot 'random' mode uses, so later draws stay stable
-    const offsetRad = rotationOffsetDeg * Math.PI / 180;
-    if (rotationMode === 'path') {
-      // Tangent angle of x(t)=margin+t*pathW, y(t)=H/2+sin(t*pi*2.5)*amplitude
-      const dxdt = pathW;
-      const dydt = amplitude * Math.cos(t * Math.PI * 2.5) * (Math.PI * 2.5);
-      return Math.atan2(dydt, dxdt) + offsetRad;
-    }
-    return offsetRad; // 'fixed'
-  }
-
-  // BRUSH PREVIEW— we're literally drawing a brush stroke here -H.A.
-  drawBrushPreview = () => {
-    const canvas = this.brushPreviewRef.current;
-    if (!canvas) return;
-    // Size the canvas buffer to physical pixels so it's sharp on Retina/HiDPI displays.
-    // Only touch canvas.width/height when they actually change — assigning to either,
-    // even to the same value, implicitly clears the canvas, which would blank the
-    // preview on every single slider tick before the new stroke is ready to draw.
-    const dpr = window.devicePixelRatio || 1;
-    const cssW = canvas.clientWidth  || 220;
-    const cssH = canvas.clientHeight || 80;
-    const targetW = Math.round(cssW * dpr);
-    const targetH = Math.round(cssH * dpr);
-    if (canvas.width !== targetW || canvas.height !== targetH) {
-      canvas.width = targetW;
-      canvas.height = targetH;
-    }
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-
-    // Background — use project background color
-    let bgColor = '#1c1c1c';
-    try {
-      const bg = window.project && window.project.backgroundColor;
-      if (bg) bgColor = bg.rgba;
-    } catch(e) {}
-    // Don't blank the canvas here — the new stroke is built off-canvas below and
-    // painted in one shot once ready, so the last good preview stays on screen
-    // (no flicker) instead of flashing blank while potrace/the SVG image loads.
-
-    // Brush color — use current fill color
-    let brushColor = '#5a9fd4';
-    try {
-      const fc = this.props.getToolSetting('fillColor');
-      if (fc) brushColor = fc.rgba;
-    } catch(e) {}
-    
-    // FIXME: these "default" values are in 3 places (search for this same comment)
-    const shape = this.props.getToolSetting('brushShape') || 'circle';
-    const spacing = Math.max(0.05, this.props.getToolSetting('brushSpacing') || 0.2);
-    const scatterAmount = this.props.getToolSetting('brushScatterAmount') ?? 0;
-    const rotationMode = this.props.getToolSetting('brushRotationMode') || 'fixed';
-    const rotationOffset = this.props.getToolSetting('brushRotationOffset') ?? 0;
-    const resT=this.props.getToolSetting('brushResolution') ?? 1;
-
-    // Snapshot current settings so componentDidUpdate can detect future changes
-    this._lastPreviewSettings = { brushResolution: resT, brushSpacing: spacing,
-      brushScatterAmount: scatterAmount,
-      brushRotationMode: rotationMode, brushRotationOffset: rotationOffset, brushShape: shape,
-      fillColorRgba: brushColor };
-
-    // Tag this render so that if an older, slower-to-resolve render finishes
-    // after a newer one, it's dropped instead of painting stale content back
-    // over the current preview.
-    const seq = (this._previewSeq = (this._previewSeq || 0) + 1);
-
-    // Resolution: same smoothnessFactor formula as the engine
-    const smoothness = 0.05 + (Math.pow(resT, 5) + 0.1 * resT * (1 - resT)) * 0.95;
-
-    const stampSize = 35;
-    const stepDist  = Math.max(2, stampSize * spacing - 1);
-
-    let _seed = 12345;
-    const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
-
-    const margin= stampSize + 4;
-    const amplitude = (H - stampSize * 2) / 2.8;
-    const pathW = W - margin * 2;
-    const numSteps = Math.ceil(pathW / stepDist) + 1;
-
-    // Rasterize stamps onto a TRANSPARENT offscreen canvas.
-    // potrace.createFromImage classifies pixels by alpha (alpha > 155 = foreground).
-    // So we must NOT fill a white background — transparent = background, opaque stamp = foreground.
-    // If you don't get it uhhhh… just trust me bro
-    const stampCanvas = document.createElement('canvas');
-    stampCanvas.width = W;
-    stampCanvas.height = H;
-    const sCtx = stampCanvas.getContext('2d');
-
-    for (let i = 0; i < numSteps; i++) {
-      const t = numSteps > 1 ? i / (numSteps - 1) : 0;
-
-      const sz = stampSize;
-
-      let x = margin + t * pathW;
-      let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
-
-      rand(); rand(); // consume position-jitter slots (not applied; potrace handles jaggedness via scale)
-      const rotation = this._brushPreviewRotation(rotationMode, rotationOffset, t, pathW, amplitude, rand);
-      const r4 = rand(), r5 = rand();
-      const sc = sz * scatterAmount;
-      x += (r4 - 0.5) * sc * 2;
-      y += (r5 - 0.5) * sc * 2;
-
-      // Always draw at 24 segs — jaggedness comes from potrace on a smaller canvas below
-      this._drawBrushStamp(sCtx, x, y, sz, shape, rotation, '#000000', 24);
-    }
-
-    // Scale down to simulate low resolution: fewer pixels → potrace produces angular shapes.
-    // imageScaleFactor range mirrors the engine: ~0.25 at Reso=0, 1.0 at Reso=1.
-    const imageScaleFactor = 0.25 + smoothness * 0.75;
-    const smallW = Math.max(30, Math.round(W * imageScaleFactor));
-    const smallH = Math.max(15, Math.round(H * imageScaleFactor));
-    const smallCanvas = document.createElement('canvas');
-    smallCanvas.width = smallW;
-    smallCanvas.height = smallH;
-    const smallCtx = smallCanvas.getContext('2d');
-    smallCtx.imageSmoothingEnabled = true;
-    smallCtx.drawImage(stampCanvas, 0, 0, smallW, smallH);
-
-    // Run potrace — same step as the engine does after the croquis rasterization
-    const pt = window.potrace;
-    if (pt) {
-      try {
-        let svgStr = pt.fromImage(smallCanvas).toSVG(1);
-        // Replace the traced fill color with the actual brush color
-        svgStr = svgStr.replace(/fill="[^"]*"/g, `fill="${brushColor}"`);
-        // Render via Image so the browser handles SVG fill-rule correctly
-        const blob = new Blob([svgStr], { type: 'image/svg+xml' });
-        const url  = URL.createObjectURL(blob);
-        const img  = new Image();
-        img.onload = () => {
-          URL.revokeObjectURL(url);
-          // A newer preview render has since started — drop this now-stale result
-          // instead of painting it over whatever that one has already drawn.
-          if (this._previewSeq !== seq) return;
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, W, H);
-          // Scale SVG back up to full preview size — low-res SVG drawn large = jagged edges visible
-          ctx.drawImage(img, 0, 0, W, H);
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          if (this._previewSeq !== seq) return;
-          this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
-            scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
-            margin, amplitude, pathW, numSteps);
-        };
-        img.src = url;
-      } catch(e) {
-        this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
-          scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
-          margin, amplitude, pathW, numSteps);
-      }
-    } else {
-      this._brushPreviewFallback(ctx, W, H, bgColor, brushColor, shape, spacing,
-        scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
-        margin, amplitude, pathW, numSteps);
-    }
-  }
-
-  // Polygon-approximation fallback when potrace is unavailable
-  _brushPreviewFallback = (ctx, W, H, bgColor, brushColor, shape, spacing,
-    scatterAmount, rotationMode, rotationOffset, smoothness, stampSize, stepDist,
-    margin, amplitude, pathW, numSteps) => {
-    // This path draws straight to the visible canvas synchronously (no async
-    // gap), so filling the background here right before the stamps is safe -H.A.
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, W, H);
-    const curveSegs = Math.max(3, Math.round(smoothness * 24));
-    const jitterAmt = (1 - smoothness) * 4;
-    let _seed = 12345;
-    const rand = () => { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return (_seed >>> 0) / 0xffffffff; };
-    for (let i = 0; i < numSteps; i++) {
-      const t = numSteps > 1 ? i / (numSteps - 1) : 0;
-      const sz = stampSize;
-      let x = margin + t * pathW;
-      let y = H / 2 + Math.sin(t * Math.PI * 2.5) * amplitude;
-      if (jitterAmt > 0) { x += (rand() - 0.5) * jitterAmt; y += (rand() - 0.5) * jitterAmt; } else { rand(); rand(); }
-      const rotation = this._brushPreviewRotation(rotationMode, rotationOffset, t, pathW, amplitude, rand);
-      const r4 = rand(), r5 = rand();
-      const sc = sz * scatterAmount; x += (r4 - 0.5) * sc * 2; y += (r5 - 0.5) * sc * 2;
-      this._drawBrushStamp(ctx, x, y, sz, shape, rotation, brushColor, curveSegs);
-    }
-  }
-
-  _drawBrushStamp = (ctx, x, y, size, shape, rotation, color, curveSegs = 24) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
-    ctx.fillStyle = color || '#5a9fd4';
-    window.Wick && window.Wick.Tools.BrushUtils.drawBrushShape(ctx, size, shape, fill => {
-      fill();
-    }, { fallback: 'polycircle', curveSegs });
-    ctx.restore();
-  }
-
 
   /**
    * Returns the value of a requested selection attribute.
@@ -1271,6 +1004,79 @@ class Inspector extends Component {
     )
   }
 
+  setCustomShapes = (shapes) => {
+    // Register with engine so _buildBrushTipCanvas can find them
+    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+    shapes.forEach(cs => { window.wickCustomBrushShapes[cs.id] = cs; });
+    this.setState({ customShapes: shapes });
+  }
+  addCustomShape = (shape) => {
+    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
+    window.wickCustomBrushShapes[shape.id] = shape;
+    const updatedCustomShapes = [...this.state.customShapes, shape];
+    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+    this.setState({ customShapes: updatedCustomShapes });
+  }
+  removeCustomShape = (shape) => {
+    if (window.wickCustomBrushShapes) delete window.wickCustomBrushShapes[shape];
+    const updatedCustomShapes = this.state.customShapes.filter(cs => cs.id !== shape);
+    this.setState({ customShapes: updatedCustomShapes });
+    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+  }
+
+  // The tool settings that define a brush.
+  getBrushPropertySettings = () => {
+    return {
+      shape: this.props.getToolSetting('brushShape'),
+      brushSize: this.props.getToolSetting('brushSize'),
+      brushResolution: this.props.getToolSetting('brushResolution'),
+      brushSpacing: this.props.getToolSetting('brushSpacing'),
+      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
+      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
+      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
+      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+    };
+  }
+
+  // The tool settings watched by the brush preview for changes.
+  getBrushPreviewSettings = () => {
+    // Brush color — use current fill color
+    let brushColor = '#5a9fd4';
+    try {
+      const fc = this.props.getToolSetting('fillColor');
+      if (fc) brushColor = fc.rgba;
+    } catch(e) {}
+
+    return {
+      brushShape: this.props.getToolSetting('brushShape') || DEFAULT_BRUSH_PROPS.shape,
+      brushSpacing: Math.max(0.05, this.props.getToolSetting('brushSpacing') || DEFAULT_BRUSH_PROPS.brushSpacing),
+      brushScatterAmount: this.props.getToolSetting('brushScatterAmount') ?? DEFAULT_BRUSH_PROPS.brushScatterAmount,
+      brushRotationMode: this.props.getToolSetting('brushRotationMode') || DEFAULT_BRUSH_PROPS.brushRotationMode,
+      brushRotationOffset: this.props.getToolSetting('brushRotationOffset') ?? DEFAULT_BRUSH_PROPS.brushRotationOffset,
+      brushResolution: this.props.getToolSetting('brushResolution') ?? DEFAULT_BRUSH_PROPS.brushResolution,
+      fillColorRgba: brushColor
+    };
+  }
+  previewSettingsHaveChanged = () => {
+      const keys = [
+        'brushShape', 'brushSpacing', 'brushScatterAmount',
+        'brushRotationMode', 'brushRotationOffset', 'brushResolution'
+      ];
+      const last = this._lastPreviewSettings;
+      const currColor = this.props.getToolSetting('fillColor');
+      const colorChanged = !last || (currColor && currColor.rgba) !== last.fillColorRgba;
+      const settingChanged = !last || keys.some(k => this.props.getToolSetting(k) !== last[k]);
+      return colorChanged || settingChanged;
+  }
+  updateBrushPreview = () => {
+    drawBrushPreview(this.brushPreviewRef.current, {
+      snapshotCurrentSettings: () => {
+        this._lastPreviewSettings = this.getBrushPreviewSettings();
+        return this._lastPreviewSettings;
+      }
+    });
+  }
+
   toggleBrushModes = () => {
     this.setState({ showBrushModes: !this.state.showBrushModes });
   }
@@ -1307,33 +1113,28 @@ class Inspector extends Component {
         const brush = JSON.parse(ev.target.result);
         if (!brush || typeof brush !== 'object') throw new Error('Invalid');
         // If brush has an embedded custom shape, register it with a fresh ID
-        let resolvedShape = brush.shape || 'circle';
-        let updatedCustomShapes = [...this.state.customShapes];
+        let resolvedShape = brush.shape;
         if (brush.shapeData && brush.shapeData.pathD) {
           const newId = 'custom_' + Date.now();
           const newShape = { ...brush.shapeData, id: newId };
-          window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-          window.wickCustomBrushShapes[newId] = newShape;
-          updatedCustomShapes = [...updatedCustomShapes, newShape];
           resolvedShape = newId;
-          localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+          this.addCustomShape(newShape);
         }
-        // FIXME: these "default" values are in 3 places (search for this same comment)
         const newBrush = {
           name: brush.name || fileName.replace(/\.cbrush$/i, '') || 'Imported Brush',
-          shape: resolvedShape,
-          brushSize: brush.brushSize ?? 10,
-          brushResolution: brush.brushResolution ?? 1,
-          brushSpacing: brush.brushSpacing ?? 0.2,
-          brushScatterAmount: brush.brushScatterAmount ?? 0,
-          brushRotationMode: brush.brushRotationMode ?? 'fixed',
-          brushRotationOffset: brush.brushRotationOffset ?? 0,
-          brushStabilizerWeight: brush.brushStabilizerWeight ?? 20,
-          fillColorRgba: brush.fillColorRgba || '#000000',
+          shape: resolvedShape || DEFAULT_BRUSH_PROPS.shape,
+          brushSize: brush.brushSize ?? DEFAULT_BRUSH_PROPS.brushSize,
+          brushResolution: brush.brushResolution ?? DEFAULT_BRUSH_PROPS.brushResolution,
+          brushSpacing: brush.brushSpacing ?? DEFAULT_BRUSH_PROPS.brushSpacing,
+          brushScatterAmount: brush.brushScatterAmount ?? DEFAULT_BRUSH_PROPS.brushScatterAmount,
+          brushRotationMode: brush.brushRotationMode ?? DEFAULT_BRUSH_PROPS.brushRotationMode,
+          brushRotationOffset: brush.brushRotationOffset ?? DEFAULT_BRUSH_PROPS.brushRotationOffset,
+          brushStabilizerWeight: brush.brushStabilizerWeight ?? DEFAULT_BRUSH_PROPS.brushStabilizerWeight,
+          fillColorRgba: brush.fillColorRgba || DEFAULT_BRUSH_PROPS.fillColorRgba,
         };
         const updated = [...this.state.savedBrushes, newBrush];
         const newIndex = updated.length - 1;
-        this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex, customShapes: updatedCustomShapes });
+        this.setState({ savedBrushes: updated, selectedBrushIndex: newIndex });
         localForage.setItem('WICK.BRUSHPRESETS', updated);
         localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', newIndex);
         this.applyBrush(newBrush);
@@ -1368,35 +1169,6 @@ class Inspector extends Component {
     URL.revokeObjectURL(url);
   }
 
-  renderTileDeleteBadge = (onDelete) => {
-    return (
-      <div
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        title="Delete"
-        style={{
-          position: 'absolute',
-          top: '-5px',
-          left: '-5px',
-          width: '14px',
-          height: '14px',
-          borderRadius: '100%',
-          background: '#4a4a4a',
-          border: '1px solid rgba(255,255,255,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '10px',
-          lineHeight: 1,
-          color: 'white',
-          cursor: 'pointer',
-          zIndex: 2,
-        }}> 
-        {/* draing the X symbol for deleting brush preset/ shape :P -H.A. */}
-        &times;
-      </div>
-    );
-  }
-
   deleteSelectedShape = () => {
     const shape = this.props.getToolSetting('brushShape');
     if (!shape) return;
@@ -1428,11 +1200,7 @@ class Inspector extends Component {
     const nextShape = allAvailable[nextIdx] || allAvailable[0];
 
     if (shape.startsWith('custom_')) {
-      // Remove from customShapes
-      const updatedCustomShapes = customShapes.filter(cs => cs.id !== shape);
-      if (window.wickCustomBrushShapes) delete window.wickCustomBrushShapes[shape];
-      this.setState({ customShapes: updatedCustomShapes });
-      localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+      this.removeCustomShape(shape);
     } else {
       // Add to removedShapes (built-in shapes are hidden, not truly deleted)
       const updatedRemoved = [...removedShapes, shape];
@@ -1460,14 +1228,7 @@ class Inspector extends Component {
     const { savedBrushes, selectedBrushIndex } = this.state;
     const brushData = {
       name: selectedBrushIndex !== null ? savedBrushes[selectedBrushIndex].name : `Brush ${savedBrushes.length + 1}`,
-      shape:             this.props.getToolSetting('brushShape'),
-      brushSize:         this.props.getToolSetting('brushSize'),
-      brushResolution:   this.props.getToolSetting('brushResolution'),
-      brushSpacing:      this.props.getToolSetting('brushSpacing'),
-      brushScatterAmount:   this.props.getToolSetting('brushScatterAmount'),
-      brushRotationMode:    this.props.getToolSetting('brushRotationMode'),
-      brushRotationOffset:  this.props.getToolSetting('brushRotationOffset'),
-      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
+      ...this.getBrushPropertySettings(),
       fillColorRgba: (() => { try { return this.props.getToolSetting('fillColor').rgba; } catch(e) { return '#000000'; } })(),
     };
     if (selectedBrushIndex !== null) {
@@ -1501,16 +1262,7 @@ class Inspector extends Component {
   _captureEditSnapshot = () => {
     this._preEditSnapshot = {
       selectedBrushIndex: this.state.selectedBrushIndex,
-      settings: {
-        shape:             this.props.getToolSetting('brushShape'),
-        brushSize:         this.props.getToolSetting('brushSize'),
-        brushResolution:   this.props.getToolSetting('brushResolution'),
-        brushSpacing:      this.props.getToolSetting('brushSpacing'),
-        brushScatterAmount:    this.props.getToolSetting('brushScatterAmount'),
-        brushRotationMode:     this.props.getToolSetting('brushRotationMode'),
-        brushRotationOffset:   this.props.getToolSetting('brushRotationOffset'),
-        brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
-      },
+      settings: this.getBrushPropertySettings(),
     };
   }
 
@@ -1545,420 +1297,14 @@ class Inspector extends Component {
 
     const id = 'custom_' + Date.now();
     const newShape = { id, name: 'Custom', pathD: d, tx, ty, scale };
-    const updatedCustomShapes = [...this.state.customShapes, newShape];
 
     // Register with engine immediately so brush can draw it right away
-    window.wickCustomBrushShapes = window.wickCustomBrushShapes || {};
-    window.wickCustomBrushShapes[id] = newShape;
+    this.addCustomShape(newShape);
 
-    this.setState({ customShapes: updatedCustomShapes, isEditingBrush: true, selectedBrushIndex: null });
-    localForage.setItem('WICK.CUSTOM_SHAPES', updatedCustomShapes);
+    this.setState({ isEditingBrush: true, selectedBrushIndex: null });
 
     this.props.setActiveTool('brush');
     this.props.setToolSetting('brushShape', id);
-  }
-
-  renderBrushList = () => {
-    const { savedBrushes, selectedBrushIndex, customShapes } = this.state;
-    const shapeMap = {};
-    BRUSH_SHAPES.forEach(s => { shapeMap[s.id] = s; });
-    customShapes.forEach(cs => {
-      shapeMap[cs.id] = { id: cs.id, name: cs.name,
-        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g> };
-    });
-
-    return (
-      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
-            {savedBrushes.map((brush, i) => {
-              const active = selectedBrushIndex === i;
-              const shape = shapeMap[brush.shape] || shapeMap['circle'];
-              const tipId = `brush-tip-${i}`;
-              return (
-                <div
-                  key={i}
-                  id={tipId}
-                  data-tip
-                  data-for={tipId}
-                  onClick={() => {
-                    this.setState({ selectedBrushIndex: i, isEditingBrush: false });
-                    this.applyBrush(brush);
-                    localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
-                  }}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    padding: '6px 2px',
-                    borderRadius: '5px',
-                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
-                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
-                  }}>
-                  <ReactTooltip id={tipId} type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
-                    <span>{brush.name || 'Brush'}</span>
-                  </ReactTooltip>
-                  {active && savedBrushes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedBrush)}
-                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
-                    <g fill="white">{shape.svg}</g>
-                  </svg>
-                </div>
-              );
-            })}
-            {/* "+" add new brush cell */}
-            <div
-              id="brush-tip-new"
-              data-tip
-              data-for="brush-tip-new"
-              onClick={this.toggleNewBrushMenu}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                padding: '6px 2px',
-                borderRadius: '5px',
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px dashed rgba(255,255,255,0.2)',
-                fontSize: '18px',
-                color: 'rgba(255,255,255,0.4)',
-                lineHeight: 1,
-              }}>
-              {/* <ReactTooltip id="brush-tip-new" type='info' place='bottom' effect='solid' aria-haspopup='true' className="wick-tooltip">
-                <span>New Brush</span>
-              </ReactTooltip> */}
-              +
-              <PopupMenu
-                isOpen={this.state.showNewBrushMenu}
-                toggle={this.closeNewBrushMenu}
-                target="brush-tip-new"
-                className="more-canvas-actions-popover">
-                <div className="brush-modes-widget">
-                  <div className='actions-container'>
-                    <ToolSettingsInput
-                      name='Create'
-                      icon='add'
-                      type='checkbox'
-                      value={false}
-                      onChange={this.startNewBrush}
-                    />
-                    <ToolSettingsInput
-                      name='Import'
-                      icon='upload'
-                      type='checkbox'
-                      value={false}
-                      onChange={() => { this.importBrush(); this.closeNewBrushMenu(); }}
-                    />
-                  </div>
-                </div>
-              </PopupMenu>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  renderBrushShapePicker = () => {
-    const currentShape = this.props.getToolSetting('brushShape');
-    const { customShapes, removedShapes } = this.state;
-    const allShapes = [
-      ...BRUSH_SHAPES.filter(s => !removedShapes.includes(s.id)),
-      ...customShapes.map(cs => ({
-        id: cs.id,
-        name: cs.name,
-        svg: <g transform={`translate(${cs.tx}, ${cs.ty}) scale(${cs.scale})`}><path d={cs.pathD} /></g>,
-      })),
-    ];
-    return (
-      <div className="inspector-item" style={{ paddingTop: '8px', paddingBottom: '8px' }}>
-        <div className="brush-shape-scroll" style={{ overflowY: 'auto', overflowX: 'hidden', paddingRight: '2px', paddingTop: '6px', paddingLeft: '6px', width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
-            {allShapes.map(shape => {
-              const active = currentShape === shape.id;
-              return (
-                <div
-                  key={shape.id}
-                  onClick={() => this.props.setToolSetting('brushShape', shape.id)}
-                  title={shape.name}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    padding: '6px 2px',
-                    borderRadius: '5px',
-                    background: active ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
-                    border: active ? '1px solid rgba(255,255,255,0.35)' : '1px solid transparent',
-                  }}>
-                  {active && allShapes.length > 1 && this.renderTileDeleteBadge(this.deleteSelectedShape)}
-                  <svg width="22" height="22" viewBox="0 0 28 28" style={{ display: 'block' }}>
-                    <g fill="white">{shape.svg}</g>
-                  </svg>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  renderBrushSettings = () => {
-    let brushModeIcon = 'brushmodenone';
-    let brushMode = this.props.getToolSetting('brushMode');
-    if (brushMode === 'inside') brushModeIcon = 'brushmodeinside';
-    else if (brushMode === 'outside') brushModeIcon = 'brushmodeoutside';
-    const rotationMode = this.props.getToolSetting('brushRotationMode');
-
-    const { isEditingBrush, selectedBrushIndex } = this.state;
-    const canEdit = selectedBrushIndex !== null || isEditingBrush;
-
-    return (
-      <div>
-        {/* Brush name input — only in edit mode */}
-        {isEditingBrush && (
-          <div className="inspector-item">
-            <InspectorTextInput
-              tooltip="Name"
-              val={selectedBrushIndex !== null ? (this.state.savedBrushes[selectedBrushIndex]?.name || '') : ''}
-              onChange={(val) => {
-                if (selectedBrushIndex === null) return;
-                const updated = [...this.state.savedBrushes];
-                updated[selectedBrushIndex] = { ...updated[selectedBrushIndex], name: val };
-                this.setState({ savedBrushes: updated });
-              }}
-              placeholder="Brush"
-              id="inspector-brush-name"
-            />
-          </div>
-        )}
-        {/* Brush stroke preview */}
-        <div style={{ margin: '6px 8px 2px', borderRadius: '3px', overflow: 'hidden', border: '1px solid #333' }}>
-          <canvas
-            ref={this.brushPreviewRef}
-            width={220}
-            height={100}
-            style={{ display: 'block', width: '100%' }}
-          />
-        </div>
-        {/* Saved brush list */}
-        {/* Brush list — hidden while editing */}
-        {!isEditingBrush && this.renderBrushList()}
-        {/* Sliders always visible */}
-        <div className="inspector-item">
-          {!isEditingBrush && (<>
-            <InspectorNumericSlider
-              tooltip="Brush Size"
-              icon="brushsize"
-              label="Size"
-              val={this.props.getToolSetting('brushSize')}
-              onChange={(val) => this.props.setToolSetting('brushSize', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushSize')}
-              onReset={() => this.props.setToolSetting('brushSize', 10)}
-            />
-            <InspectorNumericSlider
-              tooltip="Smoothing"
-              icon="brushsmoothness"
-              label="Lead"
-              val={this.props.getToolSetting('brushStabilizerWeight')}
-              onChange={(val) => this.props.setToolSetting('brushStabilizerWeight', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushStabilizerWeight')}
-              onReset={() => this.props.setToolSetting('brushStabilizerWeight', 20)}
-            />
-          </>)}
-          {/* Edit-only sliders */}
-          {isEditingBrush && (<>
-            <InspectorNumericSlider
-              tooltip="Resolution"
-              icon="brushresolution"
-              label="Quality"
-              val={this.props.getToolSetting('brushResolution')}
-              onChange={(val) => this.props.setToolSetting('brushResolution', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushResolution')}
-              onReset={() => this.props.setToolSetting('brushResolution', 0.75)}
-            />
-            <InspectorNumericSlider
-              tooltip="Spacing"
-              icon="brushspacing"
-              label="Link"
-              val={this.props.getToolSetting('brushSpacing')}
-              onChange={(val) => this.props.setToolSetting('brushSpacing', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushSpacing')}
-              onReset={() => this.props.setToolSetting('brushSpacing', 0.2)}
-            />
-            <InspectorNumericSlider
-              tooltip="Scatter Amount"
-              icon="brushscatter"
-              label="Spread"
-              val={this.props.getToolSetting('brushScatterAmount')}
-              onChange={(val) => this.props.setToolSetting('brushScatterAmount', val)}
-              inputProps={this.props.getToolSettingRestrictions('brushScatterAmount')}
-              onReset={() => this.props.setToolSetting('brushScatterAmount', 0)}
-            />
-          </>)}
-        </div>
-        {/* Edit-only: rotation mode + offset -H.A */}
-        {isEditingBrush && (
-          <div className="inspector-item">
-            <InspectorSelector
-              tooltip="Rotation"
-              type="select"
-              isSearchable={true}
-              value={rotationMode}
-              options={ROTATION_MODE_OPTIONS}
-              onChange={(val) => this.props.setToolSetting('brushRotationMode', val.value)} />
-            {rotationMode !== 'random' && (
-              <InspectorNumericSlider
-                tooltip="Rotation Offset"
-                icon="brushrandomrotation"
-                label=""
-                val={this.props.getToolSetting('brushRotationOffset')}
-                onChange={(val) => this.props.setToolSetting('brushRotationOffset', this._normalizeAngle(val))}
-                inputProps={this.props.getToolSettingRestrictions('brushRotationOffset')}
-                // onReset={() => this.props.setToolSetting('brushRotationOffset', 0)}
-              />
-            )}
-          </div>
-        )}
-        {/* Edit-only: shape picker */}
-        {isEditingBrush && this.renderBrushShapePicker()}
-        {/* Toggles — browse mode only (edit mode has nothing to show here) */}
-        {!isEditingBrush && (
-          <div className='settings-input-container' style={{ marginTop: '8px' }}>
-            <ToolSettingsInput
-              name='Enable Pressure'
-              icon='brushpressure'
-              type='checkbox'
-              value={this.props.getToolSetting('pressureEnabled')}
-              onChange={() => this.props.setToolSetting('pressureEnabled', !this.props.getToolSetting('pressureEnabled'))}
-            />
-            <ToolSettingsInput
-              name='Relative Brush Size'
-              icon='brushrelativesize'
-              type='checkbox'
-              value={this.props.getToolSetting('relativeBrushSize')}
-              onChange={() => this.props.setToolSetting('relativeBrushSize', !this.props.getToolSetting('relativeBrushSize'))}
-            />
-            <div id="inspector-brush-modes-popover-button">
-              <ToolSettingsInput
-                name='Brush Modes'
-                icon={brushModeIcon}
-                type='checkbox'
-                value={brushMode !== 'none'}
-                onChange={this.toggleBrushModes}
-              />
-              <PopupMenu
-                isOpen={this.state.showBrushModes}
-                toggle={this.closeBrushModes}
-                target="inspector-brush-modes-popover-button"
-                className="more-canvas-actions-popover">
-                <div className="brush-modes-widget">
-                  <div className='actions-container'>
-                    <ToolSettingsInput
-                      name='None'
-                      icon='brushmodenone'
-                      type='checkbox'
-                      value={brushMode === 'none'}
-                      onChange={() => { this.props.setToolSetting('brushMode', 'none'); this.closeBrushModes(); }}
-                    />
-                    <ToolSettingsInput
-                      name='Inside'
-                      icon='brushmodeinside'
-                      type='checkbox'
-                      value={brushMode === 'inside'}
-                      onChange={() => { this.props.setToolSetting('brushMode', 'inside'); this.closeBrushModes(); }}
-                    />
-                    <ToolSettingsInput
-                      name='Outside'
-                      icon='brushmodeoutside'
-                      type='checkbox'
-                      value={brushMode === 'outside'}
-                      onChange={() => { this.props.setToolSetting('brushMode', 'outside'); this.closeBrushModes(); }}
-                    />
-                  </div>
-                </div>
-              </PopupMenu>
-            </div>
-          </div>
-        )}
-        {/* Edit Brush button, or Cancel + Save Brush side by side while editing */}
-        {canEdit && (
-          <div className="inspector-item">
-            {isEditingBrush ? (
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '6px', width: '100%' }}>
-                <div style={{ flex: 1 }}>
-                  <InspectorActionButton action={{
-                    id: 'brush-cancel-edit',
-                    icon: 'cancel-black',
-                    tooltip: 'Cancel',
-                    color: 'red',
-                    action: this.cancelEditingBrush,
-                  }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <InspectorActionButton action={{
-                    id: 'brush-edit-save',
-                    icon: 'check-black',
-                    tooltip: 'Save',
-                    color: 'inspector',
-                    action: this.saveBrush,
-                  }} />
-                </div>
-              </div>
-            ) : (
-              <InspectorActionButton action={{
-                id: 'brush-edit-save',
-                icon: 'pencil-black',
-                tooltip: 'Edit Brush',
-                color: 'inspector',
-                action: () => { this._captureEditSnapshot(); this.setState({ isEditingBrush: true }); },
-              }} />
-            )}
-          </div>
-        )}
-        {/* Download Brush button — edit mode only */}
-        {isEditingBrush && (
-          <div className="inspector-item" style={{ marginTop: '4px' }}>
-            <InspectorActionButton action={{
-              id: 'brush-download',
-              icon: 'brush-black',
-              tooltip: 'Download Brush',
-              color: 'inspector',
-              action: () => {
-                const { savedBrushes, selectedBrushIndex } = this.state;
-                const brush = selectedBrushIndex !== null
-                  ? savedBrushes[selectedBrushIndex]
-                  : {
-                      name: 'brush',
-                      shape: this.props.getToolSetting('brushShape'),
-                      brushSize: this.props.getToolSetting('brushSize'),
-                      brushResolution: this.props.getToolSetting('brushResolution'),
-                      brushSpacing: this.props.getToolSetting('brushSpacing'),
-                      brushScatterAmount: this.props.getToolSetting('brushScatterAmount'),
-                      brushRotationMode: this.props.getToolSetting('brushRotationMode'),
-                      brushRotationOffset: this.props.getToolSetting('brushRotationOffset'),
-                      brushStabilizerWeight: this.props.getToolSetting('brushStabilizerWeight'),
-                    };
-                this.exportBrush(brush);
-              },
-            }} />
-          </div>
-        )}
-        {/* Hidden file input for importing .cbrush files */}
-        <input
-          type="file"
-          accept=".cbrush,.json"
-          ref={this.brushFileInputRef}
-          style={{ display: 'none' }}
-          onChange={this.handleBrushFileImport}
-        />
-      </div>
-    );
   }
 
   /**
@@ -2096,7 +1442,61 @@ class Inspector extends Component {
             <InspectorTitle type="brush" title={(() => { const { savedBrushes, selectedBrushIndex } = this.state; return (selectedBrushIndex !== null && savedBrushes[selectedBrushIndex]?.name) || 'Brush Sets'; })()} />
           </div>
           <div className="inspector-body">
-            {this.renderBrushSettings()}
+            <InspectorBrush
+              getToolSetting={this.props.getToolSetting}
+              getToolSettingRestrictions={this.props.getToolSettingRestrictions}
+              setToolSetting={this.props.setToolSetting}
+              brushPreviewRef={this.brushPreviewRef}
+
+              isEditingBrush={this.state.isEditingBrush}
+              editBrush={() => {
+                this._captureEditSnapshot();
+                this.setState({ isEditingBrush: true });
+              }}
+              saveEditingBrush={this.saveBrush}
+              cancelEditingBrush={this.cancelEditingBrush}
+
+              savedBrushes={this.state.savedBrushes}
+              selectedBrushIndex={this.state.selectedBrushIndex}
+              selectBrush={(brush, i) => {
+                this.setState({ selectedBrushIndex: i, isEditingBrush: false });
+                this.applyBrush(brush);
+                localForage.setItem('WICK.BRUSHPRESETS.selectedIndex', i);
+              }}
+              renameSelectedBrush={(name) => {
+                if (this.state.selectedBrushIndex === null) return;
+                const updated = [...this.state.savedBrushes];
+                updated[this.state.selectedBrushIndex] = { ...updated[this.state.selectedBrushIndex], name };
+                this.setState({ savedBrushes: updated });
+              }}
+              deleteSelectedBrush={this.deleteSelectedBrush}
+
+              showNewBrushMenu={this.state.showNewBrushMenu}
+              toggleNewBrushMenu={this.toggleNewBrushMenu}
+              closeNewBrushMenu={this.closeNewBrushMenu}
+              startNewBrush={this.startNewBrush}
+              importBrush={this.importBrush}
+
+              showBrushModes={this.state.showBrushModes}
+              toggleBrushModes={this.toggleBrushModes}
+              closeBrushModes={this.closeBrushModes}
+
+              removedShapes={this.state.removedShapes}
+              customShapes={this.state.customShapes}
+              deleteSelectedShape={this.deleteSelectedShape}
+
+              downloadBrush={() => {
+                const brush = this.state.selectedBrushIndex !== null
+                  ? this.state.savedBrushes[this.state.selectedBrushIndex]
+                  : {
+                      name: 'brush',
+                      ...this.getBrushPropertySettings()
+                    };
+                this.exportBrush(brush);
+              }}
+              brushFileInputRef={this.brushFileInputRef}
+              handleBrushFileImport={this.handleBrushFileImport}
+            />
           </div>
         </div>
       );
