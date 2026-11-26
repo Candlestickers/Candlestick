@@ -70,19 +70,20 @@ Wick.Tools.Eyedropper = class extends Wick.Tool {
     }
 
     onMouseDown (e) {
-        this._destroyColorPreview();
-
-        this.fireEvent({eventName: 'eyedropperPickedColor', e: {
-            color: this.hoverColor,
-        }});
+        this.onMouseMove(e);
     }
 
     onMouseDrag (e) {
-
+        this.onMouseMove(e);
     }
 
     onMouseUp (e) {
-        this._createColorPreview(e.point);
+        this.onMouseMove(e);
+
+        this._destroyColorPreview();
+        this.fireEvent({eventName: 'eyedropperPickedColor', e: {
+            color: this.hoverColor,
+        }});
     }
 
     _createColorPreview (point) {
